@@ -1,9 +1,9 @@
 #
 # Makefile for busy-wait IO tests
 #
-XCC     = gcc
-AS	= as
-LD      = ld
+XCC     = /u/wbcowan/gnuarm-4.0.2/arm-elf/bin/gcc
+AS	= /u/wbcowan/gnuarm-4.0.2/arm-elf/bin/as
+LD      = /u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ld
 CFLAGS  = -c -fPIC -Wall -I. -I../include -mcpu=arm920t -msoft-float
 # -g: include hooks for gdb
 # -c: only compile
