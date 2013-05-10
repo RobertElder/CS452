@@ -6,7 +6,35 @@
  */
 
 #include <ts7200.h>
-#include <bwio.h>
+#include "../include/bwio.h"
+
+
+void assert(int expr, const char * message){
+	if(!expr){
+		const char * title = "ASSERTION FAILURE!!!\n\r";
+		int i = 0;
+		while(title[i]){
+			int *flags, *data;
+			flags = (int *)( UART2_BASE + UART_FLAG_OFFSET );
+			data = (int *)( UART2_BASE + UART_DATA_OFFSET );
+
+			while( ( *flags & TXFF_MASK ) );
+			*data = title[i];
+			i++;
+		}
+		i = 0;
+		while(message[i]){
+			int *flags, *data;
+			flags = (int *)( UART2_BASE + UART_FLAG_OFFSET );
+			data = (int *)( UART2_BASE + UART_DATA_OFFSET );
+
+			while( ( *flags & TXFF_MASK ) );
+			*data = message[i];
+			i++;
+		}
+		while(1){};
+	}
+}
 
 /*
  * The UARTs are initialized by RedBoot to the following state

@@ -20,6 +20,7 @@ typedef char *va_list;
 #define ON	1
 #define	OFF	0
 
+
 int bwsetfifo( int channel, int state );
 
 int bwsetspeed( int channel, int speed );
@@ -37,3 +38,5 @@ int bwputr( int channel, unsigned int reg );
 void bwputw( int channel, int n, char fc, char *bf );
 
 void bwprintf( int channel, char *format, ... );
+
+void assert( int expr, const char * message);
