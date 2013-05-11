@@ -6,16 +6,23 @@
 #include <ts7200.h>
 
 int main( int argc, char* argv[] ) {
+	//  Use simple ring buffers for the output to the two UARTs
+	unsigned int buf_size = 10;
+	unsigned char output_buffer[buf_size];
+	ChannelDescription c;
+	c.channel = COM2;
+	c.out_buffer_start = 0;
+	c.out_buffer_end = 0;
+	c.buffer_size = buf_size;
+	c.buffer = output_buffer;
+
+
 	char str[] = "Hello\n\r";
-	bwsetfifo( COM2, OFF );
-	bwputstr( COM2, str );
-	bwputw( COM2, 10, '*', str );
-	bwprintf( COM2, "Hello world.\n\r" );
-	bwprintf( COM2, "%s world%u.\n\r", "Well, hello", 23 );
-	bwprintf( COM2, "%d worlds for %u person.\n\r", -23, 1 );
-	bwprintf( COM2, "%x worlds for %d people.\n\r", -23, 723 );
-	str[0] = bwgetc( COM2 );
-	bwprintf( COM2, "%s", str );
+	bwsetfifo( &c, OFF );
+	bwputstr( &c, str );
+	bwputw( &c, 10, '*', str );
+	bwprintf( &c, "Hello world.\n\r" );
+
 	int * timer_ldr = (TIMER3_BASE + LDR_OFFSET);
 	int * timer_val = (TIMER3_BASE + VAL_OFFSET);
 	int * timer_ctrl = (TIMER3_BASE + CRTL_OFFSET);
@@ -29,14 +36,12 @@ int main( int argc, char* argv[] ) {
 	int last_timer_value = 50800;
 	int ticks = 0;
 
-	assert(0,"Test...");
-
 	while(1){
 		int observed_val = *timer_val;
 		if(observed_val > last_timer_value){
 			ticks++;
-			bwprintf( COM2, "%d ticks.\n\r", ticks );
-			bwprintf( COM2, "%d observed.\n\r", observed_val );
+			bwprintf( &c, "%d ticks.\n\r", ticks );
+			bwprintf( &c, "%d observed.\n\r", observed_val );
 		}
 		last_timer_value = *timer_val;
 	}

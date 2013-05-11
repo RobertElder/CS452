@@ -8,10 +8,11 @@
 #include <ts7200.h>
 #include "../include/bwio.h"
 
+void bwui2a( unsigned int num, unsigned int base, char *bf );
 
 void assert(int expr, const char * message){
 	if(!expr){
-		const char * title = "ASSERTION FAILURE!!!\n\r";
+		const char * title = "ASSERTION FAILURE!!!\n";
 		int i = 0;
 		while(title[i]){
 			int *flags, *data;
@@ -43,9 +44,9 @@ void assert(int expr, const char * message){
  * 	no parity
  * 	fifos enabled
  */
-int bwsetfifo( int channel, int state ) {
+int bwsetfifo( ChannelDescription * channel, int state ) {
 	int *line, buf;
-	switch( channel ) {
+	switch( channel->channel ) {
 	case COM1:
 		line = (int *)( UART1_BASE + UART_LCRH_OFFSET );
 	        break;
@@ -62,9 +63,9 @@ int bwsetfifo( int channel, int state ) {
 	return 0;
 }
 
-int bwsetspeed( int channel, int speed ) {
+int bwsetspeed( ChannelDescription * channel, int speed ) {
 	int *high, *low;
-	switch( channel ) {
+	switch( channel->channel ) {
 	case COM1:
 		high = (int *)( UART1_BASE + UART_LCRM_OFFSET );
 		low = (int *)( UART1_BASE + UART_LCRL_OFFSET );
@@ -91,9 +92,9 @@ int bwsetspeed( int channel, int speed ) {
 	}
 }
 
-int bwputc( int channel, char c ) {
+int bwputc( ChannelDescription * channel, char c ) {
 	int *flags, *data;
-	switch( channel ) {
+	switch( channel->channel ) {
 	case COM1:
 		flags = (int *)( UART1_BASE + UART_FLAG_OFFSET );
 		data = (int *)( UART1_BASE + UART_DATA_OFFSET );
@@ -106,8 +107,48 @@ int bwputc( int channel, char c ) {
 		return -1;
 		break;
 	}
-	while( ( *flags & TXFF_MASK ) ) ;
+	//  while( ( *flags & TXFF_MASK ) );
+	channel->buffer[channel->out_buffer_end] = c;
+	assert(((channel->out_buffer_end + 1) % channel->buffer_size) != channel->out_buffer_start,"The output buffer is full.");
+	channel->out_buffer_end = (channel->out_buffer_end + 1) % channel->buffer_size;
+
+	const char * message = "buffered char: ";
+	int i = 0;
+	while(message[i]){
+		while( ( *flags & TXFF_MASK ) );
+		*data = message[i];
+		i++;
+	}
+
+	while( ( *flags & TXFF_MASK ) );
 	*data = c;
+
+	while( ( *flags & TXFF_MASK ) );
+	*data = '\n';
+
+	char buffer_end[12];
+	char buffer_start[12];
+	bwui2a( (unsigned int)channel->out_buffer_end, (unsigned int)10, (char *)buffer_end );
+	bwui2a( (unsigned int)channel->out_buffer_start, (unsigned int)10, (char *)buffer_start );
+	i = 0;
+	while(buffer_end[i]){
+		while( ( *flags & TXFF_MASK ) );
+		*data = buffer_end[i];
+		i++;
+	}
+
+	while( ( *flags & TXFF_MASK ) );
+	*data = '\n';
+	i = 0;
+	while(buffer_start[i]){
+		while( ( *flags & TXFF_MASK ) );
+		*data = buffer_start[i];
+		i++;
+	}
+	while( ( *flags & TXFF_MASK ) );
+	*data = '\n';
+
+
 	return 0;
 }
 
@@ -116,7 +157,7 @@ char c2x( char ch ) {
 	return 'a' + ch - 10;
 }
 
-int bwputx( int channel, char c ) {
+int bwputx( ChannelDescription * channel, char c ) {
 	char chh, chl;
 
 	chh = c2x( c / 16 );
@@ -125,7 +166,7 @@ int bwputx( int channel, char c ) {
 	return bwputc( channel, chl );
 }
 
-int bwputr( int channel, unsigned int reg ) {
+int bwputr( ChannelDescription * channel, unsigned int reg ) {
 	int byte;
 	char *ch = (char *) &reg;
 
@@ -133,7 +174,7 @@ int bwputr( int channel, unsigned int reg ) {
 	return bwputc( channel, ' ' );
 }
 
-int bwputstr( int channel, char *str ) {
+int bwputstr( ChannelDescription * channel, char *str ) {
 	while( *str ) {
 		if( bwputc( channel, *str ) < 0 ) return -1;
 		str++;
@@ -141,7 +182,7 @@ int bwputstr( int channel, char *str ) {
 	return 0;
 }
 
-void bwputw( int channel, int n, char fc, char *bf ) {
+void bwputw( ChannelDescription * channel, int n, char fc, char *bf ) {
 	char ch;
 	char *p = bf;
 
@@ -150,11 +191,11 @@ void bwputw( int channel, int n, char fc, char *bf ) {
 	while( ( ch = *bf++ ) ) bwputc( channel, ch );
 }
 
-int bwgetc( int channel ) {
+int bwgetc( ChannelDescription * channel ) {
 	int *flags, *data;
 	unsigned char c;
 
-	switch( channel ) {
+	switch( channel->channel ) {
 	case COM1:
 		flags = (int *)( UART1_BASE + UART_FLAG_OFFSET );
 		data = (int *)( UART1_BASE + UART_DATA_OFFSET );
@@ -219,7 +260,7 @@ void bwi2a( int num, char *bf ) {
 	bwui2a( num, 10, bf );
 }
 
-void bwformat ( int channel, char *fmt, va_list va ) {
+void bwformat ( ChannelDescription * channel, char *fmt, va_list va ) {
 	char bf[12];
 	char ch, lz;
 	int w;
@@ -275,7 +316,7 @@ void bwformat ( int channel, char *fmt, va_list va ) {
 	}
 }
 
-void bwprintf( int channel, char *fmt, ... ) {
+void bwprintf( ChannelDescription * channel, char *fmt, ... ) {
         va_list va;
 
         va_start(va,fmt);
