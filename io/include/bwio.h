@@ -34,6 +34,8 @@ int bwsetfifo( ChannelDescription * channel, int state );
 
 int bwsetspeed( ChannelDescription * channel, int speed );
 
+void bwchannelsend( ChannelDescription * channel );
+
 int bwputc( ChannelDescription * channel, char c );
 
 int bwgetc( ChannelDescription * channel );

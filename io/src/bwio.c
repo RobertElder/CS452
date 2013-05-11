@@ -92,7 +92,11 @@ int bwsetspeed( ChannelDescription * channel, int speed ) {
 	}
 }
 
-int bwputc( ChannelDescription * channel, char c ) {
+void bwchannelsend( ChannelDescription * channel) {
+	if(channel->out_buffer_start == channel->out_buffer_end){
+		//  There was no data buffered.
+		return;
+	}
 	int *flags, *data;
 	switch( channel->channel ) {
 	case COM1:
@@ -104,51 +108,27 @@ int bwputc( ChannelDescription * channel, char c ) {
 		data = (int *)( UART2_BASE + UART_DATA_OFFSET );
 		break;
 	default:
-		return -1;
+		assert(0,"Unknown channel.");
 		break;
 	}
+	int max_times = 100;
+	int times = 0;
+	while(times < max_times){
+		if( !( *flags & TXFF_MASK ) ){
+			*data = channel->buffer[channel->out_buffer_start];
+			channel->out_buffer_start = (channel->out_buffer_start + 1) % channel->buffer_size;
+			//  Sent data successfully
+			return;
+		}
+		times++;
+	}
+}
+
+int bwputc( ChannelDescription * channel, char c ) {
 	//  while( ( *flags & TXFF_MASK ) );
 	channel->buffer[channel->out_buffer_end] = c;
 	assert(((channel->out_buffer_end + 1) % channel->buffer_size) != channel->out_buffer_start,"The output buffer is full.");
 	channel->out_buffer_end = (channel->out_buffer_end + 1) % channel->buffer_size;
-
-	const char * message = "buffered char: ";
-	int i = 0;
-	while(message[i]){
-		while( ( *flags & TXFF_MASK ) );
-		*data = message[i];
-		i++;
-	}
-
-	while( ( *flags & TXFF_MASK ) );
-	*data = c;
-
-	while( ( *flags & TXFF_MASK ) );
-	*data = '\n';
-
-	char buffer_end[12];
-	char buffer_start[12];
-	bwui2a( (unsigned int)channel->out_buffer_end, (unsigned int)10, (char *)buffer_end );
-	bwui2a( (unsigned int)channel->out_buffer_start, (unsigned int)10, (char *)buffer_start );
-	i = 0;
-	while(buffer_end[i]){
-		while( ( *flags & TXFF_MASK ) );
-		*data = buffer_end[i];
-		i++;
-	}
-
-	while( ( *flags & TXFF_MASK ) );
-	*data = '\n';
-	i = 0;
-	while(buffer_start[i]){
-		while( ( *flags & TXFF_MASK ) );
-		*data = buffer_start[i];
-		i++;
-	}
-	while( ( *flags & TXFF_MASK ) );
-	*data = '\n';
-
-
 	return 0;
 }
 

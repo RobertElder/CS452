@@ -7,7 +7,7 @@
 
 int main( int argc, char* argv[] ) {
 	//  Use simple ring buffers for the output to the two UARTs
-	unsigned int buf_size = 10;
+	unsigned int buf_size = 100000;
 	unsigned char output_buffer[buf_size];
 	ChannelDescription c;
 	c.channel = COM2;
@@ -29,21 +29,32 @@ int main( int argc, char* argv[] ) {
 	//  Disable the timer before we set the load value
 	*timer_ctrl = (*timer_ctrl) ^ ENABLE_MASK;
 	// 508000 cycles per second
-	*timer_ldr = 50800;
+	unsigned int cycles_per_tick = 50800;
+	*timer_ldr = cycles_per_tick;
 	//  Turn the timer on enabled, with clock 508khz and periodic mode
 	*timer_ctrl = ENABLE_MASK | CLKSEL_MASK | MODE_MASK;
 
-	int last_timer_value = 50800;
+	int last_timer_value = cycles_per_tick;
 	int ticks = 0;
 
 	while(1){
 		int observed_val = *timer_val;
+		bwchannelsend(&c);
 		if(observed_val > last_timer_value){
 			ticks++;
-			bwprintf( &c, "%d ticks.\n\r", ticks );
-			bwprintf( &c, "%d observed.\n\r", observed_val );
+			bwprintf( &c, "%d ticks.\n", ticks );
 		}
-		last_timer_value = *timer_val;
+		/*  
+		 *  Uncomment to get somewhat precise information about how much time is spend in the polling loop.
+		 *  Only output this info on some iterations, because the act of buffering this print information takes about 2ms.
+		if(observed_val % 2 == 0){
+			bwprintf( &c, "observed: %d\n", observed_val );
+			bwprintf( &c, "last_timer: %d\n", last_timer_value );
+			unsigned int diff = observed_val > last_timer_value ? (cycles_per_tick - observed_val) + last_timer_value : last_timer_value - observed_val;
+			bwprintf( &c, "Time in polling loop: about %d microseconds.\n", (int)((double)diff/((double)cycles_per_tick/(double)100000)));
+		}
+		*/
+		last_timer_value = observed_val;
 	}
 	return 0;
 }
