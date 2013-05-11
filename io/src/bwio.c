@@ -75,8 +75,8 @@ int bwsetspeed( ChannelDescription * channel, int speed ) {
 		low = (int *)( UART2_BASE + UART_LCRL_OFFSET );
 	        break;
 	default:
-	        return -1;
-	        break;
+		assert(0,"Unknown Channel.");
+		return -1;
 	}
 	switch( speed ) {
 	case 115200:
@@ -88,6 +88,7 @@ int bwsetspeed( ChannelDescription * channel, int speed ) {
 		*low = 0x90;
 		return 0;
 	default:
+		assert(0,"Unknown speed.");
 		return -1;
 	}
 }
@@ -125,7 +126,6 @@ void bwchannelsend( ChannelDescription * channel) {
 }
 
 int bwputc( ChannelDescription * channel, char c ) {
-	//  while( ( *flags & TXFF_MASK ) );
 	channel->buffer[channel->out_buffer_end] = c;
 	assert(((channel->out_buffer_end + 1) % channel->buffer_size) != channel->out_buffer_start,"The output buffer is full.");
 	channel->out_buffer_end = (channel->out_buffer_end + 1) % channel->buffer_size;
