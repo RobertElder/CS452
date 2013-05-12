@@ -74,7 +74,7 @@ int bwsetfifo( ChannelDescription * channel, int state ) {
 	buf = *line;
 	buf = state ? buf | FEN_MASK : buf & ~FEN_MASK;
 	//  2 stop bits, 8 bit words, no parity, no beak
-	*line = buf;// & STP2_MASK & WLEN_MASK & ~PEN_MASK & ~BRK_MASK;
+	*line = buf & STP2_MASK & WLEN_MASK & ~PEN_MASK & ~BRK_MASK;
 	return 0;
 }
 
@@ -160,12 +160,12 @@ void bwchannelsend( ChannelDescription * channel) {
 		break;
 	}
 
-	int max_times = 1000000000;
+	int max_times = 100;
 	int times = 0;
 	while(times < max_times){
-
-		if( !(*flags & TXFF_MASK ) && (((*flags & CTS_MASK) && !(*flags & TXBUSY_MASK)) || channel->channel == COM2 )){
-			*data = channel->buffer[channel->out_buffer_start];
+		if( !(*flags & TXFF_MASK ) && !(*flags & RXFF_MASK ) && !(*flags & TXBUSY_MASK) && ((*flags & CTS_MASK)  || channel->channel == COM2 )){
+			*data = channel->output_buffer[channel->out_buffer_start];
+			/*
 			if(channel->channel == COM1){
 				int * ff = (int *)( UART2_BASE + UART_FLAG_OFFSET );
 				int * dd = (int *)( UART2_BASE + UART_DATA_OFFSET );
@@ -187,7 +187,8 @@ void bwchannelsend( ChannelDescription * channel) {
 				while( (*ff & TXFF_MASK )){};
 				*dd = '\n';
 			}
-			channel->out_buffer_start = (channel->out_buffer_start + 1) % channel->buffer_size;
+			*/
+			channel->out_buffer_start = (channel->out_buffer_start + 1) % channel->output_buffer_size;
 			//  Sent data successfully
 			return;
 		}
@@ -196,9 +197,9 @@ void bwchannelsend( ChannelDescription * channel) {
 }
 
 int bwputc( ChannelDescription * channel, char c ) {
-	channel->buffer[channel->out_buffer_end] = c;
-	assert(((channel->out_buffer_end + 1) % channel->buffer_size) != channel->out_buffer_start,"The output buffer is full.");
-	channel->out_buffer_end = (channel->out_buffer_end + 1) % channel->buffer_size;
+	channel->output_buffer[channel->out_buffer_end] = c;
+	assert(((channel->out_buffer_end + 1) % channel->output_buffer_size) != channel->out_buffer_start,"The output buffer is full.");
+	channel->out_buffer_end = (channel->out_buffer_end + 1) % channel->output_buffer_size;
 	return 0;
 }
 
@@ -241,7 +242,18 @@ void bwputw( ChannelDescription * channel, int n, char fc, char *bf ) {
 	while( ( ch = *bf++ ) ) bwputc( channel, ch );
 }
 
-int bwgetc( ChannelDescription * channel ) {
+unsigned char bwtakec( ChannelDescription * channel ) {
+	//  Remove one character from the buffer we created.  Return null on empty buffer.
+	if(channel->in_buffer_start == channel->in_buffer_end){
+		//  There was no data buffered.
+		return '\0';
+	}
+	unsigned char c = channel->input_buffer[channel->in_buffer_start];
+	channel->in_buffer_start = (channel->in_buffer_start + 1) % channel->input_buffer_size;
+	return c;
+}
+
+void bwgetc( ChannelDescription * channel ) {
 	int *flags, *data;
 	unsigned char c;
 
@@ -255,12 +267,22 @@ int bwgetc( ChannelDescription * channel ) {
 		data = (int *)( UART2_BASE + UART_DATA_OFFSET );
 		break;
 	default:
-		return -1;
+		assert(0,"Unknown Channel.");
+		return;
 		break;
 	}
-	while ( !( *flags & RXFF_MASK ) ) ;
-	c = *data;
-	return c;
+
+
+	if( *flags & RXFF_MASK ){
+		c = *data;
+		const char * msg = ".....................";
+		unsigned char * cc = (unsigned char *)msg;
+		cc[3] = c;
+		assert(0,msg);
+		channel->input_buffer[channel->in_buffer_end] = c;
+		assert(((channel->in_buffer_end + 1) % channel->input_buffer_size) != channel->in_buffer_start,"The input buffer is full.");
+		channel->in_buffer_end = (channel->in_buffer_end + 1) % channel->input_buffer_size;
+	}
 }
 
 int bwa2d( char ch ) {

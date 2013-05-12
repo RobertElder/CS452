@@ -27,8 +27,12 @@ typedef struct ChannelDescription{
 	unsigned int out_buffer_start;
 	//  End points to the index where the next character will be placed.
 	unsigned int out_buffer_end;
-	unsigned int buffer_size;
-	unsigned char * buffer;
+	unsigned int in_buffer_start;
+	unsigned int in_buffer_end;
+	unsigned int output_buffer_size;
+	unsigned int input_buffer_size;
+	unsigned char * output_buffer;
+	unsigned char * input_buffer;
 }ChannelDescription;
 
 int bwsetfifo( ChannelDescription * channel, int state );
@@ -41,7 +45,9 @@ void bwchannelerrorcheck( ChannelDescription * channel );
 
 int bwputc( ChannelDescription * channel, char c );
 
-int bwgetc( ChannelDescription * channel );
+unsigned char bwtakec( ChannelDescription * channel );
+
+void bwgetc( ChannelDescription * channel );
 
 int bwputx( ChannelDescription * channel, char c );
 
