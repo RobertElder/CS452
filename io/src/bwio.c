@@ -33,7 +33,21 @@ void assert(int expr, const char * message){
 			*data = message[i];
 			i++;
 		}
+
 		while(1){};
+	}
+}
+
+void busy_wait_print(const char * message){
+	int i = 0;
+	while(message[i]){
+		int *flags, *data;
+		flags = (int *)( UART2_BASE + UART_FLAG_OFFSET );
+		data = (int *)( UART2_BASE + UART_DATA_OFFSET );
+
+		while( ( *flags & TXFF_MASK ) );
+		*data = message[i];
+		i++;
 	}
 }
 
@@ -59,64 +73,120 @@ int bwsetfifo( ChannelDescription * channel, int state ) {
 	}
 	buf = *line;
 	buf = state ? buf | FEN_MASK : buf & ~FEN_MASK;
-	*line = buf;
+	//  2 stop bits, 8 bit words, no parity, no beak
+	*line = buf;// & STP2_MASK & WLEN_MASK & ~PEN_MASK & ~BRK_MASK;
 	return 0;
 }
 
-int bwsetspeed( ChannelDescription * channel, int speed ) {
-	int *high, *low;
+int bwsetspeed( ChannelDescription * channel) {
+	int *mid, *low;
 	switch( channel->channel ) {
 	case COM1:
-		high = (int *)( UART1_BASE + UART_LCRM_OFFSET );
+		mid = (int *)( UART1_BASE + UART_LCRM_OFFSET );
 		low = (int *)( UART1_BASE + UART_LCRL_OFFSET );
 	        break;
 	case COM2:
-		high = (int *)( UART2_BASE + UART_LCRM_OFFSET );
+		mid = (int *)( UART2_BASE + UART_LCRM_OFFSET );
 		low = (int *)( UART2_BASE + UART_LCRL_OFFSET );
 	        break;
 	default:
 		assert(0,"Unknown Channel.");
 		return -1;
 	}
-	switch( speed ) {
+	switch( channel->speed ) {
 	case 115200:
-		*high = 0x0;
+		*mid = 0x0;
 		*low = 0x3;
 		return 0;
 	case 2400:
-		*high = 0x0;
-		*low = 0x90;
+		*mid = 0x0;
+		*low = 0xBF;
 		return 0;
 	default:
 		assert(0,"Unknown speed.");
 		return -1;
 	}
+	//  This will write to the high bytes and make the change apply.
+	bwsetfifo( channel, OFF);
 }
 
-void bwchannelsend( ChannelDescription * channel) {
-	if(channel->out_buffer_start == channel->out_buffer_end){
-		//  There was no data buffered.
-		return;
-	}
-	int *flags, *data;
+void bwchannelerrorcheck( ChannelDescription * channel) {
+	int *status;
 	switch( channel->channel ) {
 	case COM1:
-		flags = (int *)( UART1_BASE + UART_FLAG_OFFSET );
-		data = (int *)( UART1_BASE + UART_DATA_OFFSET );
+		status = (int *)( UART1_BASE + UART_RSR_OFFSET );
 		break;
 	case COM2:
-		flags = (int *)( UART2_BASE + UART_FLAG_OFFSET );
-		data = (int *)( UART2_BASE + UART_DATA_OFFSET );
+		status = (int *)( UART2_BASE + UART_RSR_OFFSET );
 		break;
 	default:
 		assert(0,"Unknown channel.");
 		break;
 	}
-	int max_times = 100;
+	if(channel->channel == COM1){
+		if ((*status & FE_MASK)) busy_wait_print("Framming error on COM1.\n");
+		if ((*status & PE_MASK)) busy_wait_print("Parity error on COM1.\n");
+		if ((*status & BE_MASK)) busy_wait_print("Break error on COM1.\n");
+		if ((*status & OE_MASK)) busy_wait_print("Overrun error on COM1.\n");
+	}else{
+		if ((*status & FE_MASK)) busy_wait_print("Framming error on COM2.\n");
+		if ((*status & PE_MASK)) busy_wait_print("Parity error on COM2.\n");
+		if ((*status & BE_MASK)) busy_wait_print("Break error on COM2.\n");
+		if ((*status & OE_MASK)) busy_wait_print("Overrun error on COM2.\n");
+	}
+	//  Clear the status bits
+	*status = 0;
+
+}
+void bwchannelsend( ChannelDescription * channel) {
+	if(channel->out_buffer_start == channel->out_buffer_end){
+		//  There was no data buffered.
+		return;
+	}
+	int *flags, *data, *modemsts;
+	switch( channel->channel ) {
+	case COM1:
+		flags = (int *)( UART1_BASE + UART_FLAG_OFFSET );
+		data = (int *)( UART1_BASE + UART_DATA_OFFSET );
+		modemsts = (int *)( UART1_BASE + UART_MDMSTS_OFFSET );
+		break;
+	case COM2:
+		flags = (int *)( UART2_BASE + UART_FLAG_OFFSET );
+		data = (int *)( UART2_BASE + UART_DATA_OFFSET );
+		modemsts = (int *)( UART2_BASE + UART_MDMSTS_OFFSET );
+		break;
+	default:
+		assert(0,"Unknown channel.");
+		break;
+	}
+
+	int max_times = 1000000000;
 	int times = 0;
 	while(times < max_times){
-		if( !( *flags & TXFF_MASK ) ){
+
+		if( !(*flags & TXFF_MASK ) && (((*flags & CTS_MASK) && !(*flags & TXBUSY_MASK)) || channel->channel == COM2 )){
 			*data = channel->buffer[channel->out_buffer_start];
+			if(channel->channel == COM1){
+				int * ff = (int *)( UART2_BASE + UART_FLAG_OFFSET );
+				int * dd = (int *)( UART2_BASE + UART_DATA_OFFSET );
+				int i = 0;
+				const char * msg = "Sending to train: ";
+				char buff[12];
+				while(msg[i]){
+					while( (*ff & TXFF_MASK )){};
+					*dd = msg[i];
+					i++;
+				}
+				i = 0;
+				bwui2a( channel->buffer[channel->out_buffer_start], 10, buff);
+				while(buff[i]){
+					while( (*ff & TXFF_MASK )){};
+					*dd = buff[i];
+					i++;
+				}
+				while( (*ff & TXFF_MASK )){};
+				*dd = '\n';
+			}
 			channel->out_buffer_start = (channel->out_buffer_start + 1) % channel->buffer_size;
 			//  Sent data successfully
 			return;

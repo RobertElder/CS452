@@ -22,6 +22,7 @@ typedef char *va_list;
 
 typedef struct ChannelDescription{
 	unsigned int channel;
+	unsigned int speed;
 	//  Start points to the index of the first character to remove.  If end is the same as start, the buffer is empty.
 	unsigned int out_buffer_start;
 	//  End points to the index where the next character will be placed.
@@ -32,9 +33,11 @@ typedef struct ChannelDescription{
 
 int bwsetfifo( ChannelDescription * channel, int state );
 
-int bwsetspeed( ChannelDescription * channel, int speed );
+int bwsetspeed( ChannelDescription * channel);
 
 void bwchannelsend( ChannelDescription * channel );
+
+void bwchannelerrorcheck( ChannelDescription * channel );
 
 int bwputc( ChannelDescription * channel, char c );
 
@@ -51,3 +54,5 @@ void bwputw( ChannelDescription * channel, int n, char fc, char *bf );
 void bwprintf( ChannelDescription * channel, char *format, ... );
 
 void assert( int expr, const char * message);
+
+void busy_wait_print( const char * message);
