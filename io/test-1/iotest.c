@@ -121,7 +121,7 @@ int main( int argc, char* argv[] ) {
 		//bwchannelerrorcheck(&terminal_channel);
 		//bwchannelerrorcheck(&train_controller_channel);
 		//  Send some of the data in the output buffers
-		//bwchannelsend(&terminal_channel);
+		bwchannelsend(&terminal_channel);
 		bwchannelsend(&train_controller_channel);
 		//  Get any data that is available
 		bwgetc(&terminal_channel);
@@ -147,11 +147,11 @@ int main( int argc, char* argv[] ) {
 			}
 			ticks++;
 			//  Clear the screen
-			//bwprintf( &terminal_channel, "\x1B""[2J");
-			//print_formatted_time(&terminal_channel, ticks);
-			//print_loop_timing(&terminal_channel, observed_val, last_timer_value, cycles_per_tick, max_time);
-			//print_channel_info(&terminal_channel,&terminal_channel);
-			//print_channel_info(&terminal_channel,&train_controller_channel);
+			bwprintf( &terminal_channel, "\x1B""[2J");
+			print_formatted_time(&terminal_channel, ticks);
+			print_loop_timing(&terminal_channel, observed_val, last_timer_value, cycles_per_tick, max_time);
+			print_channel_info(&terminal_channel,&terminal_channel);
+			print_channel_info(&terminal_channel,&train_controller_channel);
 
 		}
 		last_timer_value = observed_val;

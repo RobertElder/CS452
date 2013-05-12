@@ -68,13 +68,24 @@ int bwsetfifo( ChannelDescription * channel, int state ) {
 	        line = (int *)( UART2_BASE + UART_LCRH_OFFSET );
 	        break;
 	default:
+		assert(0,"Unknown Channel.");
 	        return -1;
 	        break;
 	}
 	buf = *line;
 	buf = state ? buf | FEN_MASK : buf & ~FEN_MASK;
 	//  2 stop bits, 8 bit words, no parity, no beak
-	*line = buf & STP2_MASK & WLEN_MASK & ~PEN_MASK & ~BRK_MASK;
+	buf = buf & STP2_MASK & WLEN_MASK & ~PEN_MASK & ~BRK_MASK;
+	while(!(*line & buf)){
+		*line = buf;
+	}
+
+	assert(FEN_MASK	& 0x10,"fen corrupted.\n");
+	assert(UART_LCRH_OFFSET & 0x8,"lcrh corrupted.\n");
+	assert(UART1_BASE & 0x808c0000,"uart1 corrupted.\n");
+	assert(!(buf & FEN_MASK),"buf has fifo enabled.\n");
+	assert((*line & buf),"Line is different than buf.\n");
+	assert(!(*line & FEN_MASK),"The FIFO is enabled, and that is bad.\n");
 	return 0;
 }
 
@@ -272,8 +283,10 @@ void bwgetc( ChannelDescription * channel ) {
 		break;
 	}
 
+	//  TODO figure out why this condition is possible even though FIFO is disabled
+	  assert(!( !(*flags & RXFE_MASK ) && !(*flags & RXFF_MASK )),"It not (empty or full)");
 
-	if( *flags & RXFF_MASK ){
+	if( (*flags & RXFF_MASK )){
 		c = *data;
 		const char * msg = ".....................";
 		unsigned char * cc = (unsigned char *)msg;
