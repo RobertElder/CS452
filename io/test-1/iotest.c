@@ -110,12 +110,14 @@ int main( int argc, char* argv[] ) {
 	*timer_ctrl = ENABLE_MASK | CLKSEL_MASK | MODE_MASK;
 
 	bwsetspeed( &terminal_channel);
-	bwsetspeed( &train_controller_channel);
+	//bwsetspeed( &train_controller_channel);
 
 	unsigned char command_buffer[200];
 	unsigned int command_buffer_pos = 0;
 
 	while(1){
+		int * line = (int *)( UART2_BASE + UART_LCRH_OFFSET );
+		assert((!(*line & FEN_MASK)),"The FIFO is enabled in main, and that is bad.\n");
 		int observed_val = *timer_val;
 		//  Output any information about errors.
 		//bwchannelerrorcheck(&terminal_channel);

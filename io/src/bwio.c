@@ -85,7 +85,7 @@ int bwsetfifo( ChannelDescription * channel, int state ) {
 	assert(UART1_BASE & 0x808c0000,"uart1 corrupted.\n");
 	assert(!(buf & FEN_MASK),"buf has fifo enabled.\n");
 	assert((*line & buf),"Line is different than buf.\n");
-	assert(!(*line & FEN_MASK),"The FIFO is enabled, and that is bad.\n");
+	assert((!(*line & FEN_MASK)),"The FIFO is enabled, and that is bad.\n");
 	return 0;
 }
 
@@ -284,7 +284,7 @@ void bwgetc( ChannelDescription * channel ) {
 	}
 
 	//  TODO figure out why this condition is possible even though FIFO is disabled
-	  assert(!( !(*flags & RXFE_MASK ) && !(*flags & RXFF_MASK )),"It not (empty or full)");
+	  assert(!( (!(*flags & RXFE_MASK )) && (!(*flags & RXFF_MASK ))),"It not (empty or full)");
 
 	if( (*flags & RXFF_MASK )){
 		c = *data;
