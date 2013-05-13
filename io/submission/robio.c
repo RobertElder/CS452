@@ -1,12 +1,6 @@
-/*
- * bwio.c - busy-wait I/O routines for diagnosis
- *
- * Specific to the TS-7200 ARM evaluation board
- *
- */
 
 #include <ts7200.h>
-#include "../include/bwio.h"
+#include "robio.h"
 
 void bwui2a( unsigned int num, unsigned int base, char *bf );
 

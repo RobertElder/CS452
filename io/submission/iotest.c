@@ -2,7 +2,7 @@
  * iotest.c
  */
 
-#include "../include/bwio.h"
+#include "robio.h"
 #include <ts7200.h>
 
 unsigned int parse_number(unsigned char * str){

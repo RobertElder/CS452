@@ -1,6 +1,3 @@
-/*
- * bwio.h
- */
 
 typedef char *va_list;
 
