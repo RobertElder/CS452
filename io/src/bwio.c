@@ -63,18 +63,22 @@ void bwsetfifo( ChannelDescription * channel, int state ) {
 	switch( channel->channel ) {
 	case COM1:
 		line = (int *)( UART1_BASE + UART_LCRH_OFFSET );
+		buf = *line;
+		buf = state ? buf | FEN_MASK : buf & ~FEN_MASK;
+		//  2 stop bits, 8 bit words, no parity, no beak
+		buf = buf & STP2_MASK & WLEN_MASK & ~PEN_MASK & ~BRK_MASK;
 	        break;
 	case COM2:
 	        line = (int *)( UART2_BASE + UART_LCRH_OFFSET );
+		buf = *line;
+		buf = state ? buf | FEN_MASK : buf & ~FEN_MASK;
+		buf = buf;
 	        break;
 	default:
-		assert(0,"Unknown Channel.");
+		assert(0,"Unknown Channel in set fifo.");
 	        break;
 	}
-	buf = *line;
-	buf = state ? buf | FEN_MASK : buf & ~FEN_MASK;
-	//  2 stop bits, 8 bit words, no parity, no beak
-	buf = buf;// & STP2_MASK & WLEN_MASK & ~PEN_MASK & ~BRK_MASK;
+
 	*line = buf;
 
 	assert((!(*line & FEN_MASK)),"The FIFO is enabled, and that is bad.\n");
@@ -92,7 +96,7 @@ void bwsetspeed( ChannelDescription * channel) {
 		low = (int *)( UART2_BASE + UART_LCRL_OFFSET );
 	        break;
 	default:
-		assert(0,"Unknown Channel.");
+		assert(0,"Unknown Channel in bwsetspeed.");
 	}
 	switch( channel->speed ) {
 	case 115200:
@@ -120,7 +124,7 @@ void bwchannelerrorcheck( ChannelDescription * channel) {
 		status = (int *)( UART2_BASE + UART_RSR_OFFSET );
 		break;
 	default:
-		assert(0,"Unknown channel.");
+		assert(0,"Unknown channel in error check.");
 		break;
 	}
 	if(channel->channel == COM1){
@@ -143,20 +147,18 @@ void bwchannelsend( ChannelDescription * channel) {
 		//  There was no data buffered.
 		return;
 	}
-	int *flags, *data, *modemsts;
+	int *flags, *data;
 	switch( channel->channel ) {
 	case COM1:
 		flags = (int *)( UART1_BASE + UART_FLAG_OFFSET );
 		data = (int *)( UART1_BASE + UART_DATA_OFFSET );
-		modemsts = (int *)( UART1_BASE + UART_MDMSTS_OFFSET );
 		break;
 	case COM2:
 		flags = (int *)( UART2_BASE + UART_FLAG_OFFSET );
 		data = (int *)( UART2_BASE + UART_DATA_OFFSET );
-		modemsts = (int *)( UART2_BASE + UART_MDMSTS_OFFSET );
 		break;
 	default:
-		assert(0,"Unknown channel.");
+		assert(0,"Unknown channel in channel send.");
 		break;
 	}
 
@@ -165,29 +167,6 @@ void bwchannelsend( ChannelDescription * channel) {
 	while(times < max_times){
 		if( !(*flags & TXFF_MASK ) && ((*flags & CTS_MASK)  || channel->channel == COM2 )){
 			*data = channel->output_buffer[channel->out_buffer_start];
-			/*
-			if(channel->channel == COM1){
-				int * ff = (int *)( UART2_BASE + UART_FLAG_OFFSET );
-				int * dd = (int *)( UART2_BASE + UART_DATA_OFFSET );
-				int i = 0;
-				const char * msg = "Sending to train: ";
-				char buff[12];
-				while(msg[i]){
-					while( (*ff & TXFF_MASK )){};
-					*dd = msg[i];
-					i++;
-				}
-				i = 0;
-				bwui2a( channel->buffer[channel->out_buffer_start], 10, buff);
-				while(buff[i]){
-					while( (*ff & TXFF_MASK )){};
-					*dd = buff[i];
-					i++;
-				}
-				while( (*ff & TXFF_MASK )){};
-				*dd = '\n';
-			}
-			*/
 			channel->out_buffer_start = (channel->out_buffer_start + 1) % channel->output_buffer_size;
 			//  Sent data successfully
 			return;
@@ -246,7 +225,7 @@ unsigned char bwtakec( ChannelDescription * channel ) {
 	//  Remove one character from the buffer we created.  Return null on empty buffer.
 	if(channel->in_buffer_start == channel->in_buffer_end){
 		//  There was no data buffered.
-		return '\0';
+		return 0;
 	}
 	unsigned char c = channel->input_buffer[channel->in_buffer_start];
 	channel->in_buffer_start = (channel->in_buffer_start + 1) % channel->input_buffer_size;
@@ -255,7 +234,6 @@ unsigned char bwtakec( ChannelDescription * channel ) {
 
 void bwgetc( ChannelDescription * channel ) {
 	int *flags, *data;
-	unsigned char c;
 
 	switch( channel->channel ) {
 	case COM1:
@@ -267,18 +245,12 @@ void bwgetc( ChannelDescription * channel ) {
 		data = (int *)( UART2_BASE + UART_DATA_OFFSET );
 		break;
 	default:
-		assert(0,"Unknown Channel.");
-		return;
+		assert(0,"Unknown Channel in getc.");
 		break;
 	}
 
 	if( (*flags & RXFF_MASK )){
-		c = *data;
-		const char * msg = ".....................";
-		unsigned char * cc = (unsigned char *)msg;
-		cc[3] = c;
-		assert(0,msg);
-		channel->input_buffer[channel->in_buffer_end] = c;
+		channel->input_buffer[channel->in_buffer_end] = *data;
 		assert(((channel->in_buffer_end + 1) % channel->input_buffer_size) != channel->in_buffer_start,"The input buffer is full.");
 		channel->in_buffer_end = (channel->in_buffer_end + 1) % channel->input_buffer_size;
 	}

@@ -94,14 +94,20 @@ int main( int argc, char* argv[] ) {
 	terminal_channel.in_buffer_end = 0;
 	terminal_channel.output_buffer_size = terminal_output_buffer_size;
 	terminal_channel.output_buffer = terminal_output_buffer;
+	terminal_channel.input_buffer_size = terminal_input_buffer_size;
+	terminal_channel.input_buffer = terminal_input_buffer;
 
 	ChannelDescription train_controller_channel;
 	train_controller_channel.channel = COM1;
 	train_controller_channel.speed = 2400;
 	train_controller_channel.out_buffer_start = 0;
 	train_controller_channel.out_buffer_end = 0;
+	train_controller_channel.in_buffer_start = 0;
+	train_controller_channel.in_buffer_end = 0;
 	train_controller_channel.output_buffer_size = train_controller_output_buffer_size;
 	train_controller_channel.output_buffer = train_controller_output_buffer;
+	train_controller_channel.input_buffer_size = train_controller_input_buffer_size;
+	train_controller_channel.input_buffer = train_controller_input_buffer;
 
 	//  Disable the timer before we set the load value
 	*timer_ctrl = (*timer_ctrl) ^ ENABLE_MASK;
@@ -123,11 +129,20 @@ int main( int argc, char* argv[] ) {
 		//bwchannelerrorcheck(&terminal_channel);
 		//bwchannelerrorcheck(&train_controller_channel);
 		//  Send some of the data in the output buffers
-		bwchannelsend(&terminal_channel);
-		bwchannelsend(&train_controller_channel);
+		//bwchannelsend(&terminal_channel);
+		//bwchannelsend(&train_controller_channel);
 		//  Get any data that is available
-		//bwgetc(&terminal_channel);
-		//bwgetc(&train_controller_channel);
+		bwgetc(&terminal_channel);
+		bwgetc(&train_controller_channel);
+		unsigned char c = bwtakec(&terminal_channel);
+		if(c){
+			command_buffer[command_buffer_pos] = c;
+			command_buffer_pos++;
+			if(c == '\n'){
+				assert(0,"command");
+			}
+			assert(command_buffer_pos < 200, "Command too big.");
+		}
 
 		unsigned int diff = observed_val > last_timer_value ? (cycles_per_tick - observed_val) + last_timer_value : last_timer_value - observed_val;
 		if(diff > max_time)
@@ -141,11 +156,11 @@ int main( int argc, char* argv[] ) {
 			}
 			ticks++;
 			//  Clear the screen
-			bwprintf( &terminal_channel, "\x1B""[2J");
-			print_formatted_time(&terminal_channel, ticks);
-			print_loop_timing(&terminal_channel, observed_val, last_timer_value, cycles_per_tick, max_time);
-			print_channel_info(&terminal_channel,&terminal_channel);
-			print_channel_info(&terminal_channel,&train_controller_channel);
+			//bwprintf( &terminal_channel, "\x1B""[2J");
+			//print_formatted_time(&terminal_channel, ticks);
+			//print_loop_timing(&terminal_channel, observed_val, last_timer_value, cycles_per_tick, max_time);
+			//print_channel_info(&terminal_channel,&terminal_channel);
+			//print_channel_info(&terminal_channel,&train_controller_channel);
 
 		}
 		last_timer_value = observed_val;
