@@ -5,18 +5,77 @@
 #include "../include/bwio.h"
 #include <ts7200.h>
 
+unsigned int parse_number(unsigned char * str){
+	//  str is guaranteed to have digit characters before the number.
+	//  str points to last number in string
+	int i = 0;
+	unsigned int num = 0;
+	unsigned int base = 1;
+	while(str[-i] >= '0' && str[-i] <= '9'){
+		num += (str[-i] - '0') * base;
+		base *= 10;
+		i++;
+	}
+	return num;
+}
 
-
-int handle_command(ChannelDescription * terminal_channel, unsigned char * command_buffer, unsigned int * command_buffer_pos){
+int handle_command(ChannelDescription * terminal_channel,ChannelDescription * train_controller_channel, unsigned char * command_buffer, unsigned int * command_buffer_pos){
 	int arg1 = 0;
 	int arg2 = 0;
+
+	//  Correct syntax is expected.  Undefined behavior otherwise
+	//
 	if(command_buffer[0] == 'q'){
 		return 1;
 	}else if(command_buffer[0] == 't' && command_buffer[1] == 'r'){
-		assert(0,"stuff\n");
-		//bwa2i(0,&(command_buffer[3]),10,&arg1);
-		//bwprintf(terminal_channel,"arg1 %d\n",arg1);
+		int i = 3;
+		while(command_buffer[i+1] >= '0' && command_buffer[i+1] <= '9'){
+			i++;
+		}
+		arg1 = parse_number(&(command_buffer[i]));
+		//  Skip over space
+		i++;
+		i++;
+		while(command_buffer[i+1] >= '0' && command_buffer[i+1] <= '9'){
+			i++;
+		}
+		arg2 = parse_number(&(command_buffer[i]));
+
+		bwprintf(terminal_channel,"arg1 %d\n",arg1);
+		bwprintf(terminal_channel,"arg2 %d\n",arg2);
+		unsigned char speed = arg2;
+		unsigned char train = arg1;
+		bwputc( train_controller_channel, speed);
+		bwputc( train_controller_channel, train);
+	}else if(command_buffer[0] == 's' && command_buffer[1] == 'w'){
+		int i = 3;
+		while(command_buffer[i+1] >= '0' && command_buffer[i+1] <= '9'){
+			i++;
+		}
+		arg1 = parse_number(&(command_buffer[i]));
+		//  Skip over space
+		i++;
+		i++;
+		while(command_buffer[i+1] >= '0' && command_buffer[i+1] <= '9'){
+			i++;
+		}
+		arg2 = parse_number(&(command_buffer[i]));
+
+		//  TODO test switch command
+	}else if(command_buffer[0] == 'r' && command_buffer[1] == 'v'){
+		int i = 3;
+		while(command_buffer[i+1] >= '0' && command_buffer[i+1] <= '9'){
+			i++;
+		}
+		arg1 = parse_number(&(command_buffer[i]));
+
+		//  TODO implement reversing
+		unsigned char speed = arg2;
+		unsigned char train = arg1;
+		bwputc( train_controller_channel, 0);
+		bwputc( train_controller_channel, train);
 	}
+
 	//  Reset the command buffer
 	command_buffer[0] = 0;
 	*command_buffer_pos = 0;
@@ -141,12 +200,14 @@ int main( int argc, char* argv[] ) {
 	command_buffer[0] = 0;
 
 	while(1){
-		int * line = (int *)( UART2_BASE + UART_LCRH_OFFSET );
-		assert((!(*line & FEN_MASK)),"The FIFO is enabled in main, and that is bad.\n");
+		int * line1 = (int *)( UART1_BASE + UART_LCRH_OFFSET );
+		assert((!(*line1 & FEN_MASK)),"The FIFO is enabled in main, and that is bad.\n");
+		int * line2 = (int *)( UART2_BASE + UART_LCRH_OFFSET );
+		assert((!(*line2 & FEN_MASK)),"The FIFO is enabled in main, and that is bad.\n");
 		int observed_val = *timer_val;
 		//  Output any information about errors.
-		//bwchannelerrorcheck(&terminal_channel);
-		//bwchannelerrorcheck(&train_controller_channel);
+		bwchannelerrorcheck(&terminal_channel);
+		bwchannelerrorcheck(&train_controller_channel);
 		//  Send some of the data in the output buffers
 		bwchannelsend(&terminal_channel);
 		bwchannelsend(&train_controller_channel);
@@ -160,7 +221,7 @@ int main( int argc, char* argv[] ) {
 			command_buffer[command_buffer_pos+1] = 0;
 			command_buffer_pos++;
 			if(c == '\r' || c == '\n'){
-				if(handle_command(&terminal_channel, command_buffer, &command_buffer_pos)){
+				if(handle_command(&terminal_channel,&train_controller_channel, command_buffer, &command_buffer_pos)){
 					return 0;
 				}
 			}
@@ -171,12 +232,6 @@ int main( int argc, char* argv[] ) {
 		if(diff > max_time)
 			max_time = diff;
 		if(observed_val > last_timer_value){
-			if(ticks % 10 == 0){
-				//bwputc( &train_controller_channel, '\xA');
-				//bwputc( &train_controller_channel, '\x32');
-				//bwputc( &train_controller_channel, '\xA');
-				//bwputc( &train_controller_channel, '\x2D');
-			}
 			ticks++;
 			//  Clear the screen
 			bwprintf( &terminal_channel, "\x1B""[2J");

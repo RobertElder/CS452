@@ -72,7 +72,6 @@ void bwsetfifo( ChannelDescription * channel, int state ) {
 	        line = (int *)( UART2_BASE + UART_LCRH_OFFSET );
 		buf = *line;
 		buf = state ? buf | FEN_MASK : buf & ~FEN_MASK;
-		buf = buf;
 	        break;
 	default:
 		assert(0,"Unknown Channel in set fifo.");
@@ -166,6 +165,29 @@ void bwchannelsend( ChannelDescription * channel) {
 	int times = 0;
 	while(times < max_times){
 		if( !(*flags & TXFF_MASK ) && ((*flags & CTS_MASK)  || channel->channel == COM2 )){
+			  if(channel->channel == COM1){
+				  int * ff = (int *)( UART2_BASE + UART_FLAG_OFFSET );
+				  int * dd = (int *)( UART2_BASE + UART_DATA_OFFSET );
+				  int i = 0;
+				  const char * msg = "Sending to train: ";
+				  char buff[12];
+				  while(msg[i]){
+					  while( (*ff & TXFF_MASK )){};
+					  *dd = msg[i];
+					  i++;
+				  }
+				  i = 0;
+				  bwui2a( channel->output_buffer[channel->out_buffer_start], 10, buff);
+				  while(buff[i]){
+					  while( (*ff & TXFF_MASK )){};
+					  *dd = buff[i];
+					  i++;
+				  }
+				  while( (*ff & TXFF_MASK )){};
+				  *dd = '\n';
+			  }
+
+
 			*data = channel->output_buffer[channel->out_buffer_start];
 			channel->out_buffer_start = (channel->out_buffer_start + 1) % channel->output_buffer_size;
 			//  Sent data successfully
