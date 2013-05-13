@@ -58,7 +58,7 @@ void busy_wait_print(const char * message){
  * 	no parity
  * 	fifos enabled
  */
-int bwsetfifo( ChannelDescription * channel, int state ) {
+void bwsetfifo( ChannelDescription * channel, int state ) {
 	int *line, buf;
 	switch( channel->channel ) {
 	case COM1:
@@ -69,27 +69,18 @@ int bwsetfifo( ChannelDescription * channel, int state ) {
 	        break;
 	default:
 		assert(0,"Unknown Channel.");
-	        return -1;
 	        break;
 	}
 	buf = *line;
 	buf = state ? buf | FEN_MASK : buf & ~FEN_MASK;
 	//  2 stop bits, 8 bit words, no parity, no beak
-	buf = buf & STP2_MASK & WLEN_MASK & ~PEN_MASK & ~BRK_MASK;
-	while(!(*line & buf)){
-		*line = buf;
-	}
+	buf = buf;// & STP2_MASK & WLEN_MASK & ~PEN_MASK & ~BRK_MASK;
+	*line = buf;
 
-	assert(FEN_MASK	& 0x10,"fen corrupted.\n");
-	assert(UART_LCRH_OFFSET & 0x8,"lcrh corrupted.\n");
-	assert(UART1_BASE & 0x808c0000,"uart1 corrupted.\n");
-	assert(!(buf & FEN_MASK),"buf has fifo enabled.\n");
-	assert((*line & buf),"Line is different than buf.\n");
 	assert((!(*line & FEN_MASK)),"The FIFO is enabled, and that is bad.\n");
-	return 0;
 }
 
-int bwsetspeed( ChannelDescription * channel) {
+void bwsetspeed( ChannelDescription * channel) {
 	int *mid, *low;
 	switch( channel->channel ) {
 	case COM1:
@@ -102,20 +93,18 @@ int bwsetspeed( ChannelDescription * channel) {
 	        break;
 	default:
 		assert(0,"Unknown Channel.");
-		return -1;
 	}
 	switch( channel->speed ) {
 	case 115200:
 		*mid = 0x0;
 		*low = 0x3;
-		return 0;
+		break;
 	case 2400:
 		*mid = 0x0;
 		*low = 0xBF;
-		return 0;
+		break;
 	default:
 		assert(0,"Unknown speed.");
-		return -1;
 	}
 	//  This will write to the high bytes and make the change apply.
 	bwsetfifo( channel, OFF);
@@ -174,7 +163,7 @@ void bwchannelsend( ChannelDescription * channel) {
 	int max_times = 100;
 	int times = 0;
 	while(times < max_times){
-		if( !(*flags & TXFF_MASK ) && !(*flags & RXFF_MASK ) && !(*flags & TXBUSY_MASK) && ((*flags & CTS_MASK)  || channel->channel == COM2 )){
+		if( !(*flags & TXFF_MASK ) && ((*flags & CTS_MASK)  || channel->channel == COM2 )){
 			*data = channel->output_buffer[channel->out_buffer_start];
 			/*
 			if(channel->channel == COM1){
@@ -282,9 +271,6 @@ void bwgetc( ChannelDescription * channel ) {
 		return;
 		break;
 	}
-
-	//  TODO figure out why this condition is possible even though FIFO is disabled
-	  assert(!( (!(*flags & RXFE_MASK )) && (!(*flags & RXFF_MASK ))),"It not (empty or full)");
 
 	if( (*flags & RXFF_MASK )){
 		c = *data;

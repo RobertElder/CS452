@@ -110,7 +110,7 @@ int main( int argc, char* argv[] ) {
 	*timer_ctrl = ENABLE_MASK | CLKSEL_MASK | MODE_MASK;
 
 	bwsetspeed( &terminal_channel);
-	//bwsetspeed( &train_controller_channel);
+	bwsetspeed( &train_controller_channel);
 
 	unsigned char command_buffer[200];
 	unsigned int command_buffer_pos = 0;
@@ -126,16 +126,8 @@ int main( int argc, char* argv[] ) {
 		bwchannelsend(&terminal_channel);
 		bwchannelsend(&train_controller_channel);
 		//  Get any data that is available
-		bwgetc(&terminal_channel);
+		//bwgetc(&terminal_channel);
 		//bwgetc(&train_controller_channel);
-		unsigned char c = bwtakec(&terminal_channel);
-		if(c){
-			if(c == '\n')
-				assert(0,"Got a newline.\n");
-			//  Take stuff form the buffer if there is any.
-			command_buffer[command_buffer_pos] = c;
-			command_buffer_pos++;
-		}
 
 		unsigned int diff = observed_val > last_timer_value ? (cycles_per_tick - observed_val) + last_timer_value : last_timer_value - observed_val;
 		if(diff > max_time)

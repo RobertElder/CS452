@@ -35,9 +35,9 @@ typedef struct ChannelDescription{
 	unsigned char * input_buffer;
 }ChannelDescription;
 
-int bwsetfifo( ChannelDescription * channel, int state );
+void bwsetfifo( ChannelDescription * channel, int state );
 
-int bwsetspeed( ChannelDescription * channel);
+void bwsetspeed( ChannelDescription * channel);
 
 void bwchannelsend( ChannelDescription * channel );
 
