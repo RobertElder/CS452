@@ -5,6 +5,24 @@
 #include "../include/bwio.h"
 #include <ts7200.h>
 
+
+
+int handle_command(ChannelDescription * terminal_channel, unsigned char * command_buffer, unsigned int * command_buffer_pos){
+	int arg1 = 0;
+	int arg2 = 0;
+	if(command_buffer[0] == 'q'){
+		return 1;
+	}else if(command_buffer[0] == 't' && command_buffer[1] == 'r'){
+		assert(0,"stuff\n");
+		//bwa2i(0,&(command_buffer[3]),10,&arg1);
+		//bwprintf(terminal_channel,"arg1 %d\n",arg1);
+	}
+	//  Reset the command buffer
+	command_buffer[0] = 0;
+	*command_buffer_pos = 0;
+	return 0;
+}
+
 void print_channel_info(ChannelDescription * terminal_channel,ChannelDescription * ch){
 	unsigned int bytes_used = ch->out_buffer_start <= ch->out_buffer_end ? ch->out_buffer_end - ch->out_buffer_start : ch->out_buffer_end + (ch->output_buffer_size - ch->out_buffer_start);
 
@@ -120,6 +138,7 @@ int main( int argc, char* argv[] ) {
 
 	unsigned char command_buffer[200];
 	unsigned int command_buffer_pos = 0;
+	command_buffer[0] = 0;
 
 	while(1){
 		int * line = (int *)( UART2_BASE + UART_LCRH_OFFSET );
@@ -129,19 +148,23 @@ int main( int argc, char* argv[] ) {
 		//bwchannelerrorcheck(&terminal_channel);
 		//bwchannelerrorcheck(&train_controller_channel);
 		//  Send some of the data in the output buffers
-		//bwchannelsend(&terminal_channel);
-		//bwchannelsend(&train_controller_channel);
+		bwchannelsend(&terminal_channel);
+		bwchannelsend(&train_controller_channel);
 		//  Get any data that is available
 		bwgetc(&terminal_channel);
 		bwgetc(&train_controller_channel);
 		unsigned char c = bwtakec(&terminal_channel);
 		if(c){
+			//  Store the data in our command buffer
 			command_buffer[command_buffer_pos] = c;
+			command_buffer[command_buffer_pos+1] = 0;
 			command_buffer_pos++;
-			if(c == '\n'){
-				assert(0,"command");
+			if(c == '\r' || c == '\n'){
+				if(handle_command(&terminal_channel, command_buffer, &command_buffer_pos)){
+					return 0;
+				}
 			}
-			assert(command_buffer_pos < 200, "Command too big.");
+			assert(command_buffer_pos < 190, "Command too big.");
 		}
 
 		unsigned int diff = observed_val > last_timer_value ? (cycles_per_tick - observed_val) + last_timer_value : last_timer_value - observed_val;
@@ -156,12 +179,12 @@ int main( int argc, char* argv[] ) {
 			}
 			ticks++;
 			//  Clear the screen
-			//bwprintf( &terminal_channel, "\x1B""[2J");
-			//print_formatted_time(&terminal_channel, ticks);
-			//print_loop_timing(&terminal_channel, observed_val, last_timer_value, cycles_per_tick, max_time);
-			//print_channel_info(&terminal_channel,&terminal_channel);
-			//print_channel_info(&terminal_channel,&train_controller_channel);
-
+			bwprintf( &terminal_channel, "\x1B""[2J");
+			print_formatted_time(&terminal_channel, ticks);
+			print_loop_timing(&terminal_channel, observed_val, last_timer_value, cycles_per_tick, max_time);
+			print_channel_info(&terminal_channel,&terminal_channel);
+			print_channel_info(&terminal_channel,&train_controller_channel);
+			bwprintf( &terminal_channel, command_buffer);
 		}
 		last_timer_value = observed_val;
 	}
