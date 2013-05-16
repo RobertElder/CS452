@@ -1,0 +1,49 @@
+1)
+
+load the elf file
+
+/u0/relder/cs452/CS452/io/submission/iotest.elf
+
+use the load command to load it at 0x00218000
+
+use the go command and start typing commands.
+
+
+2)
+
+The program is structured to spend as little time in the polling loop as possible.  On each iteration, the timer values are checked, and various checks are performed to make sure that all services get at least some attention so the system does not give any suggestion of latency to the user.
+
+Whenever input or output is available for the train controller or the terminal, it is stored in ring buffers.  Ring buffers are used because they allow us to temporarily store information without having to re-allocate storage multiple times, which can cause the system to slow down and lose time.
+
+Unimplemented features include the list of switch positions, and the ability to reverse a train properly.  Setting train speed has been tested and worked on a couple of occations, but still contains bugs that cause it to be unreliable.  Much attention has been placed on checking flags and status bits to no avail.
+
+On each iteration of the loop, we check to see if there is anything in the input or output buffers, and if theres, we process a small amount of this data.
+
+3)
+
+linux024:~/cs452/CS452/io/submission> md5sum *
+0f4c469f1f7e71dc17d8a2f3e9710776  iotest.c
+95b315d42514d73136085d713b1f123e  iotest.elf
+68b329da9893e34099c7d8ad5cb9c940  iotest.h
+54cb288d1d3ad12ba7d095d4b8763930  Makefile
+4aa618b9753c5292e5d9e5c95d297f10  orex.ld
+02255c9960850a1982fffc16cec4d16b  README
+ace777ee34b61e246733d1b03c78f8e1  robio.c
+c93caad7e2b52b3fc49f2aabc9135c39  robio.h
+
+4)
+
+-rw-r----- 1 relder cs452   9218 2013-05-13 12:35 iotest.c
+-rwxr-x--x 1 relder relder 25276 2013-05-13 12:50 iotest.elf
+-rw-r----- 1 relder cs452      1 2013-05-13 12:33 iotest.h
+-rw-r----- 1 relder cs452   1095 2013-05-13 12:36 Makefile
+-rw-r----- 1 relder cs452    390 2013-05-13 12:33 orex.ld
+-rw-r----- 1 relder relder  1565 2013-05-13 12:50 README
+-rw-r----- 1 relder relder  8489 2013-05-13 12:35 robio.c
+-rw-r----- 1 relder relder  1663 2013-05-13 12:35 robio.h
+
+5) i
+
+The clock does not lose time because it does as little work as possible in each iteration of the loop and uses circular buffers to deferr the work until later.  Data is buffered in circular buffers until there is enough time to send it to its destination.  I know that it does not lose time because I keep track of the maximum amount of clock cycles that have been spent inside the polling loop, since these values show only about 9ms consistiently, I have concluded that there should be no time lost.  This information is visible when running the program.
+
+ii)  On the order of milliseconds (at least 4)  because the baud rate of the train controller is only 2400.
