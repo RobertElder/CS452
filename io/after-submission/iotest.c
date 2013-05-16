@@ -74,6 +74,8 @@ int handle_command(ChannelDescription * terminal_channel,ChannelDescription * tr
 		unsigned char train = arg1;
 		robputc( train_controller_channel, 0);
 		robputc( train_controller_channel, train);
+	}else if(command_buffer[0] == 'g'){
+		robputc( train_controller_channel, 193);
 	}
 
 	//  Reset the command buffer
@@ -204,6 +206,13 @@ int main( int argc, char* argv[] ) {
 	unsigned int command_buffer_pos = 0;
 	command_buffer[0] = 0;
 
+	unsigned int garbage = 1;
+	while(garbage){
+		//  Clean up all the garbage being sent.
+		robgetc(&train_controller_channel);
+		garbage = robtakec(&terminal_channel);
+	}
+
 	while(1){
 		int * line1 = (int *)( UART1_BASE + UART_LCRH_OFFSET );
 		assert((!(*line1 & FEN_MASK)),"The FIFO is enabled in main, and that is bad.\n");
@@ -232,6 +241,11 @@ int main( int argc, char* argv[] ) {
 				}
 			}
 			assert(command_buffer_pos < 190, "Command too big.");
+		}
+		c = robtakec(&train_controller_channel);
+		if(c){
+			unsigned char d = robtakec(&train_controller_channel);
+			assert(0,"Got some sensor data.");
 		}
 
 		unsigned int diff = observed_val > last_timer_value ? (cycles_per_tick - observed_val) + last_timer_value : last_timer_value - observed_val;
