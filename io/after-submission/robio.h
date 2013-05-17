@@ -42,19 +42,34 @@ void robchannelerrorcheck( ChannelDescription * channel );
 
 int robputc( ChannelDescription * channel, char c );
 
+
 unsigned char robtakec( ChannelDescription * channel );
 
 void robgetc( ChannelDescription * channel );
 
 int robputx( ChannelDescription * channel, char c );
 
+
 int robputstr( ChannelDescription * channel, char *str );
+
 
 int robputr( ChannelDescription * channel, unsigned int reg );
 
+
 void robputw( ChannelDescription * channel, int n, char fc, char *bf );
+
 
 void robprintf( ChannelDescription * channel, char *format, ... );
 
+/* Busy wait io functions for debugging */
+
+void bwformatbusy( const unsigned char *fmt, va_list va );
+int robputcbusy( const unsigned char c );
+int robputxbusy( const unsigned char c );
+int robputstrbusy( const unsigned char *str );
+int robputrbusy( unsigned int reg );
+void robputwbusy( int n, char fc, char *bf );
+void robprintfbusy( const unsigned char *format, ... );
+void assertf( int expr, const char * message, ...);
 void assert( int expr, const char * message);
 

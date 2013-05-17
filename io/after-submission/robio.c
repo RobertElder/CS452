@@ -4,8 +4,23 @@
 
 void bwui2a( unsigned int num, unsigned int base, char *bf );
 
+void assertf( int expr, const char * message, ...){
+	va_list va;
+	va_start(va,message);
+	if(!expr){
+		const char * title = (const char *)"ASSERTION FAILURE!!!\n";
+		robputstrbusy((const unsigned char *)title);
+		bwformatbusy( (const unsigned char *)message, va );
+		while(1){};
+	}
+	va_end(va);
+}
+
+
+
 void assert(int expr, const char * message){
-	//  For submission we don't want this busy waiting to execute.
+	assertf(expr,message);
+	/*
 	if(!expr){
 		const char * title = "ASSERTION FAILURE!!!\n";
 		int i = 0;
@@ -28,9 +43,9 @@ void assert(int expr, const char * message){
 			*data = message[i];
 			i++;
 		}
-
-		while(1){};
+		while (1) {};
 	}
+	*/
 }
 
 /*
@@ -166,6 +181,17 @@ int robputc( ChannelDescription * channel, char c ) {
 	return 0;
 }
 
+int robputcbusy( const unsigned char c ) {
+	int *flags, *data;
+
+	data = (int *)( UART2_BASE + UART_DATA_OFFSET );
+	flags = (int *)( UART2_BASE + UART_FLAG_OFFSET );
+
+	while ( (*flags & TXFF_MASK ));
+	*data = c;
+	return 0;
+}
+
 char c2x( char ch ) {
 	if ( (ch <= 9) ) return '0' + ch;
 	return 'a' + ch - 10;
@@ -180,6 +206,15 @@ int robputx( ChannelDescription * channel, char c ) {
 	return robputc( channel, chl );
 }
 
+int robputxbusy( const unsigned char c ) {
+	char chh, chl;
+
+	chh = c2x( c / 16 );
+	chl = c2x( c % 16 );
+	robputcbusy( chh );
+	return robputcbusy( chl );
+}
+
 int robputr( ChannelDescription * channel, unsigned int reg ) {
 	int byte;
 	char *ch = (char *) &reg;
@@ -188,9 +223,25 @@ int robputr( ChannelDescription * channel, unsigned int reg ) {
 	return robputc( channel, ' ' );
 }
 
+int robputrbusy( unsigned int reg ) {
+	int byte;
+	char *ch = (char *) &reg;
+
+	for( byte = 3; byte >= 0; byte-- ) robputxbusy( ch[byte] );
+	return robputcbusy( ' ' );
+}
+
 int robputstr( ChannelDescription * channel, char *str ) {
 	while( *str ) {
 		if( robputc( channel, *str ) < 0 ) return -1;
+		str++;
+	}
+	return 0;
+}
+
+int robputstrbusy( const unsigned char *str ) {
+	while( *str ) {
+		if( robputcbusy( *str ) < 0 ) return -1;
 		str++;
 	}
 	return 0;
@@ -203,6 +254,15 @@ void robputw( ChannelDescription * channel, int n, char fc, char *bf ) {
 	while( *p++ && n > 0 ) n--;
 	while( n-- > 0 ) robputc( channel, fc );
 	while( ( ch = *bf++ ) ) robputc( channel, ch );
+}
+
+void robputwbusy( int n, char fc, char *bf ) {
+	char ch;
+	char *p = bf;
+
+	while( *p++ && n > 0 ) n--;
+	while( n-- > 0 ) robputcbusy( fc );
+	while( ( ch = *bf++ ) ) robputcbusy( ch );
 }
 
 unsigned char robtakec( ChannelDescription * channel ) {
@@ -343,11 +403,75 @@ void bwformat ( ChannelDescription * channel, char *fmt, va_list va ) {
 	}
 }
 
+void bwformatbusy( const unsigned char *fmt, va_list va ) {
+	char bf[12];
+	char ch, lz;
+	int w;
+
+	
+	while ( ( ch = *(fmt++) ) ) {
+		if ( ch != '%' )
+			robputcbusy( ch );
+		else {
+			lz = 0; w = 0;
+			ch = *(fmt++);
+			switch ( ch ) {
+			case '0':
+				lz = 1; ch = *(fmt++);
+				break;
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				ch = bwa2i( ch, (char **)&fmt, 10, &w );
+				break;
+			}
+			switch( ch ) {
+			case 0: return;
+			case 'c':
+				robputcbusy( va_arg( va, char ) );
+				break;
+			case 's':
+				robputwbusy( w, 0, va_arg( va, char* ) );
+				break;
+			case 'u':
+				bwui2a( va_arg( va, unsigned int ), 10, bf );
+				robputwbusy( w, lz, bf );
+				break;
+			case 'd':
+				bwi2a( va_arg( va, int ), bf );
+				robputwbusy( w, lz, bf );
+				break;
+			case 'x':
+				bwui2a( va_arg( va, unsigned int ), 16, bf );
+				robputwbusy( w, lz, bf );
+				break;
+			case '%':
+				robputcbusy( ch );
+				break;
+			}
+		}
+	}
+}
+
 void robprintf( ChannelDescription * channel, char *fmt, ... ) {
         va_list va;
 
         va_start(va,fmt);
         bwformat( channel, fmt, va );
+        va_end(va);
+}
+
+void robprintfbusy( const unsigned char *fmt, ... ) {
+        va_list va;
+
+        va_start(va,fmt);
+        bwformatbusy( fmt, va );
         va_end(va);
 }
 

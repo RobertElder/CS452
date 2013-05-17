@@ -70,7 +70,6 @@ int handle_command(ChannelDescription * terminal_channel,ChannelDescription * tr
 		arg1 = parse_number(&(command_buffer[i]));
 
 		//  TODO implement reversing
-		unsigned char speed = arg2;
 		unsigned char train = arg1;
 		robputc( train_controller_channel, 0);
 		robputc( train_controller_channel, train);
@@ -150,9 +149,9 @@ int main( int argc, char* argv[] ) {
 	*uart2_status = 0;
 	unsigned int max_time = 0;
 
-	int * timer_ldr = (TIMER3_BASE + LDR_OFFSET);
-	int * timer_val = (TIMER3_BASE + VAL_OFFSET);
-	int * timer_ctrl = (TIMER3_BASE + CRTL_OFFSET);
+	int * timer_ldr = (int *)(TIMER3_BASE + LDR_OFFSET);
+	int * timer_val = (int *)(TIMER3_BASE + VAL_OFFSET);
+	int * timer_ctrl = (int *)(TIMER3_BASE + CRTL_OFFSET);
 
 	unsigned int terminal_output_buffer_size = 10000;
 	unsigned int terminal_input_buffer_size = 100;
@@ -202,7 +201,7 @@ int main( int argc, char* argv[] ) {
 	robsetspeed( &terminal_channel);
 	robsetspeed( &train_controller_channel);
 
-	unsigned char command_buffer[200];
+	char command_buffer[200];
 	unsigned int command_buffer_pos = 0;
 	command_buffer[0] = 0;
 
@@ -236,7 +235,7 @@ int main( int argc, char* argv[] ) {
 			command_buffer[command_buffer_pos+1] = 0;
 			command_buffer_pos++;
 			if(c == '\r' || c == '\n'){
-				if(handle_command(&terminal_channel,&train_controller_channel, command_buffer, &command_buffer_pos)){
+				if(handle_command(&terminal_channel,&train_controller_channel, (unsigned char *)command_buffer, &command_buffer_pos)){
 					return 0;
 				}
 			}
@@ -245,7 +244,8 @@ int main( int argc, char* argv[] ) {
 		c = robtakec(&train_controller_channel);
 		if(c){
 			unsigned char d = robtakec(&train_controller_channel);
-			assert(0,"Got some sensor data.");
+			assert(0,"Got some sensor data: %d.");
+			assertf(0,"Got some sensor data: %d.",d);
 		}
 
 		unsigned int diff = observed_val > last_timer_value ? (cycles_per_tick - observed_val) + last_timer_value : last_timer_value - observed_val;
