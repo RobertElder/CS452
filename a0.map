@@ -1,0 +1,122 @@
+Archive member included because of file (symbol)
+
+/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_udivsi3.o)
+                              a0.o (__udivsi3)
+/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_umodsi3.o)
+                              a0.o (__umodsi3)
+/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_dvmd_tls.o)
+                              /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_udivsi3.o) (__div0)
+/u0/wbcowan/gnuarm-4.0.2/arm-elf/bin/../lib/libc.a(memset.o)
+                              a0.o (memset)
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+ram              0x0000000000000000 0x0000000002000000
+rom              0x0000000060000000 0x0000000000800000
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+
+data            0x0000000000000000        0x0
+                0x0000000000000000                _DataStart = .
+ *(.data)
+                0x0000000000000000                _DataEnd = .
+
+bss             0x0000000000000000        0x4
+                0x0000000000000000                _BssStart = .
+ *(.bss)
+ .bss           0x0000000000000000        0x4 a0.o
+                0x0000000000000000                debug_error_num
+                0x0000000000000004                _BssEnd = .
+
+text            0x0000000000000004      0xf98
+ *(.text)
+ .text          0x0000000000000004      0xcc4 a0.o
+                0x00000000000002cc                send_char
+                0x00000000000005f0                set_timer
+                0x0000000000000004                itoa
+                0x0000000000000404                recv_char
+                0x000000000000064c                check_timer
+                0x00000000000006c8                print_clock
+                0x0000000000000254                disable_fifo
+                0x0000000000000148                bwsetspeed
+                0x0000000000000908                main
+                0x0000000000000574                put_str
+                0x00000000000008f8                print_sensors
+                0x00000000000008e8                print_switches
+                0x00000000000004f4                put_char
+ .text          0x0000000000000cc8      0x110 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_udivsi3.o)
+                0x0000000000000cc8                __udivsi3
+                0x0000000000000dc0                __aeabi_uidivmod
+ .text          0x0000000000000dd8       0xcc /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_umodsi3.o)
+                0x0000000000000dd8                __umodsi3
+ .text          0x0000000000000ea4        0x4 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_dvmd_tls.o)
+                0x0000000000000ea4                __aeabi_ldiv0
+                0x0000000000000ea4                __div0
+                0x0000000000000ea4                __aeabi_idiv0
+ .text          0x0000000000000ea8       0xa0 /u0/wbcowan/gnuarm-4.0.2/arm-elf/bin/../lib/libc.a(memset.o)
+                0x0000000000000ea8                memset
+ *(.got)
+ .got           0x0000000000000f48        0x4 a0.o
+ *(.got.plt)
+ .got.plt       0x0000000000000f4c        0xc a0.o
+                0x0000000000000f4c                _GLOBAL_OFFSET_TABLE_
+ *(.rodata)
+ .rodata        0x0000000000000f58       0x44 a0.o
+ *(.glue_7)
+ *(.glue_7t)
+
+.rel.dyn
+LOAD a0.o
+LOAD /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a
+LOAD /u0/wbcowan/gnuarm-4.0.2/arm-elf/bin/../lib/libc.a
+OUTPUT(a0.elf elf32-littlearm)
+
+.comment        0x0000000000000000       0x24
+ .comment       0x0000000000000000       0x12 a0.o
+ .comment       0x0000000000000012       0x12 /u0/wbcowan/gnuarm-4.0.2/arm-elf/bin/../lib/libc.a(memset.o)
+
+.debug_line     0x0000000000000000      0x229
+ .debug_line    0x0000000000000000       0x86 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_udivsi3.o)
+ .debug_line    0x0000000000000086       0x6f /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_umodsi3.o)
+ .debug_line    0x00000000000000f5       0x5a /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_dvmd_tls.o)
+ .debug_line    0x000000000000014f       0xda /u0/wbcowan/gnuarm-4.0.2/arm-elf/bin/../lib/libc.a(memset.o)
+
+.debug_info     0x0000000000000000      0x262
+ .debug_info    0x0000000000000000       0x71 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_udivsi3.o)
+ .debug_info    0x0000000000000071       0x71 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_umodsi3.o)
+ .debug_info    0x00000000000000e2       0x71 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_dvmd_tls.o)
+ .debug_info    0x0000000000000153      0x10f /u0/wbcowan/gnuarm-4.0.2/arm-elf/bin/../lib/libc.a(memset.o)
+
+.debug_abbrev   0x0000000000000000       0xe5
+ .debug_abbrev  0x0000000000000000       0x14 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_udivsi3.o)
+ .debug_abbrev  0x0000000000000014       0x14 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_umodsi3.o)
+ .debug_abbrev  0x0000000000000028       0x14 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_dvmd_tls.o)
+ .debug_abbrev  0x000000000000003c       0xa9 /u0/wbcowan/gnuarm-4.0.2/arm-elf/bin/../lib/libc.a(memset.o)
+
+.debug_aranges  0x0000000000000000       0x80
+ .debug_aranges
+                0x0000000000000000       0x20 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_udivsi3.o)
+ .debug_aranges
+                0x0000000000000020       0x20 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_umodsi3.o)
+ .debug_aranges
+                0x0000000000000040       0x20 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_dvmd_tls.o)
+ .debug_aranges
+                0x0000000000000060       0x20 /u0/wbcowan/gnuarm-4.0.2/arm-elf/bin/../lib/libc.a(memset.o)
+
+.debug_frame    0x0000000000000000       0x20
+ .debug_frame   0x0000000000000000       0x20 /u0/wbcowan/gnuarm-4.0.2/arm-elf/bin/../lib/libc.a(memset.o)
+
+.debug_loc      0x0000000000000000       0xbf
+ .debug_loc     0x0000000000000000       0xbf /u0/wbcowan/gnuarm-4.0.2/arm-elf/bin/../lib/libc.a(memset.o)
+
+.debug_pubnames
+                0x0000000000000000       0x1d
+ .debug_pubnames
+                0x0000000000000000       0x1d /u0/wbcowan/gnuarm-4.0.2/arm-elf/bin/../lib/libc.a(memset.o)
+
+.debug_str      0x0000000000000000       0xed
+ .debug_str     0x0000000000000000       0xed /u0/wbcowan/gnuarm-4.0.2/arm-elf/bin/../lib/libc.a(memset.o)
+                                        0x11a (size before relaxing)
