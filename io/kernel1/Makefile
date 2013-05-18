@@ -36,11 +36,11 @@ private_kernel_interface.s: private_kernel_interface.c private_kernel_interface.
 private_kernel_interface.o: private_kernel_interface.s
 	$(AS) $(ASFLAGS) -o private_kernel_interface.o private_kernel_interface.s
 
-kernel_swi_interface.o: kernel_swi_interface.s
-	$(AS) $(ASFLAGS) -o kernel_swi_interface.o kernel_swi_interface.s
+swi_kernel_interface.o: swi_kernel_interface.s
+	$(AS) $(ASFLAGS) -o swi_kernel_interface.o swi_kernel_interface.s
 
-kern.elf: kern.o public_kernel_interface.o private_kernel_interface.o kernel_swi_interface.o
-	$(LD) $(LDFLAGS) -o $@ kern.o public_kernel_interface.o private_kernel_interface.o kernel_swi_interface.o -lgcc
+kern.elf: kern.o public_kernel_interface.o private_kernel_interface.o swi_kernel_interface.o
+	$(LD) $(LDFLAGS) -o $@ kern.o public_kernel_interface.o private_kernel_interface.o swi_kernel_interface.o -lgcc
 	cp kern.elf /u/cs452/tftp/ARM/relder/kern.elf
 	chmod ugo+r /u/cs452/tftp/ARM/relder/kern.elf
 
