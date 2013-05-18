@@ -21,11 +21,17 @@ all:  kern.s kern.elf
 kern.s: kern.c kern.h
 	$(XCC) -S $(CFLAGS) kern.c
 
-kern.o: kern.s
+kern.o: kern.s kern.c kern.h
 	$(AS) $(ASFLAGS) -o kern.o kern.s
 
-kern.elf: kern.o
-	$(LD) $(LDFLAGS) -o $@ kern.o -lgcc
+public_kernel_interface.s: public_kernel_interface.c public_kernel_interface.h
+	$(XCC) -S $(CFLAGS) public_kernel_interface.c
+
+public_kernel_interface.o: public_kernel_interface.s
+	$(AS) $(ASFLAGS) -o public_kernel_interface.o public_kernel_interface.s
+
+kern.elf: kern.o public_kernel_interface.o
+	$(LD) $(LDFLAGS) -o $@ kern.o public_kernel_interface.o -lgcc
 	cp kern.elf /u/cs452/tftp/ARM/relder/kern.elf
 	chmod ugo+r /u/cs452/tftp/ARM/relder/kern.elf
 
