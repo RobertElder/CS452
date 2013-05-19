@@ -17,7 +17,7 @@ ASFLAGS	= -mcpu=arm920t -mapcs-32
 
 LDFLAGS = -init main -Map kern.map -N  -T orex.ld -L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L../lib
 
-OBJECTS = buffer.o queue.o
+OBJECTS = buffer.o queue.o task_descriptor.o
 
 all:  kern.s kern.elf
 
