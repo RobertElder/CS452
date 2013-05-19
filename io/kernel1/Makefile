@@ -41,8 +41,8 @@ swi_kernel_interface.o: swi_kernel_interface.s
 
 kern.elf: kern.o public_kernel_interface.o private_kernel_interface.o swi_kernel_interface.o
 	$(LD) $(LDFLAGS) -o $@ kern.o public_kernel_interface.o private_kernel_interface.o swi_kernel_interface.o -lgcc
-	cp kern.elf /u/cs452/tftp/ARM/relder/kern.elf
-	chmod ugo+r /u/cs452/tftp/ARM/relder/kern.elf
+	cp kern.elf /u/cs452/tftp/ARM/`whoami`/kern.elf
+	chmod ugo+r /u/cs452/tftp/ARM/`whoami`/kern.elf
 
 clean:
 	-rm -f kern.elf kern.s public_kernel_interface.s private_kernel_interface.s *.o kern.map
