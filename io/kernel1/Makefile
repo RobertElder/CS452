@@ -2,6 +2,7 @@
 # Makefile for busy-wait IO tests
 #
 XCC     = /u/wbcowan/gnuarm-4.0.2/arm-elf/bin/gcc
+CC = $(XCC)
 AS	= /u/wbcowan/gnuarm-4.0.2/arm-elf/bin/as
 LD      = /u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ld
 CFLAGS  = -g -c -fPIC -Wall -I. -I../include -mcpu=arm920t -msoft-float
@@ -15,6 +16,8 @@ ASFLAGS	= -mcpu=arm920t -mapcs-32
 # -mapcs: always generate a complete stack frame
 
 LDFLAGS = -init main -Map kern.map -N  -T orex.ld -L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L../lib
+
+OBJECTS = buffer.o
 
 all:  kern.s kern.elf
 
@@ -42,8 +45,8 @@ swi_kernel_interface.o: swi_kernel_interface.s
 kernel_entry.o: kernel_entry.s
 	$(AS) $(ASFLAGS) -o kernel_entry.o kernel_entry.s
 
-kern.elf: kern.o public_kernel_interface.o private_kernel_interface.o swi_kernel_interface.o kernel_entry.o
-	$(LD) $(LDFLAGS) -o $@ kern.o public_kernel_interface.o private_kernel_interface.o swi_kernel_interface.o kernel_entry.o -lgcc
+kern.elf: kern.o public_kernel_interface.o private_kernel_interface.o swi_kernel_interface.o kernel_entry.o $(OBJECTS)
+	$(LD) $(LDFLAGS) -o $@ kern.o public_kernel_interface.o private_kernel_interface.o swi_kernel_interface.o kernel_entry.o $(OBJECTS) -lgcc
 	cp kern.elf /u/cs452/tftp/ARM/`whoami`/kern.elf
 	chmod ugo+r /u/cs452/tftp/ARM/`whoami`/kern.elf
 
