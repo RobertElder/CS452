@@ -10,7 +10,7 @@ typedef struct Buffer {
 	unsigned int size;
 } Buffer;
 
-void Buffer_Initialize(Buffer * buffer);
+void Buffer_Initialize(Buffer * buffer, unsigned int size);
 
 // Put a character. Returns 0 if ok.
 int Buffer_PutChar(Buffer * buffer, char c);
