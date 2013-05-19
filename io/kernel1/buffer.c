@@ -1,9 +1,9 @@
 #include "buffer.h"
 
-void Buffer_Initialize(Buffer * buffer, unsigned int size) {
+void Buffer_Initialize(Buffer * buffer) {
 	buffer->start = 0;
 	buffer->end = 0;
-	buffer->size = size;
+	buffer->size = BUFFER_SIZE;
 }
 
 int Buffer_PutChar(Buffer * buffer, char c) {
