@@ -5,6 +5,8 @@
 void asm_KernelExit();
 int asm_GetStoredUserSp();
 int asm_GetStoredUserLr();
+int asm_SetStoredUserSp(int);
+int asm_SetStoredUserLr(int);
 
 void print_kernel_state(KernelState * k_state){
 	robprintfbusy((const unsigned char *)"Max tasks: %d.\n",k_state->max_tasks);
@@ -14,6 +16,7 @@ void print_kernel_state(KernelState * k_state){
 void k_InitKernel(){
 	int user_sp = asm_GetStoredUserSp();
 	int user_lr = asm_GetStoredUserLr();
+
 	robprintfbusy((const unsigned char *)"User SP is %x, lr is %x.\n",user_sp, user_lr);
 	//  Directly set the kernel state structure values on the stack.
 	KernelState * k_state = (KernelState *) KERNEL_STACK_START;
@@ -23,6 +26,10 @@ void k_InitKernel(){
 	robprintfbusy((const unsigned char *)"Inside kernel init function. SP is %x\n",k_state->last_kernel_sp);
 	print_kernel_state(k_state);
 	robprintfbusy((const unsigned char *)"Leaving k_InitKernel.\n");
+
+	//  Put the LR and SP back so we can switch back to that process.
+	asm_SetStoredUserSp(user_sp);
+	asm_SetStoredUserLr(user_lr);
 	asm_KernelExit();
 }
 
@@ -72,6 +79,10 @@ void k_Pass(){
 }
 
 void k_Exit(){
+	int user_sp = asm_GetStoredUserSp();
+	int user_lr = asm_GetStoredUserLr();
+
+	robprintfbusy((const unsigned char *)"User SP is %x, lr is %x.\n",user_sp, user_lr);
 	KernelState * k_state = (KernelState *) KERNEL_STACK_START;
 
 	robprintfbusy((const unsigned char *)"In function k_Exit\n");
