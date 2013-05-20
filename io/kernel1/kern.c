@@ -23,10 +23,14 @@ int main(){
 	*first_swi_instruction_address = 0xE51FF004;
 	first_swi_instruction_address++;
 	//  Put the address of the fcn here
-	*first_swi_instruction_address = &asm_SwiCallEntry;
+	*first_swi_instruction_address = (int)&asm_SwiCallEntry;
 	
 	//MOV r0, PC;
 	//bl robputrbusy(PLT)
 	Create( 1, 0);
+	MyTid();
+	MyParentTid();
+	Pass();
+	Exit();
 	return 0;
 }
