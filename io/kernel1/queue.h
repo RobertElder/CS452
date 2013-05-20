@@ -2,9 +2,10 @@
 #define QUEUE_H_
 
 #define QUEUE_SIZE 50
-#define ERR_QUEUE_FULL -1
-#define ERR_QUEUE_PRIORITY -2
 #define QUEUE_ITEM_TYPE int*
+
+static const int ERR_QUEUE_FULL = -1;
+static const int ERR_QUEUE_PRIORITY = -2;
 
 typedef enum QueuePriority {
 	HIGHEST, HIGH, NORMAL, LOW, LOWEST

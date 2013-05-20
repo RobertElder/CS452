@@ -2,7 +2,7 @@
 #define BUFFER_H_
 #define BUFFER_SIZE 1000
 
-const int ERR_BUFFER_FULL = -1;
+static const int ERR_BUFFER_FULL = -1;
 
 typedef struct Buffer {
 	unsigned char array[BUFFER_SIZE];
