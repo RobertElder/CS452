@@ -1,4 +1,5 @@
 #include "private_kernel_interface.h"
+#include "robio.h"
 
 void asm_KernelExit();
 

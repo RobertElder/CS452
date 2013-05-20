@@ -3,6 +3,7 @@
 .global asm_MyParentTidEntry
 .global asm_PassEntry
 .global asm_ExitEntry
+.global robputrbusy
 
 .global asm_KernelExit
 
@@ -36,6 +37,8 @@ asm_ExitEntry:
 asm_KernelExit:
 	/* TODO: Need instructions to pop kernel state off of the stack here. */
 
+	MOV r0, PC;
+	bl robputrbusy(PLT)
 	/* I think this next instruction does a jump to the return address, AND updates the CPSR register
 	with the value from the SPSR register all at once.*/
 	MOVS PC,LR;  /* MOV{S} documentation:
