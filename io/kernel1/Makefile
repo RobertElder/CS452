@@ -66,12 +66,6 @@ task_descriptor.s: task_descriptor.c task_descriptor.h
 task_descriptor.o: task_descriptor.s
 	$(AS) $(ASFLAGS) -o task_descriptor.o task_descriptor.s
 
-swi_kernel_interface.o: swi_kernel_interface.s
-	$(AS) $(ASFLAGS) -o swi_kernel_interface.o swi_kernel_interface.s
-
-kernel_entry.o: kernel_entry.s
-	$(AS) $(ASFLAGS) -o kernel_entry.o kernel_entry.s
-
 kern.elf: kern.o public_kernel_interface.o private_kernel_interface.o swi_kernel_interface.o kernel_entry.o robio.o buffer.o queue.o task_descriptor.o
 	$(LD) $(LDFLAGS) -o $@ kern.o public_kernel_interface.o private_kernel_interface.o swi_kernel_interface.o kernel_entry.o robio.o buffer.o queue.o task_descriptor.o -lgcc
 	cp kern.elf /u/cs452/tftp/ARM/`whoami`/kern.elf
