@@ -4,17 +4,22 @@
 
 void asm_KernelExit();
 
-int k_Create( int priority, void (*code)( ) ){
-	//  Just set up the kernel in here to start with
-	KernelState * k_state = (KernelState *) KERNEL_STACK_START;
+void k_InitKernel(){
 	register int *current_kernel_stack_pointer asm ("r13");
+	KernelState * k_state = (KernelState *) KERNEL_STACK_START;
 	//  The kernel state struct is stored at the base of the kernel stack.
 	*current_kernel_stack_pointer = KERNEL_STACK_START - sizeof(KernelState);
 	k_state->max_tasks = 300;
 	robputstrbusy((const unsigned char *)"Current kernel stack pointer:.\n");
 	robputrbusy(*current_kernel_stack_pointer);
+	asm_KernelExit();
+}
+
+int k_Create( int priority, void (*code)( ) ){
+	KernelState * k_state = (KernelState *) KERNEL_STACK_START;
+	robprintfbusy((const unsigned char *)"Max tasks is %d.\n",k_state->max_tasks);
 	/* TODO Argument passing has not been thought through yet. */
-	robputstrbusy((const unsigned char *)"In function k_Create.\n");
+	robputstrbusy((const unsigned char *)"In function k_Create\n");
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }

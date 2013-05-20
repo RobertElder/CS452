@@ -1,3 +1,4 @@
+.global asm_KernelInitEntry
 .global asm_CreateEntry
 .global asm_MyTidEntry
 .global asm_MyParentTidEntry
@@ -7,30 +8,35 @@
 
 .global asm_KernelExit
 
-asm_CreateEntry:
+asm_KernelInitEntry:
 	mov	ip, sp
 	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 0;
 	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
-asm_MyTidEntry:
+asm_CreateEntry:
 	mov	ip, sp
 	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 1;
 	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
-asm_MyParentTidEntry:
+asm_MyTidEntry:
 	mov	ip, sp
 	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 2;
 	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
-asm_PassEntry:
+asm_MyParentTidEntry:
 	mov	ip, sp
 	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 3;
 	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
-asm_ExitEntry:
+asm_PassEntry:
 	mov	ip, sp
 	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 4;
+	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
+asm_ExitEntry:
+	mov	ip, sp
+	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	SWI 5;
 	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 
 /*  This function executes when exiting from all kernel functions */

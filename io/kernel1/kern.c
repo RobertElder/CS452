@@ -35,6 +35,7 @@ int main(){
 	
 	//MOV r0, PC;
 	//bl robputrbusy(PLT)
+	InitKernel();
 	Create( 1, 0);
 	MyTid();
 	MyParentTid();

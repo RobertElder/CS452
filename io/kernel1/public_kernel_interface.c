@@ -1,11 +1,15 @@
 #include "public_kernel_interface.h"
 
+int asm_KernelInitEntry();
 int asm_CreateEntry();
 int asm_MyTidEntry();
 int asm_MyParentTidEntry();
 void asm_PassEntry();
 void asm_ExitEntry();
 
+void InitKernel(){
+	asm_KernelInitEntry();
+}
 
 int Create( int priority, void (*code)( ) ){
 	asm_CreateEntry();
