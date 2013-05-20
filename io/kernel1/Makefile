@@ -17,7 +17,9 @@ ASFLAGS	= -mcpu=arm920t -mapcs-32
 
 LDFLAGS = -init main -Map kern.map -N  -T orex.ld -L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L../lib
 
-OBJECTS = buffer.o queue.o task_descriptor.o
+SOURCES = buffer.c queue.c task_descriptor.c
+HEADERS = ${SOURCES:.c=.h}
+OBJECTS = ${SOURCES:.c=.o}
 
 all:  kern.s kern.elf
 
@@ -45,7 +47,7 @@ swi_kernel_interface.o: swi_kernel_interface.s
 kernel_entry.o: kernel_entry.s
 	$(AS) $(ASFLAGS) -o kernel_entry.o kernel_entry.s
 
-kern.elf: kern.o public_kernel_interface.o private_kernel_interface.o swi_kernel_interface.o kernel_entry.o $(OBJECTS)
+kern.elf: kern.o public_kernel_interface.o private_kernel_interface.o swi_kernel_interface.o kernel_entry.o $(SOURCES) $(HEADERS) $(OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ kern.o public_kernel_interface.o private_kernel_interface.o swi_kernel_interface.o kernel_entry.o $(OBJECTS) -lgcc
 	cp kern.elf /u/cs452/tftp/ARM/`whoami`/kern.elf
 	chmod ugo+r /u/cs452/tftp/ARM/`whoami`/kern.elf
