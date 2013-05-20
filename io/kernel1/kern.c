@@ -4,11 +4,19 @@
 
 void asm_SwiCallEntry();
 
-int main(){
 
-	//  Instructions to print out 17:
-	// 1100 a0e3 feff ffeb
-	// after endianness 0xe3a00011 0xebfffffe
+/*
+ *  Memory Map:
+ *  It looks like what we have to work with is 0x00000000 - 0x01ffffff
+ *  -  The program is loaded into 0x00218000
+ *  -  Let's start the kernel stack at 0x01000000
+ *  -  Stacks grow down
+ *
+ *
+ *
+ * */
+
+int main(){
 
 	int * first_swi_instruction_address = (int *)(0x8);
 	int * swi_call_entry_address = (int *)(0x20);

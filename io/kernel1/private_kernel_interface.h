@@ -3,3 +3,5 @@ int k_MyTid();
 int k_MyParentTid();
 void k_Pass();
 void k_Exit();
+
+#define KERNEL_STACK_START 0x01000000

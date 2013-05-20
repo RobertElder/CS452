@@ -6,7 +6,7 @@
 .global asm_SwiCallEntry
 
 asm_SwiCallEntry:
-/* TODO: Need instructions to pop kernel state off of the stack here. Make sure we don't overwrite r9 */
+/* We don't need to do any poping or pushing of kernel state because all kernel state is stored in a struct at the base of the kernel stack, and we always know this location */
 
 LDR r9, [lr,#-4]; /*  Put the SWI instruction call in R9.  This contains the kernel function id.  */
 MOV r9, r9, LSL #8; /*  Get rid of the high 8 bits by doing a left logical shift of 16 to discard the high bits  */
