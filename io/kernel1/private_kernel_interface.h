@@ -5,4 +5,4 @@ int k_MyParentTid();
 void k_Pass();
 void k_Exit();
 
-#define KERNEL_STACK_START 0x01000000
+#define KERNEL_STACK_START 0x01500000

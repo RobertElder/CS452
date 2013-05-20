@@ -41,8 +41,11 @@ asm_ExitEntry:
 
 /*  This function executes when exiting from all kernel functions */
 asm_KernelExit:
-	/* TODO: Need instructions to pop kernel state off of the stack here. */
-
+	LDR SP, [PC, #8]; 
+	LDR SP, [SP, #0]; 
+	LDR lr, [SP, #4];
+	LDR SP, [SP, #8];
+	.4byte	0x01500000 
 	/* I think this next instruction does a jump to the return address, AND updates the CPSR register
 	with the value from the SPSR register all at once.*/
 	MOVS PC,LR;  /* MOV{S} documentation:
