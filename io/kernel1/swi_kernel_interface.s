@@ -8,6 +8,9 @@
 
 .global asm_KernelExit
 
+.extern asm_GetStoredUserSp
+.extern asm_GetStoredUserLr
+
 asm_KernelInitEntry:
 	mov	ip, sp
 	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
@@ -41,11 +44,11 @@ asm_ExitEntry:
 
 /*  This function executes when exiting from all kernel functions */
 asm_KernelExit:
-	LDR SP, [PC, #8]; 
-	LDR SP, [SP, #0]; 
-	LDR lr, [SP, #4];
-	LDR SP, [SP, #8];
-	.4byte	0x01500000 
+	/* Put the LR and SP back for the user process. */
+        BL asm_GetStoredUserSp
+	MOV SP, R0
+        BL asm_GetStoredUserLr
+	MOV LR, R0
 	/* I think this next instruction does a jump to the return address, AND updates the CPSR register
 	with the value from the SPSR register all at once.*/
 	MOVS PC,LR;  /* MOV{S} documentation:

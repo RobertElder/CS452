@@ -3,6 +3,8 @@
 #include "kernel_state.h"
 
 void asm_KernelExit();
+int asm_GetStoredUserSp();
+int asm_GetStoredUserLr();
 
 void print_kernel_state(KernelState * k_state){
 	robprintfbusy((const unsigned char *)"Max tasks: %d.\n",k_state->max_tasks);
@@ -10,6 +12,9 @@ void print_kernel_state(KernelState * k_state){
 }
 
 void k_InitKernel(){
+	int user_sp = asm_GetStoredUserSp();
+	int user_lr = asm_GetStoredUserLr();
+	robprintfbusy((const unsigned char *)"User SP is %x, lr is %x.\n",user_sp, user_lr);
 	//  Directly set the kernel state structure values on the stack.
 	KernelState * k_state = (KernelState *) KERNEL_STACK_START;
 	k_state->max_tasks = 4;

@@ -4,6 +4,23 @@
 .extern k_Pass
 .extern k_Exit
 .global asm_SwiCallEntry
+.global asm_GetStoredUserSp
+.global asm_GetStoredUserLr
+
+
+asm_GetStoredUserSp:
+LDR r8, [PC, #8] /* load base stack pointer address */
+LDR r8, [r8, #0] /* load the address of after the kernel state structure */
+LDR r0, [r8, #8]  /*get sp*/
+BX LR
+.4byte	0x01500000 
+
+asm_GetStoredUserLr:
+LDR r8, [PC, #8] /* load base stack pointer address */
+LDR r8, [r8, #0] /* load the address of after the kernel state structure */
+LDR r0, [r8, #4]  /* get lr */
+BX LR
+.4byte	0x01500000 
 
 asm_SwiCallEntry:
 /* We don't need to do any poping or pushing of kernel state because all kernel state is stored in a struct at the base of the kernel stack, and we always know this location */
