@@ -14,6 +14,7 @@ MOV r9, r9, LSR #6; /*  Only shift back 6 to get the function id times four, so 
 ADD PC, PC, r9; /*  Use the function id times four to jump to the correct branch for our kernel function */
 .4byte	0x000000 /*  Dummy instruction that does not execute because we jump over it so the jump table works correctly */
 /*  Do branches without link because the link register (R14_svc) currently stores the return address immediately after the SWI instruction */
+B k_InitKernel
 B k_Create
 B k_MyTid
 B k_MyParentTid

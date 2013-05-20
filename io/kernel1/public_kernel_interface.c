@@ -1,6 +1,6 @@
 #include "public_kernel_interface.h"
 
-int asm_KernelInitEntry();
+void asm_KernelInitEntry();
 int asm_CreateEntry();
 int asm_MyTidEntry();
 int asm_MyParentTidEntry();

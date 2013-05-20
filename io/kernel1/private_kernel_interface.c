@@ -5,12 +5,14 @@
 void asm_KernelExit();
 
 void k_InitKernel(){
-	register int *current_kernel_stack_pointer asm ("r13");
+	//  Directly set the kernel state structure values on the stack.
 	KernelState * k_state = (KernelState *) KERNEL_STACK_START;
+	k_state->max_tasks = 300;
+	//  Now initialize the stack pointer to the correct value
+	register int *current_kernel_stack_pointer asm ("r13");
 	//  The kernel state struct is stored at the base of the kernel stack.
 	*current_kernel_stack_pointer = KERNEL_STACK_START - sizeof(KernelState);
-	k_state->max_tasks = 300;
-	robputstrbusy((const unsigned char *)"Current kernel stack pointer:.\n");
+	robputstrbusy((const unsigned char *)"Current kernel stack pointer:\n");
 	robputrbusy(*current_kernel_stack_pointer);
 	asm_KernelExit();
 }
@@ -25,8 +27,6 @@ int k_Create( int priority, void (*code)( ) ){
 }
 
 int k_MyTid(){
-	KernelState * k_state = (KernelState *) KERNEL_STACK_START;
-	robprintfbusy((const unsigned char *)"Max tasks is %d.\n",k_state->max_tasks);
 	/* TODO Argument passing has not been thought through yet. */
 	robputstrbusy((const unsigned char *)"In function k_MyTid\n");
 	asm_KernelExit();
