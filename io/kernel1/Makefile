@@ -17,7 +17,8 @@ ASFLAGS	= -mcpu=arm920t -mapcs-32
 
 LDFLAGS = -init main -Map kern.map -N  -T orex.ld -L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L../lib
 
-SOURCES = buffer.c queue.c task_descriptor.c
+#  TODO: make things generic using the following method:
+SOURCES = buffer.c queue.c task_descriptor.c robio.c
 HEADERS = ${SOURCES:.c=.h}
 OBJECTS = ${SOURCES:.c=.o}
 
@@ -41,16 +42,40 @@ private_kernel_interface.s: private_kernel_interface.c private_kernel_interface.
 private_kernel_interface.o: private_kernel_interface.s
 	$(AS) $(ASFLAGS) -o private_kernel_interface.o private_kernel_interface.s
 
+robio.s: robio.c robio.h
+	$(XCC) -S $(CFLAGS) robio.c
+
+robio.o: robio.s
+	$(AS) $(ASFLAGS) -o robio.o robio.s
+
+buffer.s: buffer.c buffer.h
+	$(XCC) -S $(CFLAGS) buffer.c
+
+buffer.o: buffer.s
+	$(AS) $(ASFLAGS) -o buffer.o buffer.s
+
+queue.s: queue.c queue.h
+	$(XCC) -S $(CFLAGS) queue.c
+
+queue.o: queue.s
+	$(AS) $(ASFLAGS) -o queue.o queue.s
+
+task_descriptor.s: task_descriptor.c task_descriptor.h
+	$(XCC) -S $(CFLAGS) task_descriptor.c
+
+task_descriptor.o: task_descriptor.s
+	$(AS) $(ASFLAGS) -o task_descriptor.o task_descriptor.s
+
 swi_kernel_interface.o: swi_kernel_interface.s
 	$(AS) $(ASFLAGS) -o swi_kernel_interface.o swi_kernel_interface.s
 
 kernel_entry.o: kernel_entry.s
 	$(AS) $(ASFLAGS) -o kernel_entry.o kernel_entry.s
 
-kern.elf: kern.o public_kernel_interface.o private_kernel_interface.o swi_kernel_interface.o kernel_entry.o $(SOURCES) $(HEADERS) $(OBJECTS)
-	$(LD) $(LDFLAGS) -o $@ kern.o public_kernel_interface.o private_kernel_interface.o swi_kernel_interface.o kernel_entry.o $(OBJECTS) -lgcc
+kern.elf: kern.o public_kernel_interface.o private_kernel_interface.o swi_kernel_interface.o kernel_entry.o robio.o buffer.o queue.o task_descriptor.o
+	$(LD) $(LDFLAGS) -o $@ kern.o public_kernel_interface.o private_kernel_interface.o swi_kernel_interface.o kernel_entry.o robio.o buffer.o queue.o task_descriptor.o -lgcc
 	cp kern.elf /u/cs452/tftp/ARM/`whoami`/kern.elf
 	chmod ugo+r /u/cs452/tftp/ARM/`whoami`/kern.elf
 
 clean:
-	-rm -f kern.elf kern.s public_kernel_interface.s private_kernel_interface.s *.o kern.map
+	-rm -f kern.elf kern.s public_kernel_interface.s private_kernel_interface.s robio.s buffer.s queue.s task_descriptor.s *.o kern.map

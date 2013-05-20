@@ -7,8 +7,8 @@
 
 asm_SwiCallEntry:
 /* TODO: Need instructions to pop kernel state off of the stack here. Make sure we don't overwrite r10 */
-B asm_SwiCallEntry
-LDR r9, [lr,#(-4)]; /*  Put the SWI instruction call in R10.  This contains the kernel function id.  */
+
+LDR r9, [lr,#-4]; /*  Put the SWI instruction call in R9.  This contains the kernel function id.  */
 MOV r9, r9, LSL #8; /*  Get rid of the high 8 bits by doing a left logical shift of 16 to discard the high bits  */
 MOV r9, r9, LSR #6; /*  Only shift back 6 to get the function id times four, so we can jump to the correct branch location */
 ADD PC, PC, r9; /*  Use the function id times four to jump to the correct branch for our kernel function */
