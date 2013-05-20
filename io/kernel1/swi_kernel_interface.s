@@ -8,37 +8,35 @@
 .global asm_KernelExit
 
 asm_CreateEntry:
-	/* TODO push user process state */
+	mov	ip, sp
+	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 0;
-	/* TODO pop user process state */
-	BX lr;
+	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 asm_MyTidEntry:
-	/* TODO push user process state */
+	mov	ip, sp
+	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 1;
-	/* TODO pop user process state */
-	BX lr;
+	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 asm_MyParentTidEntry:
-	/* TODO push user process state */
+	mov	ip, sp
+	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 2;
-	/* TODO pop user process state */
-	BX lr;
+	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 asm_PassEntry:
-	/* TODO push user process state */
+	mov	ip, sp
+	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 3;
-	/* TODO pop user process state */
-	BX lr;
+	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 asm_ExitEntry:
-	/* TODO push user process state */
+	mov	ip, sp
+	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 4;
-	/* TODO pop user process state */
-	BX lr;
+	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 
 /*  This function executes when exiting from all kernel functions */
 asm_KernelExit:
 	/* TODO: Need instructions to pop kernel state off of the stack here. */
 
-	MOV r0, PC;
-	bl robputrbusy(PLT)
 	/* I think this next instruction does a jump to the return address, AND updates the CPSR register
 	with the value from the SPSR register all at once.*/
 	MOVS PC,LR;  /* MOV{S} documentation:
