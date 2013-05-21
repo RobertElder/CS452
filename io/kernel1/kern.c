@@ -3,6 +3,8 @@
 #include "private_kernel_interface.h"
 #include "robio.h"
 #include "kernel_state.h"
+#include "tasks.h"
+#include "queue.h"
 
 void asm_SwiCallEntry();
 
@@ -42,10 +44,16 @@ int main(){
 	//MOV r0, PC;
 	//bl robputrbusy(PLT)
 	InitKernel();
+	
+	Create(NORMAL, &FirstTask_Start);
+	
+	return 0;
+	
 	Create( 99, (void(*)())52);
 	MyTid();
 	MyParentTid();
 	Pass();
 	Exit();
+	
 	return 0;
 }
