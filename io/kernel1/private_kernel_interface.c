@@ -38,7 +38,7 @@ void k_InitKernel(){
 	k_state->num_tasks = 1; /* There is one task, the start task we are creating now */
 	k_state->current_task_descriptor = &(k_state->task_descriptors[0]);
 	TD_Initialize(k_state->current_task_descriptor, 0, 4, 99, get_stack_base(0), (void *)&FirstTask_Start);
-	//PriorityQueue_Initialize(&k_state->task_queue);
+	PriorityQueue_Initialize(&k_state->task_queue);
 
 	robprintfbusy((const unsigned char *)"Leaving k_InitKernel.\n");
 	//  Set the currently saved process LR and SP to the new process so we can context switch into it when we do asm_KernelExit.
@@ -75,7 +75,10 @@ int k_Create( int priority, void (*code)( ) ){
 		TD * td = &(k_state->task_descriptors[k_state->num_tasks]);
 		TD_Initialize(td, new_task_id, priority, /*TODO: actual parent id*/ 123456789, get_stack_base(new_task_id), code);
 		k_state->num_tasks += 1;
-		//PriorityQueue_Put(&k_state->task_queue, (int*)td, priority);
+
+		int queue_return_code = PriorityQueue_Put(&k_state->task_queue, (int*)td, priority);
+		assert(queue_return_code != ERR_QUEUE_FULL,"priority queue full");
+
 		rtn = td->id;
 	}
 
