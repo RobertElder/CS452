@@ -25,15 +25,13 @@ void FirstTask_Start() {
 
 void GenericTask_Start() {
 	int my_tid = MyTid();
-	int my_parent_tid = MyParentTid();
+	//int my_parent_tid = MyParentTid();
 	while(1){
 		robprintfbusy((const unsigned char *)"INSIDE TASK Before Pass---------------------------- Task ID=%d\n",my_tid);
-		robprintfbusy((const unsigned char *)"Task ID=%d, Parent ID=%d\n",
-			my_tid, my_parent_tid);
+		//robprintfbusy((const unsigned char *)"Task ID=%d, Parent ID=%d\n", my_tid, my_parent_tid);
 		Pass();
 		robprintfbusy((const unsigned char *)"INSIDE TASK After Pass---------------------------- Task ID=%d\n",my_tid);
-		robprintfbusy((const unsigned char *)"Task ID=%d, Parent ID=%d\n",
-			my_tid, my_parent_tid);
+		//robprintfbusy((const unsigned char *)"Task ID=%d, Parent ID=%d\n", my_tid, my_parent_tid);
 		
 		Exit();
 	}

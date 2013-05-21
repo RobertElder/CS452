@@ -8,24 +8,25 @@ void asm_KernelExit();
 
 TD * schedule_next_task(KernelState * k_state){
 	int current_task_id = k_state->current_task_descriptor->id;
-	int next_task_id = current_task_id == 5 ? 1 : current_task_id + 1;
+	int next_task_id = current_task_id == 4 ? 1 : current_task_id + 1;
 	robprintfbusy((const unsigned char *)"Context switching from task %d to task %d.\n",current_task_id,next_task_id);
 	return &(k_state->task_descriptors[next_task_id]);
 }
 
 void print_kernel_state(KernelState * k_state){
-	robprintfbusy((const unsigned char *)"---- Kernel State ----.\n");
-	robprintfbusy((const unsigned char *)"Max tasks: %d.\n",k_state->max_tasks);
-	robprintfbusy((const unsigned char *)"Last User SP value: %x.\n",k_state->user_proc_sp_value);
-	robprintfbusy((const unsigned char *)"Last User LR value: %x.\n",k_state->user_proc_lr_value);
-	robprintfbusy((const unsigned char *)"Return value (if applicable): %x.\n",k_state->user_proc_return_value);
+	TD * current_t = k_state->current_task_descriptor;
+	//robprintfbusy((const unsigned char *)"---- Kernel State ----.\n");
+	//robprintfbusy((const unsigned char *)"Max tasks: %d.\n",k_state->max_tasks);
+	robprintfbusy((const unsigned char *)"SP value: %x task %d.\n",current_t->stack_pointer, current_t->id);
+	robprintfbusy((const unsigned char *)"LR value: %x task %d.\n",current_t->link_register, current_t->id);
+	//robprintfbusy((const unsigned char *)"Return value (if applicable): %x.\n",k_state->user_proc_return_value);
 }
 
 /* TODO:  Calling a kernel function from inside another kernel function is currently not supported. */
 
 void * get_stack_base(unsigned int task_id){
 	/*TODO: actually figure out how to place the stacks so they don't do crazy things and overwrite memory */
-	return (void*)(0x01400000 - (task_id * 0x00100000));
+	return (void*)(0x01400000 - (task_id * 0x00010000));
 }
 
 void k_InitKernel(){
@@ -90,9 +91,9 @@ int k_MyTid(){
 	k_state->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
 	k_state->current_task_descriptor->link_register = k_state->user_proc_lr_value;
 
-	robprintfbusy((const unsigned char *)"In function k_MyTid\n");
-	print_kernel_state(k_state);
-	robprintfbusy((const unsigned char *)"Leaving k_MyTid\n");
+	//robprintfbusy((const unsigned char *)"In function k_MyTid\n");
+	//print_kernel_state(k_state);
+	//robprintfbusy((const unsigned char *)"Leaving k_MyTid\n");
 	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
 	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
 	k_state->user_proc_return_value = k_state->current_task_descriptor->id;
@@ -119,13 +120,14 @@ void k_Pass(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	k_state->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
 	k_state->current_task_descriptor->link_register = k_state->user_proc_lr_value;
-	k_state->current_task_descriptor = schedule_next_task(k_state);
-
 	robprintfbusy((const unsigned char *)"In function k_Pass\n");
 	print_kernel_state(k_state);
+	k_state->current_task_descriptor = schedule_next_task(k_state);
+
 	robprintfbusy((const unsigned char *)"Leaving k_Pass\n");
 	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
 	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
+	print_kernel_state(k_state);
 	asm_KernelExit();
 }
 
