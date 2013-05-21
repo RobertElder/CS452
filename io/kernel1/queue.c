@@ -2,6 +2,7 @@
 
 void Queue_Initialize(Queue * queue) {
 	queue->start = 0;
+	queue->end = 0;
 }
 
 int Queue_PushEnd(Queue * queue, QUEUE_ITEM_TYPE item) {
