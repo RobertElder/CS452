@@ -31,10 +31,12 @@ void k_InitKernel(){
 	robprintfbusy((const unsigned char *)"In function k_InitKernel\n");
 	print_kernel_state(k_state);
 	//  Directly set the kernel state structure values on the stack.
-	k_state->max_tasks = 4;
+	k_state->max_tasks = MAX_TASKS;
+	k_state->task_counter = 0;
 	k_state->current_task_descriptor = &(k_state->task_descriptors[0]);
 	k_state->current_task_descriptor->link_register = (void *)&first_user_proc;
 	k_state->current_task_descriptor->stack_pointer = get_stack_base(3);
+	PriorityQueue_Initialize(&k_state->task_queue);
 
 	robprintfbusy((const unsigned char *)"Leaving k_InitKernel.\n");
 	//  Set the currently saved process LR and SP to the new process so we can context switch into it when we do asm_KernelExit.
@@ -52,14 +54,33 @@ int k_Create( int priority, void (*code)( ) ){
 	code = (void (*)() )register_1;
 
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	void * temp_sp = k_state->user_proc_sp_value;
-	void * temp_lr = k_state->user_proc_lr_value;
+	k_state->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
+	k_state->current_task_descriptor->link_register = k_state->user_proc_lr_value;
+	
+	k_state->task_counter += 1;
+	
+	if (k_state->task_counter >= k_state->max_tasks) {
+		// TODO: return ERR_K_OUT_OF_TD to callee
+	}
+	if (!Queue_IsValidPriority(priority)) {
+		// TODO: return ERR_K_INVALID_PRIORITY to callee
+	}
 
-	robprintfbusy((const unsigned char *)"In function k_Create. Priority is %d, code is %x\n",priority, code);
+	robprintfbusy((const unsigned char *)"In function k_Create. "
+		"Priority is %d, code is %x, new id is %d\n",
+		priority, code, k_state->task_counter);
 	print_kernel_state(k_state);
+	
+	TD * td = &(k_state->task_descriptors[k_state->task_counter]);
+	TD_Initialize(td, k_state->task_counter, priority, 123456789);
+	PriorityQueue_Put(&k_state->task_queue, (int*)td, priority);
+	
+	// TODO: return task id
+
 	robprintfbusy((const unsigned char *)"Leaving k_Create.\n");
-	k_state->user_proc_sp_value = temp_sp;
-	k_state->user_proc_lr_value = temp_lr;
+	//  Set things up to switch back to the 'current' task, which might be a different one.
+	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
+	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
 	print_kernel_state(k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */

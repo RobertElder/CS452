@@ -8,7 +8,7 @@ static const int ERR_QUEUE_FULL = -1;
 static const int ERR_QUEUE_PRIORITY = -2;
 
 typedef enum QueuePriority {
-	HIGHEST, HIGH, NORMAL, LOW, LOWEST
+	HIGHEST=1, HIGH=2, NORMAL=3, LOW=4, LOWEST=5
 } QueuePriority;
 
 typedef struct QueueItem {
@@ -40,5 +40,7 @@ void PriorityQueue_Initialize(PriorityQueue * queue);
 int PriorityQueue_Put(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority priority);
 
 QUEUE_ITEM_TYPE PriorityQueue_Get(PriorityQueue * queue);
+
+int Queue_IsValidPriority(QueuePriority priority);
 
 #endif /* QUEUE_H_ */

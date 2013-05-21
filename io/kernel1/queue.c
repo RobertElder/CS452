@@ -79,3 +79,16 @@ QUEUE_ITEM_TYPE PriorityQueue_Get(PriorityQueue * queue) {
 
 	return 0;
 }
+
+int Queue_IsValidPriority(QueuePriority priority) {
+	switch(priority){
+	case HIGHEST:
+	case HIGH:
+	case NORMAL:
+	case LOW:
+	case LOWEST:
+		return 1;
+	default:
+		return 0;
+	}
+}
