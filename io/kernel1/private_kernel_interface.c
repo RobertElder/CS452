@@ -10,14 +10,20 @@ void print_kernel_state(KernelState * k_state){
 	robprintfbusy((const unsigned char *)"Max tasks: %d.\n",k_state->max_tasks);
 	robprintfbusy((const unsigned char *)"Last User SP value: %x.\n",k_state->user_proc_sp_value);
 	robprintfbusy((const unsigned char *)"Last User LR value: %x.\n",k_state->user_proc_lr_value);
+	robprintfbusy((const unsigned char *)"Return value (if applicable): %x.\n",k_state->user_proc_return_value);
 }
 
-/* TODO:  Calling a kernel function from inside another kernel function is not supported. */
+/* TODO:  Calling a kernel function from inside another kernel function is currently not supported. */
 
 void first_user_proc(){
 	while(1){
 		robprintfbusy((const unsigned char *)"Inside first user proc.\n");
-		Create(83, (void*)9);
+		int rtn1 = Create(83, (void*)9);
+		robprintfbusy((const unsigned char *)"Return value from create: %d.\n",rtn1);
+		int rtn2 = MyTid();
+		robprintfbusy((const unsigned char *)"Return value from mytid: %d.\n",rtn2);
+		int rtn3 = MyParentTid();
+		robprintfbusy((const unsigned char *)"Return value from myparenttid: %d.\n",rtn3);
 	}
 }
 
@@ -81,6 +87,7 @@ int k_Create( int priority, void (*code)( ) ){
 	//  Set things up to switch back to the 'current' task, which might be a different one.
 	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
 	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
+	k_state->user_proc_return_value = 57;
 	print_kernel_state(k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
@@ -88,20 +95,30 @@ int k_Create( int priority, void (*code)( ) ){
 
 int k_MyTid(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	k_state->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
+	k_state->current_task_descriptor->link_register = k_state->user_proc_lr_value;
 
 	robprintfbusy((const unsigned char *)"In function k_MyTid\n");
 	print_kernel_state(k_state);
 	robprintfbusy((const unsigned char *)"Leaving k_MyTid\n");
+	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
+	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
+	k_state->user_proc_return_value = 42;
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
 
 int k_MyParentTid(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	k_state->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
+	k_state->current_task_descriptor->link_register = k_state->user_proc_lr_value;
 
 	robprintfbusy((const unsigned char *)"In function k_MyParentTid\n");
 	print_kernel_state(k_state);
 	robprintfbusy((const unsigned char *)"Leaving k_MyParentTid\n");
+	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
+	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
+	k_state->user_proc_return_value = 208;
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }

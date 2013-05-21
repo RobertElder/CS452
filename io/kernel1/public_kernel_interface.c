@@ -12,18 +12,15 @@ void InitKernel(){
 }
 
 int Create( int priority, void (*code)( ) ){
-	asm_CreateEntry();
-	return 0;
+	return asm_CreateEntry();
 }
 
 int MyTid(){
-	asm_MyTidEntry();
-	return 0;
+	return asm_MyTidEntry();
 }
 
 int MyParentTid(){
-	asm_MyParentTidEntry();
-	return 0;
+	return asm_MyParentTidEntry();
 }
 
 void Pass(){

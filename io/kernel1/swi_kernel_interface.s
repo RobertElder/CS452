@@ -15,8 +15,7 @@
 /* Functions to get/set user process state */
 .global asm_GetStoredUserSp
 .global asm_GetStoredUserLr
-.global asm_SetStoredUserSp
-.global asm_SetStoredUserLr
+.global asm_GetStoredUserRtn
 
 
 asm_KernelInitEntry:
@@ -52,12 +51,13 @@ asm_ExitEntry:
 
 /*  This function executes when exiting from all kernel functions */
 asm_KernelExit:
-	/* Put the LR and SP back for the user process. */
+	/* Put the return value, LR and SP back for the user process. */
+        BL asm_GetStoredUserRtn 
+	MOV R0, R8
         BL asm_GetStoredUserSp
-	MOV SP, R0
-        BL asm_GetStoredUserLr
-	MOV LR, R0
-	/* TODO:  Get stored return value from kernel state struct and also put it in r0 */
+	MOV SP, R8
+        BL asm_GetStoredUserLr /* Do this one last so we don't overwrite LR with BL asm_...*/
+	MOV LR, R8
 	
 	/* I think this next instruction does a jump to the return address, AND updates the CPSR register
 	with the value from the SPSR register all at once.*/
@@ -75,30 +75,22 @@ asm_KernelExit:
 
 	/* Interrups are now enabled!!! */
 
-
-
-asm_SetStoredUserSp:
-LDR r8, [PC, #92] /* load base stack pointer address */
-LDR r8, [r8, #0] /* load the address of after the kernel state structure */
-STR r0, [r8, #0]  /*set sp*/
-BX LR
-
-asm_SetStoredUserLr:
+asm_GetStoredUserRtn:
 LDR r8, [PC, #76] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
-STR r0, [r8, #4]  /* set lr */
+LDR r8, [r8, #8]  /* get return value */
 BX LR
 
 asm_GetStoredUserSp:
 LDR r8, [PC, #60] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
-LDR r0, [r8, #0]  /*get sp*/
+LDR r8, [r8, #0]  /* get sp*/
 BX LR
 
 asm_GetStoredUserLr:
 LDR r8, [PC, #44] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
-LDR r0, [r8, #4]  /* get lr */
+LDR r8, [r8, #4]  /* get lr */
 BX LR
 
 asm_SwiCallEntry:
