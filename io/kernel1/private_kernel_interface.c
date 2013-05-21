@@ -1,26 +1,46 @@
 #include "private_kernel_interface.h"
+#include "public_kernel_interface.h"
 #include "robio.h"
 #include "kernel_state.h"
 
 void asm_KernelExit();
 
 void print_kernel_state(KernelState * k_state){
+	robprintfbusy((const unsigned char *)"---- Kernel State ----.\n");
 	robprintfbusy((const unsigned char *)"Max tasks: %d.\n",k_state->max_tasks);
-	robprintfbusy((const unsigned char *)"Last User SP value: %x.\n",k_state->user_prod_sp_value);
-	robprintfbusy((const unsigned char *)"Last User LR value: %x.\n",k_state->user_prod_lr_value);
+	robprintfbusy((const unsigned char *)"Last User SP value: %x.\n",k_state->user_proc_sp_value);
+	robprintfbusy((const unsigned char *)"Last User LR value: %x.\n",k_state->user_proc_lr_value);
+}
+
+/* TODO:  Calling a kernel function from inside another kernel function is not supported. */
+
+void first_user_proc(){
+	while(1){
+		robprintfbusy((const unsigned char *)"Inside first user proc.\n");
+		Create(83, (void*)9);
+	}
+}
+
+void * get_stack_base(unsigned int task_id){
+	assert(task_id == 3,"Unimplemented.");
+	return (void*)0x01400000;
 }
 
 void k_InitKernel(){
-	//  Directly set the kernel state structure values on the stack.
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	k_state->max_tasks = 4;
-
-	//  Now print out some useful info
-	robprintfbusy((const unsigned char *)"Inside kernel init function. SP is %x\n",k_state->user_prod_sp_value);
+	robprintfbusy((const unsigned char *)"In function k_InitKernel\n");
 	print_kernel_state(k_state);
-	robprintfbusy((const unsigned char *)"Leaving k_InitKernel.\n");
+	//  Directly set the kernel state structure values on the stack.
+	k_state->max_tasks = 4;
+	k_state->current_task_descriptor = &(k_state->task_descriptors[0]);
+	k_state->current_task_descriptor->link_register = (void *)&first_user_proc;
+	k_state->current_task_descriptor->stack_pointer = get_stack_base(3);
 
-	//  Put the LR and SP back so we can switch back to that process.
+	robprintfbusy((const unsigned char *)"Leaving k_InitKernel.\n");
+	//  Set the currently saved process LR and SP to the new process so we can context switch into it when we do asm_KernelExit.
+	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
+	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
+	print_kernel_state(k_state);
 	asm_KernelExit();
 }
 
@@ -32,10 +52,15 @@ int k_Create( int priority, void (*code)( ) ){
 	code = (void (*)() )register_1;
 
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	void * temp_sp = k_state->user_proc_sp_value;
+	void * temp_lr = k_state->user_proc_lr_value;
 
 	robprintfbusy((const unsigned char *)"In function k_Create. Priority is %d, code is %x\n",priority, code);
 	print_kernel_state(k_state);
 	robprintfbusy((const unsigned char *)"Leaving k_Create.\n");
+	k_state->user_proc_sp_value = temp_sp;
+	k_state->user_proc_lr_value = temp_lr;
+	print_kernel_state(k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }

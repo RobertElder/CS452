@@ -19,6 +19,7 @@ typedef struct TaskDescriptor {
 	QueuePriority priority;
 	int parent_id;
 	int * stack_pointer;
+	int * link_register;
 	int * spsr;
 	int return_value;
 } TD;

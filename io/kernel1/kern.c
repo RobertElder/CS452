@@ -14,7 +14,8 @@ void asm_SwiCallEntry();
  *  -  Let's start the kernel stack at KERNEL_STACK_START
  *  -  Stacks grow down
  *
- *
+        MOV r0, PC;
+        bl robputrbusy(PLT)
  *
  * */
 

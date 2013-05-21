@@ -57,6 +57,8 @@ asm_KernelExit:
 	MOV SP, R0
         BL asm_GetStoredUserLr
 	MOV LR, R0
+	/* TODO:  Get stored return value from kernel state struct and also put it in r0 */
+	
 	/* I think this next instruction does a jump to the return address, AND updates the CPSR register
 	with the value from the SPSR register all at once.*/
 	MOVS PC,LR;  /* MOV{S} documentation:
