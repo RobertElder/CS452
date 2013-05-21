@@ -1,4 +1,5 @@
 #include "private_kernel_interface.h"
+#include "public_kernel_interface.h"
 #include "robio.h"
 #include "kernel_state.h"
 
@@ -38,6 +39,13 @@ int k_Create( int priority, void (*code)( ) ){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
 	k_state->task_counter += 1;
+	
+	if (k_state->task_counter >= k_state->max_tasks) {
+		// TODO: return ERR_K_OUT_OF_TD to callee
+	}
+	if (!Queue_IsValidPriority(priority)) {
+		// TODO: return ERR_K_INVALID_PRIORITY to callee
+	}
 
 	robprintfbusy((const unsigned char *)"In function k_Create. "
 		"Priority is %d, code is %x, new id is %d\n",
@@ -46,6 +54,9 @@ int k_Create( int priority, void (*code)( ) ){
 	
 	TD * td = &(k_state->task_descriptors[k_state->task_counter]);
 	TD_Initialize(td, k_state->task_counter, priority, 123456789);
+	PriorityQueue_Put(&k_state->task_queue, td, priority);
+	
+	// TODO: return task id
 
 	robprintfbusy((const unsigned char *)"Leaving k_Create.\n");
 	asm_KernelExit();
