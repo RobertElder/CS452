@@ -5,8 +5,9 @@
 #define KERNEL_STATE_H_
 
 typedef struct KernelState {
-	/* The last value of the kernel stack pointer.  This will always be the same value just after entering a kernel function. */
-	void * last_kernel_sp;
+	/*  These two values are set automatically when before a kernel function is envoked, and re-instated to their registers on exit. */
+	void * user_prod_sp_value;
+	void * user_prod_lr_value;
 	/* The maximum number of tasks that the kernel currently supports. */
 	unsigned int max_tasks;
 } KernelState;

@@ -78,7 +78,7 @@ asm_KernelExit:
 asm_SetStoredUserSp:
 LDR r8, [PC, #92] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
-STR r0, [r8, #8]  /*set sp*/
+STR r0, [r8, #0]  /*set sp*/
 BX LR
 
 asm_SetStoredUserLr:
@@ -90,7 +90,7 @@ BX LR
 asm_GetStoredUserSp:
 LDR r8, [PC, #60] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
-LDR r0, [r8, #8]  /*get sp*/
+LDR r0, [r8, #0]  /*get sp*/
 BX LR
 
 asm_GetStoredUserLr:
@@ -104,8 +104,8 @@ asm_SwiCallEntry:
 
 LDR r8, [PC, #28]; /*  Load the base of the kernel stack into SP */
 LDR r8, [r8, #0]; /*  The value at the base of the SP is where we want the SP to start */
-STR lr, [r8, #4] /*  Save the link register after our kernel state structure */
-STR SP, [r8, #8] /*  Save the user stack pointer */
+STR SP, [r8, #0] /*  Save the stack pointer directly into the kernel state struct */
+STR LR, [r8, #4] /*  Save the user link register directly into the kernel state struct  */
 MOV SP, r8 /*  Load the new kernel stack pointer */
 LDR r9, [lr,#-4]; /*  Put the SWI instruction call in R9.  This contains the kernel function id.  */
 MOV r9, r9, LSL #8; /*  Get rid of the high 8 bits by doing a left logical shift of 16 to discard the high bits  */

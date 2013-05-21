@@ -37,7 +37,7 @@ int main(){
 	//  Put the address of the fcn here
 	*first_swi_instruction_address = (int)&asm_SwiCallEntry;
 	//  Initialize the value of the saved kernel stack pointer that we will load every time we do an SWI call
-	*kernel_saved_sp_loc = (int)(KERNEL_STACK_START - sizeof(KernelState) -8);
+	*kernel_saved_sp_loc = (int)(KERNEL_STACK_START - sizeof(KernelState));
 	
 	//MOV r0, PC;
 	//bl robputrbusy(PLT)

@@ -10,7 +10,8 @@ int asm_SetStoredUserLr(int);
 
 void print_kernel_state(KernelState * k_state){
 	robprintfbusy((const unsigned char *)"Max tasks: %d.\n",k_state->max_tasks);
-	robprintfbusy((const unsigned char *)"Last Kernel SP value: %x.\n",k_state->last_kernel_sp);
+	robprintfbusy((const unsigned char *)"Last User SP value: %x.\n",k_state->user_prod_sp_value);
+	robprintfbusy((const unsigned char *)"Last User LR value: %x.\n",k_state->user_prod_lr_value);
 }
 
 void k_InitKernel(){
@@ -19,11 +20,11 @@ void k_InitKernel(){
 
 	robprintfbusy((const unsigned char *)"User SP is %x, lr is %x.\n",user_sp, user_lr);
 	//  Directly set the kernel state structure values on the stack.
-	KernelState * k_state = (KernelState *) KERNEL_STACK_START;
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	k_state->max_tasks = 4;
 
 	//  Now print out some useful info
-	robprintfbusy((const unsigned char *)"Inside kernel init function. SP is %x\n",k_state->last_kernel_sp);
+	robprintfbusy((const unsigned char *)"Inside kernel init function. SP is %x\n",k_state->user_prod_sp_value);
 	print_kernel_state(k_state);
 	robprintfbusy((const unsigned char *)"Leaving k_InitKernel.\n");
 
@@ -40,7 +41,7 @@ int k_Create( int priority, void (*code)( ) ){
 	register int *register_1 asm ("r1");
 	code = (void (*)() )register_1;
 
-	KernelState * k_state = (KernelState *) KERNEL_STACK_START;
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 
 	robprintfbusy((const unsigned char *)"In function k_Create. Priority is %d, code is %x\n",priority, code);
 	print_kernel_state(k_state);
@@ -50,7 +51,7 @@ int k_Create( int priority, void (*code)( ) ){
 }
 
 int k_MyTid(){
-	KernelState * k_state = (KernelState *) KERNEL_STACK_START;
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 
 	robprintfbusy((const unsigned char *)"In function k_MyTid\n");
 	print_kernel_state(k_state);
@@ -60,7 +61,7 @@ int k_MyTid(){
 }
 
 int k_MyParentTid(){
-	KernelState * k_state = (KernelState *) KERNEL_STACK_START;
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 
 	robprintfbusy((const unsigned char *)"In function k_MyParentTid\n");
 	print_kernel_state(k_state);
@@ -70,7 +71,7 @@ int k_MyParentTid(){
 }
 
 void k_Pass(){
-	KernelState * k_state = (KernelState *) KERNEL_STACK_START;
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 
 	robprintfbusy((const unsigned char *)"In function k_Pass\n");
 	print_kernel_state(k_state);
@@ -79,11 +80,11 @@ void k_Pass(){
 }
 
 void k_Exit(){
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	int user_sp = asm_GetStoredUserSp();
 	int user_lr = asm_GetStoredUserLr();
 
 	robprintfbusy((const unsigned char *)"User SP is %x, lr is %x.\n",user_sp, user_lr);
-	KernelState * k_state = (KernelState *) KERNEL_STACK_START;
 
 	robprintfbusy((const unsigned char *)"In function k_Exit\n");
 	print_kernel_state(k_state);
