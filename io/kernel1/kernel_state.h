@@ -5,7 +5,7 @@
 #ifndef KERNEL_STATE_H_
 #define KERNEL_STATE_H_
 
-#define MAX_TASKS 4
+#define MAX_TASKS 5
 
 typedef struct KernelState {
 	/*  IMPORTANT!!!  The order of the items in this struct is important
@@ -20,7 +20,7 @@ typedef struct KernelState {
 	TD * current_task_descriptor;
 	TD task_descriptors[MAX_TASKS + 1];
 	PriorityQueue task_queue;
-	unsigned int task_counter;
+	unsigned int num_tasks;
 } KernelState;
 
 

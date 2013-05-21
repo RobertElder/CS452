@@ -6,6 +6,13 @@
 
 void asm_KernelExit();
 
+TD * schedule_next_task(KernelState * k_state){
+	int current_task_id = k_state->current_task_descriptor->id;
+	int next_task_id = current_task_id == 5 ? 1 : current_task_id + 1;
+	robprintfbusy((const unsigned char *)"Context switching from task %d to task %d.\n",current_task_id,next_task_id);
+	return &(k_state->task_descriptors[next_task_id]);
+}
+
 void print_kernel_state(KernelState * k_state){
 	robprintfbusy((const unsigned char *)"---- Kernel State ----.\n");
 	robprintfbusy((const unsigned char *)"Max tasks: %d.\n",k_state->max_tasks);
@@ -27,11 +34,10 @@ void k_InitKernel(){
 	print_kernel_state(k_state);
 	//  Directly set the kernel state structure values on the stack.
 	k_state->max_tasks = MAX_TASKS;
-	k_state->task_counter = 0;
+	k_state->num_tasks = 1; /* There is one task, the start task we are creating now */
 	k_state->current_task_descriptor = &(k_state->task_descriptors[0]);
-	k_state->current_task_descriptor->link_register = (void *)&FirstTask_Start;
-	k_state->current_task_descriptor->stack_pointer = get_stack_base(0);
-	PriorityQueue_Initialize(&k_state->task_queue);
+	TD_Initialize(k_state->current_task_descriptor, 0, 4, 99, get_stack_base(0), (void *)&FirstTask_Start);
+	//PriorityQueue_Initialize(&k_state->task_queue);
 
 	robprintfbusy((const unsigned char *)"Leaving k_InitKernel.\n");
 	//  Set the currently saved process LR and SP to the new process so we can context switch into it when we do asm_KernelExit.
@@ -51,22 +57,23 @@ int k_Create( int priority, void (*code)( ) ){
 
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
-	k_state->task_counter += 1;
 	
-	if (k_state->task_counter >= k_state->max_tasks) {
+	if (k_state->num_tasks >= k_state->max_tasks) {
 		assert(0,"out of tds");
 		rtn = ERR_K_OUT_OF_TD;
 	}else if (!Queue_IsValidPriority(priority)) {
 		assert(0,"invalid priority");
 		rtn = ERR_K_INVALID_PRIORITY;
 	}else{
+		int new_task_id = k_state->num_tasks;
 		robprintfbusy((const unsigned char *)"In function k_Create. "
 			"Priority is %d, code is %x, new id is %d\n",
-			priority, code, k_state->task_counter);
+			priority, code, k_state->num_tasks);
 		print_kernel_state(k_state);
 		
-		TD * td = &(k_state->task_descriptors[k_state->task_counter]);
-		TD_Initialize(td, k_state->task_counter, priority, 123456789, get_stack_base(k_state->task_counter), code);
+		TD * td = &(k_state->task_descriptors[k_state->num_tasks]);
+		TD_Initialize(td, new_task_id, priority, /*TODO: actual parent id*/ 123456789, get_stack_base(new_task_id), code);
+		k_state->num_tasks += 1;
 		//PriorityQueue_Put(&k_state->task_queue, (int*)td, priority);
 		rtn = td->id;
 	}
@@ -88,7 +95,7 @@ int k_MyTid(){
 	robprintfbusy((const unsigned char *)"Leaving k_MyTid\n");
 	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
 	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
-	k_state->user_proc_return_value = 42;
+	k_state->user_proc_return_value = k_state->current_task_descriptor->id;
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
@@ -110,10 +117,15 @@ int k_MyParentTid(){
 
 void k_Pass(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	k_state->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
+	k_state->current_task_descriptor->link_register = k_state->user_proc_lr_value;
+	k_state->current_task_descriptor = schedule_next_task(k_state);
 
 	robprintfbusy((const unsigned char *)"In function k_Pass\n");
 	print_kernel_state(k_state);
 	robprintfbusy((const unsigned char *)"Leaving k_Pass\n");
+	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
+	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
 	asm_KernelExit();
 }
 
