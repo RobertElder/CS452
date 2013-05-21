@@ -34,7 +34,7 @@ int main(){
 	/*  From the doc: 'If R15 is specified as register Rn, the value used is the address of the instruction plus eight.
 	 *  ' WHAT??? WHY??? I WASTED A WHOLE DAY BECAUSE OF THIS!!!
 	 *
-	 * */
+	 * LRD PC [PC, #-4]*/
 	*first_swi_instruction_address = 0xE51FF004;
 	first_swi_instruction_address++;
 	//  Put the address of the fcn here
@@ -42,19 +42,7 @@ int main(){
 	//  Initialize the value of the saved kernel stack pointer that we will load every time we do an SWI call
 	*kernel_saved_sp_loc = (int)(KERNEL_STACK_START - sizeof(KernelState));
 	
-	//MOV r0, PC;
-	//bl robputrbusy(PLT)
 	InitKernel();
-	
-	Create(NORMAL, &FirstTask_Start);
-	
-	return 0;
-	
-	Create( 99, (void(*)())52);
-	MyTid();
-	MyParentTid();
-	Pass();
-	Exit();
 	
 	return 0;
 }

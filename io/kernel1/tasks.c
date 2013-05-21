@@ -4,6 +4,7 @@
 #include "queue.h"
 
 void FirstTask_Start() {
+	while(1){
 	robprintfbusy((const unsigned char *)"F1RST TASK!!1\n");
 	int tid;
 	
@@ -18,6 +19,7 @@ void FirstTask_Start() {
 		
 	tid = Create(HIGH, &GenericTask_Start);
 	robprintfbusy((const unsigned char *)"Created: %d\n", tid);
+	}
 }
 
 void GenericTask_Start() {

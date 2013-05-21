@@ -2,6 +2,7 @@
 #include "public_kernel_interface.h"
 #include "robio.h"
 #include "kernel_state.h"
+#include "tasks.h"
 
 void asm_KernelExit();
 
@@ -15,21 +16,9 @@ void print_kernel_state(KernelState * k_state){
 
 /* TODO:  Calling a kernel function from inside another kernel function is currently not supported. */
 
-void first_user_proc(){
-	while(1){
-		robprintfbusy((const unsigned char *)"Inside first user proc.\n");
-		int rtn1 = Create(83, (void*)9);
-		robprintfbusy((const unsigned char *)"Return value from create: %d.\n",rtn1);
-		int rtn2 = MyTid();
-		robprintfbusy((const unsigned char *)"Return value from mytid: %d.\n",rtn2);
-		int rtn3 = MyParentTid();
-		robprintfbusy((const unsigned char *)"Return value from myparenttid: %d.\n",rtn3);
-	}
-}
-
 void * get_stack_base(unsigned int task_id){
-	assert(task_id == 3,"Unimplemented.");
-	return (void*)0x01400000;
+	/*TODO: actually figure out how to place the stacks so they don't do crazy things and overwrite memory */
+	return (void*)(0x01400000 - (task_id * 0x00100000));
 }
 
 void k_InitKernel(){
@@ -40,8 +29,8 @@ void k_InitKernel(){
 	k_state->max_tasks = MAX_TASKS;
 	k_state->task_counter = 0;
 	k_state->current_task_descriptor = &(k_state->task_descriptors[0]);
-	k_state->current_task_descriptor->link_register = (void *)&first_user_proc;
-	k_state->current_task_descriptor->stack_pointer = get_stack_base(3);
+	k_state->current_task_descriptor->link_register = (void *)&FirstTask_Start;
+	k_state->current_task_descriptor->stack_pointer = get_stack_base(0);
 	PriorityQueue_Initialize(&k_state->task_queue);
 
 	robprintfbusy((const unsigned char *)"Leaving k_InitKernel.\n");
@@ -58,36 +47,32 @@ int k_Create( int priority, void (*code)( ) ){
 	priority = (int)register_0;
 	register int *register_1 asm ("r1");
 	code = (void (*)() )register_1;
+	int rtn = 0;
 
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	k_state->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
-	k_state->current_task_descriptor->link_register = k_state->user_proc_lr_value;
 	
 	k_state->task_counter += 1;
 	
 	if (k_state->task_counter >= k_state->max_tasks) {
-		// TODO: return ERR_K_OUT_OF_TD to callee
+		assert(0,"out of tds");
+		rtn = ERR_K_OUT_OF_TD;
+	}else if (!Queue_IsValidPriority(priority)) {
+		assert(0,"invalid priority");
+		rtn = ERR_K_INVALID_PRIORITY;
+	}else{
+		robprintfbusy((const unsigned char *)"In function k_Create. "
+			"Priority is %d, code is %x, new id is %d\n",
+			priority, code, k_state->task_counter);
+		print_kernel_state(k_state);
+		
+		TD * td = &(k_state->task_descriptors[k_state->task_counter]);
+		TD_Initialize(td, k_state->task_counter, priority, 123456789, get_stack_base(k_state->task_counter), code);
+		//PriorityQueue_Put(&k_state->task_queue, (int*)td, priority);
+		rtn = td->id;
 	}
-	if (!Queue_IsValidPriority(priority)) {
-		// TODO: return ERR_K_INVALID_PRIORITY to callee
-	}
-
-	robprintfbusy((const unsigned char *)"In function k_Create. "
-		"Priority is %d, code is %x, new id is %d\n",
-		priority, code, k_state->task_counter);
-	print_kernel_state(k_state);
-	
-	TD * td = &(k_state->task_descriptors[k_state->task_counter]);
-	TD_Initialize(td, k_state->task_counter, priority, 123456789);
-	PriorityQueue_Put(&k_state->task_queue, (int*)td, priority);
-	
-	// TODO: return task id
 
 	robprintfbusy((const unsigned char *)"Leaving k_Create.\n");
-	//  Set things up to switch back to the 'current' task, which might be a different one.
-	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
-	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
-	k_state->user_proc_return_value = 57;
+	k_state->user_proc_return_value = rtn;
 	print_kernel_state(k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
