@@ -6,6 +6,9 @@
 
 void asm_KernelExit();
 
+
+
+
 TD * schedule_next_task(KernelState * k_state){
 	int current_task_id = k_state->current_task_descriptor->id;
 	int next_task_id = current_task_id == 4 ? 1 : current_task_id + 1;
@@ -26,7 +29,27 @@ void print_kernel_state(KernelState * k_state){
 
 void * get_stack_base(unsigned int task_id){
 	/*TODO: actually figure out how to place the stacks so they don't do crazy things and overwrite memory */
-	return (void*)(0x01400000 - (task_id * 0x00010000));
+	return (void*)(USER_TASKS_STACK_START - (task_id * USER_TASK_STACK_SIZE));
+}
+
+void validate_stack_value(TD * td){
+	int empty_stack_value = (int)get_stack_base(td->id);
+	int full_stack_value = empty_stack_value - USER_TASK_STACK_SIZE;
+	assertf(
+		((int)td->stack_pointer) < empty_stack_value,
+		"User task id %d has stack underflow. SP is %x, but shouldn't be more than %x.",
+		td->id,
+		td->stack_pointer,
+		empty_stack_value
+	);
+	assertf(
+		((int)td->stack_pointer) > full_stack_value,
+		"User task id %d has stack overflow. SP is %x, but shouldn't be less than %x.",
+		td->id,
+		td->stack_pointer,
+		full_stack_value
+	);
+
 }
 
 void k_InitKernel(){
@@ -120,6 +143,8 @@ void k_Pass(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	k_state->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
 	k_state->current_task_descriptor->link_register = k_state->user_proc_lr_value;
+	//  Check for stack overflow and underflows
+	validate_stack_value(k_state->current_task_descriptor);
 	robprintfbusy((const unsigned char *)"In function k_Pass\n");
 	print_kernel_state(k_state);
 	k_state->current_task_descriptor = schedule_next_task(k_state);
