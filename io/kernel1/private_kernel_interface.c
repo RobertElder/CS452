@@ -18,6 +18,8 @@ TD * schedule_next_task(KernelState * k_state){
 	return &(k_state->task_descriptors[next_task_id]);
 	*/
 	
+	k_state->current_task_descriptor = READY;
+	
 	while (1) {
 		TD * td = PriorityQueue_Get(&(k_state->task_queue));
 	
@@ -26,6 +28,7 @@ TD * schedule_next_task(KernelState * k_state){
 		} else if (td->state != ZOMBIE) {
 			PriorityQueue_Put(&(k_state->task_queue), td, td->priority);
 			robprintfbusy((const unsigned char *)"Context switching from task %d to task %d.\n",current_task_id,td->id);
+			td->state = ACTIVE;
 			return td;
 		} else {
 			robprintfbusy((const unsigned char *)"Not scheduling %d because it's a zombie now.\n", td->id);
