@@ -48,6 +48,7 @@ void apply_task_schedule(KernelState * k_state) {
 	}else{
 		k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
 		k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
+		k_state->user_proc_return_value = k_state->current_task_descriptor->return_value;
 	}
 }
 
@@ -143,9 +144,13 @@ int k_Create( int priority, void (*code)( ) ){
 
 		rtn = td->id;
 	}
+	
+	k_state->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
+	k_state->current_task_descriptor->link_register = k_state->user_proc_lr_value;
+	k_state->current_task_descriptor->return_value = rtn;
+	apply_task_schedule(k_state);
 
 	robprintfbusy((const unsigned char *)"Leaving k_Create.\n");
-	k_state->user_proc_return_value = rtn;
 	print_kernel_state(k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
