@@ -8,17 +8,38 @@ void asm_KernelExit();
 
 TD * schedule_next_task(KernelState * k_state){
 	int current_task_id = k_state->current_task_descriptor->id;
+	
+	/*
 	int next_task_id = current_task_id == 4 ? 1 : current_task_id + 1;
 	robprintfbusy((const unsigned char *)"Context switching from task %d to task %d.\n",current_task_id,next_task_id);
 	return &(k_state->task_descriptors[next_task_id]);
+	*/
+	
+	while (1) {
+		TD * td = PriorityQueue_Get(&(k_state->task_queue));
+	
+		//assert(td != 0, "Task PriorityQueue is empty");
+		
+		if (td == 0) {
+			return 0;
+		} else if (td->state != ZOMBIE) {
+			PriorityQueue_Put(&(k_state->task_queue), td, td->priority);
+			robprintfbusy((const unsigned char *)"Context switching from task %d to task %d.\n",current_task_id,td->id);
+			return td;
+		} else {
+			robprintfbusy((const unsigned char *)"Not scheduling %d because it's a zombie now.\n", td->id);
+		}
+	}
+	
+	assert(0, "Shouldn't get here");
 }
 
 void print_kernel_state(KernelState * k_state){
-	TD * current_t = k_state->current_task_descriptor;
+	//TD * current_t = k_state->current_task_descriptor;
 	//robprintfbusy((const unsigned char *)"---- Kernel State ----.\n");
 	//robprintfbusy((const unsigned char *)"Max tasks: %d.\n",k_state->max_tasks);
-	robprintfbusy((const unsigned char *)"SP value: %x task %d.\n",current_t->stack_pointer, current_t->id);
-	robprintfbusy((const unsigned char *)"LR value: %x task %d.\n",current_t->link_register, current_t->id);
+	//robprintfbusy((const unsigned char *)"SP value: %x task %d.\n",current_t->stack_pointer, current_t->id);
+	//robprintfbusy((const unsigned char *)"LR value: %x task %d.\n",current_t->link_register, current_t->id);
 	//robprintfbusy((const unsigned char *)"Return value (if applicable): %x.\n",k_state->user_proc_return_value);
 }
 
@@ -39,7 +60,7 @@ void k_InitKernel(){
 	k_state->current_task_descriptor = &(k_state->task_descriptors[0]);
 	TD_Initialize(k_state->current_task_descriptor, 0, 4, 99, get_stack_base(0), (void *)&FirstTask_Start);
 	PriorityQueue_Initialize(&k_state->task_queue);
-
+	
 	robprintfbusy((const unsigned char *)"Leaving k_InitKernel.\n");
 	//  Set the currently saved process LR and SP to the new process so we can context switch into it when we do asm_KernelExit.
 	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
@@ -73,11 +94,12 @@ int k_Create( int priority, void (*code)( ) ){
 		print_kernel_state(k_state);
 		
 		TD * td = &(k_state->task_descriptors[k_state->num_tasks]);
-		TD_Initialize(td, new_task_id, priority, /*TODO: actual parent id*/ 123456789, get_stack_base(new_task_id), code);
+		TD_Initialize(td, new_task_id, priority, k_state->current_task_descriptor->id, get_stack_base(new_task_id), code);
 		k_state->num_tasks += 1;
 
-		int queue_return_code = PriorityQueue_Put(&k_state->task_queue, (int*)td, priority);
+		int queue_return_code = PriorityQueue_Put(&k_state->task_queue, td, priority);
 		assert(queue_return_code != ERR_QUEUE_FULL,"priority queue full");
+		assert(queue_return_code != ERR_QUEUE_PRIORITY,"priority queue wrong priority");
 
 		rtn = td->id;
 	}
@@ -126,6 +148,11 @@ void k_Pass(){
 	robprintfbusy((const unsigned char *)"In function k_Pass\n");
 	print_kernel_state(k_state);
 	k_state->current_task_descriptor = schedule_next_task(k_state);
+	
+	if (k_state->current_task_descriptor == 0) {
+		// TODO: We're done here, exit cleanly
+		assert(0, "Last task exited");
+	}
 
 	robprintfbusy((const unsigned char *)"Leaving k_Pass\n");
 	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
@@ -138,6 +165,7 @@ void k_Exit(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	robprintfbusy((const unsigned char *)"In function k_Exit\n");
 	print_kernel_state(k_state);
+	k_state->current_task_descriptor->state = ZOMBIE;
 	robprintfbusy((const unsigned char *)"Leaving k_Exit\n");
 	asm_KernelExit();
 }

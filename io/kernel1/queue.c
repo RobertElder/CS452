@@ -63,7 +63,6 @@ QUEUE_ITEM_TYPE PriorityQueue_Get(PriorityQueue * queue) {
 
 	// TODO: this looks messy
 	item = Queue_PopStart(&(queue->highest));
-	
 	if (item) {
 		return item;
 	}
