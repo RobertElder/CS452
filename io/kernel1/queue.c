@@ -1,4 +1,5 @@
 #include "queue.h"
+#include "robio.h"
 
 void Queue_Initialize(Queue * queue) {
 	queue->start = 0;
@@ -9,10 +10,12 @@ int Queue_PushEnd(Queue * queue, QUEUE_ITEM_TYPE item) {
 	if ((queue->end + 1) % QUEUE_SIZE == queue->start) {
 		return ERR_QUEUE_FULL;
 	}
+	
+	assert(item, "Queue_PushEnd: item=0");
 
 	queue->items[queue->end].item = item;
 	queue->end = (queue->end + 1) % QUEUE_SIZE;
-
+	
 	return 0;
 }
 
@@ -21,7 +24,10 @@ QUEUE_ITEM_TYPE Queue_PopStart(Queue * queue) {
 		return 0;
 	}
 
-	QUEUE_ITEM_TYPE item = queue->items[queue->end].item;
+	QUEUE_ITEM_TYPE item = queue->items[queue->start].item;
+
+	assert(item, "Queue_PopStart: item=0");
+
 	queue->start = (queue->start + 1) % QUEUE_SIZE;
 	return item;
 }
