@@ -136,7 +136,7 @@ int k_MyParentTid(){
 	robprintfbusy((const unsigned char *)"Leaving k_MyParentTid\n");
 	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
 	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
-	k_state->user_proc_return_value = 208;
+	k_state->user_proc_return_value = k_state->current_task_descriptor->parent_id;
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
