@@ -2,7 +2,7 @@
 #define QUEUE_H_
 
 #define QUEUE_SIZE 50
-#define QUEUE_ITEM_TYPE int*
+#define QUEUE_ITEM_TYPE void*
 
 static const int ERR_QUEUE_FULL = -1;
 static const int ERR_QUEUE_PRIORITY = -2;

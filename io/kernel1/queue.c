@@ -10,8 +10,7 @@ int Queue_PushEnd(Queue * queue, QUEUE_ITEM_TYPE item) {
 		return ERR_QUEUE_FULL;
 	}
 
-	QueueItem queue_item = {item};
-	queue->items[queue->end] = queue_item;
+	queue->items[queue->end].item = item;
 	queue->end = (queue->end + 1) % QUEUE_SIZE;
 
 	return 0;
@@ -22,9 +21,9 @@ QUEUE_ITEM_TYPE Queue_PopStart(Queue * queue) {
 		return 0;
 	}
 
-	QueueItem queue_item = queue->items[queue->end];
+	QUEUE_ITEM_TYPE item = queue->items[queue->end].item;
 	queue->start = (queue->start + 1) % QUEUE_SIZE;
-	return queue_item.item;
+	return item;
 }
 
 
@@ -45,9 +44,9 @@ int PriorityQueue_Put(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority
 	case NORMAL:
 		return Queue_PushEnd(&(queue->normal), item);
 	case LOW:
-		return Queue_PushEnd(&(queue->lowest), item);
-	case LOWEST:
 		return Queue_PushEnd(&(queue->low), item);
+	case LOWEST:
+		return Queue_PushEnd(&(queue->lowest), item);
 	default:
 		return ERR_QUEUE_PRIORITY;
 	}
@@ -58,6 +57,7 @@ QUEUE_ITEM_TYPE PriorityQueue_Get(PriorityQueue * queue) {
 
 	// TODO: this looks messy
 	item = Queue_PopStart(&(queue->highest));
+	
 	if (item) {
 		return item;
 	}
