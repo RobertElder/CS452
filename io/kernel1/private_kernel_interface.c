@@ -12,12 +12,6 @@ void asm_KernelExit();
 TD * schedule_next_task(KernelState * k_state){
 	int current_task_id = k_state->current_task_descriptor->id;
 	
-	/*
-	int next_task_id = current_task_id == 4 ? 1 : current_task_id + 1;
-	robprintfbusy((const unsigned char *)"Context switching from task %d to task %d.\n",current_task_id,next_task_id);
-	return &(k_state->task_descriptors[next_task_id]);
-	*/
-	
 	k_state->current_task_descriptor = READY;
 	
 	while (1) {
@@ -27,11 +21,9 @@ TD * schedule_next_task(KernelState * k_state){
 			return 0;
 		} else if (td->state != ZOMBIE) {
 			PriorityQueue_Put(&(k_state->task_queue), td, td->priority);
-			robprintfbusy((const unsigned char *)"Context switching from task %d to task %d.\n",current_task_id,td->id);
 			td->state = ACTIVE;
 			return td;
 		} else {
-			robprintfbusy((const unsigned char *)"Not scheduling %d because it's a zombie now.\n", td->id);
 		}
 	}
 	
@@ -93,7 +85,6 @@ void k_InitKernel(){
 	/*  Remember where to return to, in case we want to hand control back to redboot */
 	k_state->redboot_sp_value = k_state->user_proc_sp_value;
 	k_state->redboot_lr_value = k_state->user_proc_lr_value;
-	robprintfbusy((const unsigned char *)"In function k_InitKernel\n");
 	print_kernel_state(k_state);
 	//  Directly set the kernel state structure values on the stack.
 	k_state->max_tasks = MAX_TASKS;
@@ -102,7 +93,6 @@ void k_InitKernel(){
 	TD_Initialize(k_state->current_task_descriptor, 0, LOWEST, 99, get_stack_base(0), (void *)&KernelTask_Start);
 	PriorityQueue_Initialize(&k_state->task_queue);
 	
-	robprintfbusy((const unsigned char *)"Leaving k_InitKernel.\n");
 	//  Set the currently saved process LR and SP to the new process so we can context switch into it when we do asm_KernelExit.
 	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
 	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
@@ -129,9 +119,6 @@ int k_Create( int priority, void (*code)( ) ){
 		rtn = ERR_K_INVALID_PRIORITY;
 	}else{
 		int new_task_id = k_state->num_tasks;
-		robprintfbusy((const unsigned char *)"In function k_Create. "
-			"Priority is %d, code is %x, new id is %d\n",
-			priority, code, k_state->num_tasks);
 		print_kernel_state(k_state);
 		
 		TD * td = &(k_state->task_descriptors[k_state->num_tasks]);
@@ -150,7 +137,6 @@ int k_Create( int priority, void (*code)( ) ){
 	k_state->current_task_descriptor->return_value = rtn;
 	apply_task_schedule(k_state);
 
-	robprintfbusy((const unsigned char *)"Leaving k_Create.\n");
 	print_kernel_state(k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
@@ -176,9 +162,7 @@ int k_MyParentTid(){
 	k_state->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
 	k_state->current_task_descriptor->link_register = k_state->user_proc_lr_value;
 
-	robprintfbusy((const unsigned char *)"In function k_MyParentTid\n");
 	print_kernel_state(k_state);
-	robprintfbusy((const unsigned char *)"Leaving k_MyParentTid\n");
 	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
 	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
 	k_state->user_proc_return_value = k_state->current_task_descriptor->parent_id;
@@ -192,22 +176,18 @@ void k_Pass(){
 	k_state->current_task_descriptor->link_register = k_state->user_proc_lr_value;
 	//  Check for stack overflow and underflows
 	validate_stack_value(k_state->current_task_descriptor);
-	robprintfbusy((const unsigned char *)"In function k_Pass\n");
 	print_kernel_state(k_state);
 	apply_task_schedule(k_state);
 
-	robprintfbusy((const unsigned char *)"Leaving k_Pass\n");
 	print_kernel_state(k_state);
 	asm_KernelExit();
 }
 
 void k_Exit(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	robprintfbusy((const unsigned char *)"In function k_Exit\n");
 	print_kernel_state(k_state);
 	k_state->current_task_descriptor->state = ZOMBIE;
 	apply_task_schedule(k_state);
 	
-	robprintfbusy((const unsigned char *)"Leaving k_Exit\n");
 	asm_KernelExit();
 }

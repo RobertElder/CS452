@@ -2,7 +2,6 @@
 #include "robio.h"
 
 void TD_Initialize(TD * td, int id, QueuePriority priority, int parent_id, void * sp, void * lr) {
-	robprintfbusy((const unsigned char *)"Initializing task descriptor.  id: %d, sp: %x lr: %x \n",id,sp,lr);
 	td->id = id;
 	td->state = ACTIVE;
 	td->priority = priority;
