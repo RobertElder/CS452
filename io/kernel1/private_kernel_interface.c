@@ -21,8 +21,6 @@ TD * schedule_next_task(KernelState * k_state){
 	while (1) {
 		TD * td = PriorityQueue_Get(&(k_state->task_queue));
 	
-		//assert(td != 0, "Task PriorityQueue is empty");
-		
 		if (td == 0) {
 			return 0;
 		} else if (td->state != ZOMBIE) {
