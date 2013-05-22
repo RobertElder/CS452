@@ -10,8 +10,6 @@ void asm_KernelExit();
 
 
 TD * schedule_next_task(KernelState * k_state){
-	int current_task_id = k_state->current_task_descriptor->id;
-	
 	k_state->current_task_descriptor = READY;
 	
 	while (1) {
@@ -23,8 +21,7 @@ TD * schedule_next_task(KernelState * k_state){
 			PriorityQueue_Put(&(k_state->task_queue), td, td->priority);
 			td->state = ACTIVE;
 			return td;
-		} else {
-		}
+		} 
 	}
 	
 	assert(0, "Shouldn't get here");
