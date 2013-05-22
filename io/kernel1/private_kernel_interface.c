@@ -38,13 +38,20 @@ TD * schedule_next_task(KernelState * k_state){
 	assert(0, "Shouldn't get here");
 }
 
-void apply_task_schedule(KernelState * k_state) {
+void save_current_task_state(KernelState * k_state) {
+	k_state->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
+	k_state->current_task_descriptor->link_register = k_state->user_proc_lr_value;
+	k_state->current_task_descriptor->spsr_register = k_state->user_proc_spsr;
+}
+
+void set_next_task_state(KernelState * k_state) {
 	k_state->current_task_descriptor = schedule_next_task(k_state);
 	
 	if (k_state->current_task_descriptor == 0) {
 		/* Nothing to do, exit to redboot. */
 		k_state->user_proc_sp_value = k_state->redboot_sp_value;
 		k_state->user_proc_lr_value = k_state->redboot_lr_value;
+		k_state->user_proc_return_value = 0;
 	}else{
 		k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
 		k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
@@ -145,10 +152,9 @@ int k_Create( int priority, void (*code)( ) ){
 		rtn = td->id;
 	}
 	
-	k_state->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
-	k_state->current_task_descriptor->link_register = k_state->user_proc_lr_value;
+	save_current_task_state(k_state);
 	k_state->current_task_descriptor->return_value = rtn;
-	apply_task_schedule(k_state);
+	set_next_task_state(k_state);
 
 	robprintfbusy((const unsigned char *)"Leaving k_Create.\n");
 	print_kernel_state(k_state);
@@ -158,43 +164,34 @@ int k_Create( int priority, void (*code)( ) ){
 
 int k_MyTid(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	k_state->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
-	k_state->current_task_descriptor->link_register = k_state->user_proc_lr_value;
-
-	//robprintfbusy((const unsigned char *)"In function k_MyTid\n");
-	//print_kernel_state(k_state);
-	//robprintfbusy((const unsigned char *)"Leaving k_MyTid\n");
-	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
-	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
-	k_state->user_proc_return_value = k_state->current_task_descriptor->id;
+	save_current_task_state(k_state);
+	k_state->current_task_descriptor->return_value = k_state->current_task_descriptor->id;
+	set_next_task_state(k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
 
 int k_MyParentTid(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	k_state->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
-	k_state->current_task_descriptor->link_register = k_state->user_proc_lr_value;
+	save_current_task_state(k_state);
 
 	robprintfbusy((const unsigned char *)"In function k_MyParentTid\n");
 	print_kernel_state(k_state);
 	robprintfbusy((const unsigned char *)"Leaving k_MyParentTid\n");
-	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
-	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
-	k_state->user_proc_return_value = k_state->current_task_descriptor->parent_id;
+	k_state->current_task_descriptor->return_value = k_state->current_task_descriptor->parent_id;
+	set_next_task_state(k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
 
 void k_Pass(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	k_state->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
-	k_state->current_task_descriptor->link_register = k_state->user_proc_lr_value;
+	save_current_task_state(k_state);
 	//  Check for stack overflow and underflows
 	validate_stack_value(k_state->current_task_descriptor);
 	robprintfbusy((const unsigned char *)"In function k_Pass\n");
 	print_kernel_state(k_state);
-	apply_task_schedule(k_state);
+	set_next_task_state(k_state);
 
 	robprintfbusy((const unsigned char *)"Leaving k_Pass\n");
 	print_kernel_state(k_state);
@@ -206,7 +203,7 @@ void k_Exit(){
 	robprintfbusy((const unsigned char *)"In function k_Exit\n");
 	print_kernel_state(k_state);
 	k_state->current_task_descriptor->state = ZOMBIE;
-	apply_task_schedule(k_state);
+	set_next_task_state(k_state);
 	
 	robprintfbusy((const unsigned char *)"Leaving k_Exit\n");
 	asm_KernelExit();
