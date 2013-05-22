@@ -37,7 +37,7 @@ void FirstTask_Start() {
 	robprintfbusy((const unsigned char *)"First: exiting\n");
 	Exit();
 	
-	robprintfbusy((const unsigned char *)"Shouldn't see me\n");
+	assert(0, "Shouldn't see me\n");
 }
 
 int overflow(int times){
