@@ -11,7 +11,7 @@ int Queue_PushEnd(Queue * queue, QUEUE_ITEM_TYPE item) {
 		return ERR_QUEUE_FULL;
 	}
 	
-	assert(item, "Queue_PushEnd: item=0");
+	assert((int)item, "Queue_PushEnd: item=0");
 
 	queue->items[queue->end].item = item;
 	queue->end = (queue->end + 1) % QUEUE_SIZE;
@@ -26,7 +26,7 @@ QUEUE_ITEM_TYPE Queue_PopStart(Queue * queue) {
 
 	QUEUE_ITEM_TYPE item = queue->items[queue->start].item;
 
-	assert(item, "Queue_PopStart: item=0");
+	assert((int)item, "Queue_PopStart: item=0");
 
 	queue->start = (queue->start + 1) % QUEUE_SIZE;
 	return item;

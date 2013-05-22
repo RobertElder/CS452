@@ -76,6 +76,9 @@ void validate_stack_value(TD * td){
 
 void k_InitKernel(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	/*  Remember where to return to, in case we want to hand control back to redboot */
+	k_state->redboot_sp_value = k_state->user_proc_sp_value;
+	k_state->redboot_lr_value = k_state->user_proc_lr_value;
 	robprintfbusy((const unsigned char *)"In function k_InitKernel\n");
 	print_kernel_state(k_state);
 	//  Directly set the kernel state structure values on the stack.
@@ -176,13 +179,15 @@ void k_Pass(){
 	k_state->current_task_descriptor = schedule_next_task(k_state);
 	
 	if (k_state->current_task_descriptor == 0) {
-		// TODO: We're done here, exit cleanly
-		assert(0, "Last task exited");
+		/* Nothing to do, exit to redboot. */
+		k_state->user_proc_sp_value = k_state->redboot_sp_value;
+		k_state->user_proc_lr_value = k_state->redboot_lr_value;
+	}else{
+		k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
+		k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
 	}
 
 	robprintfbusy((const unsigned char *)"Leaving k_Pass\n");
-	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
-	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
 	print_kernel_state(k_state);
 	asm_KernelExit();
 }
@@ -195,12 +200,14 @@ void k_Exit(){
 	k_state->current_task_descriptor = schedule_next_task(k_state);
 	
 	if (k_state->current_task_descriptor == 0) {
-		// TODO: We're done here, exit cleanly
-		assert(0, "Last task exited");
+		/* Nothing to do, exit to redboot. */
+		k_state->user_proc_sp_value = k_state->redboot_sp_value;
+		k_state->user_proc_lr_value = k_state->redboot_lr_value;
+	}else{
+		k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
+		k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
 	}
 	
 	robprintfbusy((const unsigned char *)"Leaving k_Exit\n");
-	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
-	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
 	asm_KernelExit();
 }
