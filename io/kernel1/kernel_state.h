@@ -5,7 +5,7 @@
 #ifndef KERNEL_STATE_H_
 #define KERNEL_STATE_H_
 
-#define MAX_TASKS 5
+#define MAX_TASKS 6
 
 typedef struct KernelState {
 	/*  IMPORTANT!!!  The order of the items in this struct is important

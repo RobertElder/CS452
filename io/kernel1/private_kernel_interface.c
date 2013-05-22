@@ -58,7 +58,7 @@ void k_InitKernel(){
 	k_state->max_tasks = MAX_TASKS;
 	k_state->num_tasks = 1; /* There is one task, the start task we are creating now */
 	k_state->current_task_descriptor = &(k_state->task_descriptors[0]);
-	TD_Initialize(k_state->current_task_descriptor, 0, 4, 99, get_stack_base(0), (void *)&FirstTask_Start);
+	TD_Initialize(k_state->current_task_descriptor, 0, LOWEST, 99, get_stack_base(0), (void *)&KernelTask_Start);
 	PriorityQueue_Initialize(&k_state->task_queue);
 	
 	robprintfbusy((const unsigned char *)"Leaving k_InitKernel.\n");
@@ -166,6 +166,15 @@ void k_Exit(){
 	robprintfbusy((const unsigned char *)"In function k_Exit\n");
 	print_kernel_state(k_state);
 	k_state->current_task_descriptor->state = ZOMBIE;
+	k_state->current_task_descriptor = schedule_next_task(k_state);
+	
+	if (k_state->current_task_descriptor == 0) {
+		// TODO: We're done here, exit cleanly
+		assert(0, "Last task exited");
+	}
+	
 	robprintfbusy((const unsigned char *)"Leaving k_Exit\n");
+	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
+	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
 	asm_KernelExit();
 }

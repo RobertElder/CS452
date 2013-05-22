@@ -3,6 +3,18 @@
 #include "robio.h"
 #include "queue.h"
 
+void KernelTask_Start() {
+	int tid = Create(NORMAL, &FirstTask_Start);
+	
+	assert(tid == 1, "FirstTask tid not 1");
+	
+	while(1) {
+		Pass();
+	}
+	
+	Exit();
+}
+
 void FirstTask_Start() {
 	//while(1){
 		robprintfbusy((const unsigned char *)"F1RST TASK!!1\n");
@@ -19,12 +31,13 @@ void FirstTask_Start() {
 			
 		tid = Create(HIGH, &GenericTask_Start);
 		robprintfbusy((const unsigned char *)"Created: %d\n", tid);
-		Pass();
+		//Pass();
 	//}
 	
-	while(1){
-	Pass();
-	}
+	robprintfbusy((const unsigned char *)"First: exiting\n");
+	Exit();
+	
+	robprintfbusy((const unsigned char *)"Shouldn't see me\n");
 }
 
 void GenericTask_Start() {
