@@ -106,3 +106,28 @@ Source Code
 
 Output
 ======
+
+The executable prints the following:
+
+1. ``FirstTask``, with ID 1, prints the message about creating two tasks 2 and 3
+2. Task 4 executes.
+
+   * Task 4 executes because it is created with ``HIGH`` priority. The ``FirstTask`` has only ``NORMAL`` priority.
+
+3. ``FirstTask`` prints that it created task 4.
+4. Task 5 executes.
+
+   * Task 5 has ``HIGH`` priority
+
+5. ``FirstTask`` prints that it created task 5.
+6. ``FirstTask`` exits.
+7. Task 2 runs.
+
+   * Task 2 has ``LOW`` priority so it runs only now.
+
+8. Task 3 runs.
+9. Task 2 runs.
+
+   * Task 2 and 3 have equal priority so they are queued right after each other.
+10. Task 3 runs.
+
