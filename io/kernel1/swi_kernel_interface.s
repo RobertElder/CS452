@@ -59,8 +59,14 @@ asm_KernelExit:
         BL asm_GetStoredUserRtn 
 	MOV R0, R8
 	/* --enter system */
-	MRS r7, CPSR
-	ORR r6, r7, #31
+	MRS r7, CPSR  /* Save current mode */
+	MRS r6, SPSR /* determine what was last mode */
+	AND r5, r6, #31  /* only want the mode bits */
+	MOV r6, r7 /* Assume we want supervisor  */
+	CMP r5, #19  /* did they come from supervisor mode? */
+	BEQ DONOTSWITCHTOSYSTEM1
+	ORR r6, r7, #31 /* Go into sytem mode to get user sp */
+	DONOTSWITCHTOSYSTEM1:
 	MSR CPSR, r6
         BL asm_GetStoredUserSp
 	MOV SP, R8
@@ -86,25 +92,25 @@ asm_KernelExit:
 	/* Interrups are now enabled!!! */
 
 asm_GetStoredUserSpsr:
-LDR r8, [PC, #116] /* load base stack pointer address */
+LDR r8, [PC, #136] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
 LDR r8, [r8, #12]  /* get return value */
 BX LR
 
 asm_GetStoredUserRtn:
-LDR r8, [PC, #100] /* load base stack pointer address */
+LDR r8, [PC, #120] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
 LDR r8, [r8, #8]  /* get return value */
 BX LR
 
 asm_GetStoredUserSp:
-LDR r8, [PC, #84] /* load base stack pointer address */
+LDR r8, [PC, #104] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
 LDR r8, [r8, #0]  /* get sp*/
 BX LR
 
 asm_GetStoredUserLr:
-LDR r8, [PC, #68] /* load base stack pointer address */
+LDR r8, [PC, #88] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
 LDR r8, [r8, #4]  /* get lr */
 BX LR
@@ -112,11 +118,17 @@ BX LR
 asm_SwiCallEntry:
 /* We don't need to do any poping or pushing of kernel state because all kernel state is stored in a struct at the base of the kernel stack, and we always know this location */
 
-LDR r8, [PC, #52]; /*  Load the value of the base of the kernel stack into r8 */
+LDR r8, [PC, #72]; /*  Load the value of the base of the kernel stack into r8 */
 LDR r8, [r8, #0]; /*  The value at the base of the SP is where we want the SP to start, after the kernel state struct */
 	/* --enter system */
-MRS r7, CPSR
-ORR r6, r7, #31
+MRS r7, CPSR  /* Save current mode */
+MRS r6, SPSR /* determine what was last mode */
+AND r5, r6, #31  /* only want the mode bits */
+MOV r6, r7 /* Assume we want supervisor  */
+CMP r5, #19  /* did they come from supervisor mode? */
+BEQ DONOTSWITCHTOSYSTEM2
+ORR r6, r7, #31 /* Go into sytem mode to get user sp */
+DONOTSWITCHTOSYSTEM2:
 MSR CPSR, r6
 STR SP, [r8, #0] /*  Save the stack pointer directly into the kernel state struct */
 MSR CPSR, r7

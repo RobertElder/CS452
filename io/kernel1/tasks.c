@@ -51,11 +51,8 @@ void GenericTask_Start() {
 	int my_tid = MyTid();
 	int my_parent_tid = MyParentTid();
 	robprintfbusy((const unsigned char *)"Task ID=%d, Parent ID=%d\n", my_tid, my_parent_tid);
-	robprintfbusy((const unsigned char *)"About to pass.\n");
 	Pass();
 	robprintfbusy((const unsigned char *)"Task ID=%d, Parent ID=%d\n", my_tid, my_parent_tid);
-	
-	robprintfbusy((const unsigned char *)"About to exit.\n");
 	Exit();
 }
 
