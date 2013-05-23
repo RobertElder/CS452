@@ -6,9 +6,6 @@
 
 void asm_KernelExit();
 
-
-
-
 TD * schedule_next_task(KernelState * k_state){
 	k_state->current_task_descriptor = READY;
 	
@@ -31,6 +28,8 @@ void save_current_task_state(KernelState * k_state) {
 	k_state->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
 	k_state->current_task_descriptor->link_register = k_state->user_proc_lr_value;
 	k_state->current_task_descriptor->spsr_register = k_state->user_proc_spsr;
+	robprintfbusy((const unsigned char *)"Saving state for task %d, SP: %x LR %x spsr: %d.\n",k_state->current_task_descriptor->id,k_state->user_proc_sp_value,k_state->user_proc_lr_value,(k_state->user_proc_spsr & 0x00FFFFFF));
+
 }
 
 void set_next_task_state(KernelState * k_state) {
@@ -41,11 +40,14 @@ void set_next_task_state(KernelState * k_state) {
 		k_state->user_proc_sp_value = k_state->redboot_sp_value;
 		k_state->user_proc_lr_value = k_state->redboot_lr_value;
 		k_state->user_proc_return_value = 0;
+		k_state->user_proc_spsr = k_state->redboot_spsr_value;
 	}else{
 		k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
 		k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
 		k_state->user_proc_return_value = k_state->current_task_descriptor->return_value;
+		k_state->user_proc_spsr = k_state->current_task_descriptor->spsr_register;
 	}
+	robprintfbusy((const unsigned char *)"Loading state for task %d, SP: %x LR %x spsr: %d.\n",k_state->current_task_descriptor->id,k_state->user_proc_sp_value,k_state->user_proc_lr_value,(k_state->user_proc_spsr & 0x00FFFFFF));
 }
 
 void print_kernel_state(KernelState * k_state){
@@ -68,14 +70,14 @@ void validate_stack_value(TD * td){
 	int empty_stack_value = (int)get_stack_base(td->id);
 	int full_stack_value = empty_stack_value - USER_TASK_STACK_SIZE;
 	assertf(
-		((int)td->stack_pointer) < empty_stack_value,
+		((int)td->stack_pointer) <= empty_stack_value,
 		"User task id %d has stack underflow. SP is %x, but shouldn't be more than %x.",
 		td->id,
 		td->stack_pointer,
 		empty_stack_value
 	);
 	assertf(
-		((int)td->stack_pointer) > full_stack_value,
+		((int)td->stack_pointer) >= full_stack_value,
 		"User task id %d has stack overflow. SP is %x, but shouldn't be less than %x.",
 		td->id,
 		td->stack_pointer,
@@ -89,6 +91,8 @@ void k_InitKernel(){
 	/*  Remember where to return to, in case we want to hand control back to redboot */
 	k_state->redboot_sp_value = k_state->user_proc_sp_value;
 	k_state->redboot_lr_value = k_state->user_proc_lr_value;
+	k_state->redboot_spsr_value = k_state->user_proc_spsr;
+	robprintfbusy((const unsigned char *)"bits from redboot: %d",k_state->user_proc_spsr);
 	print_kernel_state(k_state);
 	//  Directly set the kernel state structure values on the stack.
 	k_state->max_tasks = MAX_TASKS;
@@ -100,6 +104,7 @@ void k_InitKernel(){
 	//  Set the currently saved process LR and SP to the new process so we can context switch into it when we do asm_KernelExit.
 	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
 	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
+	k_state->user_proc_spsr = k_state->current_task_descriptor->spsr_register;
 	print_kernel_state(k_state);
 	asm_KernelExit();
 }
@@ -141,6 +146,7 @@ int k_Create( int priority, void (*code)( ) ){
 	set_next_task_state(k_state);
 
 	print_kernel_state(k_state);
+	robprintfbusy((const unsigned char *)"exiting create into task %d\n",k_state->current_task_descriptor->id);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
@@ -173,14 +179,18 @@ void k_Pass(){
 	set_next_task_state(k_state);
 
 	print_kernel_state(k_state);
+	robprintfbusy((const unsigned char *)"exiting pass\n");
 	asm_KernelExit();
 }
 
 void k_Exit(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	save_current_task_state(k_state);
+	validate_stack_value(k_state->current_task_descriptor);
 	print_kernel_state(k_state);
 	k_state->current_task_descriptor->state = ZOMBIE;
 	set_next_task_state(k_state);
 	
+	robprintfbusy((const unsigned char *)"About to leave k_exit into proc %d.\n",k_state->current_task_descriptor->id);
 	asm_KernelExit();
 }

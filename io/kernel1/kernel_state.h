@@ -24,7 +24,7 @@ typedef struct KernelState {
 	unsigned int num_tasks;
 	void * redboot_sp_value;
 	void * redboot_lr_value;
-	void * spsr;
+	int redboot_spsr_value;
 } KernelState;
 
 

@@ -16,6 +16,7 @@
 .global asm_GetStoredUserSp
 .global asm_GetStoredUserLr
 .global asm_GetStoredUserRtn
+.global asm_GetStoredUserSpsr
 
 
 asm_KernelInitEntry:
@@ -51,11 +52,20 @@ asm_ExitEntry:
 
 /*  This function executes when exiting from all kernel functions */
 asm_KernelExit:
-	/* Put the return value, LR and SP back for the user process. */
+	/* Put the spsr, return value, LR and SP back for the user process. */
+        BL asm_GetStoredUserSpsr
+	MSR SPSR, R8
+        MOV r0, R8;
         BL asm_GetStoredUserRtn 
 	MOV R0, R8
+	/* --enter system */
+	MRS r7, CPSR
+	ORR r6, r7, #31
+	MSR CPSR, r6
         BL asm_GetStoredUserSp
 	MOV SP, R8
+	MSR CPSR, r7
+	/* --leave system */
         BL asm_GetStoredUserLr /* Do this one last so we don't overwrite LR with BL asm_...*/
 	MOV LR, R8
 	
@@ -75,20 +85,26 @@ asm_KernelExit:
 
 	/* Interrups are now enabled!!! */
 
+asm_GetStoredUserSpsr:
+LDR r8, [PC, #116] /* load base stack pointer address */
+LDR r8, [r8, #0] /* load the address of after the kernel state structure */
+LDR r8, [r8, #12]  /* get return value */
+BX LR
+
 asm_GetStoredUserRtn:
-LDR r8, [PC, #76] /* load base stack pointer address */
+LDR r8, [PC, #100] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
 LDR r8, [r8, #8]  /* get return value */
 BX LR
 
 asm_GetStoredUserSp:
-LDR r8, [PC, #60] /* load base stack pointer address */
+LDR r8, [PC, #84] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
 LDR r8, [r8, #0]  /* get sp*/
 BX LR
 
 asm_GetStoredUserLr:
-LDR r8, [PC, #44] /* load base stack pointer address */
+LDR r8, [PC, #68] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
 LDR r8, [r8, #4]  /* get lr */
 BX LR
@@ -96,10 +112,18 @@ BX LR
 asm_SwiCallEntry:
 /* We don't need to do any poping or pushing of kernel state because all kernel state is stored in a struct at the base of the kernel stack, and we always know this location */
 
-LDR r8, [PC, #28]; /*  Load the base of the kernel stack into SP */
-LDR r8, [r8, #0]; /*  The value at the base of the SP is where we want the SP to start */
+LDR r8, [PC, #52]; /*  Load the value of the base of the kernel stack into r8 */
+LDR r8, [r8, #0]; /*  The value at the base of the SP is where we want the SP to start, after the kernel state struct */
+	/* --enter system */
+MRS r7, CPSR
+ORR r6, r7, #31
+MSR CPSR, r6
 STR SP, [r8, #0] /*  Save the stack pointer directly into the kernel state struct */
+MSR CPSR, r7
+	/* --leave system */
 STR LR, [r8, #4] /*  Save the user link register directly into the kernel state struct  */
+MRS SP, SPSR /*  The stack pointer has been saved already, use sp as a temp register to get the spsr */
+STR SP, [r8, #12] /* Save the user's cpsr, which is now in spsr into the kernel struct */
 MOV SP, r8 /*  Load the new kernel stack pointer */
 LDR r9, [lr,#-4]; /*  Put the SWI instruction call in R9.  This contains the kernel function id.  */
 MOV r9, r9, LSL #8; /*  Get rid of the high 8 bits by doing a left logical shift of 16 to discard the high bits  */
