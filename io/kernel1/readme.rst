@@ -27,6 +27,46 @@ Description
 Kernel
 ++++++
 
+The entry point is located in ``kern.c``.
+
+The kernel follows the following:
+
+1. Sets the location of our SWI routine.
+2. Increments the stack pointer to accommodate our Kernel State.
+3. Initialize the kernel (File ``private_kernel_interface.c``).
+
+   1. Save the SP and LR values so the kernel can exit back to RedBoot.
+   2. Initialize the pseudo Task Descriptor.
+   3. Initialize the queues.
+   4. Set the SP and LR value to Kernel State
+   5. Call the ``asm_KernelExit`` routine to push the values to the register.
+
+4. Jump to KernelTask_Start (File ``tasks.c``)
+5. Start our first user task that starts the 4 other generic tasks.
+
+
+Scheduling
+----------
+
+Scheduling occurs for all kernel calls. Before the current task descriptor is swapped out,
+
+1. The user task's SP, LR, and SPSR values are saved into the current task descriptor.
+2. Any related values are also saved into the TD.
+3. The next task is selected.
+
+   1. The current task is set to ``READY``.
+   2. A task is removed from the Priority Queue.
+
+      * Any tasks in the ``ZOMBIE`` state are not re-queued. Go back to step 1.
+
+   3. Use the pointer to the task as the next task to be run.
+   4. Set the new task as ``ACTIVE``.
+   5. Add the task back to the Priority Queue.
+
+4. If there no more tasks in the Priority Queue, the kernel exits back to RedBoot.
+5. Otherwise, the SP, LR, and return values are saved into the Kernel State.
+6. Assembly routine pushes these values to the registers.
+
 
 Algorithms and Data structures
 ++++++++++++++++++++++++++++++
