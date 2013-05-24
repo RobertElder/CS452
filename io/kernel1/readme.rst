@@ -106,6 +106,8 @@ Algorithms and Data structures
 Queue
 -----
 
+File: ``queue.c``
+
 The queue, a ``struct``, is implemented as a ring buffer. A start and end index is used to point to the start and end of the array. Each item is a ``void*``. The ring buffer allows adding and removing an item from the queue in constant time. A null pointer is returned if the queue is empty.
 
 
@@ -130,11 +132,15 @@ Performance can be improved for removing an item in the priority queue. It curre
 Task Descriptor (TD)
 --------------------
 
+File: ``task_descriptor.c``
+
 The TD, a ``struct``, holds important information such as the task id, state, and return values.
 
 
 Kernel State
 ------------
+
+File: ``kernel_state.h``
 
 The Kernel State is a ``struct`` stored at ``0x01500000``. It contains values such as the SP, LR, and return values that are set and retrieved in C code. Once these values are set, a routine is run in assembly code that pushes these values to the appropriate registers. This method makes it convenient for writing in C.
 
