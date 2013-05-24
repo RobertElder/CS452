@@ -4,7 +4,7 @@ CS 452 K1
 
 
 :Names: Robert Elder, Christopher Foo
-:ID #: , 20309244
+:ID #: 20335246, 20309244
 :Userids: relder, chfoo
 :Date due: May 27, 2013
 
@@ -12,11 +12,11 @@ CS 452 K1
 Running
 =======
 
-The executable is located at ``/u/cs452/tftp/ARM/somewhere/path/here/kern.elf``.
+The executable is located at ``/u0/relder/cs452/CS452/io/kernel-1-submission/kern.elf``.
 
 It is executed using the regular commands::
 
-    load -b 0x00218000 -h 10.15.167.4 /u/cs452/tftp/ARM/somewhere/path/here/kern.elf
+    load -b 0x00218000 -h 10.15.167.4 /u0/relder/cs452/CS452/io/kernel-1-submission/kern.elf
     go
 
 
@@ -32,7 +32,7 @@ The entry point is located in ``kern.c``.
 The kernel follows the following:
 
 1. Sets the location of our SWI routine.
-2. Increments the stack pointer to accommodate our Kernel State.
+2. Sets the stack pointer to accommodate our Kernel State.
 3. Initialize the kernel (File ``private_kernel_interface.c``:``k_InitKernel()``).
 
    1. Save the SP and LR values so the kernel can exit back to RedBoot.
@@ -142,7 +142,7 @@ Kernel State
 
 File: ``kernel_state.h``
 
-The Kernel State is a ``struct`` stored at ``0x01500000``. It contains values such as the SP, LR, and return values that are set and retrieved in C code. Once these values are set, a routine is run in assembly code that pushes these values to the appropriate registers. This method makes it convenient for writing in C.
+The Kernel State is a ``struct`` stored at ``0x01500000 - sizeof(KernelState)``. It contains values such as the SP, LR, and return values that are set and retrieved in C code. Once these values are set, a routine is run in assembly code that pushes these values to the appropriate registers. The same information is also written to the struct directly when entering a kernel function.  This method makes it convenient for writing in C.
 
 The Kernel State also contains information about the Task Descriptors.
 
@@ -150,7 +150,7 @@ The Kernel State also contains information about the Task Descriptors.
 Source Code
 ===========
 
-The source code is located at ``/u/location/here/files/``.
+The source code is located at ``/u0/relder/cs452/CS452/io/kernel-1-submission``.
 
 ::
 
