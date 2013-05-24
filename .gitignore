@@ -1,7 +1,6 @@
 *.o
 *.map
 *.bak
-*.elf
 *~
 .cproject
 .project
