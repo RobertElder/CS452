@@ -8,11 +8,8 @@ void KernelTask_Start() {
 	
 	assert(tid == 1, "FirstTask tid not 1");
 	
-	while(1) {
-		Pass();
-	}
-	
 	Exit();
+	assert(0, "Shouldn't see me\n");
 }
 
 void FirstTask_Start() {
@@ -54,6 +51,7 @@ void GenericTask_Start() {
 	Pass();
 	robprintfbusy((const unsigned char *)"Task ID=%d, Parent ID=%d\n", my_tid, my_parent_tid);
 	Exit();
+	assert(0, "Shouldn't see me\n");
 }
 
 /*

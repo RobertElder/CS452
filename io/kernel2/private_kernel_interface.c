@@ -6,6 +6,12 @@
 
 void asm_KernelExit();
 
+void safely_add_task_to_priority_queue(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority priority){
+	int queue_return_code = PriorityQueue_Put(queue, item, priority);
+	assert(queue_return_code != ERR_QUEUE_FULL,"priority queue full");
+	assert(queue_return_code != ERR_QUEUE_PRIORITY,"priority queue wrong priority");
+}
+
 TD * schedule_next_task(KernelState * k_state){
 	k_state->current_task_descriptor = READY;
 	
@@ -13,12 +19,17 @@ TD * schedule_next_task(KernelState * k_state){
 		TD * td = PriorityQueue_Get(&(k_state->task_queue));
 	
 		if (td == 0) {
+			//  There are no ready tasks found.
 			return 0;
 		} else if (td->state != ZOMBIE) {
+			//  We're scheduling this task now, put it at the end of the queue
 			PriorityQueue_Put(&(k_state->task_queue), td, td->priority);
 			td->state = ACTIVE;
 			return td;
-		} 
+		} else {
+			// TODO:
+			// Destroy the zombie task
+		}
 	}
 	
 	assert(0, "Shouldn't get here");
@@ -85,6 +96,9 @@ void validate_stack_value(TD * td){
 
 void k_InitKernel(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	TD * task_descriptor = &(k_state->task_descriptors[0]);
+	int task_priority = LOWEST;
+	int task_id = 0;
 	/*  Remember where to return to, in case we want to hand control back to redboot */
 	k_state->redboot_sp_value = k_state->user_proc_sp_value;
 	k_state->redboot_lr_value = k_state->user_proc_lr_value;
@@ -93,14 +107,10 @@ void k_InitKernel(){
 	//  Directly set the kernel state structure values on the stack.
 	k_state->max_tasks = MAX_TASKS;
 	k_state->num_tasks = 1; /* There is one task, the start task we are creating now */
-	k_state->current_task_descriptor = &(k_state->task_descriptors[0]);
-	TD_Initialize(k_state->current_task_descriptor, 0, LOWEST, 99, get_stack_base(0), (void *)&KernelTask_Start);
+	TD_Initialize(task_descriptor, task_id, task_priority, 99, get_stack_base(task_id), (void *)&KernelTask_Start);
 	PriorityQueue_Initialize(&k_state->task_queue);
-	
-	//  Set the currently saved process LR and SP to the new process so we can context switch into it when we do asm_KernelExit.
-	k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
-	k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
-	k_state->user_proc_spsr = k_state->current_task_descriptor->spsr_register;
+	safely_add_task_to_priority_queue(&k_state->task_queue, task_descriptor, task_priority);
+	set_next_task_state(k_state);
 	print_kernel_state(k_state);
 	asm_KernelExit();
 }
@@ -130,9 +140,7 @@ int k_Create( int priority, void (*code)( ) ){
 		TD_Initialize(td, new_task_id, priority, k_state->current_task_descriptor->id, get_stack_base(new_task_id), code);
 		k_state->num_tasks += 1;
 
-		int queue_return_code = PriorityQueue_Put(&k_state->task_queue, td, priority);
-		assert(queue_return_code != ERR_QUEUE_FULL,"priority queue full");
-		assert(queue_return_code != ERR_QUEUE_PRIORITY,"priority queue wrong priority");
+		safely_add_task_to_priority_queue(&k_state->task_queue, td, priority);
 
 		rtn = td->id;
 	}
