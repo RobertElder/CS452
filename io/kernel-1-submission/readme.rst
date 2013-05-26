@@ -12,11 +12,11 @@ CS 452 K1
 Running
 =======
 
-The executable is located at ``/u0/relder/cs452/CS452/io/kernel-1-submission/kern.elf``.
+The executable is located at ``/u/cs452/tftp/ARM/relder-chfoo/k1-submit/kern.elf``.
 
 It is executed using the regular commands::
 
-    load -b 0x00218000 -h 10.15.167.4 /u0/relder/cs452/CS452/io/kernel-1-submission/kern.elf
+    load -b 0x00218000 -h 10.15.167.4 /u/cs452/tftp/ARM/relder-chfoo/k1-submit/kern.elf
     go
 
 
@@ -150,13 +150,43 @@ The Kernel State also contains information about the Task Descriptors.
 Source Code
 ===========
 
-The source code is located at ``/u0/relder/cs452/CS452/io/kernel-1-submission``.
+The source code is located at ``/u4/chfoo/cs452/group/k1-submit/io/kernel-1-submission``. It can be compiled by running ``make``.
 
-::
+Source code MD5 hashes::
 
-    Listings go here
-    Listings go here
-    Listings go here
+    chfoo@nettop37:~/cs452/group/k1-submit/io/kernel-1-submission$ md5sum *
+    6f52c9e07c8e16288b0f6e70ac1bbd52  Makefile
+    bb97a5a42f82d99c9766caa1277ee231  buffer.c
+    5be428c52822585e9e397ff12f9af96f  buffer.h
+    e270fd64ae08a0317d37fadedd24cabb  kern.c
+    634a19ff734f7bb6c8b33f110e66696b  kern.elf
+    d41d8cd98f00b204e9800998ecf8427e  kern.h
+    b00a171e052d7c818750f58a3bdcf27c  kernel_control_flow.pdf
+    52dd3c8bac8b93e7bc9024ca3e56b00a  kernel_stack.pdf
+    98f7a503cb32985bcd45b4f75b1844d8  kernel_state.h
+    4aa618b9753c5292e5d9e5c95d297f10  orex.ld
+    ee534990a4714e0699c3e38aae6ec9d1  private_kernel_interface.c
+    bae820d4171cdc89818dbff01d5ac374  private_kernel_interface.h
+    48aaad68699d272e84cc0794d9149d7a  public_kernel_interface.c
+    90621ac9a036d7786da4b8afd2df482e  public_kernel_interface.h
+    9cb336d84ff0e62c35f9c6ba24b5ab05  queue.c
+    dd0449e95a89088411b71aac6825b6cf  queue.h
+    50c0e650f22e669776f99c5b9fe41d84  readme.rst
+    9070188c20a1d659520f46c95e8c60be  robio.c
+    e9f9061a7e008eb95988b478164a75df  robio.h
+    5b5afc928a7807d129e319ad4cd7c557  swi_kernel_interface.s
+    89c7c55442b259b16bc5336bbc567fe2  task_descriptor.c
+    fa673eaf431d48587330386fa421a961  task_descriptor.h
+    a0b2c347ea4836aaf330c43bd55fdd9a  tasks.c
+    e37b5f09bcd33f5c1665fe85fad38f6e  tasks.h
+
+Elf MD5 hash::
+
+    chfoo@nettop37:/u/cs452/tftp/ARM/relder-chfoo/k1-submit$ md5sum kern.elf 
+    634a19ff734f7bb6c8b33f110e66696b  kern.elf
+
+
+Git sha1 hash: ``cacb8815c528e5b1533254233b04c3ba4eb96c74``
 
 
 Output
