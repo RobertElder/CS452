@@ -116,12 +116,7 @@ void k_InitKernel(){
 }
 
 int k_Create( int priority, void (*code)( ) ){
-	//  Grab the parameters before they are overwritten
-	register int *register_0 asm ("r0");
-	priority = (int)register_0;
-	register int *register_1 asm ("r1");
-	code = (void (*)() )register_1;
-	int rtn = 0;
+	int rtn = ERR_K_DEFAULT;
 
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
