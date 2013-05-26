@@ -14,6 +14,13 @@ void KernelTask_Start() {
 
 void FirstTask_Start() {
 	int tid;
+
+	int aaa = Send(1, (char *)2, 3, (char*)4, 5);
+	int bbb = Receive( (int *)1, (char *)2, 3);
+	int ccc = Reply( 1, (char *)2, 3);
+	assertf((8 == aaa),"rtn is wrong it is %d",aaa);
+	assertf((7 == bbb),"rtn is wrong it is %d",bbb);
+	assertf((6 == ccc),"rtn is wrong it is %d",ccc);
 	
 	tid = Create(LOW, &GenericTask_Start);
 	robprintfbusy((const unsigned char *)"Created: %d\n", tid);

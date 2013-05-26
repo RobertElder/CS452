@@ -192,16 +192,22 @@ void k_Exit(){
 }
 
 int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	k_state->user_proc_return_value = 8;
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
 
 int k_Receive(int *tid, char *msg, int msglen){
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	k_state->user_proc_return_value = 7;
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
 
 int k_Reply(int *tid, char *msg, int msglen){
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	k_state->user_proc_return_value = 6;
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
