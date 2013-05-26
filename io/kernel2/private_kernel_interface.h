@@ -4,6 +4,9 @@ int k_MyTid();
 int k_MyParentTid();
 void k_Pass();
 void k_Exit();
+int k_Send(int tid, char *msg, int msglen, char *reply, int replylen);
+int k_Receive(int *tid, char *msg, int msglen);
+int k_Reply(int *tid, char *msg, int msglen);
 
 #define KERNEL_STACK_START 0x01500000
 #define KERNEL_STACK_SIZE 0x00100000

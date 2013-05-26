@@ -195,3 +195,18 @@ void k_Exit(){
 	
 	asm_KernelExit();
 }
+
+int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
+	asm_KernelExit();
+	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
+}
+
+int k_Receive(int *tid, char *msg, int msglen){
+	asm_KernelExit();
+	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
+}
+
+int k_Reply(int *tid, char *msg, int msglen){
+	asm_KernelExit();
+	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
+}

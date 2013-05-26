@@ -6,6 +6,9 @@ int asm_MyTidEntry();
 int asm_MyParentTidEntry();
 void asm_PassEntry();
 void asm_ExitEntry();
+int asm_SendEntry();
+int asm_ReceiveEntry();
+int asm_ReplyEntry();
 
 void InitKernel(){
 	asm_KernelInitEntry();
@@ -29,4 +32,16 @@ void Pass(){
 
 void Exit(){
 	asm_ExitEntry();
+}
+
+int Send(int tid, char *msg, int msglen, char *reply, int replylen){
+	return asm_SendEntry();
+}
+
+int Receive( int *tid, char *msg, int msglen ){
+	return asm_ReceiveEntry();
+}
+
+int Reply( int tid, char *reply, int replylen ){
+	return asm_ReplyEntry();
 }

@@ -11,6 +11,9 @@
 .global asm_MyParentTidEntry
 .global asm_PassEntry
 .global asm_ExitEntry
+.global asm_SendEntry
+.global asm_ReceiveEntry
+.global asm_ReplyEntry
 
 /* Functions to get/set user process state */
 .global asm_GetStoredUserSp
@@ -48,6 +51,21 @@ asm_ExitEntry:
 	mov	ip, sp
 	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 5;
+	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
+asm_SendEntry:
+	mov	ip, sp
+	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	SWI 6;
+	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
+asm_ReceiveEntry:
+	mov	ip, sp
+	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	SWI 7;
+	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
+asm_ReplyEntry:
+	mov	ip, sp
+	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	SWI 8;
 	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 
 /*  This function executes when exiting from all kernel functions */
@@ -149,4 +167,7 @@ B k_MyTid
 B k_MyParentTid
 B k_Pass
 B k_Exit
+B k_Send
+B k_Receive
+B k_Reply
 

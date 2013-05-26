@@ -10,5 +10,8 @@ int MyTid();
 int MyParentTid();
 void Pass();
 void Exit();
+int Send(int , char *, int , char *, int );
+int Receive( int *, char *, int);
+int Reply( int , char *, int );
 
 #endif
