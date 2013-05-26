@@ -41,7 +41,7 @@ void save_current_task_state(KernelState * k_state) {
 	k_state->current_task_descriptor->spsr_register = k_state->user_proc_spsr;
 }
 
-void set_next_task_state(KernelState * k_state) {
+void schedule_and_set_next_task_state(KernelState * k_state) {
 	k_state->current_task_descriptor = schedule_next_task(k_state);
 	
 	if (k_state->current_task_descriptor == 0) {
@@ -110,7 +110,7 @@ void k_InitKernel(){
 	TD_Initialize(task_descriptor, task_id, task_priority, 99, get_stack_base(task_id), (void *)&KernelTask_Start);
 	PriorityQueue_Initialize(&k_state->task_queue);
 	safely_add_task_to_priority_queue(&k_state->task_queue, task_descriptor, task_priority);
-	set_next_task_state(k_state);
+	schedule_and_set_next_task_state(k_state);
 	print_kernel_state(k_state);
 	asm_KernelExit();
 }
@@ -142,7 +142,7 @@ int k_Create( int priority, void (*code)( ) ){
 	
 	save_current_task_state(k_state);
 	k_state->current_task_descriptor->return_value = rtn;
-	set_next_task_state(k_state);
+	schedule_and_set_next_task_state(k_state);
 
 	print_kernel_state(k_state);
 	asm_KernelExit();
@@ -153,7 +153,7 @@ int k_MyTid(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	save_current_task_state(k_state);
 	k_state->current_task_descriptor->return_value = k_state->current_task_descriptor->id;
-	set_next_task_state(k_state);
+	schedule_and_set_next_task_state(k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
@@ -163,7 +163,7 @@ int k_MyParentTid(){
 	save_current_task_state(k_state);
 	print_kernel_state(k_state);
 	k_state->current_task_descriptor->return_value = k_state->current_task_descriptor->parent_id;
-	set_next_task_state(k_state);
+	schedule_and_set_next_task_state(k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
@@ -174,7 +174,7 @@ void k_Pass(){
 	//  Check for stack overflow and underflows
 	validate_stack_value(k_state->current_task_descriptor);
 	print_kernel_state(k_state);
-	set_next_task_state(k_state);
+	schedule_and_set_next_task_state(k_state);
 
 	print_kernel_state(k_state);
 	asm_KernelExit();
@@ -186,7 +186,7 @@ void k_Exit(){
 	validate_stack_value(k_state->current_task_descriptor);
 	print_kernel_state(k_state);
 	k_state->current_task_descriptor->state = ZOMBIE;
-	set_next_task_state(k_state);
+	schedule_and_set_next_task_state(k_state);
 	
 	asm_KernelExit();
 }

@@ -110,25 +110,25 @@ asm_KernelExit:
 	/* Interrups are now enabled!!! */
 
 asm_GetStoredUserSpsr:
-LDR r8, [PC, #136] /* load base stack pointer address */
+LDR r8, [PC, #140] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
 LDR r8, [r8, #12]  /* get return value */
 BX LR
 
 asm_GetStoredUserRtn:
-LDR r8, [PC, #120] /* load base stack pointer address */
+LDR r8, [PC, #124] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
 LDR r8, [r8, #8]  /* get return value */
 BX LR
 
 asm_GetStoredUserSp:
-LDR r8, [PC, #104] /* load base stack pointer address */
+LDR r8, [PC, #108] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
 LDR r8, [r8, #0]  /* get sp*/
 BX LR
 
 asm_GetStoredUserLr:
-LDR r8, [PC, #88] /* load base stack pointer address */
+LDR r8, [PC, #92] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
 LDR r8, [r8, #4]  /* get lr */
 BX LR
@@ -136,7 +136,7 @@ BX LR
 asm_SwiCallEntry:
 /* We don't need to do any poping or pushing of kernel state because all kernel state is stored in a struct at the base of the kernel stack, and we always know this location */
 
-LDR r8, [PC, #72]; /*  Load the value of the base of the kernel stack into r8 */
+LDR r8, [PC, #76]; /*  Load the value of the base of the kernel stack into r8 */
 LDR r8, [r8, #0]; /*  The value at the base of the SP is where we want the SP to start, after the kernel state struct */
 	/* --enter system */
 MRS r7, CPSR  /* Save current mode */
@@ -149,6 +149,7 @@ ORR r6, r7, #31 /* Go into sytem mode to get user sp */
 DONOTSWITCHTOSYSTEM2:
 MSR CPSR, r6
 STR SP, [r8, #0] /*  Save the stack pointer directly into the kernel state struct */
+LDR r4, [SP, #84] /*  Get argument number 5 of the calling function, TODO: make this not incredibly hacky */
 MSR CPSR, r7
 	/* --leave system */
 STR LR, [r8, #4] /*  Save the user link register directly into the kernel state struct  */
