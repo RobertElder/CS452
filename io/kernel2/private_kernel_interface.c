@@ -41,9 +41,7 @@ void save_current_task_state(KernelState * k_state) {
 	k_state->current_task_descriptor->spsr_register = k_state->user_proc_spsr;
 }
 
-void schedule_and_set_next_task_state(KernelState * k_state) {
-	k_state->current_task_descriptor = schedule_next_task(k_state);
-	
+void set_next_task_state(KernelState * k_state) {
 	if (k_state->current_task_descriptor == 0) {
 		/* Nothing to do, exit to redboot. */
 		k_state->user_proc_sp_value = k_state->redboot_sp_value;
@@ -56,6 +54,11 @@ void schedule_and_set_next_task_state(KernelState * k_state) {
 		k_state->user_proc_return_value = k_state->current_task_descriptor->return_value;
 		k_state->user_proc_spsr = k_state->current_task_descriptor->spsr_register;
 	}
+}
+
+void schedule_and_set_next_task_state(KernelState * k_state) {
+	k_state->current_task_descriptor = schedule_next_task(k_state);
+	set_next_task_state(k_state);
 }
 
 void print_kernel_state(KernelState * k_state){
@@ -153,7 +156,7 @@ int k_MyTid(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	save_current_task_state(k_state);
 	k_state->current_task_descriptor->return_value = k_state->current_task_descriptor->id;
-	schedule_and_set_next_task_state(k_state);
+	set_next_task_state(k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
@@ -163,7 +166,7 @@ int k_MyParentTid(){
 	save_current_task_state(k_state);
 	print_kernel_state(k_state);
 	k_state->current_task_descriptor->return_value = k_state->current_task_descriptor->parent_id;
-	schedule_and_set_next_task_state(k_state);
+	set_next_task_state(k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
@@ -193,21 +196,27 @@ void k_Exit(){
 
 int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	k_state->user_proc_return_value = 8;
+	save_current_task_state(k_state);
+	k_state->current_task_descriptor->return_value = 8;
+	set_next_task_state(k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
 
 int k_Receive(int *tid, char *msg, int msglen){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	k_state->user_proc_return_value = 7;
+	save_current_task_state(k_state);
+	k_state->current_task_descriptor->return_value = 7;
+	set_next_task_state(k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
 
 int k_Reply(int *tid, char *msg, int msglen){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	k_state->user_proc_return_value = 6;
+	save_current_task_state(k_state);
+	k_state->current_task_descriptor->return_value = 6;
+	set_next_task_state(k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
