@@ -15,7 +15,7 @@ void InitKernel(){
 }
 
 int Create( int priority, void (*code)( ) ){
-	return asm_CreateEntry();
+	return asm_CreateEntry(priority, code);
 }
 
 int MyTid(){
@@ -35,13 +35,13 @@ void Exit(){
 }
 
 int Send(int tid, char *msg, int msglen, char *reply, int replylen){
-	return asm_SendEntry();
+	return asm_SendEntry(tid, msg, msglen, reply, replylen);
 }
 
 int Receive( int *tid, char *msg, int msglen ){
-	return asm_ReceiveEntry();
+	return asm_ReceiveEntry(tid, msg, msglen);
 }
 
 int Reply( int tid, char *reply, int replylen ){
-	return asm_ReplyEntry();
+	return asm_ReplyEntry(tid, reply, replylen);
 }

@@ -15,7 +15,7 @@ void KernelTask_Start() {
 void FirstTask_Start() {
 	int tid;
 
-	int aaa = Send(1, (char *)2, 3, (char*)4, 5);
+	int aaa = Send(1, (char *)2, 3, (char*)4, 383);
 	int bbb = Receive( (int *)1, (char *)2, 3);
 	int ccc = Reply( 1, (char *)2, 3);
 	assertf((8 == aaa),"rtn is wrong it is %d",aaa);
