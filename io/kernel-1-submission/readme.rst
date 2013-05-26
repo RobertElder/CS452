@@ -16,7 +16,7 @@ The executable is located at ``/u/cs452/tftp/ARM/relder-chfoo/k1-submit/kern.elf
 
 It is executed using the regular commands::
 
-    load -b 0x00218000 -h 10.15.167.4 /u/cs452/tftp/ARM/relder-chfoo/k1-submit/kern.elf
+    load -b 0x00218000 -h 10.15.167.4 ARM/relder-chfoo/k1-submit/kern.elf
     go
 
 
