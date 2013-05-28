@@ -45,3 +45,14 @@ int Receive( int *tid, char *msg, int msglen ){
 int Reply( int tid, char *reply, int replylen ){
 	return asm_ReplyEntry(tid, reply, replylen);
 }
+
+int RegisterAs( char *name ) {
+	// TODO
+	return -123456789; 
+}
+
+int WhoIs( char *name ) {
+	// TODO
+	return -123456789;
+}
+

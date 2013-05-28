@@ -22,19 +22,7 @@ void FirstTask_Start() {
 	assertf((7 == bbb),"rtn is wrong it is %d",bbb);
 	assertf((6 == ccc),"rtn is wrong it is %d",ccc);
 	
-	tid = Create(LOW, &GenericTask_Start);
-	robprintfbusy((const unsigned char *)"Created: %d\n", tid);
 	
-	tid = Create(LOW, &GenericTask_Start);
-	robprintfbusy((const unsigned char *)"Created: %d\n", tid);
-	
-	tid = Create(HIGH, &GenericTask_Start);
-	robprintfbusy((const unsigned char *)"Created: %d\n", tid);
-		
-	tid = Create(HIGH, &GenericTask_Start);
-	robprintfbusy((const unsigned char *)"Created: %d\n", tid);
-	
-	robprintfbusy((const unsigned char *)"First: exiting\n");
 	Exit();
 	
 	assert(0, "Shouldn't see me\n");
@@ -51,57 +39,24 @@ int overflow(int times){
 	return i-1;
 }
 
-void GenericTask_Start() {
-	int my_tid = MyTid();
-	int my_parent_tid = MyParentTid();
-	robprintfbusy((const unsigned char *)"Task ID=%d, Parent ID=%d\n", my_tid, my_parent_tid);
-	Pass();
-	robprintfbusy((const unsigned char *)"Task ID=%d, Parent ID=%d\n", my_tid, my_parent_tid);
-	Exit();
-	assert(0, "Shouldn't see me\n");
+void NameServer_Start() {
+	// TODO
 }
 
-/*
-	while(1){
-		int i = 1;
-		int j = 2;
-		int k = 3;
-		int l = 4;
-		int m = 5;
-		int n = 6;
-		int o = 7;
-		int p = 8;
-		int q = 9;
-		int r = 10;
-		int s = 11;
-		int t = 12;
-		int u = 13;
-		int v = 14;
-		int w = 15;
-		int x = 16;
-		robprintfbusy((const unsigned char *)"INSIDE TASK Before Pass---------------------------- Task ID=%d\n",my_tid);
-		robprintfbusy((const unsigned char *)"Task ID=%d, Parent ID=%d\n", my_tid, my_parent_tid);
-		Pass();
-		overflow(100);
-		robprintfbusy((const unsigned char *)"INSIDE TASK After Pass---------------------------- Task ID=%d\n",my_tid);
-		robprintfbusy((const unsigned char *)"Task ID=%d, Parent ID=%d\n", my_tid, my_parent_tid);
-		assert((i == 1), "Stack must have been corrupted in GenericTask_Start.");
-		assert((j == 2), "Stack must have been corrupted in GenericTask_Start.");
-		assert((k == 3), "Stack must have been corrupted in GenericTask_Start.");
-		assert((l == 4), "Stack must have been corrupted in GenericTask_Start.");
-		assert((m == 5), "Stack must have been corrupted in GenericTask_Start.");
-		assert((n == 6), "Stack must have been corrupted in GenericTask_Start.");
-		assert((o == 7), "Stack must have been corrupted in GenericTask_Start.");
-		assert((p == 8), "Stack must have been corrupted in GenericTask_Start.");
-		assert((q == 9), "Stack must have been corrupted in GenericTask_Start.");
-		assert((r == 10), "Stack must have been corrupted in GenericTask_Start.");
-		assert((s == 11), "Stack must have been corrupted in GenericTask_Start.");
-		assert((t == 12), "Stack must have been corrupted in GenericTask_Start.");
-		assert((u == 13), "Stack must have been corrupted in GenericTask_Start.");
-		assert((v == 14), "Stack must have been corrupted in GenericTask_Start.");
-		assert((w == 15), "Stack must have been corrupted in GenericTask_Start.");
-		assert((x == 16), "Stack must have been corrupted in GenericTask_Start.");
-		
-		Exit();
-	}
-*/
+void RPSServer_Start() {
+	int result = RegisterAs(RPS_SERVER_NAME);
+	
+	assert(result == 0, "RPSServer_Start failed to register name");
+	
+	// TODO
+}
+
+void RPSClient_Start() {
+	int server_tid = WhoIs(RPS_SERVER_NAME);
+
+	// TODO perform a set of requests that adequately tests the RPS server,
+	
+	// TODO send a quit request when they have finished playing, and
+
+	Exit();
+}
