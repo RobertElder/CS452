@@ -8,7 +8,7 @@ void assertf( int expr, const char * message, ...){
 	va_list va;
 	va_start(va,message);
 	if(!expr){
-		const char * title = (const char *)"\
+		const char * title = (const char *)"\033[36m\
                                 ``,:::::``                                          \n\
                               .@@@@@@@@@@@#`                                        \n\
                              `#@@@@@@@@@@@@#`                                       \n\
@@ -57,7 +57,8 @@ void assertf( int expr, const char * message, ...){
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#+';.````.;'+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@:        \n\
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@`       \n\
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@+    \n\
-	\nASSERTION FAILURE!!!\n";
+	\033[0m"
+	"\n\033[1;4;7mASSERTION FAILURE!!!\033[0m\n";
 		robputstrbusy((const unsigned char *)title);
 		bwformatbusy( (const unsigned char *)message, va );
 		while(1){};
