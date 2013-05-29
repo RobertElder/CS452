@@ -8,8 +8,8 @@ void RNG_Initialize(RNG * gen) {
 }
 
 unsigned int RNG_Get(RNG * gen) {
-	unsigned int next_x = gen->a * gen->x + gen->c;
-	gen->x = next_x & 0x3fffffff;
+	unsigned int next_x = (gen->a * gen->x + gen->c) & 0x3fffffff;
+	gen->x = next_x;
 	return next_x;
 }
 
