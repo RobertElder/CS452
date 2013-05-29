@@ -53,7 +53,33 @@ int overflow(int times){
 
 void NameServer_Start() {
 	// TODO
+	// Allocate a static amount of memory on the stack for the registered names
+	//
 	robprintfbusy((const unsigned char *)"Name server here %d\n", MyTid());
+	while(1){
+		/*
+		 TODO:  Make this not pseudocode
+		  message =  Receive( int *tid, char *msg, int msglen);
+		  switch message_type{
+			  case MESSAGE_TYPE_REGISTER_AS:{
+			  	if(name already exists){
+					overwrite
+			        }else{
+					if(enough space for one more){
+						add it
+					}else{
+						assert(0,"Out of space for registered names in name server.");
+					}
+				}
+			  }
+			  case MESSAGE_TYPE_WHOIS:{
+			  	reply(the task id they asked for);
+			  }
+		  }
+		*/
+		Pass();
+	}
+	assert(0, "Shouldn't see me\n");
 }
 
 void RPSServer_Start() {
@@ -64,6 +90,7 @@ void RPSServer_Start() {
 	assert(result == 0, "RPSServer_Start failed to register name");
 	
 	// TODO
+	assert(0, "Shouldn't see me\n");
 }
 
 void RPSClient_Start() {
