@@ -80,11 +80,11 @@ void RPSClient_Start() {
 	// Want to play
 	robprintfbusy((const unsigned char *)"Client: %d - I want to play\n", my_id);
 	Send(server_id, (char*) SIGN_UP, sizeof(PLAY), reply, sizeof(reply));
-	assert(strcmp(reply, CHOOSE) == 0, "Client wasn't asked to choose");
+	assert(m_strcmp(reply, CHOOSE) == 0, "Client wasn't asked to choose");
 	
 	int i;
 	for (i = 0; i < rounds; i++) {
-		strcpy(buffer, PLAY);
+		m_strcpy(buffer, PLAY);
 		
 		unsigned int choice = RNG_GetRange(&rng, 0, 2);
 		
@@ -144,7 +144,7 @@ void RPSClient_Start() {
 	
 	// Finished playing
 	Send(server_id, (char*) QUIT, sizeof(QUIT), reply, sizeof(reply));
-	assert(strcmp(reply, GOODBYE) == 0, "Client didn't get a goodbye from server");
+	assert(m_strcmp(reply, GOODBYE) == 0, "Client didn't get a goodbye from server");
 
 	Exit();
 }

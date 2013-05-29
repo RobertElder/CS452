@@ -1,6 +1,6 @@
 #include "memory.h"
 
-void strcpy(char *dest, const char *src) {
+void m_strcpy(char *dest, const char *src) {
 	// FIXME: I'm not optimal
 	int i = 0;
 	
@@ -13,7 +13,7 @@ void strcpy(char *dest, const char *src) {
 	}
 }
 
-int strcmp(const char *s1, const char *s2) {
+int m_strcmp(const char *s1, const char *s2) {
 	// FIXME: I'm probably not optimal
 	
 	int i = 0;
