@@ -210,11 +210,9 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 
 int k_Receive(int *tid, char *msg, int msglen){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	assert((tid == (int*)1), "param problem\n");
-	assert(((char*)2 == msg), "param problem\n");
-	assert((3 == msglen), "param problem\n");
 	save_current_task_state(k_state);
-	k_state->current_task_descriptor->return_value = 7;
+	// TODO: Check for messages available for this process.  Otherwise, block current process.
+	k_state->current_task_descriptor->return_value = MESSAGE_SIZE;
 	set_next_task_state(k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
