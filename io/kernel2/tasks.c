@@ -2,6 +2,8 @@
 #include "public_kernel_interface.h"
 #include "robio.h"
 #include "queue.h"
+#include "memory.h"
+#include "random.h"
 
 void KernelTask_Start() {
 	int tid = Create(NORMAL, &FirstTask_Start);
@@ -14,7 +16,6 @@ void KernelTask_Start() {
 
 void FirstTask_Start() {
 	int tid;
-
 	int aaa = Send(1, (char *)2, 3, (char*)4, 383);
 	int bbb = Receive( (int *)1, (char *)2, 3);
 	int ccc = Reply( 1, (char *)2, 3);
@@ -22,6 +23,17 @@ void FirstTask_Start() {
 	assertf((7 == bbb),"rtn is wrong it is %d",bbb);
 	assertf((6 == ccc),"rtn is wrong it is %d",ccc);
 	
+	tid = Create(NORMAL, &NameServer_Start);
+	assert(tid == 2, "NameServer tid not 2");
+	
+	tid = Create(NORMAL, &RPSServer_Start);
+	assert(tid == 3, "RPServer tid not 3");
+	
+	int i;
+	for (i = 0; i < 5; i++) {
+		tid = Create(NORMAL, &RPSClient_Start);
+		assert(tid == 3 +i , "RPSClient tid not");
+	}
 	
 	Exit();
 	
@@ -41,10 +53,13 @@ int overflow(int times){
 
 void NameServer_Start() {
 	// TODO
+	robprintfbusy((const unsigned char *)"Name server here %d\n", MyTid());
 }
 
 void RPSServer_Start() {
-	int result = RegisterAs(RPS_SERVER_NAME);
+	robprintfbusy((const unsigned char *)"rps server here %d\n", MyTid());
+
+	int result = RegisterAs((char*) RPS_SERVER_NAME);
 	
 	assert(result == 0, "RPSServer_Start failed to register name");
 	
@@ -52,11 +67,84 @@ void RPSServer_Start() {
 }
 
 void RPSClient_Start() {
-	int server_tid = WhoIs(RPS_SERVER_NAME);
+	robprintfbusy((const unsigned char *)"rps client here %d\n", MyTid());
 
-	// TODO perform a set of requests that adequately tests the RPS server,
+	RNG rng;
+	RNG_Initialize(&rng);
+	int server_id = WhoIs((char*) RPS_SERVER_NAME);
+	int my_id = MyTid();
+	static char buffer[] = "XXXXXXXXXXXXXXXXXXXX";
+	static char reply[] = "XXXXXXXXXXXXXXXXXXXX";
+	const unsigned int rounds = 5;
 	
-	// TODO send a quit request when they have finished playing, and
+	// Want to play
+	robprintfbusy((const unsigned char *)"Client: %d - I want to play\n", my_id);
+	Send(server_id, (char*) SIGN_UP, sizeof(PLAY), reply, sizeof(reply));
+	assert(strcmp(reply, CHOOSE) == 0, "Client wasn't asked to choose");
+	
+	int i;
+	for (i = 0; i < rounds; i++) {
+		strcpy(buffer, PLAY);
+		
+		unsigned int choice = RNG_GetRange(&rng, 0, 2);
+		
+		switch(choice) {
+		case 0:
+			buffer[5] = ROCK;
+			robprintfbusy((const unsigned char *)"Client: %d - I choose rock\n", my_id);
+			break;
+		case 1:
+			buffer[5] = PAPER;
+			robprintfbusy((const unsigned char *)"Client: %d - I choose paper\n", my_id);
+			break;
+		case 2:
+			buffer[5] = SCISSORS;
+			robprintfbusy((const unsigned char *)"Client: %d - I choose scissors\n", my_id);
+			break;
+		default:
+			assert(0, "RNG gave client something wrong");
+		}
+		
+		Send(server_id, buffer, sizeof(buffer), reply, sizeof(reply));
+		assert(reply[0] == RESULT[0], "Client didn't get a result");
+		
+		char outcome = reply[7];
+		switch (outcome) {
+		case WIN:
+			robprintfbusy((const unsigned char *)"Client: %d - I won ", my_id);
+			break;
+		case LOSE:
+			robprintfbusy((const unsigned char *)"Client: %d - I lost ", my_id);
+			break;
+		case TIE:
+			robprintfbusy((const unsigned char *)"Client: %d - It was a tie ", my_id);
+			break;
+		default:
+			assert(0, "Client not sure whether its win or lose");
+		}
+		
+		char reason = reply[8];
+		switch (reason) {
+		case ROCK:
+			robprintfbusy((const unsigned char *)" because opponent chose rock\n");
+			break;
+		case PAPER:
+			robprintfbusy((const unsigned char *)" because opponent chose paper\n");
+			break;
+		case SCISSORS:
+			robprintfbusy((const unsigned char *)" because opponent chose scissors\n");
+			break;
+		case FORFEIT:
+			robprintfbusy((const unsigned char *)" because opponent gave up\n");
+			break;
+		default:
+			assert(0, "Client unable to explain why it won/lost");
+		}
+	}
+	
+	// Finished playing
+	Send(server_id, (char*) QUIT, sizeof(QUIT), reply, sizeof(reply));
+	assert(strcmp(reply, GOODBYE) == 0, "Client didn't get a goodbye from server");
 
 	Exit();
 }
