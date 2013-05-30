@@ -14,9 +14,14 @@ unsigned int RNG_Get(RNG * gen) {
 }
 
 float RNG_GetFloat(RNG * gen) {
-	return RNG_Get(gen) / gen->m;
+	return (float) RNG_Get(gen) / 0x3fffffff;
 }
 
 unsigned int RNG_GetRange(RNG * gen, unsigned int lower, unsigned int upper) {
-	return RNG_GetFloat(gen) * (upper - lower) + lower;
+	unsigned int value = RNG_GetFloat(gen) * (upper + 1 - lower) + lower;
+
+	assert(value <= upper, "RNG_GetRange: returned an integer not in range (too big)");
+	assert(value >= lower, "RNG_GetRange: returned an integer not in range (too small)");
+
+	return value;
 }

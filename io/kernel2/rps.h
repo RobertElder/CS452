@@ -59,6 +59,8 @@ void RPSServer_SelectPlayers(RPSServer * server);
 
 void RPSServer_SendChoose(RPSServer * server);
 
+void RPSServer_SendResult(RPSServer * server);
+
 void RPSClient_Start();
 
 void RPSClient_Initialize(RPSClient * client);
@@ -66,5 +68,7 @@ void RPSClient_Initialize(RPSClient * client);
 void RPSClient_PlayARound(RPSClient * client);
 
 RPS_CHOICE int_to_rps_choice(int num);
+
+int get_who_won(RPS_CHOICE player_1_choice, RPS_CHOICE player_2_choice);
 
 #endif /* RPS_H_ */
