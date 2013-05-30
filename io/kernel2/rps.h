@@ -30,7 +30,7 @@ typedef struct RPSMessage {
 typedef struct RPSServer {
 	int tid;
 	char receive_buffer[MESSAGE_SIZE];
-	char send_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
 	Queue player_tid_queue;
 	int player_1_tid;
 	int player_2_tid;

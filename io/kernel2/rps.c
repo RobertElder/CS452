@@ -36,6 +36,7 @@ void RPSServer_Initialize(RPSServer * server) {
 
 void RPSServer_ProcessMessage(RPSServer * server) {
 	RPSMessage * receive_message;
+	RPSMessage * reply_message;
 	int source_tid;
 	Receive(&source_tid, server->receive_buffer, MESSAGE_SIZE);
 	receive_message = (RPSMessage*)server->receive_buffer;
@@ -47,7 +48,12 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 		break;
 	case MESSAGE_TYPE_QUIT:
 		server->signed_in_players[source_tid] = 0;
-		// TODO: reply GOODBYE message
+
+		reply_message = (RPSMessage *) server->reply_buffer;
+		reply_message->message_type = MESSAGE_TYPE_GOODBYE;
+		int result = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
+		assert(result == 0, "RPSServer couldn't send GOODBYE to client");
+
 		break;
 	default:
 		assert(0, "RPSServer: Unknown message type from client");
