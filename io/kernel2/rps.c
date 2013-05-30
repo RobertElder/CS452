@@ -35,24 +35,36 @@ void RPSServer_Initialize(RPSServer * server) {
 }
 
 void RPSServer_ProcessMessage(RPSServer * server) {
+	robprintfbusy((const unsigned char *)"RPS Server process message\n");
+
 	RPSMessage * receive_message;
 	RPSMessage * reply_message;
 	int source_tid;
 	Receive(&source_tid, server->receive_buffer, MESSAGE_SIZE);
 	receive_message = (RPSMessage*)server->receive_buffer;
+	int return_code;
 
 	switch (receive_message->message_type) {
 	case MESSAGE_TYPE_SIGN_UP:
+		robprintfbusy((const unsigned char *)"RPS Server received sign up request from %d\n", source_tid);
+
 		Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)source_tid);
 		server->signed_in_players[source_tid] = 1;
+
+		reply_message = (RPSMessage *) server->reply_buffer;
+		reply_message->message_type = MESSAGE_TYPE_SIGN_UP_OK;
+		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
+		assert(return_code == 0, "RPSServer couldn't send SIGN_UP_OK to client");
 		break;
 	case MESSAGE_TYPE_QUIT:
+		robprintfbusy((const unsigned char *)"RPS Server received quit request from %d\n", source_tid);
+
 		server->signed_in_players[source_tid] = 0;
 
 		reply_message = (RPSMessage *) server->reply_buffer;
 		reply_message->message_type = MESSAGE_TYPE_GOODBYE;
-		int result = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
-		assert(result == 0, "RPSServer couldn't send GOODBYE to client");
+		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
+		assert(return_code == 0, "RPSServer couldn't send GOODBYE to client");
 
 		break;
 	default:
@@ -67,7 +79,7 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 			return;
 		}
 
-		RPSServer_SendChoose(server);
+		RPSServer_ReceiveChoices(server);
 		RPSServer_SendResult(server);
 
 		Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)server->player_1_tid);
@@ -104,13 +116,15 @@ void RPSServer_SelectPlayers(RPSServer * server) {
 	}
 }
 
-void RPSServer_SendChoose(RPSServer * server) {
+void RPSServer_ReceiveChoices(RPSServer * server) {
 	RPSMessage * reply_message;
 	RPSMessage * send_message;
 	int return_code;
 
 	send_message = (RPSMessage *) server->send_buffer;
 	send_message->message_type = MESSAGE_TYPE_CHOOSE;
+
+	robprintfbusy((const unsigned char *)"RPS Server sending P1 %d to choose\n", server->player_1_tid);
 
 	return_code = Send(server->player_1_tid, server->send_buffer, MESSAGE_SIZE,
 			server->reply_buffer, MESSAGE_SIZE);
@@ -119,6 +133,8 @@ void RPSServer_SendChoose(RPSServer * server) {
 	reply_message = (RPSMessage *) server->reply_buffer;
 	assert(reply_message->message_type == MESSAGE_TYPE_PLAY, "Failed to receive PLAY message from player 1");
 	server->player_1_choice = reply_message->choice;
+
+	robprintfbusy((const unsigned char *)"RPS Server sending P2 %d to choose\n", server->player_2_tid);
 
 	return_code = Send(server->player_2_tid, server->send_buffer, MESSAGE_SIZE,
 			server->reply_buffer, MESSAGE_SIZE);
@@ -152,12 +168,16 @@ void RPSServer_SendResult(RPSServer * server) {
 	reply_message->outcome = player_1_outcome;
 	reply_message->choice = server->player_2_choice;
 
+	robprintfbusy((const unsigned char *)"RPS Server replying P1 %d with result\n", server->player_1_tid);
+
 	return_code = Reply(server->player_1_tid, server->reply_buffer, MESSAGE_SIZE);
 	assert(return_code == 0, "Failed to reply RESULT message to player 1");
 
 	reply_message->message_type = MESSAGE_TYPE_RESULT;
 	reply_message->outcome = player_2_outcome;
 	reply_message->choice = server->player_1_choice;
+
+	robprintfbusy((const unsigned char *)"RPS Server replying P2 %d with result\n", server->player_2_tid);
 
 	return_code = Reply(server->player_2_tid, server->reply_buffer, MESSAGE_SIZE);
 	assert(return_code == 0, "Failed to reply RESULT message to player 2");
@@ -180,7 +200,7 @@ void RPSClient_Start() {
 	Send(client.server_id, client.send_buffer, MESSAGE_SIZE, client.reply_buffer,MESSAGE_SIZE);
 	reply_message = (RPSMessage *) client.reply_buffer;
 
-	assert(reply_message->message_type == MESSAGE_TYPE_CHOOSE, "Client wasn't asked to choose");
+	assert(reply_message->message_type == MESSAGE_TYPE_SIGN_UP_OK, "Client didn't sign up successfully");
 
 	int i;
 	for (i = 0; i < client.num_rounds_to_play; i++) {
