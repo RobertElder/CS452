@@ -1,29 +1,46 @@
+#include "message.h"
+#include "random.h"
+
 #ifndef RPS_H_
 #define RPS_H_
 
-
 static const char RPS_SERVER_NAME[] = "rps_server";
-static const char SIGN_UP[] = "sign_up";
-static const char CHOOSE[] = "choose";
-static const char PLAY[] = "play ?"; // ? = ROCK, PAPER, SCISSORS
-typedef enum CHOICE {
-	ROCK = 'r',
-	PAPER = 'p',
-	SCISSORS = 's',
-	FORFEIT = 'f',
-} CHOICE;
-static const char RESULT[] = "result ? ?"; // 1? = WIN, LOSE, TIE; 2? = ROCK, PAPER, SCISSORS, FORFEIT
-typedef enum OUTCOME {
-	WIN = 'w',
-	LOSE = 'l',
-	TIE = 't',
-} OUTCOME;
-static const char QUIT[] = "quit";
-static const char GOODBYE[] = "goodbye";
+
+typedef enum RPS_CHOICE {
+	ROCK = 0,
+	PAPER = 1,
+	SCISSORS = 2,
+	FORFEIT = 3,
+} RPS_CHOICE;
+
+typedef enum RPS_OUTCOME {
+	WIN = 0,
+	LOSE = 1,
+	TIE = 2,
+} RPS_OUTCOME;
+
+typedef struct RPSMessage {
+	MessageType message_type;
+	RPS_CHOICE choice;
+	RPS_OUTCOME outcome;
+} RPSMessage;
+
+
+typedef struct RPSClient {
+	int tid;
+	char reply_buffer[MESSAGE_SIZE];
+	char send_buffer[MESSAGE_SIZE];
+	RNG rng;
+	int server_id;
+	unsigned int num_rounds_to_play;
+} RPSClient;
 
 void RPSServer_Start();
 
 void RPSClient_Start();
 
+void RPSClient_Initialize(RPSClient * client);
+
+void RPSClient_PlayARound(RPSClient * client);
 
 #endif /* RPS_H_ */

@@ -17,23 +17,45 @@ void RPSServer_Start() {
 
 void RPSClient_Start() {
 	robprintfbusy((const unsigned char *)"rps client here %d\n", MyTid());
-
-	RNG rng;
-	RNG_Initialize(&rng);
-	int server_id = WhoIs((char*) RPS_SERVER_NAME);
-	int my_id = MyTid();
-	static char buffer[] = "XXXXXXXXXXXXXXXXXXXX";
-	static char reply[] = "XXXXXXXXXXXXXXXXXXXX";
-	const unsigned int rounds = 5;
+	RPSClient client;
+	RPSClient_Initialize(&client);
 
 	// Want to play
-	robprintfbusy((const unsigned char *)"Client: %d - I want to play\n", my_id);
-	Send(server_id, (char*) SIGN_UP, sizeof(PLAY), reply, sizeof(reply));
-	assert(m_strcmp(reply, CHOOSE) == 0, "Client wasn't asked to choose");
+	robprintfbusy((const unsigned char *)"Client: %d - I want to play\n", client.tid);
+
+	RPSMessage * send_message;
+	RPSMessage * reply_message;
+
+	send_message = (RPSMessage *) client.send_buffer;
+	send_message->message_type= MESSAGE_TYPE_SIGN_UP;
+	Send(client.server_id, client.send_buffer, MESSAGE_SIZE, client.reply_buffer,MESSAGE_SIZE);
+	reply_message = (RPSMessage *) client.reply_buffer;
+
+	assert(reply_message->message_type == MESSAGE_TYPE_CHOOSE, "Client wasn't asked to choose");
 
 	int i;
-	for (i = 0; i < rounds; i++) {
-		m_strcpy(buffer, PLAY);
+	for (i = 0; i < client.num_rounds_to_play; i++) {
+		RPSClient_PlayARound(&client);
+	}
+
+	// Finished playing
+	send_message->message_type = MESSAGE_TYPE_QUIT;
+	Send(client.server_id, client.send_buffer, MESSAGE_SIZE, client.reply_buffer,MESSAGE_SIZE);
+	reply_message = (RPSMessage *) client.reply_buffer;
+	assert(reply_message->message_type == MESSAGE_TYPE_GOODBYE, "Client didn't get a goodbye from server");
+
+	Exit();
+}
+
+void RPSClient_Initialize(RPSClient * client) {
+	client->tid = MyTid();
+	RNG_Initialize(&client->rng);
+	client->server_id = WhoIs((char*) RPS_SERVER_NAME);
+	client->num_rounds_to_play = 5;
+}
+
+void RPSClient_PlayARound(RPSClient * client) {
+	/*m_strcpy(buffer, PLAY);
 
 		unsigned int choice = RNG_GetRange(&rng, 0, 2);
 
@@ -90,10 +112,5 @@ void RPSClient_Start() {
 			assert(0, "Client unable to explain why it won/lost");
 		}
 	}
-
-	// Finished playing
-	Send(server_id, (char*) QUIT, sizeof(QUIT), reply, sizeof(reply));
-	assert(m_strcmp(reply, GOODBYE) == 0, "Client didn't get a goodbye from server");
-
-	Exit();
+	 * */
 }
