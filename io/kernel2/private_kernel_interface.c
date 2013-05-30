@@ -240,6 +240,10 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			k_state->task_descriptors[tid].state = READY;
 			k_state->task_descriptors[tid].return_value = msglen;
 			m_strcpy(k_state->task_descriptors[tid].receive_msg, msg, msglen);
+			//  This task is now blocked on a reply
+			k_state->current_task_descriptor->state = REPLY_BLOCKED;
+			*(k_state->task_descriptors[tid].origin_tid) = k_state->current_task_descriptor->id;
+			schedule_and_set_next_task_state(k_state);
 		}else{
 			robprintfbusy((unsigned const char *)"Task %d sends a message to: %d and blocks because the destination is not blocked on send.\n",k_state->current_task_descriptor->id, tid);
 			int index = RingBufferIndex_Put(&k_state->messages_index);
@@ -249,7 +253,6 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			k_state->current_task_descriptor->state = RECEIVE_BLOCKED;
 			schedule_and_set_next_task_state(k_state);
 		}
-		*(k_state->task_descriptors[tid].origin_tid) = k_state->current_task_descriptor->id;
 	} else {
 		if (!is_tid_in_range(tid)) {
 			return_value = ERR_K_TID_OUT_OF_RANGE;
