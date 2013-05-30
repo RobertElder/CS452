@@ -234,6 +234,7 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 	TD * current_td = k_state->current_task_descriptor;
 
 	if (is_inited_tid(k_state, tid)) {
+		k_state->current_task_descriptor->reply_msg = reply;
 		if(k_state->task_descriptors[tid].state == SEND_BLOCKED){
 			robprintfbusy((unsigned const char *)"Task: %d sends to task %d and unblocks it because it was waiting for send.\n",k_state->current_task_descriptor->id, tid);
 			//  That task is now ready to be scheduled
