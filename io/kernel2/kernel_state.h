@@ -1,6 +1,8 @@
 
 #include "task_descriptor.h"
 #include "queue.h"
+#include "message.h"
+#include "buffer.h"
 
 #ifndef KERNEL_STATE_H_
 #define KERNEL_STATE_H_
@@ -20,11 +22,14 @@ typedef struct KernelState {
 	/* Pointer to the currently scheduled task */
 	TD * current_task_descriptor;
 	TD task_descriptors[MAX_TASKS + 1];
+	short inited_td[MAX_TASKS + 1];
 	PriorityQueue task_queue;
 	unsigned int num_tasks;
 	void * redboot_sp_value;
 	void * redboot_lr_value;
 	int redboot_spsr_value;
+	KernelMessage messages[MAX_MESSAGES];
+	RingBufferIndex messages_index;
 } KernelState;
 
 
