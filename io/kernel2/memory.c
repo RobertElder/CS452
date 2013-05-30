@@ -1,13 +1,23 @@
 #include "memory.h"
 
-void m_strcpy(char *dest, const char *src) {
+void m_strcpy(char *dest, const char *src, int len) {
+	// FIXME: I'm not optimal
+	int i = 0;
+	
+	while (i < len) {
+		dest[i] = src[i];
+		i += 1;
+	}
+}
+
+
+int m_strlen(const char * str) {
 	// FIXME: I'm not optimal
 	int i = 0;
 	
 	while (1) {
-		dest[i] = src[i];
-		if (src[i] == '\x00') {
-			break;
+		if (str[i] == '\x00') {
+			return i;
 		} 
 		i += 1;
 	}

@@ -28,7 +28,7 @@ TD * schedule_next_task(KernelState * k_state){
 			PriorityQueue_Put(&(k_state->task_queue), td, td->priority);
 			td->state = ACTIVE;
 			return td;
-		} else if (td->state == RECEIVE_BLOCKED) {
+		} else if (td->state == RECEIVE_BLOCKED || td->state == SEND_BLOCKED || td->state == REPLY_BLOCKED) {
 			//  TODO:  this is inefficient, for now just put it at the end of the ready queue.
 			PriorityQueue_Put(&(k_state->task_queue), td, td->priority);
 			//  Just keep executing in this loop until we find a ready task.
@@ -234,12 +234,21 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 	TD * current_td = k_state->current_task_descriptor;
 
 	if (is_inited_tid(k_state, tid)) {
-		// TODO: put message on queue
-		robprintfbusy((unsigned const char *)"Sending a message to tid: %d from:  %d\n",tid, k_state->current_task_descriptor->id);
-		int index = RingBufferIndex_Put(&k_state->messages_index);
-		KernelMessage * km = &k_state->messages[index];
-		KernelMessage_Initialize(km, current_td->id, tid, msg, reply, msglen, replylen);
-		Queue_PushEnd(&k_state->task_descriptors[tid].messages, km);
+		if(k_state->task_descriptors[tid].state == SEND_BLOCKED){
+			//  That task is now ready to be scheduled
+			k_state->task_descriptors[tid].state = READY;
+			k_state->task_descriptors[tid].return_value = msglen;
+			m_strcpy(k_state->task_descriptors[tid].receive_msg, msg, msglen);
+		}else{
+			robprintfbusy((unsigned const char *)"Sending a message to tid: %d from:  %d\n",tid, k_state->current_task_descriptor->id);
+			int index = RingBufferIndex_Put(&k_state->messages_index);
+			KernelMessage * km = &k_state->messages[index];
+			KernelMessage_Initialize(km, current_td->id, tid, msg, reply, msglen, replylen);
+			Queue_PushEnd(&k_state->task_descriptors[tid].messages, km);
+			k_state->current_task_descriptor->state = RECEIVE_BLOCKED;
+			schedule_and_set_next_task_state(k_state);
+		}
+
 	} else {
 		if (!is_tid_in_range(tid)) {
 			return_value = ERR_K_TID_OUT_OF_RANGE;
@@ -264,17 +273,22 @@ int k_Receive(int *tid, char *msg, int msglen){
 	if(message == 0){
 		robprintfbusy((unsigned const char *)"Blocking for receive tid: %d\n",k_state->current_task_descriptor->id);
 		//  No messages, block this task
-		k_state->current_task_descriptor->state = RECEIVE_BLOCKED;
+		k_state->current_task_descriptor->state = SEND_BLOCKED;
 		k_state->current_task_descriptor->return_value = MESSAGE_SIZE;
+		//  Remember where to store the message one we get it
+		k_state->current_task_descriptor->receive_msg = msg;
+		k_state->current_task_descriptor->reply_msg = msg;
 		//  Switch to the next ready process.
 		schedule_and_set_next_task_state(k_state);
 	}else{
 		robprintfbusy((unsigned const char *)"There is a message available for receive tid: %d\n",k_state->current_task_descriptor->id);
 		//  There is a message, give it to the task
 		RingBufferIndex_Get(&k_state->messages_index);
-		m_strcpy(msg, message->msg);
+		m_strcpy(msg, message->msg, msglen);
 		*tid = message->origin;
 		k_state->current_task_descriptor->return_value = message->origin_size;
+		assert(k_state->task_descriptors[message->destination].state == RECEIVE_BLOCKED, "Impossible state, sender shoudl be receive blocked.");
+		k_state->task_descriptors[message->destination].state = REPLY_BLOCKED;
 	}
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
@@ -283,14 +297,14 @@ int k_Receive(int *tid, char *msg, int msglen){
 int k_Reply(int tid, char *reply, int replylen){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	save_current_task_state(k_state);
-	assert((tid == 1), "param problem\n");
-	assert(((char*)2 == reply), "param problem\n");
-	assert((3 == replylen), "param problem\n");
 
-	int return_value = 6;
+	int return_value = -1;
 
 	if (is_inited_tid(k_state, tid)) {
-		// TODO: do something
+		assert(k_state->task_descriptors[tid].state == REPLY_BLOCKED, "Impossible state, replying to non reply blocked task.");
+		// TODO: totally broken
+		m_strcpy(k_state->task_descriptors[tid].reply_msg, reply, replylen);
+		k_state->task_descriptors[tid].state = READY;
 	} else {
 		if (!is_tid_in_range(tid)) {
 			return_value = ERR_K_TID_OUT_OF_RANGE;

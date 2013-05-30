@@ -50,7 +50,7 @@ void NameServer_Initialize(NameServer * ns) {
 
 void NameServer_SetName(NameServer * ns, int tid, char * name) {
 	if (0 <= tid && tid < MAX_TASKS) {
-		m_strcpy(ns->names[tid], name);
+		m_strcpy(ns->names[tid], name, m_strlen(name) + 1);
 		ns->filled[tid] = 1;
 	} else {
 		assert(0,"Out of space for registered names in name server.");

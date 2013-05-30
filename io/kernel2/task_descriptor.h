@@ -23,6 +23,8 @@ typedef struct TaskDescriptor {
 	int * link_register;
 	int spsr_register;
 	int return_value;
+	char * receive_msg;
+	char * reply_msg;
 } TD;
 
 void TD_Initialize(TD * td, int id, QueuePriority priority, int parent_id, void *, void *);
