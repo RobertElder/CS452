@@ -43,7 +43,7 @@ void NameServer_Initialize(NameServer * ns) {
 	ns->tid = MyTid();
 
 	int i;
-	for (i = 0; i < MAX_TASKS; i++) {
+	for (i = 0; i < MAX_TASKS + 1; i++) {
 		ns->filled[i] = 0;
 	}
 }
@@ -60,7 +60,7 @@ void NameServer_SetName(NameServer * ns, int tid, char * name) {
 int NameServer_GetName(NameServer * ns, char * name) {
 	int tid;
 
-	for (tid = 0; tid < MAX_TASKS; tid++) {
+	for (tid = 0; tid < MAX_TASKS + 1; tid++) {
 		if (!ns->filled[tid]) {
 			continue;
 		}
