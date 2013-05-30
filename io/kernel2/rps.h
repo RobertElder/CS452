@@ -1,5 +1,6 @@
 #include "message.h"
 #include "random.h"
+#include "queue.h"
 
 #ifndef RPS_H_
 #define RPS_H_
@@ -25,6 +26,12 @@ typedef struct RPSMessage {
 	RPS_OUTCOME outcome;
 } RPSMessage;
 
+typedef struct RPSServer {
+	int tid;
+	char receive_buffer[MESSAGE_SIZE];
+	char send_buffer[MESSAGE_SIZE];
+	Queue player_tid_queue;
+} RPSServer;
 
 typedef struct RPSClient {
 	int tid;
@@ -36,6 +43,10 @@ typedef struct RPSClient {
 } RPSClient;
 
 void RPSServer_Start();
+
+void RPSServer_Initialize(RPSServer * server);
+
+void RPSServer_ProcessMessage(RPSServer * server);
 
 void RPSClient_Start();
 

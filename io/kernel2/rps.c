@@ -3,6 +3,7 @@
 #include "public_kernel_interface.h"
 #include "random.h"
 #include "memory.h"
+#include "queue.h"
 
 void RPSServer_Start() {
 	robprintfbusy((const unsigned char *)"rps server here %d\n", MyTid());
@@ -11,8 +12,39 @@ void RPSServer_Start() {
 
 	assert(result == 0, "RPSServer_Start failed to register name");
 
+	RPSServer server;
+	RPSServer_Initialize(&server);
+
+	while(1) {
+		RPSServer_ProcessMessage(&server);
+	}
+
 	// TODO
 	assert(0, "Shouldn't see me\n");
+}
+
+void RPSServer_Initialize(RPSServer * server) {
+	server->tid = MyTid();
+	Queue_Initialize(&server->player_tid_queue);
+}
+
+void RPSServer_ProcessMessage(RPSServer * server) {
+	RPSMessage * receive_message;
+	int source_tid;
+	Receive(&source_tid, server->receive_buffer, MESSAGE_SIZE);
+	receive_message = (RPSMessage*)server->receive_buffer;
+
+	switch (receive_message->message_type) {
+	case MESSAGE_TYPE_SIGN_UP:
+		break;
+	case MESSAGE_TYPE_PLAY:
+		break;
+	case MESSAGE_TYPE_QUIT:
+		break;
+	default:
+		assert(0, "RPSServer: Unknown message type from client");
+		break;
+	}
 }
 
 void RPSClient_Start() {
