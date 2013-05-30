@@ -1,28 +1,57 @@
 #include "buffer.h"
+#include "robio.h"
 
-void Buffer_Initialize(Buffer * buffer) {
-	buffer->start = 0;
-	buffer->end = 0;
-	buffer->size = BUFFER_SIZE;
+void RingBufferIndex_Initialize(RingBufferIndex * rbi, unsigned int size) {
+	rbi->start = 0;
+	rbi->end = 0;
+	rbi->size = size;
 }
 
-int Buffer_PutChar(Buffer * buffer, char c) {
-	if ((buffer->end + 1) % buffer->size == buffer->start) {
+int RingBufferIndex_Put(RingBufferIndex * rbi) {
+	if ((rbi->end + 1) % rbi->size == rbi->start) {
 		return ERR_BUFFER_FULL;
 	}
+	int index = rbi->end;
 
-	buffer->array[buffer->end] = c;
-	buffer->end = (buffer->end + 1) % buffer->size;
+	rbi->end = (rbi->end + 1) % rbi->size;
+
+	return index;
+}
+
+// Returns index where to get the item
+int RingBufferIndex_Get(RingBufferIndex * rbi) {
+	if (rbi->start == rbi->end) {
+		return ERR_BUFFER_EMPTY;
+	}
+
+	int index = rbi->end;
+	rbi->start = (rbi->start + 1) % rbi->size;
+	return index;
+}
+
+void CharBuffer_Initialize(CharBuffer * buffer) {
+	RingBufferIndex_Initialize(&buffer->buffer_index);
+}
+
+int CharBuffer_PutChar(CharBuffer * buffer, char c) {
+	int index = RingBufferIndex_Put(&buffer->buffer_index);
+
+	if (index == ERR_BUFFER_FULL) {
+		assert(0, 'CharBuffer_PutChar: buffer is full');
+		return index;
+	}
+
+	buffer->array[index] = c;
 
 	return 0;
 }
 
-char Buffer_GetChar(Buffer * buffer) {
-	if (buffer->start == buffer->end) {
+char CharBuffer_GetChar(CharBuffer * buffer) {
+	int index = RingBufferIndex_Get(&buffer->buffer_index);
+
+	if (index == ERR_BUFFER_EMPTY) {
 		return 0;
 	}
 
-	unsigned char c = buffer->array[buffer->end];
-	buffer->start = (buffer->start + 1) % buffer->size;
-	return c;
+	return buffer->array[index];
 }
