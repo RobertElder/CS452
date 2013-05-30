@@ -249,7 +249,7 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			k_state->current_task_descriptor->state = RECEIVE_BLOCKED;
 			schedule_and_set_next_task_state(k_state);
 		}
-		*(k_state->task_descriptors[tid].receive_tid) = tid;
+		*(k_state->task_descriptors[tid].origin_tid) = k_state->current_task_descriptor->id;
 	} else {
 		if (!is_tid_in_range(tid)) {
 			return_value = ERR_K_TID_OUT_OF_RANGE;
@@ -273,7 +273,7 @@ int k_Receive(int *tid, char *msg, int msglen){
 	KernelMessage * message = (KernelMessage *) Queue_PopStart(&k_state->current_task_descriptor->messages);
 	//  Remember where to store the message one we get it
 	k_state->current_task_descriptor->receive_msg = msg;
-	k_state->current_task_descriptor->receive_tid = tid;
+	k_state->current_task_descriptor->origin_tid = tid;
 	if(message == 0){
 		robprintfbusy((unsigned const char *)"Task: %d is blocking in receive because there are no messages.\n",k_state->current_task_descriptor->id);
 		//  No messages, block this task
@@ -309,9 +309,6 @@ int k_Reply(int tid, char *reply, int replylen){
 		assert(k_state->task_descriptors[tid].state == REPLY_BLOCKED, "Impossible state, replying to non reply blocked task.");
 		m_strcpy(k_state->task_descriptors[tid].reply_msg, reply, replylen);
 		k_state->task_descriptors[tid].state = READY;
-
-		assertf((int)k_state->task_descriptors[tid].receive_tid, "k_Reply: receive id is 0, calling task is %d\n",k_state->current_task_descriptor->id);
-		*(k_state->task_descriptors[tid].receive_tid) = tid;
 	} else {
 		if (!is_tid_in_range(tid)) {
 			return_value = ERR_K_TID_OUT_OF_RANGE;
