@@ -1,4 +1,5 @@
 #include "random.h"
+#include "robio.h"
 
 void RNG_Initialize(RNG * gen) {
 	gen->a = 1103515245;
