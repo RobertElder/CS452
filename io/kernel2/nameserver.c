@@ -25,6 +25,7 @@ void NameServer_Start() {
 				outgoing_message = (NameServerMessage *) ns.reply_buffer;
 				outgoing_message->message_type = MESSAGE_TYPE_REGISTER_AS_OK;
 				Reply(sender_id, ns.reply_buffer, MESSAGE_SIZE);
+				robprintfbusy((const unsigned char *)"Name server name '%s' was registered\n", ns.names[sender_id]);
 				break;
 			}case MESSAGE_TYPE_WHOIS:{
 				outgoing_message = (NameServerMessage *) ns.reply_buffer;
@@ -38,6 +39,7 @@ void NameServer_Start() {
 			}
 		}
 		Pass();
+		robprintfbusy((const unsigned char *)"Name server now loops\n");
 	}
 	assert(0, "Shouldn't see me\n");
 }
