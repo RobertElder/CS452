@@ -1,6 +1,7 @@
 #include "public_kernel_interface.h"
 #include "message.h"
 #include "nameserver.h"
+#include "robio.h"
 
 void asm_KernelInitEntry();
 int asm_CreateEntry();

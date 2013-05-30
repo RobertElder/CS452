@@ -7,6 +7,8 @@ static const int ERR_K_DEFAULT = -3;
 static const int ERR_INVALID_NAME_SERVER = -1;
 static const int ERR_NOT_A_NAME_SERVER = -2;
 static const int NAMESERVER_TID = 2;
+static const int ERR_K_TID_OUT_OF_RANGE = -1;
+static const int ERR_K_TID_DOES_NOT_EXIST = -2;
 
 void InitKernel();
 int Create( int priority, void (*code)( ) );
