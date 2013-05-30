@@ -1,4 +1,6 @@
 #include "public_kernel_interface.h"
+#include "message.h"
+#include "nameserver.h"
 
 void asm_KernelInitEntry();
 int asm_CreateEntry();
@@ -47,12 +49,44 @@ int Reply( int tid, char *reply, int replylen ){
 }
 
 int RegisterAs( char *name ) {
-	// TODO
-	return -123456789; 
+	NameServerMessage * send_message;
+	NameServerMessage * receive_message;
+
+	char send_buffer[MESSAGE_SIZE];
+	char receive_buffer[MESSAGE_SIZE];
+
+	send_message = (NameServerMessage *) send_buffer;
+	send_message->message_type = MESSAGE_TYPE_REGISTER_AS;
+	send_message->str = name;
+	send_message->num = MyTid();
+
+	Send(NAMESERVER_TID, send_buffer, MESSAGE_SIZE, receive_buffer, MESSAGE_SIZE);
+
+	receive_message = (NameServerMessage *) receive_buffer;
+
+	// TODO: I'm not sure if we ever send a message to the wrong server since
+	// it is hard coded. So we never really encounter an error.
+	return 0;
 }
 
 int WhoIs( char *name ) {
-	// TODO
-	return -123456789;
+	NameServerMessage * send_message;
+	NameServerMessage * receive_message;
+
+	char send_buffer[MESSAGE_SIZE];
+	char receive_buffer[MESSAGE_SIZE];
+
+	send_message = (NameServerMessage *) send_buffer;
+	send_message->message_type = MESSAGE_TYPE_WHOIS;
+	send_message->str = name;
+
+	Send(NAMESERVER_TID, send_buffer, MESSAGE_SIZE, receive_buffer, MESSAGE_SIZE);
+
+	receive_message = (NameServerMessage *) receive_buffer;
+	assert(receive_message->message_type == MESSAGE_TYPE_WHOIS_REPLY, "Didn't get back a whois reply message type");
+
+	// TODO: I'm not sure if we ever send a message to the wrong server since
+	// it is hard coded. So we never really encounter an error.
+	return receive_message->num;
 }
 
