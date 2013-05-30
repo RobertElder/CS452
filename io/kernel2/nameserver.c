@@ -1,45 +1,74 @@
 #include "nameserver.h"
-#include "tasks.h"
-
+#include "memory.h"
+#include "message.h"
+#include "public_kernel_interface.h"
 
 void NameServer_Start() {
-	// TODO
-	// Allocate a static amount of memory on the stack for the registered names
+	NameServer ns;
+	NameServer_Initialize(&ns);
+	robprintfbusy((const unsigned char *)"Name server here %d\n", ns.tid);
 
 	int sender_id;
-	char receive_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
 	NameServerMessage * received_message;
-
-	robprintfbusy((const unsigned char *)"Name server here %d\n", MyTid());
+	NameServerMessage * outgoing_message;
 
 	while(1){
-		Receive( &sender_id, receive_buffer, MESSAGE_SIZE);
-		received_message = (NameServerMessage *) receive_buffer;
+		Receive( &sender_id, ns.receive_buffer, MESSAGE_SIZE);
+		received_message = (NameServerMessage *) ns.receive_buffer;
 
 		switch (received_message->message_type) {
 			case MESSAGE_TYPE_REGISTER_AS:{
-				/*
-				if(name already exists){
-					overwrite
-				}else{
-					if(enough space for one more){
-						add it
-					}else{
-						assert(0,"Out of space for registered names in name server.");
-					}
-				}
-				*/
-				reply_buffer[0] = 0;
+				NameServer_SetName(&ns, sender_id, received_message->str);
+				break;
 			}case MESSAGE_TYPE_WHOIS:{
-				/*
-				reply(the task id they asked for);
-				*/
+				outgoing_message = (NameServerMessage *) ns.reply_buffer;
+				outgoing_message->message_type = MESSAGE_TYPE_WHOIS_REPLY;
+				outgoing_message->num = NameServer_GetName(&ns, received_message->str);
+				Reply(sender_id, ns.reply_buffer, MESSAGE_SIZE);
+				break;
 			}default:{
 				assert(0,"Name server message type not found.");
+				break;
 			}
 		}
 		Pass();
 	}
 	assert(0, "Shouldn't see me\n");
 }
+
+
+void NameServer_Initialize(NameServer * ns) {
+	ns->num_clients = 0;
+	ns->tid = MyTid();
+
+	int i;
+	for (i = 0; i < MAX_TASKS; i++) {
+		ns->filled[i] = 0;
+	}
+}
+
+void NameServer_SetName(NameServer * ns, int tid, char * name) {
+	if (0 <= tid && tid < MAX_TASKS) {
+		m_strcpy(ns->names[tid], name);
+		ns->filled[tid] = 1;
+	} else {
+		assert(0,"Out of space for registered names in name server.");
+	}
+}
+
+int NameServer_GetName(NameServer * ns, char * name) {
+	int tid;
+
+	for (tid = 0; tid < MAX_TASKS; tid++) {
+		if (!ns->filled[tid]) {
+			continue;
+		}
+
+		if (m_strcmp(ns->names[tid], name) == 0) {
+			return tid;
+		}
+	}
+
+	return 0;
+}
+

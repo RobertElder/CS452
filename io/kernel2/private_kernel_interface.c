@@ -3,6 +3,7 @@
 #include "robio.h"
 #include "kernel_state.h"
 #include "tasks.h"
+#include "message.h"
 
 void asm_KernelExit();
 

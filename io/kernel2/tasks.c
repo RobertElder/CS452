@@ -4,6 +4,7 @@
 #include "queue.h"
 #include "memory.h"
 #include "random.h"
+#include "message.h"
 #include "nameserver.h"
 
 void KernelTask_Start() {

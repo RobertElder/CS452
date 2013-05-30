@@ -1,13 +1,6 @@
 #ifndef TASK_H_
 #define TASK_H_
 
-#define MESSAGE_SIZE 100
-
-typedef enum MessageType {
-	MESSAGE_TYPE_REGISTER_AS = 0,
-	MESSAGE_TYPE_WHOIS
-} MessageType;
-
 static const char RPS_SERVER_NAME[] = "rps_server";
 static const char SIGN_UP[] = "sign_up";
 static const char CHOOSE[] = "choose";
