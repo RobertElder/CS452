@@ -74,7 +74,7 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 		Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)server->player_2_tid);
 
 		robprintfbusy((const unsigned char *)"RPSServer=%d Press any key to continue\n", MyTid());
-		// TODO: put busywait getc here
+		robgetcbusy(COM2);
 	}
 }
 

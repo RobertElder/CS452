@@ -1,4 +1,5 @@
-
+#ifndef ROBIO_H_
+#define ROBIO_H_
 typedef char *va_list;
 
 #define __va_argsiz(t)	\
@@ -72,4 +73,6 @@ void robputwbusy( int n, char fc, char *bf );
 void robprintfbusy( const unsigned char *format, ... );
 void assertf( int expr, const char * message, ...);
 void assert( int expr, const char * message);
+char robgetcbusy(int channel);
 
+#endif
