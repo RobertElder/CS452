@@ -4,6 +4,8 @@
 #include "kernel_state.h"
 #include "tasks.h"
 #include "message.h"
+#include "queue.h"
+#include "memory.h"
 
 void asm_KernelExit();
 
@@ -98,6 +100,25 @@ void validate_stack_value(TD * td){
 
 }
 
+int is_tid_in_range(int tid) {
+	if (tid < 0 || tid > MAX_TASKS + 1) {
+		return 0;
+	}
+	return 1;
+}
+
+int is_inited_tid(KernelState * k_state, int tid) {
+	if (!is_tid_in_range(tid)) {
+		return 0;
+	}
+
+	if (k_state->inited_td[tid]) {
+		return 1;
+	}
+
+	return 0;
+}
+
 void k_InitKernel(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	TD * task_descriptor = &(k_state->task_descriptors[0]);
@@ -113,6 +134,14 @@ void k_InitKernel(){
 	k_state->num_tasks = 1; /* There is one task, the start task we are creating now */
 	TD_Initialize(task_descriptor, task_id, task_priority, 99, get_stack_base(task_id), (void *)&KernelTask_Start);
 	PriorityQueue_Initialize(&k_state->task_queue);
+
+	int i;
+	for (i = 0; i < MAX_TASKS + 1; i++) {
+		k_state->inited_td[i] = 0;
+	}
+
+	RingBufferIndex_Initialize(&k_state->messages_index, QUEUE_SIZE);
+
 	safely_add_task_to_priority_queue(&k_state->task_queue, task_descriptor, task_priority);
 	schedule_and_set_next_task_state(k_state);
 	print_kernel_state(k_state);
@@ -138,6 +167,7 @@ int k_Create( int priority, void (*code)( ) ){
 		TD * td = &(k_state->task_descriptors[k_state->num_tasks]);
 		TD_Initialize(td, new_task_id, priority, k_state->current_task_descriptor->id, get_stack_base(new_task_id), code);
 		k_state->num_tasks += 1;
+		k_state->inited_td[new_task_id] = 1;
 
 		safely_add_task_to_priority_queue(&k_state->task_queue, td, priority);
 
@@ -203,18 +233,38 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 	assert((3 == msglen), "param problem in ksend msglen\n");
 	assert(((char*)4 == reply), "param problem in ksend reply\n");
 	assertf((383 == replylen), "param problem in ksend replylen, should be 383, but is %d\n",replylen);
-	k_state->current_task_descriptor->return_value = 8;
+
+	int return_value = 8;
+	TD * current_td = k_state->current_task_descriptor;
+
+	if (is_inited_tid(k_state, tid)) {
+		// TODO: put message on queue
+		int index = RingBufferIndex_Put(&k_state->messages_index);
+		KernelMessage * km = &k_state->messages[index];
+		KernelMessage_Initialize(km, current_td->id, tid, msg, reply, msglen, replylen);
+		Queue_PushEnd(&current_td->messages, km);
+	} else {
+		if (!is_tid_in_range(tid)) {
+			return_value = ERR_K_TID_OUT_OF_RANGE;
+		} else {
+			return_value = ERR_K_TID_DOES_NOT_EXIST;
+		}
+	}
+
+	k_state->current_task_descriptor->return_value = return_value;
 	set_next_task_state(k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
 
 int k_Receive(int *tid, char *msg, int msglen){
+	assert(msglen >= MESSAGE_SIZE, "k_Receive user space msg len is too small for our message");
+
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	save_current_task_state(k_state);
 	//  Attempt to receive a message from the queue associated with that process.
-	void * message = Queue_PopStart(&k_state->current_task_descriptor->messages);
-	if(message == (void *)0){
+	KernelMessage * message = (KernelMessage *) Queue_PopStart(&k_state->current_task_descriptor->messages);
+	if(message == 0){
 		//  No messages, block this task
 		k_state->current_task_descriptor->state = RECEIVE_BLOCKED;
 		k_state->current_task_descriptor->return_value = MESSAGE_SIZE;
@@ -222,19 +272,35 @@ int k_Receive(int *tid, char *msg, int msglen){
 		schedule_and_set_next_task_state(k_state);
 	}else{
 		//  There is a message, give it to the task
-		assert(0,"case not considered.");
+		RingBufferIndex_Get(&k_state->messages_index);
+		m_strcpy(msg, message->msg);
+		*tid = message->origin;
+		k_state->current_task_descriptor->return_value = message->origin_size;
 	}
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
 
-int k_Reply(int *tid, char *msg, int msglen){
+int k_Reply(int tid, char *reply, int replylen){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	save_current_task_state(k_state);
-	assert((tid == (int*)1), "param problem\n");
-	assert(((char*)2 == msg), "param problem\n");
-	assert((3 == msglen), "param problem\n");
-	k_state->current_task_descriptor->return_value = 6;
+	assert((tid == 1), "param problem\n");
+	assert(((char*)2 == reply), "param problem\n");
+	assert((3 == replylen), "param problem\n");
+
+	int return_value = 6;
+
+	if (is_inited_tid(k_state, tid)) {
+		// TODO: do something
+	} else {
+		if (!is_tid_in_range(tid)) {
+			return_value = ERR_K_TID_OUT_OF_RANGE;
+		} else {
+			return_value = ERR_K_TID_DOES_NOT_EXIST;
+		}
+	}
+
+	k_state->current_task_descriptor->return_value = return_value;
 	set_next_task_state(k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
