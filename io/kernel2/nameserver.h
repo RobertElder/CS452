@@ -17,7 +17,7 @@ typedef struct NameServer {
 	char receive_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
 	char names[MAX_TASKS][MAX_CLIENT_NAME_LENGTH];
-	char filled[MAX_TASKS][1];
+	short filled[MAX_TASKS];
 	unsigned int num_clients;
 } NameServer;
 

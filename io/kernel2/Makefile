@@ -96,4 +96,4 @@ kern.elf: $(OBJECTS)
 	chmod ugo+r /u/cs452/tftp/ARM/`whoami`/kern.elf
 
 clean:
-	-rm -f kern.elf kern.s public_kernel_interface.s private_kernel_interface.s robio.s buffer.s queue.s task_descriptor.s tasks.s memory.s random.s *.o kern.map
+	-rm -f kern.elf kern.s public_kernel_interface.s private_kernel_interface.s robio.s buffer.s queue.s task_descriptor.s tasks.s memory.s random.s nameserver.s *.o kern.map

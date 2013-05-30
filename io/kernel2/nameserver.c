@@ -2,6 +2,7 @@
 #include "memory.h"
 #include "message.h"
 #include "public_kernel_interface.h"
+#include "robio.h"
 
 void NameServer_Start() {
 	NameServer ns;
