@@ -16,23 +16,30 @@ void safely_add_task_to_priority_queue(PriorityQueue * queue, QUEUE_ITEM_TYPE it
 }
 
 TD * schedule_next_task(KernelState * k_state){
-	k_state->current_task_descriptor = READY;
-	
+	int times = 0;
 	while (1) {
 		TD * td = PriorityQueue_Get(&(k_state->task_queue));
 	
 		if (td == 0) {
 			//  There are no ready tasks found.
 			return 0;
-		} else if (td->state != ZOMBIE) {
+		} else if (td->state == READY) {
 			//  We're scheduling this task now, put it at the end of the queue
 			PriorityQueue_Put(&(k_state->task_queue), td, td->priority);
 			td->state = ACTIVE;
 			return td;
-		} else {
+		} else if (td->state == RECEIVE_BLOCKED) {
+			//  TODO:  this is inefficient, for now just put it at the end of the ready queue.
+			PriorityQueue_Put(&(k_state->task_queue), td, td->priority);
+			//  Just keep executing in this loop until we find a ready task.
+		} else if (td->state == ZOMBIE) {
 			// TODO:
 			// Destroy the zombie task
+		} else {
+			assertf(0,"Unknown task state: %d.",td->state);
 		}
+		times++;
+		assert(times < 100,"Scheduler ran more than 100 times, probably a bug.");
 	}
 	
 	assert(0, "Shouldn't get here");
@@ -128,7 +135,6 @@ void k_InitKernel(){
 	k_state->redboot_sp_value = k_state->user_proc_sp_value;
 	k_state->redboot_lr_value = k_state->user_proc_lr_value;
 	k_state->redboot_spsr_value = k_state->user_proc_spsr;
-	print_kernel_state(k_state);
 	//  Directly set the kernel state structure values on the stack.
 	k_state->max_tasks = MAX_TASKS;
 	k_state->num_tasks = 1; /* There is one task, the start task we are creating now */
@@ -144,7 +150,6 @@ void k_InitKernel(){
 
 	safely_add_task_to_priority_queue(&k_state->task_queue, task_descriptor, task_priority);
 	schedule_and_set_next_task_state(k_state);
-	print_kernel_state(k_state);
 	asm_KernelExit();
 }
 
@@ -162,7 +167,6 @@ int k_Create( int priority, void (*code)( ) ){
 		rtn = ERR_K_INVALID_PRIORITY;
 	}else{
 		int new_task_id = k_state->num_tasks;
-		print_kernel_state(k_state);
 		
 		TD * td = &(k_state->task_descriptors[k_state->num_tasks]);
 		TD_Initialize(td, new_task_id, priority, k_state->current_task_descriptor->id, get_stack_base(new_task_id), code);
@@ -176,9 +180,9 @@ int k_Create( int priority, void (*code)( ) ){
 	
 	save_current_task_state(k_state);
 	k_state->current_task_descriptor->return_value = rtn;
+	k_state->current_task_descriptor->state = READY;
 	schedule_and_set_next_task_state(k_state);
 
-	print_kernel_state(k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
@@ -195,7 +199,6 @@ int k_MyTid(){
 int k_MyParentTid(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	save_current_task_state(k_state);
-	print_kernel_state(k_state);
 	k_state->current_task_descriptor->return_value = k_state->current_task_descriptor->parent_id;
 	set_next_task_state(k_state);
 	asm_KernelExit();
@@ -207,10 +210,9 @@ void k_Pass(){
 	save_current_task_state(k_state);
 	//  Check for stack overflow and underflows
 	validate_stack_value(k_state->current_task_descriptor);
-	print_kernel_state(k_state);
+	k_state->current_task_descriptor->state = READY;
 	schedule_and_set_next_task_state(k_state);
 
-	print_kernel_state(k_state);
 	asm_KernelExit();
 }
 
@@ -218,7 +220,6 @@ void k_Exit(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	save_current_task_state(k_state);
 	validate_stack_value(k_state->current_task_descriptor);
-	print_kernel_state(k_state);
 	k_state->current_task_descriptor->state = ZOMBIE;
 	schedule_and_set_next_task_state(k_state);
 	
