@@ -17,6 +17,7 @@ typedef struct TaskDescriptor {
 	int id;
 	TaskState state;
 	QueuePriority priority;
+	Queue messages;
 	int parent_id;
 	int * stack_pointer;
 	int * link_register;
