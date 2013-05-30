@@ -7,6 +7,8 @@ void m_strcpy(char *dest, const char *src, int len) {
 	while (i < len) {
 		dest[i] = src[i];
 		i += 1;
+
+		assert(i < 100000, "m_strcpy has been running for a really long time");
 	}
 }
 
@@ -20,6 +22,8 @@ int m_strlen(const char * str) {
 			return i;
 		} 
 		i += 1;
+
+		assert(i < 100000, "m_strlen has been running for a really long time");
 	}
 }
 
@@ -36,6 +40,8 @@ int m_strcmp(const char *s1, const char *s2) {
 			break;
 		}
 		i += 1;
+
+		assert(i < 100000, "m_strcmp has been running for a really long time");
 	}
 	return 0;
 }
