@@ -54,7 +54,7 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 		reply_message = (RPSMessage *) server->reply_buffer;
 		reply_message->message_type = MESSAGE_TYPE_SIGN_UP_OK;
 		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
-		assert(return_code == 0, "RPSServer couldn't send SIGN_UP_OK to client");
+		assertf(return_code == 0, "RPSServer couldn't send SIGN_UP_OK to client. Got err=%d. Source TID=%d", return_code, source_tid);
 		break;
 	case MESSAGE_TYPE_QUIT:
 		robprintfbusy((const unsigned char *)"RPS Server received quit request from %d\n", source_tid);

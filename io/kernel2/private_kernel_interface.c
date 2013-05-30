@@ -307,7 +307,7 @@ int k_Reply(int tid, char *reply, int replylen){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	save_current_task_state(k_state);
 
-	int return_value = -1;
+	int return_value = 0;
 
 	k_state->current_task_descriptor->reply_msg = reply;
 	if (is_inited_tid(k_state, tid)) {
