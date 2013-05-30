@@ -235,12 +235,13 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 
 	if (is_inited_tid(k_state, tid)) {
 		if(k_state->task_descriptors[tid].state == SEND_BLOCKED){
+			robprintfbusy((unsigned const char *)"Task: %d sends to task %d and unblocks it because it was waiting for send.\n",k_state->current_task_descriptor->id, tid);
 			//  That task is now ready to be scheduled
 			k_state->task_descriptors[tid].state = READY;
 			k_state->task_descriptors[tid].return_value = msglen;
 			m_strcpy(k_state->task_descriptors[tid].receive_msg, msg, msglen);
 		}else{
-			robprintfbusy((unsigned const char *)"Sending a message to tid: %d from:  %d\n",tid, k_state->current_task_descriptor->id);
+			robprintfbusy((unsigned const char *)"Task %d sends a message to: %d and blocks because the destination is not blocked on send.\n",k_state->current_task_descriptor->id, tid);
 			int index = RingBufferIndex_Put(&k_state->messages_index);
 			KernelMessage * km = &k_state->messages[index];
 			KernelMessage_Initialize(km, current_td->id, tid, msg, reply, msglen, replylen);
@@ -270,19 +271,18 @@ int k_Receive(int *tid, char *msg, int msglen){
 	save_current_task_state(k_state);
 	//  Attempt to receive a message from the queue associated with that process.
 	KernelMessage * message = (KernelMessage *) Queue_PopStart(&k_state->current_task_descriptor->messages);
+	//  Remember where to store the message one we get it
+	k_state->current_task_descriptor->receive_msg = msg;
+	k_state->current_task_descriptor->receive_tid = tid;
 	if(message == 0){
-		robprintfbusy((unsigned const char *)"Blocking for receive tid: %d\n",k_state->current_task_descriptor->id);
+		robprintfbusy((unsigned const char *)"Task: %d is blocking in receive because there are no messages.\n",k_state->current_task_descriptor->id);
 		//  No messages, block this task
 		k_state->current_task_descriptor->state = SEND_BLOCKED;
 		k_state->current_task_descriptor->return_value = MESSAGE_SIZE;
-		//  Remember where to store the message one we get it
-		k_state->current_task_descriptor->receive_msg = msg;
-		k_state->current_task_descriptor->reply_msg = msg;
-		k_state->current_task_descriptor->receive_tid = tid;
 		//  Switch to the next ready process.
 		schedule_and_set_next_task_state(k_state);
 	}else{
-		robprintfbusy((unsigned const char *)"There is a message available for receive tid: %d\n",k_state->current_task_descriptor->id);
+		robprintfbusy((unsigned const char *)"Task %d receives a message from %d because there is a message waiting.\n",k_state->current_task_descriptor->id,message->origin);
 		//  There is a message, give it to the task
 		RingBufferIndex_Get(&k_state->messages_index);
 		m_strcpy(msg, message->msg, msglen);
@@ -290,8 +290,8 @@ int k_Receive(int *tid, char *msg, int msglen){
 		*tid = message->origin;
 		assert(message->origin, "k_Receive: no message origin");
 		k_state->current_task_descriptor->return_value = message->origin_size;
-		assert(k_state->task_descriptors[message->destination].state == RECEIVE_BLOCKED, "Impossible state, sender shoudl be receive blocked.");
-		k_state->task_descriptors[message->destination].state = REPLY_BLOCKED;
+		assert(k_state->task_descriptors[message->origin].state == RECEIVE_BLOCKED, "Impossible state, sender shoudl be receive blocked.");
+		k_state->task_descriptors[message->origin].state = REPLY_BLOCKED;
 	}
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
@@ -303,13 +303,14 @@ int k_Reply(int tid, char *reply, int replylen){
 
 	int return_value = -1;
 
+	k_state->current_task_descriptor->reply_msg = reply;
 	if (is_inited_tid(k_state, tid)) {
+		robprintfbusy((unsigned const char *)"Task %d replies to task %d\n",k_state->current_task_descriptor->id,tid);
 		assert(k_state->task_descriptors[tid].state == REPLY_BLOCKED, "Impossible state, replying to non reply blocked task.");
-		// TODO: totally broken
 		m_strcpy(k_state->task_descriptors[tid].reply_msg, reply, replylen);
 		k_state->task_descriptors[tid].state = READY;
 
-		assert((int)k_state->task_descriptors[tid].receive_tid, "k_Reply: receive id is 0");
+		assertf((int)k_state->task_descriptors[tid].receive_tid, "k_Reply: receive id is 0, calling task is %d\n",k_state->current_task_descriptor->id);
 		*(k_state->task_descriptors[tid].receive_tid) = tid;
 	} else {
 		if (!is_tid_in_range(tid)) {

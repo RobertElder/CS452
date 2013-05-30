@@ -15,6 +15,7 @@ void NameServer_Start() {
 
 	while(1){
 		Receive( &sender_id, ns.receive_buffer, MESSAGE_SIZE);
+		robprintfbusy((const unsigned char *)"After Receive call in name server\n");
 		received_message = (NameServerMessage *) ns.receive_buffer;
 
 		switch (received_message->message_type) {
