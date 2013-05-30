@@ -235,10 +235,11 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 
 	if (is_inited_tid(k_state, tid)) {
 		// TODO: put message on queue
+		robprintfbusy((unsigned const char *)"Sending a message to tid: %d from:  %d\n",tid, k_state->current_task_descriptor->id);
 		int index = RingBufferIndex_Put(&k_state->messages_index);
 		KernelMessage * km = &k_state->messages[index];
 		KernelMessage_Initialize(km, current_td->id, tid, msg, reply, msglen, replylen);
-		Queue_PushEnd(&current_td->messages, km);
+		Queue_PushEnd(&k_state->task_descriptors[tid].messages, km);
 	} else {
 		if (!is_tid_in_range(tid)) {
 			return_value = ERR_K_TID_OUT_OF_RANGE;
@@ -261,12 +262,14 @@ int k_Receive(int *tid, char *msg, int msglen){
 	//  Attempt to receive a message from the queue associated with that process.
 	KernelMessage * message = (KernelMessage *) Queue_PopStart(&k_state->current_task_descriptor->messages);
 	if(message == 0){
+		robprintfbusy((unsigned const char *)"Blocking for receive tid: %d\n",k_state->current_task_descriptor->id);
 		//  No messages, block this task
 		k_state->current_task_descriptor->state = RECEIVE_BLOCKED;
 		k_state->current_task_descriptor->return_value = MESSAGE_SIZE;
 		//  Switch to the next ready process.
 		schedule_and_set_next_task_state(k_state);
 	}else{
+		robprintfbusy((unsigned const char *)"There is a message available for receive tid: %d\n",k_state->current_task_descriptor->id);
 		//  There is a message, give it to the task
 		RingBufferIndex_Get(&k_state->messages_index);
 		m_strcpy(msg, message->msg);

@@ -29,7 +29,7 @@ void FirstTask_Start() {
 	int i;
 	for (i = 0; i < 5; i++) {
 		tid = Create(NORMAL, &RPSClient_Start);
-		assert(tid == 3 +i , "RPSClient tid not");
+		assert(tid == 3 + i + 1, "RPSClient tid not");
 	}
 	
 	Exit();
