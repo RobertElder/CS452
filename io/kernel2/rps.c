@@ -72,7 +72,8 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 
 		// TODO: send RESULT message to player 1 and then send RESULT message to player 2
 		// TODO: requeue the two player tids;
-		// TODO: use bwgetc as a press any key to continue
+		robprintfbusy((const unsigned char *)"RPSServer=%d Press any key to continue\n", MyTid());
+		// TODO: put busywait getc here
 	}
 }
 
