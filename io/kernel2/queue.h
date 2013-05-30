@@ -19,6 +19,7 @@ typedef struct Queue {
 	QueueItem items[QUEUE_SIZE];
 	unsigned int start;
 	unsigned int end;
+	unsigned int current_count;
 } Queue;
 
 typedef struct PriorityQueue {
@@ -34,6 +35,8 @@ void Queue_Initialize(Queue * queue);
 int Queue_PushEnd(Queue * queue, QUEUE_ITEM_TYPE item);
 
 QUEUE_ITEM_TYPE Queue_PopStart(Queue * queue);
+
+int Queue_CurrentCount(Queue * queue);
 
 void PriorityQueue_Initialize(PriorityQueue * queue);
 

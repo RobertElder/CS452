@@ -4,6 +4,7 @@
 void Queue_Initialize(Queue * queue) {
 	queue->start = 0;
 	queue->end = 0;
+	queue->current_count = 0;
 }
 
 int Queue_PushEnd(Queue * queue, QUEUE_ITEM_TYPE item) {
@@ -15,6 +16,7 @@ int Queue_PushEnd(Queue * queue, QUEUE_ITEM_TYPE item) {
 
 	queue->items[queue->end].item = item;
 	queue->end = (queue->end + 1) % QUEUE_SIZE;
+	queue->current_count += 1;
 	
 	return 0;
 }
@@ -29,9 +31,13 @@ QUEUE_ITEM_TYPE Queue_PopStart(Queue * queue) {
 	assert((int)item, "Queue_PopStart: item=0");
 
 	queue->start = (queue->start + 1) % QUEUE_SIZE;
+	queue->current_count -= 1;
 	return item;
 }
 
+int Queue_CurrentCount(Queue * queue) {
+	return queue->current_count;
+}
 
 void PriorityQueue_Initialize(PriorityQueue * queue) {
 	Queue_Initialize(&(queue->highest));
