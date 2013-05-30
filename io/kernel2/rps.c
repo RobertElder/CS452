@@ -55,62 +55,81 @@ void RPSClient_Initialize(RPSClient * client) {
 }
 
 void RPSClient_PlayARound(RPSClient * client) {
-	/*m_strcpy(buffer, PLAY);
+	RPSMessage * send_message;
+	RPSMessage * reply_message;
 
-		unsigned int choice = RNG_GetRange(&rng, 0, 2);
+	RPS_CHOICE choice = int_to_rps_choice(RNG_GetRange(&client->rng, 0, 2));
 
-		switch(choice) {
-		case 0:
-			buffer[5] = ROCK;
-			robprintfbusy((const unsigned char *)"Client: %d - I choose rock\n", my_id);
-			break;
-		case 1:
-			buffer[5] = PAPER;
-			robprintfbusy((const unsigned char *)"Client: %d - I choose paper\n", my_id);
-			break;
-		case 2:
-			buffer[5] = SCISSORS;
-			robprintfbusy((const unsigned char *)"Client: %d - I choose scissors\n", my_id);
-			break;
-		default:
-			assert(0, "RNG gave client something wrong");
-		}
-
-		Send(server_id, buffer, sizeof(buffer), reply, sizeof(reply));
-		assert(reply[0] == RESULT[0], "Client didn't get a result");
-
-		char outcome = reply[7];
-		switch (outcome) {
-		case WIN:
-			robprintfbusy((const unsigned char *)"Client: %d - I won ", my_id);
-			break;
-		case LOSE:
-			robprintfbusy((const unsigned char *)"Client: %d - I lost ", my_id);
-			break;
-		case TIE:
-			robprintfbusy((const unsigned char *)"Client: %d - It was a tie ", my_id);
-			break;
-		default:
-			assert(0, "Client not sure whether its win or lose");
-		}
-
-		char reason = reply[8];
-		switch (reason) {
-		case ROCK:
-			robprintfbusy((const unsigned char *)" because opponent chose rock\n");
-			break;
-		case PAPER:
-			robprintfbusy((const unsigned char *)" because opponent chose paper\n");
-			break;
-		case SCISSORS:
-			robprintfbusy((const unsigned char *)" because opponent chose scissors\n");
-			break;
-		case FORFEIT:
-			robprintfbusy((const unsigned char *)" because opponent gave up\n");
-			break;
-		default:
-			assert(0, "Client unable to explain why it won/lost");
-		}
+	switch(choice) {
+	case ROCK:
+		robprintfbusy((const unsigned char *)"Client: %d - I choose rock\n", client->tid);
+		break;
+	case PAPER:
+		robprintfbusy((const unsigned char *)"Client: %d - I choose paper\n", client->tid);
+		break;
+	case SCISSORS:
+		robprintfbusy((const unsigned char *)"Client: %d - I choose scissors\n", client->tid);
+		break;
+	default:
+		assert(0, "RNG gave client something wrong");
+		break;
 	}
-	 * */
+
+	send_message->message_type = MESSAGE_TYPE_PLAY;
+	send_message->choice = choice;
+	Send(client->server_id, client->send_buffer, MESSAGE_SIZE, client->reply_buffer, MESSAGE_SIZE);
+	reply_message = (RPSMessage *) client->reply_buffer;
+	assert(reply_message->message_type == MESSAGE_TYPE_RESULT, "Client didn't get a result");
+
+	RPS_OUTCOME outcome = reply_message->outcome;
+	switch (outcome) {
+	case WIN:
+		robprintfbusy((const unsigned char *)"Client: %d - I won ", client->tid);
+		break;
+	case LOSE:
+		robprintfbusy((const unsigned char *)"Client: %d - I lost ", client->tid);
+		break;
+	case TIE:
+		robprintfbusy((const unsigned char *)"Client: %d - It was a tie ", client->tid);
+		break;
+	default:
+		assert(0, "Client not sure whether its win or lose");
+		break;
+	}
+
+	RPS_CHOICE reason = reply_message->choice;
+	switch (reason) {
+	case ROCK:
+		robprintfbusy((const unsigned char *)" because opponent chose rock\n");
+		break;
+	case PAPER:
+		robprintfbusy((const unsigned char *)" because opponent chose paper\n");
+		break;
+	case SCISSORS:
+		robprintfbusy((const unsigned char *)" because opponent chose scissors\n");
+		break;
+	case FORFEIT:
+		robprintfbusy((const unsigned char *)" because opponent gave up\n");
+		break;
+	default:
+		assert(0, "Client unable to explain why it won/lost");
+		break;
+	}
+}
+
+
+RPS_CHOICE int_to_rps_choice(int num) {
+	switch(num){
+	case 0:
+		return ROCK;
+	case 1:
+		return PAPER;
+	case 2:
+		return SCISSORS;
+	case 3:
+		return FORFEIT;
+	default:
+		assert(0, "Unknown int to rps choice");
+		return -1;
+	}
 }

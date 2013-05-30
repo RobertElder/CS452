@@ -43,4 +43,6 @@ void RPSClient_Initialize(RPSClient * client);
 
 void RPSClient_PlayARound(RPSClient * client);
 
+RPS_CHOICE int_to_rps_choice(int num);
+
 #endif /* RPS_H_ */
