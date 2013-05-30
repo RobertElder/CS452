@@ -64,6 +64,8 @@ int RegisterAs( char *name ) {
 	Send(NAMESERVER_TID, send_buffer, MESSAGE_SIZE, receive_buffer, MESSAGE_SIZE);
 
 	receive_message = (NameServerMessage *) receive_buffer;
+	assert(receive_message->message_type == MESSAGE_TYPE_REGISTER_AS_OK, "Didn't get back a register ok message type");
+
 
 	// TODO: I'm not sure if we ever send a message to the wrong server since
 	// it is hard coded. So we never really encounter an error.

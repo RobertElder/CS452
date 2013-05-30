@@ -22,6 +22,9 @@ void NameServer_Start() {
 			case MESSAGE_TYPE_REGISTER_AS:{
 				robprintfbusy((const unsigned char *)"Name server got request from %d to register %s\n", sender_id, received_message->str);
 				NameServer_SetName(&ns, sender_id, received_message->str);
+				outgoing_message = (NameServerMessage *) ns.reply_buffer;
+				outgoing_message->message_type = MESSAGE_TYPE_REGISTER_AS_OK;
+				Reply(sender_id, ns.reply_buffer, MESSAGE_SIZE);
 				break;
 			}case MESSAGE_TYPE_WHOIS:{
 				outgoing_message = (NameServerMessage *) ns.reply_buffer;
