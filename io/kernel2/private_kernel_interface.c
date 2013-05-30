@@ -309,7 +309,7 @@ int k_Reply(int tid, char *reply, int replylen){
 		m_strcpy(k_state->task_descriptors[tid].reply_msg, reply, replylen);
 		k_state->task_descriptors[tid].state = READY;
 
-		assert(k_state->task_descriptors[tid].receive_tid, "k_Reply: receive id is 0");
+		assert((int)k_state->task_descriptors[tid].receive_tid, "k_Reply: receive id is 0");
 		*(k_state->task_descriptors[tid].receive_tid) = tid;
 	} else {
 		if (!is_tid_in_range(tid)) {
