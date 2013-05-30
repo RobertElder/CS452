@@ -57,7 +57,7 @@ void RPSServer_ProcessMessage(RPSServer * server);
 
 void RPSServer_SelectPlayers(RPSServer * server);
 
-void RPSServer_SendChoose(RPSServer * server);
+void RPSServer_ReceiveChoices(RPSServer * server);
 
 void RPSServer_SendResult(RPSServer * server);
 

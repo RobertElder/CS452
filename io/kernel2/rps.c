@@ -40,19 +40,25 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 	int source_tid;
 	Receive(&source_tid, server->receive_buffer, MESSAGE_SIZE);
 	receive_message = (RPSMessage*)server->receive_buffer;
+	int return_code;
 
 	switch (receive_message->message_type) {
 	case MESSAGE_TYPE_SIGN_UP:
 		Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)source_tid);
 		server->signed_in_players[source_tid] = 1;
+
+		reply_message = (RPSMessage *) server->reply_buffer;
+		reply_message->message_type = MESSAGE_TYPE_SIGN_UP_OK;
+		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
+		assert(return_code == 0, "RPSServer couldn't send SIGN_UP_OK to client");
 		break;
 	case MESSAGE_TYPE_QUIT:
 		server->signed_in_players[source_tid] = 0;
 
 		reply_message = (RPSMessage *) server->reply_buffer;
 		reply_message->message_type = MESSAGE_TYPE_GOODBYE;
-		int result = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
-		assert(result == 0, "RPSServer couldn't send GOODBYE to client");
+		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
+		assert(return_code == 0, "RPSServer couldn't send GOODBYE to client");
 
 		break;
 	default:
@@ -67,7 +73,7 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 			return;
 		}
 
-		RPSServer_SendChoose(server);
+		RPSServer_ReceiveChoices(server);
 		RPSServer_SendResult(server);
 
 		Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)server->player_1_tid);
@@ -104,7 +110,7 @@ void RPSServer_SelectPlayers(RPSServer * server) {
 	}
 }
 
-void RPSServer_SendChoose(RPSServer * server) {
+void RPSServer_ReceiveChoices(RPSServer * server) {
 	RPSMessage * reply_message;
 	RPSMessage * send_message;
 	int return_code;
@@ -180,7 +186,7 @@ void RPSClient_Start() {
 	Send(client.server_id, client.send_buffer, MESSAGE_SIZE, client.reply_buffer,MESSAGE_SIZE);
 	reply_message = (RPSMessage *) client.reply_buffer;
 
-	assert(reply_message->message_type == MESSAGE_TYPE_CHOOSE, "Client wasn't asked to choose");
+	assert(reply_message->message_type == MESSAGE_TYPE_SIGN_UP_OK, "Client didn't sign up successfully");
 
 	int i;
 	for (i = 0; i < client.num_rounds_to_play; i++) {
