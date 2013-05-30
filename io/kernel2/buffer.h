@@ -16,7 +16,7 @@ typedef struct CharBuffer {
 	RingBufferIndex buffer_index;
 } CharBuffer;
 
-void RingBufferIndex_Initialize(RingBufferIndex * rbi);
+void RingBufferIndex_Initialize(RingBufferIndex * rbi, unsigned int size);
 
 // Returns index where to put the item
 int RingBufferIndex_Put(RingBufferIndex * rbi);
