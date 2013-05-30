@@ -248,7 +248,7 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			k_state->current_task_descriptor->state = RECEIVE_BLOCKED;
 			schedule_and_set_next_task_state(k_state);
 		}
-
+		*(k_state->task_descriptors[tid].receive_tid) = tid;
 	} else {
 		if (!is_tid_in_range(tid)) {
 			return_value = ERR_K_TID_OUT_OF_RANGE;
@@ -278,6 +278,7 @@ int k_Receive(int *tid, char *msg, int msglen){
 		//  Remember where to store the message one we get it
 		k_state->current_task_descriptor->receive_msg = msg;
 		k_state->current_task_descriptor->reply_msg = msg;
+		k_state->current_task_descriptor->receive_tid = tid;
 		//  Switch to the next ready process.
 		schedule_and_set_next_task_state(k_state);
 	}else{
@@ -285,7 +286,9 @@ int k_Receive(int *tid, char *msg, int msglen){
 		//  There is a message, give it to the task
 		RingBufferIndex_Get(&k_state->messages_index);
 		m_strcpy(msg, message->msg, msglen);
+
 		*tid = message->origin;
+		assert(message->origin, "k_Receive: no message origin");
 		k_state->current_task_descriptor->return_value = message->origin_size;
 		assert(k_state->task_descriptors[message->destination].state == RECEIVE_BLOCKED, "Impossible state, sender shoudl be receive blocked.");
 		k_state->task_descriptors[message->destination].state = REPLY_BLOCKED;
@@ -305,6 +308,9 @@ int k_Reply(int tid, char *reply, int replylen){
 		// TODO: totally broken
 		m_strcpy(k_state->task_descriptors[tid].reply_msg, reply, replylen);
 		k_state->task_descriptors[tid].state = READY;
+
+		assert(k_state->task_descriptors[tid].receive_tid, "k_Reply: receive id is 0");
+		*(k_state->task_descriptors[tid].receive_tid) = tid;
 	} else {
 		if (!is_tid_in_range(tid)) {
 			return_value = ERR_K_TID_OUT_OF_RANGE;

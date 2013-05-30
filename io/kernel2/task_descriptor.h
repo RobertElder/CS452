@@ -25,6 +25,7 @@ typedef struct TaskDescriptor {
 	int return_value;
 	char * receive_msg;
 	char * reply_msg;
+	int * receive_tid;
 } TD;
 
 void TD_Initialize(TD * td, int id, QueuePriority priority, int parent_id, void *, void *);

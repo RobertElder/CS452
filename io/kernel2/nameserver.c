@@ -19,6 +19,7 @@ void NameServer_Start() {
 
 		switch (received_message->message_type) {
 			case MESSAGE_TYPE_REGISTER_AS:{
+				robprintfbusy((const unsigned char *)"Name server got request from %d to register %s\n", sender_id, received_message->str);
 				NameServer_SetName(&ns, sender_id, received_message->str);
 				break;
 			}case MESSAGE_TYPE_WHOIS:{
@@ -49,7 +50,7 @@ void NameServer_Initialize(NameServer * ns) {
 }
 
 void NameServer_SetName(NameServer * ns, int tid, char * name) {
-	if (0 <= tid && tid < MAX_TASKS) {
+	if (0 <= tid && tid < MAX_TASKS + 1) {
 		m_strcpy(ns->names[tid], name, m_strlen(name) + 1);
 		ns->filled[tid] = 1;
 	} else {
