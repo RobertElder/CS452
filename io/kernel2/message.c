@@ -7,7 +7,7 @@ void KernelMessage_Initialize(KernelMessage * km,
 		) {
 	km->origin = origin;
 	km->destination = destination;
-	m_strcpy(km->msg, *msg);
+	m_strcpy(km->msg, msg);
 	km->dest_buffer = dest_buffer;
 	km->origin_size = origin_size;
 	km->destination_size = destination_size;

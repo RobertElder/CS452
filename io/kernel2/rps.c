@@ -44,7 +44,7 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 
 	switch (receive_message->message_type) {
 	case MESSAGE_TYPE_SIGN_UP:
-		Queue_PushEnd(&server->player_tid_queue, source_tid);
+		Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)source_tid);
 		server->signed_in_players[source_tid] = 1;
 		break;
 	case MESSAGE_TYPE_QUIT:
@@ -71,6 +71,7 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 		RPSServer_SendChoose(server);
 
 		// TODO: send RESULT message to player 1 and then send RESULT message to player 2
+		send_message = (RPSMessage *) 0;
 		// TODO: requeue the two player tids;
 		robprintfbusy((const unsigned char *)"RPSServer=%d Press any key to continue\n", MyTid());
 		// TODO: put busywait getc here

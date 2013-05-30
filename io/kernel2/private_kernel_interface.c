@@ -228,11 +228,6 @@ void k_Exit(){
 int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	save_current_task_state(k_state);
-	assert((tid == 1), "param problem in ksend tid\n");
-	assert(((char*)2 == msg), "param problem in ksend msg\n");
-	assert((3 == msglen), "param problem in ksend msglen\n");
-	assert(((char*)4 == reply), "param problem in ksend reply\n");
-	assertf((383 == replylen), "param problem in ksend replylen, should be 383, but is %d\n",replylen);
 
 	int return_value = 8;
 	TD * current_td = k_state->current_task_descriptor;
