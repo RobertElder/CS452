@@ -211,9 +211,18 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 int k_Receive(int *tid, char *msg, int msglen){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	save_current_task_state(k_state);
-	// TODO: Check for messages available for this process.  Otherwise, block current process.
-	k_state->current_task_descriptor->return_value = MESSAGE_SIZE;
-	set_next_task_state(k_state);
+	//  Attempt to receive a message from the queue associated with that process.
+	void * message = Queue_PopStart(&k_state->current_task_descriptor->messages);
+	if(message == (void *)0){
+		//  No messages, block this task
+		k_state->current_task_descriptor->state = RECEIVE_BLOCKED;
+		k_state->current_task_descriptor->return_value = MESSAGE_SIZE;
+		//  Switch to the next ready process.
+		schedule_and_set_next_task_state(k_state);
+	}else{
+		//  There is a message, give it to the task
+		assert(0,"case not considered.");
+	}
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
