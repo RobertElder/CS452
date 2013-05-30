@@ -37,7 +37,6 @@ void RPSServer_Initialize(RPSServer * server) {
 void RPSServer_ProcessMessage(RPSServer * server) {
 	RPSMessage * receive_message;
 	RPSMessage * reply_message;
-	RPSMessage * send_message;
 	int source_tid;
 	Receive(&source_tid, server->receive_buffer, MESSAGE_SIZE);
 	receive_message = (RPSMessage*)server->receive_buffer;
@@ -69,10 +68,11 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 		}
 
 		RPSServer_SendChoose(server);
+		RPSServer_SendResult(server);
 
-		// TODO: send RESULT message to player 1 and then send RESULT message to player 2
-		send_message = (RPSMessage *) 0;
-		// TODO: requeue the two player tids;
+		Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)server->player_1_tid);
+		Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)server->player_2_tid);
+
 		robprintfbusy((const unsigned char *)"RPSServer=%d Press any key to continue\n", MyTid());
 		// TODO: put busywait getc here
 	}
@@ -86,7 +86,7 @@ void RPSServer_SelectPlayers(RPSServer * server) {
 			// Yay, found player 1!
 			break;
 		} else {
-			// Player 1 is quiter
+			// Player 1 has quit
 			server->player_1_tid = 0;
 		}
 	}
@@ -98,7 +98,7 @@ void RPSServer_SelectPlayers(RPSServer * server) {
 			// Yay, found player 2!
 			break;
 		} else {
-			// Player 2 is quiter
+			// Player 2 has quit
 			server->player_2_tid = 0;
 		}
 	}
@@ -128,6 +128,41 @@ void RPSServer_SendChoose(RPSServer * server) {
 	assert(reply_message->message_type == MESSAGE_TYPE_PLAY, "Failed to receive PLAY message from player 2");
 	server->player_2_choice = reply_message->choice;
 }
+
+void RPSServer_SendResult(RPSServer * server) {
+	RPSMessage * reply_message;
+	RPS_OUTCOME player_1_outcome;
+	RPS_OUTCOME player_2_outcome;
+	int return_code;
+	int winner = get_who_won(server->player_1_choice, server->player_2_choice);
+
+	if (winner == 0) {
+		player_1_outcome = TIE;
+		player_2_outcome = TIE;
+	} else if (winner == 1) {
+		player_1_outcome = WIN;
+		player_2_outcome = LOSE;
+	} else {
+		player_1_outcome = LOSE;
+		player_2_outcome = WIN;
+	}
+
+	reply_message = (RPSMessage *) server->reply_buffer;
+	reply_message->message_type = MESSAGE_TYPE_RESULT;
+	reply_message->outcome = player_1_outcome;
+	reply_message->choice = server->player_2_choice;
+
+	return_code = Reply(server->player_1_tid, server->reply_buffer, MESSAGE_SIZE);
+	assert(return_code == 0, "Failed to reply RESULT message to player 1");
+
+	reply_message->message_type = MESSAGE_TYPE_RESULT;
+	reply_message->outcome = player_2_outcome;
+	reply_message->choice = server->player_1_choice;
+
+	return_code = Reply(server->player_2_tid, server->reply_buffer, MESSAGE_SIZE);
+	assert(return_code == 0, "Failed to reply RESULT message to player 2");
+}
+
 
 void RPSClient_Start() {
 	robprintfbusy((const unsigned char *)"rps client here %d\n", MyTid());
@@ -246,4 +281,53 @@ RPS_CHOICE int_to_rps_choice(int num) {
 		assert(0, "Unknown int to rps choice");
 		return -1;
 	}
+}
+
+
+int get_who_won(RPS_CHOICE player_1_choice, RPS_CHOICE player_2_choice) {
+	if (player_1_choice == ROCK) {
+		switch(player_2_choice) {
+		case ROCK:
+			return 0;
+		case PAPER:
+			return 2;
+		case SCISSORS:
+			return 1;
+		case FORFEIT:
+			return 1;
+		}
+	} else if (player_1_choice == PAPER) {
+		switch(player_2_choice) {
+		case ROCK:
+			return 1;
+		case PAPER:
+			return 0;
+		case SCISSORS:
+			return 2;
+		case FORFEIT:
+			return 1;
+		}
+	} else if (player_1_choice == SCISSORS) {
+		switch(player_2_choice) {
+		case ROCK:
+			return 2;
+		case PAPER:
+			return 1;
+		case SCISSORS:
+			return 0;
+		case FORFEIT:
+			return 1;
+		}
+	} else {
+		// player_1_choice == FORFEIT
+		switch(player_2_choice) {
+		case FORFEIT:
+			return 0;
+		default:
+			return 2;
+		}
+	}
+
+	assert(0, "get_who_won: Unable to determine who won");
+	return -1;
 }
