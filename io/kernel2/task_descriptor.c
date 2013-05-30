@@ -11,5 +11,7 @@ void TD_Initialize(TD * td, int id, QueuePriority priority, int parent_id, void 
 	td->spsr_register = 16; /*  This will turn on user mode. */
 	td->return_value = 0;
 	td->origin_tid = 0;
+	td->receive_msg = 0;
+	td->reply_msg = 0;
 	Queue_Initialize(&td->messages);
 }

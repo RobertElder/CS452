@@ -239,6 +239,7 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			//  That task is now ready to be scheduled
 			k_state->task_descriptors[tid].state = READY;
 			k_state->task_descriptors[tid].return_value = msglen;
+			assert((int) k_state->task_descriptors[tid].receive_msg, "k_Send: receive_msg isn't set");
 			m_strcpy(k_state->task_descriptors[tid].receive_msg, msg, msglen);
 			//  This task is now blocked on a reply
 			k_state->current_task_descriptor->state = REPLY_BLOCKED;
@@ -295,6 +296,7 @@ int k_Receive(int *tid, char *msg, int msglen){
 		k_state->current_task_descriptor->return_value = message->origin_size;
 		assert(k_state->task_descriptors[message->origin].state == RECEIVE_BLOCKED, "Impossible state, sender shoudl be receive blocked.");
 		k_state->task_descriptors[message->origin].state = REPLY_BLOCKED;
+		set_next_task_state(k_state);
 	}
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
@@ -310,6 +312,7 @@ int k_Reply(int tid, char *reply, int replylen){
 	if (is_inited_tid(k_state, tid)) {
 		robprintfbusy((unsigned const char *)"Task %d replies to task %d\n",k_state->current_task_descriptor->id,tid);
 		assert(k_state->task_descriptors[tid].state == REPLY_BLOCKED, "Impossible state, replying to non reply blocked task.");
+		assert((int) k_state->task_descriptors[tid].reply_msg, "k_Reply: reply_msg isn't set");
 		m_strcpy(k_state->task_descriptors[tid].reply_msg, reply, replylen);
 		k_state->task_descriptors[tid].state = READY;
 	} else {

@@ -1,4 +1,5 @@
 #include "memory.h"
+#include "robio.h"
 
 void m_strcpy(char *dest, const char *src, int len) {
 	// FIXME: I'm not optimal
