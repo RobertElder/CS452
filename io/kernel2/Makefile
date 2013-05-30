@@ -18,7 +18,7 @@ ASFLAGS	= -mcpu=arm920t -mapcs-32
 LDFLAGS = -init main -Map kern.map -N  -T orex.ld -L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L../lib
 
 #  TODO: make things generic using the following method:
-SOURCES = kern.c public_kernel_interface.c private_kernel_interface.c swi_kernel_interface.c robio.c buffer.c queue.c task_descriptor.c tasks.c memory.c random.c
+SOURCES = kern.c public_kernel_interface.c private_kernel_interface.c swi_kernel_interface.c robio.c buffer.c queue.c task_descriptor.c tasks.c memory.c random.c nameserver.c
 HEADERS = ${SOURCES:.c=.h}
 OBJECTS = ${SOURCES:.c=.o}
 
@@ -83,6 +83,12 @@ random.s: random.c random.h
 
 random.o: random.s
 	$(AS) $(ASFLAGS) -o random.o random.s
+
+nameserver.s: nameserver.c nameserver.h
+	$(XCC) -S $(CFLAGS) nameserver.c
+
+nameserver.o: nameserver.s
+	$(AS) $(ASFLAGS) -o nameserver.o nameserver.s
 
 kern.elf: $(OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ $(OBJECTS) -lgcc

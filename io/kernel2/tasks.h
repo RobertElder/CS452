@@ -8,11 +8,6 @@ typedef enum MessageType {
 	MESSAGE_TYPE_WHOIS
 } MessageType;
 
-typedef struct NameServerMessage {
-	MessageType message_type;
-	char * str;
-} NameServerMessage;
-
 static const char RPS_SERVER_NAME[] = "rps_server";
 static const char SIGN_UP[] = "sign_up";
 static const char CHOOSE[] = "choose";
@@ -35,8 +30,6 @@ static const char GOODBYE[] = "goodbye";
 void KernelTask_Start();
 
 void FirstTask_Start();
-
-void NameServer_Start();
 
 void RPSServer_Start();
 
