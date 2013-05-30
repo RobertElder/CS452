@@ -19,13 +19,19 @@ void RPSServer_Start() {
 		RPSServer_ProcessMessage(&server);
 	}
 
-	// TODO
 	assert(0, "Shouldn't see me\n");
 }
 
 void RPSServer_Initialize(RPSServer * server) {
 	server->tid = MyTid();
 	Queue_Initialize(&server->player_tid_queue);
+	server->player_1_tid = 0;
+	server->player_2_tid = 0;
+
+	int i;
+	for (i = 0; i < MAX_TASKS + 1; i++) {
+		server->signed_in_players[i] = 0;
+	}
 }
 
 void RPSServer_ProcessMessage(RPSServer * server) {
@@ -36,14 +42,25 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 
 	switch (receive_message->message_type) {
 	case MESSAGE_TYPE_SIGN_UP:
-		break;
-	case MESSAGE_TYPE_PLAY:
+		Queue_PushEnd(&server->player_tid_queue, source_tid);
+		server->signed_in_players[source_tid] = 1;
 		break;
 	case MESSAGE_TYPE_QUIT:
+		server->signed_in_players[source_tid] = 0;
+		// TODO: reply GOODBYE message
 		break;
 	default:
 		assert(0, "RPSServer: Unknown message type from client");
 		break;
+	}
+
+	if (Queue_CurrentCount(&server->player_tid_queue) >= 2) {
+		// TODO: get first two player tids
+		// TODO: make sure they are signed in, otherwise discard the apporpriate ones and repeat from step one
+		// TODO: send CHOICE message to player 1 and then send CHOICE message to player 2
+		// TODO: expect MESSAGE_TYPE_PLAY message from player 1 and player 2
+		// TODO: send RESULT message to player 1 and then send RESULT message to player 2
+		// TODO: requeue the two player tids;
 	}
 }
 

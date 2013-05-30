@@ -1,6 +1,7 @@
 #include "message.h"
 #include "random.h"
 #include "queue.h"
+#include "kernel_state.h"
 
 #ifndef RPS_H_
 #define RPS_H_
@@ -31,6 +32,11 @@ typedef struct RPSServer {
 	char receive_buffer[MESSAGE_SIZE];
 	char send_buffer[MESSAGE_SIZE];
 	Queue player_tid_queue;
+	int player_1_tid;
+	int player_2_tid;
+	RPS_CHOICE player_1_choice;
+	RPS_CHOICE player_2_choice;
+	short signed_in_players[MAX_TASKS + 1];
 } RPSServer;
 
 typedef struct RPSClient {
