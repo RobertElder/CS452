@@ -54,6 +54,8 @@ void RPSServer_Initialize(RPSServer * server);
 
 void RPSServer_ProcessMessage(RPSServer * server);
 
+void RPSServer_SelectPlayers(RPSServer * server);
+
 void RPSClient_Start();
 
 void RPSClient_Initialize(RPSClient * client);

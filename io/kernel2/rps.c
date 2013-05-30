@@ -61,12 +61,43 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 	}
 
 	if (Queue_CurrentCount(&server->player_tid_queue) >= 2) {
-		// TODO: get first two player tids
-		// TODO: make sure they are signed in, otherwise discard the apporpriate ones and repeat from step one
+		RPSServer_SelectPlayers(server);
+
+		if (!server->player_1_tid || !server->player_2_tid) {
+			return;
+		}
+
 		// TODO: send CHOICE message to player 1 and then send CHOICE message to player 2
 		// TODO: expect MESSAGE_TYPE_PLAY message from player 1 and player 2
 		// TODO: send RESULT message to player 1 and then send RESULT message to player 2
 		// TODO: requeue the two player tids;
+		// TODO: use bwgetc as a press any key to continue
+	}
+}
+
+void RPSServer_SelectPlayers(RPSServer * server) {
+	while (Queue_CurrentCount(&server->player_tid_queue)) {
+		server->player_1_tid = (int) Queue_PopStart(&server->player_tid_queue);
+
+		if (server->signed_in_players[server->player_1_tid]) {
+			// Yay, found player 1!
+			break;
+		} else {
+			// Player 1 is quiter
+			server->player_1_tid = 0;
+		}
+	}
+
+	while (Queue_CurrentCount(&server->player_tid_queue)) {
+		server->player_2_tid = (int) Queue_PopStart(&server->player_tid_queue);
+
+		if (server->signed_in_players[server->player_1_tid]) {
+			// Yay, found player 2!
+			break;
+		} else {
+			// Player 2 is quiter
+			server->player_2_tid = 0;
+		}
 	}
 }
 
