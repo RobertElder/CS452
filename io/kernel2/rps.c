@@ -37,6 +37,7 @@ void RPSServer_Initialize(RPSServer * server) {
 void RPSServer_ProcessMessage(RPSServer * server) {
 	RPSMessage * receive_message;
 	RPSMessage * reply_message;
+	RPSMessage * send_message;
 	int source_tid;
 	Receive(&source_tid, server->receive_buffer, MESSAGE_SIZE);
 	receive_message = (RPSMessage*)server->receive_buffer;
@@ -67,8 +68,8 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 			return;
 		}
 
-		// TODO: send CHOICE message to player 1 and then send CHOICE message to player 2
-		// TODO: expect MESSAGE_TYPE_PLAY message from player 1 and player 2
+		RPSServer_SendChoose(server);
+
 		// TODO: send RESULT message to player 1 and then send RESULT message to player 2
 		// TODO: requeue the two player tids;
 		// TODO: use bwgetc as a press any key to continue
@@ -99,6 +100,31 @@ void RPSServer_SelectPlayers(RPSServer * server) {
 			server->player_2_tid = 0;
 		}
 	}
+}
+
+void RPSServer_SendChoose(RPSServer * server) {
+	RPSMessage * reply_message;
+	RPSMessage * send_message;
+	int return_code;
+
+	send_message = (RPSMessage *) server->send_buffer;
+	send_message->message_type = MESSAGE_TYPE_CHOOSE;
+
+	return_code = Send(server->player_1_tid, server->send_buffer, MESSAGE_SIZE,
+			server->reply_buffer, MESSAGE_SIZE);
+	assert(return_code == 0, "Failed to send CHOOSE message to player 1");
+
+	reply_message = (RPSMessage *) server->reply_buffer;
+	assert(reply_message->message_type == MESSAGE_TYPE_PLAY, "Failed to receive PLAY message from player 1");
+	server->player_1_choice = reply_message->choice;
+
+	return_code = Send(server->player_2_tid, server->send_buffer, MESSAGE_SIZE,
+			server->reply_buffer, MESSAGE_SIZE);
+	assert(return_code == 0, "Failed to send CHOOSE message to player 2");
+
+	reply_message = (RPSMessage *) server->reply_buffer;
+	assert(reply_message->message_type == MESSAGE_TYPE_PLAY, "Failed to receive PLAY message from player 2");
+	server->player_2_choice = reply_message->choice;
 }
 
 void RPSClient_Start() {
