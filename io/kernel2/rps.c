@@ -150,15 +150,10 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 			return;
 		}
 
-		robprintfbusy((const unsigned char *)"RPSServer candidates players P1=%d, P2=%d\n", server->player_1_tid, server->player_2_tid);
+		//robprintfbusy((const unsigned char *)"RPSServer candidates players P1=%d, P2=%d\n", server->player_1_tid, server->player_2_tid);
 
 		server->is_playing_game = 1;
 	}
-
-	robprintfbusy((const unsigned char *)"Server: There's only %d person in queue.\n",
-					Queue_CurrentCount(&server->player_tid_queue));
-	robprintfbusy((const unsigned char *)"RPSServer playing=%d candidates players P1=%d, P2=%d\n", server->is_playing_game, server->player_1_tid, server->player_2_tid);
-
 
 	Pass();
 }
@@ -188,6 +183,11 @@ void RPSServer_SelectPlayers(RPSServer * server) {
 			// Player 2 has quit
 			server->player_2_tid = 0;
 		}
+	}
+
+	if (server->player_1_tid == server->player_2_tid) {
+		server->player_1_tid = 0;
+		server->player_2_tid = 0;
 	}
 }
 
@@ -307,10 +307,10 @@ void RPSClient_PlayARound(RPSClient * client) {
 		if (reply_message->message_type == MESSAGE_TYPE_RESULT) {
 			break;
 		}
-		robprintfbusy((const unsigned char *)"RPSClient wait %d\n", client->tid);
+		//robprintfbusy((const unsigned char *)"RPSClient wait %d\n", client->tid);
 		//assert(reply_message->message_type == MESSAGE_TYPE_RESULT, "Client didn't get a RESULT message");
 		counter +=1;
-		assert(counter < 10, "waitianfasdfsadf");
+		assertf(counter < 10, "Forever Alone: TID=%d hasn't played in a while", client->tid);
 	}
 
 	RPS_OUTCOME outcome = reply_message->outcome;
