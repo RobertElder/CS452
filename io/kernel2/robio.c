@@ -343,7 +343,7 @@ void robgetc( ChannelDescription * channel ) {
 		break;
 	}
 
-	if( (*flags & RXFF_MASK )){
+	if( !(*flags & RXFE_MASK )){
 		channel->input_buffer[channel->in_buffer_end] = *data;
 		assert(((channel->in_buffer_end + 1) % channel->input_buffer_size) != channel->in_buffer_start,"The input buffer is full.");
 		channel->in_buffer_end = (channel->in_buffer_end + 1) % channel->input_buffer_size;
