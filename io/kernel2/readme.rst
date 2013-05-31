@@ -87,7 +87,7 @@ File: ``rps.h``
 
 There are two server-client structures: ``RPSServer`` and ``RPSClient``. ``RPSMessage`` is the message structure.
 
-The kernel starts the ``RPSServer`` and 3 ``RPSClient``s. All of them are executed at ``NORMAL`` priority as to allow us to catch synchronization bugs. 
+The kernel starts the ``RPSServer`` and 3 ``RPSClient``. All of them are executed at ``NORMAL`` priority as to allow us to catch synchronization bugs. 
 
 RPSServer
 ---------
@@ -189,7 +189,7 @@ File: ``message.h``
 Messages
 --------
 
-Messages are ``structs`` that are casted into ``char*``. This casting allows us to manipulate messages more easily with type safety rather than dealing with raw ``char``s. The message size is fixed arbitrary 100 for consistency.
+Messages are ``structs`` that are casted into ``char*``. This casting allows us to manipulate messages more easily with type safety rather than dealing with raw ``char``. The message size is fixed arbitrary 100 for consistency.
 
 
 Random Number Generator
