@@ -221,9 +221,6 @@ void RPSClient_Initialize(RPSClient * client) {
 void RPSClient_PlayARound(RPSClient * client) {
 	RPSMessage * send_message;
 	RPSMessage * reply_message;
-	RPSMessage * receive_message;
-	int source_tid;
-	int return_code;
 
 	RPS_CHOICE choice = int_to_rps_choice(RNG_GetRange(&client->rng, 0, 2));
 
@@ -319,6 +316,9 @@ int get_who_won(RPS_CHOICE player_1_choice, RPS_CHOICE player_2_choice) {
 			return 1;
 		case FORFEIT:
 			return 1;
+		case NO_CHOICE:
+			assert(0, "get_who_won: shouldn't get here");
+			return -1;
 		}
 	} else if (player_1_choice == PAPER) {
 		switch(player_2_choice) {
@@ -330,6 +330,9 @@ int get_who_won(RPS_CHOICE player_1_choice, RPS_CHOICE player_2_choice) {
 			return 2;
 		case FORFEIT:
 			return 1;
+		case NO_CHOICE:
+			assert(0, "get_who_won: shouldn't get here");
+			return -1;
 		}
 	} else if (player_1_choice == SCISSORS) {
 		switch(player_2_choice) {
@@ -341,10 +344,16 @@ int get_who_won(RPS_CHOICE player_1_choice, RPS_CHOICE player_2_choice) {
 			return 0;
 		case FORFEIT:
 			return 1;
+		case NO_CHOICE:
+			assert(0, "get_who_won: shouldn't get here");
+			return -1;
 		}
 	} else {
 		// player_1_choice == FORFEIT
 		switch(player_2_choice) {
+		case NO_CHOICE:
+			assert(0, "get_who_won: shouldn't get here");
+			return -1;
 		case FORFEIT:
 			return 0;
 		default:
