@@ -1,10 +1,10 @@
 #include "random.h"
 #include "robio.h"
 
-void RNG_Initialize(RNG * gen) {
+void RNG_Initialize(RNG * gen, unsigned int seed) {
 	gen->a = 1103515245;
 	gen->c = 12345;
-	gen->x = 42;
+	gen->x = (seed * 1234567890) % gen->m;
 	gen->m = 2147483648UL;
 }
 

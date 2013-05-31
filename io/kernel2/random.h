@@ -8,7 +8,7 @@ typedef struct RNG {
 	unsigned int m;
 } RNG;
 
-void RNG_Initialize(RNG * gen);
+void RNG_Initialize(RNG * gen, unsigned int seed);
 
 unsigned int RNG_Get(RNG * gen);
 
