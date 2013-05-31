@@ -77,6 +77,24 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 	case MESSAGE_TYPE_QUIT:
 		robprintfbusy((const unsigned char *)"Server: Received quit request from %d\n", source_tid);
 
+		// Invalidate candidates which may be stale
+		server->is_playing_game = 0;
+
+		reply_message = (RPSMessage *) server->reply_buffer;
+		reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
+
+		if (server->player_1_tid) {
+			return_code = Reply(server->player_1_tid, server->reply_buffer, MESSAGE_SIZE);
+			assert(return_code == 0, "RPSServer couldn't send NEG_ACK to client");
+		}
+		if (server->player_2_tid) {
+			return_code = Reply(server->player_2_tid, server->reply_buffer, MESSAGE_SIZE);
+			assert(return_code == 0, "RPSServer couldn't send NEG_ACK to client");
+		}
+
+		server->player_1_tid = 0;
+		server->player_2_tid = 0;
+
 		server->signed_in_players[source_tid] = 0;
 
 		reply_message = (RPSMessage *) server->reply_buffer;
@@ -92,8 +110,7 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 			} else if (source_tid == server->player_2_tid) {
 				server->player_2_choice = receive_message->choice;
 			} else {
-				//assertf(0, "RPSServer not ready for PLAY by tid=%d", source_tid);
-				// Not ready yet
+				// Not ready yet for playing
 				reply_message = (RPSMessage *) server->reply_buffer;
 				reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
 				return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
@@ -101,6 +118,7 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 			}
 
 			if (server->player_1_choice != NO_CHOICE && server->player_2_choice != NO_CHOICE) {
+				robprintfbusy((const unsigned char *)"Server: We got players! P1=%d, P2=%d\n", server->player_1_tid, server->player_2_tid);
 				RPSServer_ReplyResult(server);
 				server->player_1_choice = NO_CHOICE;
 				server->player_2_choice = NO_CHOICE;
@@ -108,8 +126,7 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 				server->games_played += 1;
 			}
 		} else {
-			//assertf(0, "RPSServer not ready for PLAY by tid=%d", source_tid);
-			// Not ready yet
+			// Not ready yet for playing
 			reply_message = (RPSMessage *) server->reply_buffer;
 			reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
 			return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
@@ -133,10 +150,15 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 			return;
 		}
 
-		robprintfbusy((const unsigned char *)"Server: We got players! P1=%d, P2=%d\n", server->player_1_tid, server->player_2_tid);
+		robprintfbusy((const unsigned char *)"RPSServer candidates players P1=%d, P2=%d\n", server->player_1_tid, server->player_2_tid);
 
 		server->is_playing_game = 1;
 	}
+
+	robprintfbusy((const unsigned char *)"Server: There's only %d person in queue.\n",
+					Queue_CurrentCount(&server->player_tid_queue));
+	robprintfbusy((const unsigned char *)"RPSServer playing=%d candidates players P1=%d, P2=%d\n", server->is_playing_game, server->player_1_tid, server->player_2_tid);
+
 
 	Pass();
 }
@@ -158,7 +180,7 @@ void RPSServer_SelectPlayers(RPSServer * server) {
 	while (Queue_CurrentCount(&server->player_tid_queue)) {
 		server->player_2_tid = (int) Queue_PopStart(&server->player_tid_queue);
 
-		if (server->signed_in_players[server->player_1_tid]) {
+		if (server->signed_in_players[server->player_2_tid]) {
 			// Yay, found player 2!
 			Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)server->player_2_tid);
 			break;
@@ -276,9 +298,8 @@ void RPSClient_PlayARound(RPSClient * client) {
 	send_message->message_type = MESSAGE_TYPE_PLAY;
 	send_message->choice = choice;
 
+	int counter = 0;
 	while (1) {
-		robprintfbusy((const unsigned char *)"RPSClient waitasfdf %d\n", client->tid);
-
 		Send(client->server_id, client->send_buffer, MESSAGE_SIZE, client->reply_buffer, MESSAGE_SIZE);
 
 		reply_message = (RPSMessage *) client->reply_buffer;
@@ -288,6 +309,8 @@ void RPSClient_PlayARound(RPSClient * client) {
 		}
 		robprintfbusy((const unsigned char *)"RPSClient wait %d\n", client->tid);
 		//assert(reply_message->message_type == MESSAGE_TYPE_RESULT, "Client didn't get a RESULT message");
+		counter +=1;
+		assert(counter < 10, "waitianfasdfsadf");
 	}
 
 	RPS_OUTCOME outcome = reply_message->outcome;

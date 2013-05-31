@@ -32,7 +32,7 @@ TD * schedule_next_task(KernelState * k_state){
 			//  TODO:  this is inefficient, for now just put it at the end of the ready queue.
 			PriorityQueue_Put(&(k_state->task_queue), td, td->priority);
 			//  Just keep executing in this loop until we find a ready task.
-			robprintfbusy((unsigned const char *)"Task: %d is state %d.\n",td->id, td->state);
+			//robprintfbusy((unsigned const char *)"Task: %d is state %d.\n",td->id, td->state);
 		} else if (td->state == ZOMBIE) {
 			// TODO:
 			// Destroy the zombie task
