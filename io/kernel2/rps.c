@@ -226,8 +226,15 @@ void RPSClient_Initialize(RPSClient * client) {
 void RPSClient_PlayARound(RPSClient * client) {
 	RPSMessage * send_message;
 	RPSMessage * reply_message;
+	RPSMessage * receive_message;
+	int source_tid;
 
 	RPS_CHOICE choice = int_to_rps_choice(RNG_GetRange(&client->rng, 0, 2));
+
+	receive_message = (RPSMessage *) client->receive_buffer;
+	Receive(&source_tid, client->receive_buffer, MESSAGE_SIZE);
+
+	assert(receive_message->message_type == MESSAGE_TYPE_CHOOSE, "RPSClient: Expceted a message from server to tell us to choose");
 
 	switch(choice) {
 	case ROCK:

@@ -44,6 +44,7 @@ typedef struct RPSClient {
 	int tid;
 	char reply_buffer[MESSAGE_SIZE];
 	char send_buffer[MESSAGE_SIZE];
+	char receive_buffer[MESSAGE_SIZE];
 	RNG rng;
 	int server_id;
 	unsigned int num_rounds_to_play;
