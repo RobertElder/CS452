@@ -1,22 +1,22 @@
 =========
-CS 452 K1
+CS 452 K2
 =========
 
 
 :Names: Robert Elder, Christopher Foo
 :ID #: 20335246, 20309244
 :Userids: relder, chfoo
-:Date due: May 27, 2013
+:Date due: May 31, 2013
 
 
 Running
 =======
 
-The executable is located at ``/u0/relder/cs452/CS452/io/kernel-1-submission/kern.elf``.
+The executable is located at ``/u/cs452/tftp/ARM/relder-chfoo/k2-submit/kern.elf``.
 
 It is executed using the regular commands::
 
-    load -b 0x00218000 -h 10.15.167.4 /u0/relder/cs452/CS452/io/kernel-1-submission/kern.elf
+    load -b 0x00218000 -h 10.15.167.4 ARM/relder-chfoo/k2-submit/kern.elf
     go
 
 
@@ -27,76 +27,116 @@ Description
 Kernel
 ++++++
 
-The entry point is located in ``kern.c``.
-
-The kernel follows the following:
-
-1. Sets the location of our SWI routine.
-2. Sets the stack pointer to accommodate our Kernel State.
-3. Initialize the kernel (File ``private_kernel_interface.c``:``k_InitKernel()``).
-
-   1. Save the SP and LR values so the kernel can exit back to RedBoot.
-   2. Initialize the pseudo Task Descriptor.
-   3. Initialize the queues.
-   4. Set the SP and LR value of the pseudo Task Descriptor to the Kernel State
-   5. Call the ``asm_KernelExit`` routine to push the values to the register.
-
-4. Jump to KernelTask_Start (File ``tasks.c``)
-5. Start our first user task that starts the 4 other generic tasks.
-
 
 Scheduling
 ----------
 
-Scheduling occurs for all kernel calls. Before the current task descriptor is swapped out,
+* The blocked states are now used. They corresponds to those explained in the lecture:
 
-1. The user task's SP, LR, and SPSR values are saved into the current task descriptor.
-2. Any related values are also saved into the TD.
-3. The next task is selected (``schedule_next_task()``).
+  * ``RECEIVE_BLOCKED``
+  * ``SEND_BLOCKED``
+  * ``REPLY_BLOCKED``
 
-   1. The current task is set to ``READY``.
-   2. A task is removed from the Priority Queue.
-
-      * Any tasks in the ``ZOMBIE`` state are not re-queued. Go back to step 1.
-
-   3. Use the pointer to the task as the next task to be run.
-   4. Set the selected task as ``ACTIVE``.
-   5. Reschedule the selected task by adding it back to the Priority Queue.
-
-4. If there no more tasks in the Priority Queue, the kernel exits back to RedBoot using the values we saved on the Kernel State.
-5. Otherwise, the SP, LR, and return values are saved into the Kernel State.
-6. Assembly routine ``asm_KernelExit`` pushes these values to the registers.
-
-
-User tasks
-----------
-
-The tasks are defined in ``tasks.c``.
-
-``KernelTask`` is a pseudo task with a pseudo task descriptor. It is simply used to start the first user task and does not get rescheduled. It has a task id of 0.
-
-The first user task is called ``FirstTask``. It has a task id of 1. The other tasks are called ``GenericTask``.
+* Tasks that blocked are simply rescheduled by re-queueing it.
 
 
 System Calls
 ------------
 
-The system calls should be complete in respect to the specifications.
+* Added support for 5th argument.
 
-``Create``
-    Returns the new task id, ``ERR_K_INVALID_PRIORITY -1``, or ``ERR_K_OUT_OF_TD -2``
+The system calls are not entirely complete according specifications and are noted below.
 
-``MyTid``
-    Returns the current task id
+``Send``
+    The function behaves as expected except the error ``-3`` code is not implemented.
 
-``MyParentTid``
-    Returns the parent task id. The parent task id is always returned regardless of the parent's state.
+``Receive``
+    The function behaves as expected. The size of the message sent would be typically 100 bytes since it is the convention used in the kernel.
 
-``Pass``
-    (Rescheduling happens as normal in the background.)
+``Reply``
+    The function behaves as expected except error codes ``-3`` and ``-4`` are not implemented.
 
-``Exit``
-    Task is marked as ``ZOMBIE`` (and rescheduling happens as normal in the background).
+``RegisterAs``
+    The function behaves as expected. It uses the ``NameServerMessage`` structure and sends the message. ``0`` is always returned because the Task ID is hard-coded and the call should never send to the wrong task.
+
+``WhoIs``
+    The function behaves as expected. As noted in ``RegisterAs``, we either return a Task ID or 0.
+
+Name Server
++++++++++++
+
+File: ``nameserver.c``
+
+The name server uses a 2D ``char`` array. The maximum name is limited arbitrary to 100 letters including the null terminator. The array index corresponds to the Task ID for simplicity and constant time operations.
+
+It does the following:
+
+1. ``Receive`` a message casted to ``NameServerMessage``
+2. Determine the request type.
+3. Look up or set the value in the array.
+
+* Requests to set the name multiple times overwrites the previous value.
+* 0 is returned when an invalid Task ID is provided.
+* The Task ID is hard-coded to ``2``.
+
+
+Rock Paper Scissors
++++++++++++++++++++
+
+File: ``rps.h``
+
+There are two server-client structures: ``RPSServer`` and ``RPSClient``. ``RPSMessage`` is the message structure.
+
+The kernel starts the ``RPSServer`` and 3 ``RPSClient``s. All of them are executed at ``NORMAL`` priority as to allow us to catch synchronization bugs. 
+
+RPSServer
+---------
+
+1. Registers with the name server
+2. ``Receive`` and processes message with sign up, quit, and play types.
+3. Outputs if there is only 1 or less items in the sign up queue.
+
+Sign Up
+'''''''
+
+1. Add the task ID to the sign up queue.
+2. Mark it as signed up on the sign up array.
+3. ``Reply`` with a ``SIGN_UP_OK`` type message.
+
+Quit:
+'''''
+
+1. Mark it as quit (0) on the sign up array.
+2. ``Reply`` with a ``GOODBYE`` type message.
+
+Player Selection
+''''''''''''''''
+
+Players are selected by going through the sign up queue. Players are not requeued if they have quit.
+
+Play
+''''
+
+1. Get the player's choice by matching the Task IDs
+2. Once we have two choices, we can ``Reply`` with the outcome.
+3. ``Reply`` a ``NEGATIVE_ACK`` message type if the client cannot play yet.
+
+
+RPSClient
+---------
+
+Each client wants to play 5 times.
+
+1. Look up the task ID of the ``RPSServer``.
+2. Sign up
+3. Decide their choice and ``Send`` it.
+4. If a ``NEGATIVE_ACK`` is received, try again. This is a simple polling method that is robust.
+
+   * This could be improved/avoided by having the ``RPSServer`` notify or ``Send`` to the client to let it know it is ready.
+
+5. Read the message and print out results.
+6. Waits for keyboard input
+
 
 
 Algorithms and Data structures
@@ -108,25 +148,8 @@ Queue
 
 File: ``queue.c``
 
-The queue, a ``struct``, is implemented as a ring buffer. A start and end index is used to point to the start and end of the array. Each item is a ``void*``. The ring buffer allows adding and removing an item from the queue in constant time. A null pointer is returned if the queue is empty.
+A change was made so that it returns the current item count.
 
-
-Priority Queue
---------------
-
-The priority queue consists of 5 queues for 5 levels of priority: highest, high, normal, low, and lowest. ``NORMAL`` is the default priority. Adding and removing an item is constant time.
-
-======== ===
-Priority Int
-======== ===
-HIGHEST   1
-HIGH      2
-NORMAL    3
-LOW       4
-LOWEST    5
-======== ===
-
-Performance can be improved for removing an item in the priority queue. It currently checks all queues. An additional variable that tracks the highest, non-empty queue could be used.
 
 
 Task Descriptor (TD)
@@ -134,7 +157,7 @@ Task Descriptor (TD)
 
 File: ``task_descriptor.c``
 
-The TD, a ``struct``, holds important information such as the task id, state, and return values.
+The TD was modified so it contains message pointer such as the address of TID for ``Receive``
 
 
 Kernel State
@@ -142,47 +165,93 @@ Kernel State
 
 File: ``kernel_state.h``
 
-The Kernel State is a ``struct`` stored at ``0x01500000 - sizeof(KernelState)``. It contains values such as the SP, LR, and return values that are set and retrieved in C code. Once these values are set, a routine is run in assembly code that pushes these values to the appropriate registers. The same information is also written to the struct directly when entering a kernel function.  This method makes it convenient for writing in C.
+An array of ``KernelMessage`` and its related variables was added to the ``KernelState``
 
-The Kernel State also contains information about the Task Descriptors.
+
+Memory Operations
+-----------------
+
+File: ``memory.c``
+
+Functions were added so that strings (potentially binary data) could be copied. They are simple and copy one ``char`` at a time.
+
+Possible improvements: Instructions could be written in assembly that make use of the block copying mode.
+
+
+Kernel Message
+--------------
+
+File: ``message.h``
+
+``KernelMessage`` is a ``struct`` that contains the message string. It contains origin and destination IDs and pointers.
+
+
+Messages
+--------
+
+Messages are ``structs`` that are casted into ``char*``. This casting allows us to manipulate messages more easily with type safety rather than dealing with raw ``char``s. The message size is fixed arbitrary 100 for consistency.
+
+
+Random Number Generator
+-----------------------
+
+File: ``random.h``
+
+A LCG is used as the random number generator. It uses the GCC values as noted on Wikipedia. The seed is multiplied by an arbitrary number to get the generator going.
+
+
+Assert
+------
+
+The assert statement has been enhanced to show Thomas The Tank Engine. Please do not be alarmed when you see it.
+
 
 
 Source Code
 ===========
 
-The source code is located at ``/u0/relder/cs452/CS452/io/kernel-1-submission``.
+The source code is located at ``/u4/chfoo/cs452/group/k1-submit/io/kernel-1-submission``. It can be compiled by running ``make``.
 
-::
+Source code MD5 hashes::
 
-    Listings go here
-    Listings go here
-    Listings go here
+    TODO
+
+Elf MD5 hash::
+
+    TODO
+
+Git sha1 hash: ``TODO``
 
 
 Output
 ======
 
-The executable prints the following:
+The executable prints:
 
-1. ``FirstTask``, with ID 1, prints the message about creating two tasks 2 and 3
-2. Task 4 executes.
+* Task creation
+* Who wants to sign up
+* What clients choose
+* The chosen player task IDs
+* The result of the game
+* The client's reasoning for winning/losing
+* When a client quits
 
-   * Task 4 executes because it is created with ``HIGH`` priority. The ``FirstTask`` has only ``NORMAL`` priority.
+Note that a keyboard response is needed when the *client* gets the result. This allows us to see what the *server* decided before continuing execution. So two presses of the keyboard are needed for each round.
 
-3. ``FirstTask`` prints that it created task 4.
-4. Task 5 executes.
 
-   * Task 5 has ``HIGH`` priority
+Unimplemented Code
+++++++++++++++++++
 
-5. ``FirstTask`` prints that it created task 5.
-6. ``FirstTask`` exits.
-7. Task 2 runs.
+Because the user tasks are not finished, the program will end up at an assertion failure. The last task remaining will not be able to play because it will continue to poll and wait.
 
-   * Task 2 has ``LOW`` priority so it runs only now.
+If more time was available, we would have implemented:
 
-8. Task 3 runs.
-9. Task 2 runs.
+* Detect when 1 client is remaining and ``Send`` a ``SHUTDOWN`` message type to the client.
+* The client will stop and exit.
+* Stop the ``PRSServer`` and the name server
+* Exit cleanly.
 
-   * Task 2 and 3 have equal priority so they are queued right after each other.
-10. Task 3 runs.
+Performance Measurement
+=======================
 
+TODO
