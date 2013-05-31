@@ -7,25 +7,21 @@
 void NameServer_Start() {
 	NameServer ns;
 	NameServer_Initialize(&ns);
-	//robprintfbusy((const unsigned char *)"Name server here %d\n", ns.tid);
-
 	int sender_id;
 	NameServerMessage * received_message;
 	NameServerMessage * outgoing_message;
 
 	while(1){
 		Receive( &sender_id, ns.receive_buffer, MESSAGE_SIZE);
-		//robprintfbusy((const unsigned char *)"After Receive call in name server\n");
 		received_message = (NameServerMessage *) ns.receive_buffer;
 
 		switch (received_message->message_type) {
 			case MESSAGE_TYPE_REGISTER_AS:{
-				robprintfbusy((const unsigned char *)"Name server got request from %d to register %s\n", sender_id, received_message->str);
+				robprintfbusy((const unsigned char *)"Name server got request from %d to register '%s'\n", sender_id, received_message->str);
 				NameServer_SetName(&ns, sender_id, received_message->str);
 				outgoing_message = (NameServerMessage *) ns.reply_buffer;
 				outgoing_message->message_type = MESSAGE_TYPE_REGISTER_AS_OK;
 				Reply(sender_id, ns.reply_buffer, MESSAGE_SIZE);
-				//robprintfbusy((const unsigned char *)"Name server name '%s' was registered\n", ns.names[sender_id]);
 				break;
 			}case MESSAGE_TYPE_WHOIS:{
 				outgoing_message = (NameServerMessage *) ns.reply_buffer;
@@ -39,7 +35,6 @@ void NameServer_Start() {
 			}
 		}
 		Pass();
-		//robprintfbusy((const unsigned char *)"Name server now loops\n");
 	}
 	assert(0, "Shouldn't see me\n");
 }

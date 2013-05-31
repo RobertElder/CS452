@@ -6,7 +6,7 @@
 #include "queue.h"
 
 void RPSServer_Start() {
-	robprintfbusy((const unsigned char *)"RPSServer here tid=%d\n", MyTid());
+	robprintfbusy((const unsigned char *)"RPSServer created tid=%d\n", MyTid());
 
 	int result = RegisterAs((char*) RPS_SERVER_NAME);
 
@@ -28,7 +28,7 @@ void RPSServer_Start() {
 		}
 	}
 
-	robprintfbusy((const unsigned char *)"RPSServer exit\n");
+	robprintfbusy((const unsigned char *)"RPSServer exited\n");
 
 	Exit();
 
@@ -53,8 +53,6 @@ void RPSServer_Initialize(RPSServer * server) {
 }
 
 void RPSServer_ProcessMessage(RPSServer * server) {
-	//robprintfbusy((const unsigned char *)"RPS Server process message\n");
-
 	RPSMessage * receive_message;
 	RPSMessage * reply_message;
 	int source_tid;
@@ -105,6 +103,7 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 		break;
 	case MESSAGE_TYPE_PLAY:
 		if (server->is_playing_game) {
+			// Grab choices from the ones we are interested in
 			if (source_tid == server->player_1_tid) {
 				server->player_1_choice = receive_message->choice;
 			} else if (source_tid == server->player_2_tid) {
@@ -118,6 +117,7 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 			}
 
 			if (server->player_1_choice != NO_CHOICE && server->player_2_choice != NO_CHOICE) {
+				// We can play now!
 				robprintfbusy((const unsigned char *)"Server: We got players! P1=%d, P2=%d\n", server->player_1_tid, server->player_2_tid);
 				RPSServer_ReplyResult(server);
 				server->player_1_choice = NO_CHOICE;
@@ -149,8 +149,6 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 			Pass();
 			return;
 		}
-
-		//robprintfbusy((const unsigned char *)"RPSServer candidates players P1=%d, P2=%d\n", server->player_1_tid, server->player_2_tid);
 
 		server->is_playing_game = 1;
 	}
@@ -214,8 +212,6 @@ void RPSServer_ReplyResult(RPSServer * server) {
 	reply_message->outcome = player_1_outcome;
 	reply_message->choice = server->player_2_choice;
 
-	//robprintfbusy((const unsigned char *)"RPS Server replying P1 %d with result\n", server->player_1_tid);
-
 	return_code = Reply(server->player_1_tid, server->reply_buffer, MESSAGE_SIZE);
 	assert(return_code == 0, "Failed to reply RESULT message to player 1");
 
@@ -223,8 +219,6 @@ void RPSServer_ReplyResult(RPSServer * server) {
 	reply_message->message_type = MESSAGE_TYPE_RESULT;
 	reply_message->outcome = player_2_outcome;
 	reply_message->choice = server->player_1_choice;
-
-	//robprintfbusy((const unsigned char *)"RPS Server replying P2 %d with result\n", server->player_2_tid);
 
 	return_code = Reply(server->player_2_tid, server->reply_buffer, MESSAGE_SIZE);
 	assert(return_code == 0, "Failed to send RESULT message to player 2");
@@ -307,8 +301,9 @@ void RPSClient_PlayARound(RPSClient * client) {
 		if (reply_message->message_type == MESSAGE_TYPE_RESULT) {
 			break;
 		}
-		//robprintfbusy((const unsigned char *)"RPSClient wait %d\n", client->tid);
-		//assert(reply_message->message_type == MESSAGE_TYPE_RESULT, "Client didn't get a RESULT message");
+		assert(reply_message->message_type == MESSAGE_TYPE_RESULT ||
+				reply_message->message_type == MESSAGE_TYPE_NEG_ACK,
+				"Client didn't get a RESULT or a NEG_ACK message");
 		counter +=1;
 		assertf(counter < 10, "Forever Alone: TID=%d hasn't played in a while", client->tid);
 	}
