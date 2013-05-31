@@ -40,6 +40,8 @@ typedef struct RPSServer {
 	RPS_CHOICE player_2_choice;
 	short signed_in_players[MAX_TASKS + 1];
 	short is_playing_game;
+	short running;
+	unsigned int games_played;
 } RPSServer;
 
 typedef struct RPSClient {
