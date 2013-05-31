@@ -9,6 +9,7 @@
 static const char RPS_SERVER_NAME[] = "rps_server";
 
 typedef enum RPS_CHOICE {
+	NO_CHOICE=-1,
 	ROCK = 0,
 	PAPER = 1,
 	SCISSORS = 2,
@@ -38,6 +39,7 @@ typedef struct RPSServer {
 	RPS_CHOICE player_1_choice;
 	RPS_CHOICE player_2_choice;
 	short signed_in_players[MAX_TASKS + 1];
+	short is_playing_game;
 } RPSServer;
 
 typedef struct RPSClient {
@@ -58,9 +60,7 @@ void RPSServer_ProcessMessage(RPSServer * server);
 
 void RPSServer_SelectPlayers(RPSServer * server);
 
-void RPSServer_ReceiveChoices(RPSServer * server);
-
-void RPSServer_SendResult(RPSServer * server);
+void RPSServer_ReplyResult(RPSServer * server);
 
 void RPSClient_Start();
 
