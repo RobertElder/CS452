@@ -83,19 +83,19 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 		reply_message = (RPSMessage *) server->reply_buffer;
 		reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
 
-		if (server->player_1_tid) {
+		server->signed_in_players[source_tid] = 0;
+
+		if (server->player_1_tid && server->signed_in_players[server->player_1_tid] && server->player_1_choice != NO_CHOICE) {
 			return_code = Reply(server->player_1_tid, server->reply_buffer, MESSAGE_SIZE);
 			assert(return_code == 0, "RPSServer couldn't send NEG_ACK to client");
 		}
-		if (server->player_2_tid) {
+		if (server->player_2_tid && server->signed_in_players[server->player_2_tid] && server->player_2_choice != NO_CHOICE) {
 			return_code = Reply(server->player_2_tid, server->reply_buffer, MESSAGE_SIZE);
 			assert(return_code == 0, "RPSServer couldn't send NEG_ACK to client");
 		}
 
 		server->player_1_tid = 0;
 		server->player_2_tid = 0;
-
-		server->signed_in_players[source_tid] = 0;
 
 		reply_message = (RPSMessage *) server->reply_buffer;
 		reply_message->message_type = MESSAGE_TYPE_GOODBYE;
