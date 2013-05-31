@@ -199,7 +199,7 @@ void RPSServer_ReplyResult(RPSServer * server) {
 	return_code = Reply(server->player_2_tid, server->reply_buffer, MESSAGE_SIZE);
 	assert(return_code == 0, "Failed to send RESULT message to player 2");
 
-	robprintfbusy((const unsigned char *)"Server: ***** P1 chose %d, P2 chose %d *****\n", server->player_1_choice, server->player_2_choice);
+	robprintfbusy((const unsigned char *)"Server: ***** P1=%d chose %d, P2=%d chose %d *****\n", server->player_1_tid, server->player_1_choice, server->player_2_tid, server->player_2_choice);
 }
 
 
@@ -269,6 +269,8 @@ void RPSClient_PlayARound(RPSClient * client) {
 	send_message->choice = choice;
 
 	while (1) {
+		robprintfbusy((const unsigned char *)"RPSClient waitasfdf %d\n", client->tid);
+
 		Send(client->server_id, client->send_buffer, MESSAGE_SIZE, client->reply_buffer, MESSAGE_SIZE);
 
 		reply_message = (RPSMessage *) client->reply_buffer;

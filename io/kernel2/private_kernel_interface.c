@@ -40,7 +40,7 @@ TD * schedule_next_task(KernelState * k_state){
 			assertf(0,"Unknown task state: %d.",td->state);
 		}
 		times++;
-		assert(times < MAX_TASKS + 2,"Scheduler ran more than 100 times, probably a bug.");
+		assertf(times < MAX_TASKS + 2,"Scheduler ran more than %d times, probably a bug.", MAX_TASKS + 2);
 	}
 	
 	assert(0, "Shouldn't get here");
