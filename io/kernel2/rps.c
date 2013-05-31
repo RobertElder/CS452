@@ -91,6 +91,13 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 				server->player_1_choice = receive_message->choice;
 			} else if (source_tid == server->player_2_tid) {
 				server->player_2_choice = receive_message->choice;
+			} else {
+				//assertf(0, "RPSServer not ready for PLAY by tid=%d", source_tid);
+				// Not ready yet
+				reply_message = (RPSMessage *) server->reply_buffer;
+				reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
+				return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
+				assert(return_code == 0, "RPSServer couldn't send NEG_ACK to client");
 			}
 
 			if (server->player_1_choice != NO_CHOICE && server->player_2_choice != NO_CHOICE) {
@@ -115,19 +122,18 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 		break;
 	}
 
-	if (Queue_CurrentCount(&server->player_tid_queue) == 1) {
-		robprintfbusy((const unsigned char *)"Server: There's only 1 person in queue.\n", server->player_1_tid, server->player_2_tid);
+	if (Queue_CurrentCount(&server->player_tid_queue) <= 1) {
+		robprintfbusy((const unsigned char *)"Server: There's only %d person in queue.\n",
+				Queue_CurrentCount(&server->player_tid_queue));
 	} else if (Queue_CurrentCount(&server->player_tid_queue) >= 2 && !server->is_playing_game) {
 		RPSServer_SelectPlayers(server);
 
 		if (!server->player_1_tid || !server->player_2_tid) {
+			Pass();
 			return;
 		}
 
 		robprintfbusy((const unsigned char *)"Server: We got players! P1=%d, P2=%d\n", server->player_1_tid, server->player_2_tid);
-
-		Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)server->player_1_tid);
-		Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)server->player_2_tid);
 
 		server->is_playing_game = 1;
 	}
@@ -141,6 +147,7 @@ void RPSServer_SelectPlayers(RPSServer * server) {
 
 		if (server->signed_in_players[server->player_1_tid]) {
 			// Yay, found player 1!
+			Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)server->player_1_tid);
 			break;
 		} else {
 			// Player 1 has quit
@@ -153,6 +160,7 @@ void RPSServer_SelectPlayers(RPSServer * server) {
 
 		if (server->signed_in_players[server->player_1_tid]) {
 			// Yay, found player 2!
+			Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)server->player_2_tid);
 			break;
 		} else {
 			// Player 2 has quit
