@@ -16,6 +16,7 @@ typedef enum MessageType {
 	MESSAGE_TYPE_RESULT,
 	MESSAGE_TYPE_QUIT,
 	MESSAGE_TYPE_GOODBYE,
+	MESSAGE_TYPE_ACK,
 } MessageType;
 
 

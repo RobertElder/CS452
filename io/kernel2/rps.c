@@ -79,6 +79,8 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 			return;
 		}
 
+		robprintfbusy((const unsigned char *)"Server: We got players! P1=%d, P2=%d\n", server->player_1_tid, server->player_2_tid);
+
 		RPSServer_ReceiveChoices(server);
 		RPSServer_SendResult(server);
 
@@ -146,6 +148,7 @@ void RPSServer_ReceiveChoices(RPSServer * server) {
 }
 
 void RPSServer_SendResult(RPSServer * server) {
+	RPSMessage * send_message;
 	RPSMessage * reply_message;
 	RPS_OUTCOME player_1_outcome;
 	RPS_OUTCOME player_2_outcome;
@@ -163,24 +166,33 @@ void RPSServer_SendResult(RPSServer * server) {
 		player_2_outcome = WIN;
 	}
 
-	reply_message = (RPSMessage *) server->reply_buffer;
-	reply_message->message_type = MESSAGE_TYPE_RESULT;
-	reply_message->outcome = player_1_outcome;
-	reply_message->choice = server->player_2_choice;
+	send_message = (RPSMessage *) server->send_buffer;
+	send_message->message_type = MESSAGE_TYPE_RESULT;
+	send_message->outcome = player_1_outcome;
+	send_message->choice = server->player_2_choice;
 
 	robprintfbusy((const unsigned char *)"RPS Server replying P1 %d with result\n", server->player_1_tid);
 
-	return_code = Reply(server->player_1_tid, server->reply_buffer, MESSAGE_SIZE);
-	assert(return_code == 0, "Failed to reply RESULT message to player 1");
+	return_code = Send(server->player_1_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+	assert(return_code == 0, "Failed to send RESULT message to player 1");
 
-	reply_message->message_type = MESSAGE_TYPE_RESULT;
-	reply_message->outcome = player_2_outcome;
-	reply_message->choice = server->player_1_choice;
+	reply_message = (RPSMessage *) server->reply_buffer;
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "Client didn't acknowledge server");
+
+
+	send_message = (RPSMessage *) server->send_buffer;
+	send_message->message_type = MESSAGE_TYPE_RESULT;
+	send_message->outcome = player_2_outcome;
+	send_message->choice = server->player_1_choice;
 
 	robprintfbusy((const unsigned char *)"RPS Server replying P2 %d with result\n", server->player_2_tid);
 
-	return_code = Reply(server->player_2_tid, server->reply_buffer, MESSAGE_SIZE);
-	assert(return_code == 0, "Failed to reply RESULT message to player 2");
+	return_code = Send(server->player_2_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+	assert(return_code == 0, "Failed to send RESULT message to player 2");
+
+	reply_message = (RPSMessage *) server->reply_buffer;
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "Client didn't acknowledge server");
+
 }
 
 
@@ -228,6 +240,7 @@ void RPSClient_PlayARound(RPSClient * client) {
 	RPSMessage * reply_message;
 	RPSMessage * receive_message;
 	int source_tid;
+	int return_code;
 
 	RPS_CHOICE choice = int_to_rps_choice(RNG_GetRange(&client->rng, 0, 2));
 
@@ -251,13 +264,25 @@ void RPSClient_PlayARound(RPSClient * client) {
 		break;
 	}
 
-	send_message->message_type = MESSAGE_TYPE_PLAY;
-	send_message->choice = choice;
-	Send(client->server_id, client->send_buffer, MESSAGE_SIZE, client->reply_buffer, MESSAGE_SIZE);
-	reply_message = (RPSMessage *) client->reply_buffer;
-	assert(reply_message->message_type == MESSAGE_TYPE_RESULT, "Client didn't get a result");
+	reply_message = (RPSMessage * ) client->reply_buffer;
+	reply_message->message_type = MESSAGE_TYPE_PLAY;
+	reply_message->choice = choice;
+	return_code = Reply(client->server_id, client->reply_buffer, MESSAGE_SIZE);
 
-	RPS_OUTCOME outcome = reply_message->outcome;
+	assert(return_code == 0, "RPSClient: Couldn't reply with PLAY and our choice");
+
+	receive_message = (RPSMessage *) client->receive_buffer;
+	Receive(&source_tid, client->receive_buffer, MESSAGE_SIZE);
+	assert(receive_message->message_type == MESSAGE_TYPE_RESULT, "Client didn't get a RESULT message");
+
+	RPS_OUTCOME outcome = receive_message->outcome;
+	RPS_CHOICE reason = receive_message->choice;
+
+	reply_message = (RPSMessage * ) client->reply_buffer;
+	reply_message->message_type = MESSAGE_TYPE_ACK;
+	return_code = Reply(client->server_id, client->reply_buffer, MESSAGE_SIZE);
+	assert(return_code == 0, "RPSClient: Couldn't reply with an ACK of outcome");
+
 	switch (outcome) {
 	case WIN:
 		robprintfbusy((const unsigned char *)"Client: %d - I won ", client->tid);
@@ -273,7 +298,6 @@ void RPSClient_PlayARound(RPSClient * client) {
 		break;
 	}
 
-	RPS_CHOICE reason = reply_message->choice;
 	switch (reason) {
 	case ROCK:
 		robprintfbusy((const unsigned char *)" because opponent chose rock\n");
