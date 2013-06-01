@@ -58,108 +58,38 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 	int source_tid;
 	Receive(&source_tid, server->receive_buffer, MESSAGE_SIZE);
 	receive_message = (RPSMessage*)server->receive_buffer;
-	int return_code;
 
 	switch (receive_message->message_type) {
 	case MESSAGE_TYPE_SIGN_UP:
-		robprintfbusy((const unsigned char *)"Server: Received sign up request from %d\n", source_tid);
-
-		Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)source_tid);
-		server->signed_in_players[source_tid] = 1;
-
-		reply_message = (RPSMessage *) server->reply_buffer;
-		reply_message->message_type = MESSAGE_TYPE_SIGN_UP_OK;
-		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
-		assertf(return_code == 0, "RPSServer couldn't send SIGN_UP_OK to client. Got err=%d. Source TID=%d", return_code, source_tid);
+		RPSServer_HandleSignup(server, receive_message, source_tid);
 		break;
 	case MESSAGE_TYPE_QUIT:
-		robprintfbusy((const unsigned char *)"Server: Received quit request from %d\n", source_tid);
-
-		// Invalidate candidates which may be stale
-		reply_message = (RPSMessage *) server->reply_buffer;
-		reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
-
-		server->signed_in_players[source_tid] = 0;
-
-		if (server->is_playing_game) {
-			if (server->player_1_tid && server->signed_in_players[server->player_1_tid] && server->player_1_choice != NO_CHOICE) {
-				return_code = Reply(server->player_1_tid, server->reply_buffer, MESSAGE_SIZE);
-				assert(return_code == 0, "RPSServer couldn't send NEG_ACK to client");
-			}
-			if (server->player_2_tid && server->signed_in_players[server->player_2_tid] && server->player_2_choice != NO_CHOICE) {
-				return_code = Reply(server->player_2_tid, server->reply_buffer, MESSAGE_SIZE);
-				assert(return_code == 0, "RPSServer couldn't send NEG_ACK to client");
-			}
-		}
-
-		server->is_playing_game = 0;
-		server->player_1_tid = 0;
-		server->player_2_tid = 0;
-
-		reply_message = (RPSMessage *) server->reply_buffer;
-		reply_message->message_type = MESSAGE_TYPE_GOODBYE;
-		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
-		assert(return_code == 0, "RPSServer couldn't send GOODBYE to client");
-
+		RPSServer_HandleQuit(server, receive_message, source_tid);
 		break;
 	case MESSAGE_TYPE_PLAY:
-		if (server->is_playing_game) {
-			// Grab choices from the ones we are interested in
-			if (source_tid == server->player_1_tid) {
-				server->player_1_choice = receive_message->choice;
-			} else if (source_tid == server->player_2_tid) {
-				server->player_2_choice = receive_message->choice;
-			} else {
-				// Not ready yet for playing
-				reply_message = (RPSMessage *) server->reply_buffer;
-				reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
-				return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
-				assert(return_code == 0, "RPSServer couldn't send NEG_ACK to client");
-			}
-
-			if (server->player_1_choice != NO_CHOICE && server->player_2_choice != NO_CHOICE) {
-				// We can play now!
-				robprintfbusy((const unsigned char *)"Server: We got players! P1=%d, P2=%d\n", server->player_1_tid, server->player_2_tid);
-				RPSServer_ReplyResult(server);
-				server->player_1_choice = NO_CHOICE;
-				server->player_2_choice = NO_CHOICE;
-				server->player_1_tid = 0;
-				server->player_2_tid = 0;
-				server->is_playing_game = 0;
-				server->games_played += 1;
-			}
-		} else {
-			// Not ready yet for playing
-			reply_message = (RPSMessage *) server->reply_buffer;
-			reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
-			return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
-			assert(return_code == 0, "RPSServer couldn't send NEG_ACK to client");
-		}
-
+		RPSServer_HandlePlay(server, receive_message, source_tid);
 		break;
 	default:
 		assert(0, "RPSServer: Unknown message type from client");
 		break;
 	}
 
-	if (Queue_CurrentCount(&server->player_tid_queue) <= 1) {
-		robprintfbusy((const unsigned char *)"Server: There's only %d person in queue.\n",
-				Queue_CurrentCount(&server->player_tid_queue));
-	} else if (Queue_CurrentCount(&server->player_tid_queue) >= 2 && !server->is_playing_game) {
-		RPSServer_SelectPlayers(server);
-
-		if (!server->player_1_tid || !server->player_2_tid) {
-			Pass();
-			return;
-		}
-
-		server->is_playing_game = 1;
-	}
+	RPSServer_SelectPlayers(server);
 
 	Pass();
 }
 
 void RPSServer_SelectPlayers(RPSServer * server) {
+	if (Queue_CurrentCount(&server->player_tid_queue) <= 1) {
+		robprintfbusy((const unsigned char *)"Server: There's only %d person in queue.\n",
+				Queue_CurrentCount(&server->player_tid_queue));
+		return;
+	}
+
+	if (server->is_playing_game) {
+		return;
+	}
+
 	while (Queue_CurrentCount(&server->player_tid_queue)) {
 		server->player_1_tid = (int) Queue_PopStart(&server->player_tid_queue);
 
@@ -189,7 +119,17 @@ void RPSServer_SelectPlayers(RPSServer * server) {
 	if (server->player_1_tid == server->player_2_tid) {
 		server->player_1_tid = 0;
 		server->player_2_tid = 0;
+		return;
 	}
+
+
+	if (!server->player_1_tid || !server->player_2_tid) {
+		server->player_1_tid = 0;
+		server->player_2_tid = 0;
+		return;
+	}
+
+	server->is_playing_game = 1;
 }
 
 void RPSServer_ReplyResult(RPSServer * server) {
@@ -227,6 +167,88 @@ void RPSServer_ReplyResult(RPSServer * server) {
 	assert(return_code == 0, "Failed to send RESULT message to player 2");
 
 	robprintfbusy((const unsigned char *)"Server: ***** P1=%d chose %d, P2=%d chose %d *****\n", server->player_1_tid, server->player_1_choice, server->player_2_tid, server->player_2_choice);
+}
+
+
+void RPSServer_HandleSignup(RPSServer * server, RPSMessage * message, int source_tid) {
+	robprintfbusy((const unsigned char *)"Server: Received sign up request from %d\n", source_tid);
+
+	Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)source_tid);
+	server->signed_in_players[source_tid] = 1;
+
+	RPSMessage * reply_message = (RPSMessage *) server->reply_buffer;
+	reply_message->message_type = MESSAGE_TYPE_SIGN_UP_OK;
+	int return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
+	assertf(return_code == 0, "RPSServer couldn't send SIGN_UP_OK to client. Got err=%d. Source TID=%d", return_code, source_tid);
+}
+
+void RPSServer_HandleQuit(RPSServer * server, RPSMessage * message, int source_tid) {
+	robprintfbusy((const unsigned char *)"Server: Received quit request from %d\n", source_tid);
+	int return_code;
+
+	// Invalidate candidates which may be stale
+	RPSMessage * reply_message = (RPSMessage *) server->reply_buffer;
+	reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
+
+	server->signed_in_players[source_tid] = 0;
+
+	if (server->is_playing_game) {
+		if (server->player_1_tid && server->signed_in_players[server->player_1_tid] && server->player_1_choice != NO_CHOICE) {
+			return_code = Reply(server->player_1_tid, server->reply_buffer, MESSAGE_SIZE);
+			assert(return_code == 0, "RPSServer couldn't send NEG_ACK to client");
+		}
+		if (server->player_2_tid && server->signed_in_players[server->player_2_tid] && server->player_2_choice != NO_CHOICE) {
+			return_code = Reply(server->player_2_tid, server->reply_buffer, MESSAGE_SIZE);
+			assert(return_code == 0, "RPSServer couldn't send NEG_ACK to client");
+		}
+	}
+
+	server->is_playing_game = 0;
+	server->player_1_tid = 0;
+	server->player_2_tid = 0;
+
+	reply_message = (RPSMessage *) server->reply_buffer;
+	reply_message->message_type = MESSAGE_TYPE_GOODBYE;
+	return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
+	assert(return_code == 0, "RPSServer couldn't send GOODBYE to client");
+}
+
+void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_tid) {
+	int return_code;
+	RPSMessage * reply_message;
+
+	if (server->is_playing_game) {
+		// Grab choices from the ones we are interested in
+		if (source_tid == server->player_1_tid) {
+			server->player_1_choice = message->choice;
+		} else if (source_tid == server->player_2_tid) {
+			server->player_2_choice = message->choice;
+		} else {
+			// Not ready yet for playing
+			reply_message = (RPSMessage *) server->reply_buffer;
+			reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
+			return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
+			assert(return_code == 0, "RPSServer couldn't send NEG_ACK to client");
+		}
+
+		if (server->player_1_choice != NO_CHOICE && server->player_2_choice != NO_CHOICE) {
+			// We can play now!
+			robprintfbusy((const unsigned char *)"Server: We got players! P1=%d, P2=%d\n", server->player_1_tid, server->player_2_tid);
+			RPSServer_ReplyResult(server);
+			server->player_1_choice = NO_CHOICE;
+			server->player_2_choice = NO_CHOICE;
+			server->player_1_tid = 0;
+			server->player_2_tid = 0;
+			server->is_playing_game = 0;
+			server->games_played += 1;
+		}
+	} else {
+		// Not ready yet for playing
+		reply_message = (RPSMessage *) server->reply_buffer;
+		reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
+		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
+		assert(return_code == 0, "RPSServer couldn't send NEG_ACK to client");
+	}
 }
 
 

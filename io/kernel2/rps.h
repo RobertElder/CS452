@@ -64,6 +64,14 @@ void RPSServer_SelectPlayers(RPSServer * server);
 
 void RPSServer_ReplyResult(RPSServer * server);
 
+void RPSServer_Shutdown(RPSServer * server);
+
+void RPSServer_HandleSignup(RPSServer * server, RPSMessage * message, int source_tid);
+
+void RPSServer_HandleQuit(RPSServer * server, RPSMessage * message, int source_tid);
+
+void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_tid);
+
 void RPSClient_Start();
 
 void RPSClient_Initialize(RPSClient * client);
