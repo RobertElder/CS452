@@ -222,15 +222,55 @@ The source code is located at ``/u4/chfoo/cs452/group/k2a-submit/io/kernel2``. I
 
 Source code MD5 hashes::
 
-    TODO
-    Listings go here
+    chfoo@nettop38:~/cs452/group/k2a-submit/io/kernel2$ md5sum */*.* *.*
+	50ef0e1e3c71ab1e795fc3d39f75ef9d  include/bwio.h
+	9af226f127c1fd759530cd45236c37b8  include/ts7200.h
+	da5c58f5a70790d853646f4a76f4c540  buffer.c
+	1f9a730c5017ddd24e18523d27dc471e  buffer.h
+	e270fd64ae08a0317d37fadedd24cabb  kern.c
+	147be2be54ef2d9f4cad65a5794e7db7  kern.elf
+	d41d8cd98f00b204e9800998ecf8427e  kern.h
+	b00a171e052d7c818750f58a3bdcf27c  kernel_control_flow.pdf
+	52dd3c8bac8b93e7bc9024ca3e56b00a  kernel_stack.pdf
+	84a5537b040cccb5d8ef47b4915018e8  kernel_state.h
+	7a7803ae8e9733a3bb9e27f07a2e0855  memory.c
+	c782fb4d47461c3c448d646ff43271c3  memory.h
+	adcff2244ac92050360eacd7ab4f5dd9  message.c
+	04eded8ccd08bc5f73ff2eaf0274f076  message.h
+	e80ae585145cca0cc59cc19c9dcf9b7b  nameserver.c
+	53f58016672e3a2a02c3a5aee480ec50  nameserver.h
+	4aa618b9753c5292e5d9e5c95d297f10  orex.ld
+	e208b867b9bac6cf5c81c6d73f9b3f8d  private_kernel_interface.c
+	bef673553ff2738e5355c9c0d8c9fb77  private_kernel_interface.h
+	0656c0cea9a29f56d2db883a50ef0884  public_kernel_interface.c
+	774ba0cc7254fa6203bc796b85d716cb  public_kernel_interface.h
+	8bb4ea6e2e00ae9c9bad30f682dbe9af  queue.c
+	8c282e71bf30800f9d749685dba46de5  queue.h
+	91fbdbffeb090806d35dc54cb2e0627a  random.c
+	7b31c57ff692317d816c839156382596  random.h
+	5346b105cb8defb34e3aa6c4a853ff5c  readme.pdf
+	e18b4677ae9866d43b7711a219042fff  readme.rst
+	a03dcb23183838a3968c9e4cf1fa1183  readme.tex
+	3bf0193cced01283304b36167df3594a  robio.c
+	6fe98c156b7860cd10e5c8e7c7ef39ef  robio.h
+	f207d682e54e737639f45f3a17078b6b  rps.c
+	89e7636353a31fd35b73a82ee49a20e0  rps.h
+	d55a63fb8522de9736cc3833ff0a9025  swi_kernel_interface.s
+	d22a28c9457c285a63ea0ff7091b5f6b  task_descriptor.c
+	db54248f4493240552b83a78d7656822  task_descriptor.h
+	1d21eae6d91007bfd0d6dd6e35266aa9  tasks.c
+	e1bc57af359db93c3982f8c0af896fcc  tasks.h
+	952d806f62f1ef2d28b508485a7545c2  timing.ods
+
 
 
 Elf MD5 hash::
 
-    TODO
+    chfoo@nettop38:/u/cs452/tftp/ARM/relder-chfoo/k2a-submit$ md5sum kern.elf 
+    147be2be54ef2d9f4cad65a5794e7db7  kern.elf
 
-Git sha1 hash: ``TODO``
+
+Git sha1 hash: ``7f890df902b0c688f32fb0488ffe15032964f1c1``
 
 
 Output
