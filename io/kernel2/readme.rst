@@ -261,5 +261,24 @@ Note that a keyboard response is needed when the *client* gets the result. This 
 Performance Measurement
 =======================
 
-TODO
+============== ====== ================= ============ ===== =========
+Message length Caches Send before Reply Optimization Group Time (us)
+============== ====== ================= ============ ===== =========
+4                off       yes             off         2     549
+64               off         yes              off       2   2088
+4                  on    yes                    off     2    broken
+64                on    yes                off         2    broken
+4                off    no                      off    2    547
+64             off    no                         off    2    2090
+4              on     no                        off    2    broken
+64               on    no                       off    2    broken
+4                off    yes                      on    2    broken
+64               off    yes                      on    2    broken
+4               on    yes                        on    2    broken
+64             on     yes                        on    2    broken
+4               off    no                        on    2    broken
+64              off    no                        on    2    broken
+4               on     no                        on    2    broken
+64               on    no                        on    2    broken
+============== ====== ================= ============ ===== =========
 
