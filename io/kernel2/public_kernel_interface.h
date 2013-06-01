@@ -9,6 +9,8 @@ static const int ERR_NOT_A_NAME_SERVER = -2;
 static const int NAMESERVER_TID = 2;
 static const int ERR_K_TID_OUT_OF_RANGE = -1;
 static const int ERR_K_TID_DOES_NOT_EXIST = -2;
+static const int ERR_K_TASK_NOT_REPLY_BLOCKED = -3;
+static const int ERR_K_INSUFFICIENT_SPACE = -4;
 
 void InitKernel();
 int Create( int priority, void (*code)( ) );

@@ -55,7 +55,7 @@ The system calls are not entirely complete according specifications and are note
     The function behaves as expected. The size of the message sent would be typically 100 bytes since it is the convention used in the kernel.
 
 ``Reply``
-    The function behaves as expected except error codes ``-3`` and ``-4`` are not implemented.
+    The function behaves as expected, however, errors ``-3`` ``-4`` include an assert that will aid in debugging.
 
 ``RegisterAs``
     The function behaves as expected. It uses the ``NameServerMessage`` structure and sends the message. ``0`` is always returned because the Task ID is hard-coded and the call should never send to the wrong task.
