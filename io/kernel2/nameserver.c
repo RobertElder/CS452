@@ -29,6 +29,13 @@ void NameServer_Start() {
 				outgoing_message->num = NameServer_GetName(&ns, received_message->str);
 				Reply(sender_id, ns.reply_buffer, MESSAGE_SIZE);
 				break;
+			}case MESSAGE_TYPE_NAME_SERVER_SHUTDOWN: {
+				robprintfbusy((const unsigned char *)"Name server got request from %d shutdown\n", sender_id);
+				outgoing_message = (NameServerMessage *) ns.reply_buffer;
+				outgoing_message->message_type = MESSAGE_TYPE_ACK;
+				Reply(sender_id, ns.reply_buffer, MESSAGE_SIZE);
+				Exit();
+				return;
 			}default:{
 				assert(0,"Name server message type not found.");
 				break;

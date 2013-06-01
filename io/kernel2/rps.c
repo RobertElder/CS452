@@ -4,6 +4,7 @@
 #include "random.h"
 #include "memory.h"
 #include "queue.h"
+#include "nameserver.h"
 
 void RPSServer_Start() {
 	robprintfbusy((const unsigned char *)"RPSServer created tid=%d\n", MyTid());
@@ -29,6 +30,12 @@ void RPSServer_Start() {
 	}
 
 	robprintfbusy((const unsigned char *)"RPSServer exited\n");
+
+	NameServerMessage * name_server_message = (NameServerMessage *) server.send_buffer;
+	NameServerMessage * reply_message = (NameServerMessage *) server.reply_buffer;
+	name_server_message->message_type = MESSAGE_TYPE_NAME_SERVER_SHUTDOWN;
+	Send(NAMESERVER_TID, server.send_buffer, MESSAGE_SIZE, server.reply_buffer, MESSAGE_SIZE);
+	assert(reply_message->message_type==MESSAGE_TYPE_ACK, "RPSServer didn't get ACK from name server");
 
 	Exit();
 
