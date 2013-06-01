@@ -235,6 +235,7 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 
 	if (is_inited_tid(k_state, tid)) {
 		k_state->current_task_descriptor->reply_msg = reply;
+		k_state->current_task_descriptor->reply_len = replylen;
 		if(k_state->task_descriptors[tid].state == SEND_BLOCKED){
 			//robprintfbusy((unsigned const char *)"Task: %d sends to task %d and unblocks it because it was waiting for send.\n",k_state->current_task_descriptor->id, tid);
 			//  That task is now ready to be scheduled
@@ -313,9 +314,17 @@ int k_Reply(int tid, char *reply, int replylen){
 	if (is_inited_tid(k_state, tid)) {
 		//robprintfbusy((unsigned const char *)"Task %d replies to task %d\n",k_state->current_task_descriptor->id,tid);
 		assert(k_state->task_descriptors[tid].state == REPLY_BLOCKED, "Impossible state, replying to non reply blocked task.");
-		assert((int) k_state->task_descriptors[tid].reply_msg, "k_Reply: reply_msg isn't set");
-		m_strcpy(k_state->task_descriptors[tid].reply_msg, reply, replylen);
-		k_state->task_descriptors[tid].state = READY;
+
+		if (k_state->task_descriptors[tid].state != REPLY_BLOCKED) {
+			return_value = ERR_K_TASK_NOT_REPLY_BLOCKED;
+		} else if (k_state->task_descriptors[tid].reply_len > replylen) {
+			assert(0, "k_Reply: Insufficient space in destination");
+			return_value = ERR_K_INSUFFICIENT_SPACE;
+		} else {
+			assert((int) k_state->task_descriptors[tid].reply_msg, "k_Reply: reply_msg isn't set");
+			m_strcpy(k_state->task_descriptors[tid].reply_msg, reply, replylen);
+			k_state->task_descriptors[tid].state = READY;
+		}
 	} else {
 		if (!is_tid_in_range(tid)) {
 			return_value = ERR_K_TID_OUT_OF_RANGE;
