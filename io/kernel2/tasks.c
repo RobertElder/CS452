@@ -32,7 +32,7 @@ int ticks = 0;
 
 
 void KernelTask_Start() {
-	int tid = Create(NORMAL, &FirstTask_Start);
+	int tid = Create(NORMAL, &SecondTask_Start);
 	
 	assert(tid == 1, "FirstTask tid not 1");
 
@@ -45,10 +45,7 @@ void KernelTask_Start() {
 }
 
 void FirstTask_Start() {
-	int tid;
-	
-	tid = Create(NORMAL, &SecondTask_Start);
-	assert(tid == 2, "second task tid not 2");
+
 	
 	char receive_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
@@ -58,7 +55,7 @@ void FirstTask_Start() {
 
 	while (1) {
 		Receive(&source_tid, receive_buffer,MESSAGE_SIZE);
-		assert(source_tid == 2, "Source tid wasnt 2");
+		assert(source_tid == 1, "Source tid wasnt 2");
 
 		if (receive_message->message_type == MESSAGE_TYPE_SHUTDOWN) {
 			break;
@@ -67,14 +64,14 @@ void FirstTask_Start() {
 		assert(receive_message->message_type == MESSAGE_TYPE_PLAY, "1st task didn't get PLAY message");
 		//robprintfbusy((const unsigned char *)"First: received\n");
 		reply_message->message_type = MESSAGE_TYPE_ACK;
-		Reply(2, reply_buffer, MESSAGE_SIZE);
+		Reply(1, reply_buffer, MESSAGE_SIZE);
 		//robprintfbusy((const unsigned char *)"First: replied\n");
 		Pass();
 	}
 	
 	robprintfbusy((const unsigned char *)"First: received shutdown\n");
 	reply_message->message_type = MESSAGE_TYPE_ACK;
-	Reply(2, reply_buffer, MESSAGE_SIZE);
+	Reply(1, reply_buffer, MESSAGE_SIZE);
 	robprintfbusy((const unsigned char *)"First: replied\n");
 	robprintfbusy((const unsigned char *)"First: shutdown\n");
 	
@@ -88,6 +85,9 @@ void SecondTask_Start() {
 	int * timer_ldr = (int *)(TIMER3_BASE + LDR_OFFSET);
 	int * timer_val = (int *)(TIMER3_BASE + VAL_OFFSET);
 	int * timer_ctrl = (int *)(TIMER3_BASE + CRTL_OFFSET);
+
+	int tid = Create(NORMAL, &FirstTask_Start);
+	assert(tid == 2, "second task tid not 2");
 
 	//  Disable the timer before we set the load value
 	*timer_ctrl = (*timer_ctrl) ^ ENABLE_MASK;
@@ -104,7 +104,7 @@ void SecondTask_Start() {
 		send_message->message_type = MESSAGE_TYPE_PLAY;
 		// start
 		int last_timer_value = *timer_val;
-		Send(1, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+		Send(2, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		int observed_val = *timer_val;
 		//  On finished:
 		unsigned int diff = observed_val > last_timer_value ? (cycles_per_tick - observed_val) + last_timer_value : last_timer_value - observed_val;
