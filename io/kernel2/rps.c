@@ -45,6 +45,7 @@ void RPSServer_Initialize(RPSServer * server) {
 	server->player_2_choice = NO_CHOICE;
 	server->running = 1;
 	server->games_played = 0;
+	server->is_shutdown = 0;
 
 	int i;
 	for (i = 0; i < MAX_TASKS + 1; i++) {
@@ -54,7 +55,6 @@ void RPSServer_Initialize(RPSServer * server) {
 
 void RPSServer_ProcessMessage(RPSServer * server) {
 	RPSMessage * receive_message;
-	RPSMessage * reply_message;
 	int source_tid;
 	Receive(&source_tid, server->receive_buffer, MESSAGE_SIZE);
 	receive_message = (RPSMessage*)server->receive_buffer;
@@ -77,6 +77,10 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 	RPSServer_SelectPlayers(server);
 
 	Pass();
+
+	if (Queue_CurrentCount(&server->player_tid_queue) == 0) {
+		server->running = 0;
+	}
 }
 
 void RPSServer_SelectPlayers(RPSServer * server) {
@@ -186,38 +190,34 @@ void RPSServer_HandleQuit(RPSServer * server, RPSMessage * message, int source_t
 	robprintfbusy((const unsigned char *)"Server: Received quit request from %d\n", source_tid);
 	int return_code;
 
-	// Invalidate candidates which may be stale
 	RPSMessage * reply_message = (RPSMessage *) server->reply_buffer;
-	reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
-
 	server->signed_in_players[source_tid] = 0;
-
-	if (server->is_playing_game) {
-		if (server->player_1_tid && server->signed_in_players[server->player_1_tid] && server->player_1_choice != NO_CHOICE) {
-			return_code = Reply(server->player_1_tid, server->reply_buffer, MESSAGE_SIZE);
-			assert(return_code == 0, "RPSServer couldn't send NEG_ACK to client");
-		}
-		if (server->player_2_tid && server->signed_in_players[server->player_2_tid] && server->player_2_choice != NO_CHOICE) {
-			return_code = Reply(server->player_2_tid, server->reply_buffer, MESSAGE_SIZE);
-			assert(return_code == 0, "RPSServer couldn't send NEG_ACK to client");
-		}
-	}
-
 	server->is_playing_game = 0;
 	server->player_1_tid = 0;
 	server->player_2_tid = 0;
 
 	reply_message = (RPSMessage *) server->reply_buffer;
 	reply_message->message_type = MESSAGE_TYPE_GOODBYE;
+	robprintfbusy((const unsigned char *)"Server: Telling %d goodbye message\n", source_tid);
 	return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
 	assert(return_code == 0, "RPSServer couldn't send GOODBYE to client");
+
+	robprintfbusy((const unsigned char *)"Server: We are shutting down\n");
+	server->is_shutdown = 1;
 }
 
 void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_tid) {
 	int return_code;
-	RPSMessage * reply_message;
+	RPSMessage * reply_message = (RPSMessage *) server->reply_buffer;
 
-	if (server->is_playing_game) {
+	if (server->is_shutdown) {
+		reply_message->message_type = MESSAGE_TYPE_SHUTDOWN;
+		robprintfbusy((const unsigned char *)"Server: Telling %d that have shutdown\n", source_tid);
+		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
+		assert(return_code == 0, "RPSServer couldn't send SHUTDOWN to client");
+		server->signed_in_players[source_tid] = 0;
+
+	} else if (server->is_playing_game) {
 		// Grab choices from the ones we are interested in
 		if (source_tid == server->player_1_tid) {
 			server->player_1_choice = message->choice;
@@ -226,9 +226,9 @@ void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_t
 		} else {
 			// Not ready yet for playing
 			reply_message = (RPSMessage *) server->reply_buffer;
-			reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
+			reply_message->message_type = MESSAGE_TYPE_WAIT;
 			return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
-			assert(return_code == 0, "RPSServer couldn't send NEG_ACK to client");
+			assert(return_code == 0, "RPSServer couldn't send WAIT to client");
 		}
 
 		if (server->player_1_choice != NO_CHOICE && server->player_2_choice != NO_CHOICE) {
@@ -245,9 +245,9 @@ void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_t
 	} else {
 		// Not ready yet for playing
 		reply_message = (RPSMessage *) server->reply_buffer;
-		reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
+		reply_message->message_type = MESSAGE_TYPE_WAIT;
 		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
-		assert(return_code == 0, "RPSServer couldn't send NEG_ACK to client");
+		assert(return_code == 0, "RPSServer couldn't send WAIT to client");
 	}
 }
 
@@ -274,13 +274,13 @@ void RPSClient_Start() {
 	for (i = 0; i < client.num_rounds_to_play; i++) {
 		RPSClient_PlayARound(&client);
 		Pass();
+		if (!client.running) {
+			robprintfbusy((const unsigned char *)"Client: %d - Quiting due to server shutdown\n", client.tid);
+			Exit();
+		}
 	}
 
-	// Finished playing
-	send_message->message_type = MESSAGE_TYPE_QUIT;
-	Send(client.server_id, client.send_buffer, MESSAGE_SIZE, client.reply_buffer,MESSAGE_SIZE);
-	reply_message = (RPSMessage *) client.reply_buffer;
-	assert(reply_message->message_type == MESSAGE_TYPE_GOODBYE, "Client didn't get a goodbye from server");
+	RPSClient_Quit(&client);
 
 	Exit();
 }
@@ -290,13 +290,37 @@ void RPSClient_Initialize(RPSClient * client) {
 	RNG_Initialize(&client->rng, client->tid);
 	client->server_id = WhoIs((char*) RPS_SERVER_NAME);
 	client->num_rounds_to_play = 5;
+	client->running = 1;
 }
+
 
 void RPSClient_PlayARound(RPSClient * client) {
 	RPSMessage * send_message;
 	RPSMessage * reply_message;
 
 	RPS_CHOICE choice = int_to_rps_choice(RNG_GetRange(&client->rng, 0, 2));
+
+	send_message = (RPSMessage * ) client->send_buffer;
+	send_message->message_type = MESSAGE_TYPE_PLAY;
+	send_message->choice = choice;
+
+	int counter = 0;
+	while (1) {
+		Send(client->server_id, client->send_buffer, MESSAGE_SIZE, client->reply_buffer, MESSAGE_SIZE);
+
+		reply_message = (RPSMessage *) client->reply_buffer;
+
+		if (reply_message->message_type == MESSAGE_TYPE_RESULT) {
+			break;
+		} else if (reply_message->message_type == MESSAGE_TYPE_SHUTDOWN) {
+			client->running = 0;
+			return;
+		}
+		assertf(reply_message->message_type == MESSAGE_TYPE_WAIT,
+				"Client wasn't told to wait. Got=%d, TID=%d", reply_message->message_type, client->tid);
+		counter +=1;
+		assertf(counter < 10, "Forever Alone: TID=%d hasn't played in a while", client->tid);
+	}
 
 	switch(choice) {
 	case ROCK:
@@ -311,26 +335,6 @@ void RPSClient_PlayARound(RPSClient * client) {
 	default:
 		assert(0, "RNG gave client something wrong");
 		break;
-	}
-
-	send_message = (RPSMessage * ) client->send_buffer;
-	send_message->message_type = MESSAGE_TYPE_PLAY;
-	send_message->choice = choice;
-
-	int counter = 0;
-	while (1) {
-		Send(client->server_id, client->send_buffer, MESSAGE_SIZE, client->reply_buffer, MESSAGE_SIZE);
-
-		reply_message = (RPSMessage *) client->reply_buffer;
-
-		if (reply_message->message_type == MESSAGE_TYPE_RESULT) {
-			break;
-		}
-		assert(reply_message->message_type == MESSAGE_TYPE_RESULT ||
-				reply_message->message_type == MESSAGE_TYPE_NEG_ACK,
-				"Client didn't get a RESULT or a NEG_ACK message");
-		counter +=1;
-		assertf(counter < 10, "Forever Alone: TID=%d hasn't played in a while", client->tid);
 	}
 
 	RPS_OUTCOME outcome = reply_message->outcome;
@@ -389,6 +393,17 @@ RPS_CHOICE int_to_rps_choice(int num) {
 		assert(0, "Unknown int to rps choice");
 		return -1;
 	}
+}
+
+void RPSClient_Quit(RPSClient * client) {
+	// Finished playing
+	RPSMessage * send_message = (RPSMessage *) client->send_buffer;
+	RPSMessage * reply_message = (RPSMessage *) client->reply_buffer;
+	send_message->message_type = MESSAGE_TYPE_QUIT;
+	Send(client->server_id, client->send_buffer, MESSAGE_SIZE, client->reply_buffer,MESSAGE_SIZE);
+	reply_message = (RPSMessage *) client->reply_buffer;
+	assert(reply_message->message_type == MESSAGE_TYPE_GOODBYE, "Client didn't get a goodbye from server");
+	robprintfbusy((const unsigned char *)"Client: %d - I decided to quit.\n", client->tid);
 }
 
 

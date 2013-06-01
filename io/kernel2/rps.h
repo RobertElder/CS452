@@ -41,6 +41,7 @@ typedef struct RPSServer {
 	short signed_in_players[MAX_TASKS + 1];
 	short is_playing_game;
 	short running;
+	short is_shutdown;
 	unsigned int games_played;
 } RPSServer;
 
@@ -52,6 +53,7 @@ typedef struct RPSClient {
 	RNG rng;
 	int server_id;
 	unsigned int num_rounds_to_play;
+	short running;
 } RPSClient;
 
 void RPSServer_Start();
@@ -77,6 +79,8 @@ void RPSClient_Start();
 void RPSClient_Initialize(RPSClient * client);
 
 void RPSClient_PlayARound(RPSClient * client);
+
+void RPSClient_Quit(RPSClient * client);
 
 RPS_CHOICE int_to_rps_choice(int num);
 
