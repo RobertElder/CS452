@@ -124,7 +124,7 @@ Play
 
 1. Get the player's choice by matching the Task IDs
 2. Once we have two choices, we can ``Reply`` with the outcome.
-3. ``Reply`` a ``NEGATIVE_ACK`` message type if the client cannot play yet.
+3. ``Reply`` a ``WAIT`` message type if the client cannot play yet.
 4. ``Reply`` a ``SHUTDOWN`` message if any one signed up has quit.
 
    * This design decision was made so that the shutdown case is well defined.
@@ -321,4 +321,7 @@ Message length Caches Send before Reply Optimization Group Time (us)
 4               on     no                        on    2    broken
 64               on    no                        on    2    broken
 ============== ====== ================= ============ ===== =========
+
+The time spent in the code is likely in the string copy functions. Since they are unoptimized and only copy one ``char`` at a time, it is very expensive and operates in linear time.
+
 

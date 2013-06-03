@@ -275,7 +275,7 @@ Players are selected by going through the sign up queue. Players are not requeue
 
 \item Once we have two choices, we can \texttt{Reply} with the outcome.
 
-\item \texttt{Reply} a \texttt{NEGATIVE\_ACK} message type if the client cannot play yet.
+\item \texttt{Reply} a \texttt{WAIT} message type if the client cannot play yet.
 
 \item \texttt{Reply} a \texttt{SHUTDOWN} message if any one signed up has quit.
 %
@@ -770,5 +770,7 @@ broken
  \\
 \hline
 \end{longtable*}
+
+The time spent in the code is likely in the string copy functions. Since they are unoptimized and only copy one \texttt{char} at a time, it is very expensive and operates in linear time.
 
 \end{document}
