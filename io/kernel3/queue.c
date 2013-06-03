@@ -44,6 +44,7 @@ void PriorityQueue_Initialize(PriorityQueue * queue) {
 	for (i = 0; i < NUM_PRIORITIES; i++) {
 		Queue_Initialize(&(queue->queues[i]));
 	}
+	queue->queues_with_items = 0;
 }
 
 int PriorityQueue_Put(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority priority) {
@@ -52,22 +53,23 @@ int PriorityQueue_Put(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority
 		return ERR_QUEUE_PRIORITY;
 	}
 	
+	queue->queues_with_items |= 1 << (NUM_PRIORITIES - 1 - priority);
 	return Queue_PushEnd(&(queue->queues[priority]), item);
 }
 
 QUEUE_ITEM_TYPE PriorityQueue_Get(PriorityQueue * queue) {
-	QUEUE_ITEM_TYPE item;
-
-	// TODO: make this constant time somehow
-	int i;
-	for (i = 0; i < NUM_PRIORITIES; i++) {
-		item = Queue_PopStart(&(queue->queues[i]));
-		if (item) {
-			return item;
-		}
-	}
+	int priority = __builtin_clz(queue->queues_with_items);
 	
-	return 0;
+	assertf(Queue_IsValidPriority(priority), "PriorityQueue_Get: Got bad priority %d from CLZ", priority);
+	
+	QUEUE_ITEM_TYPE item = Queue_PopStart(&(queue->queues[priority]));
+	
+	if (item) {
+		return item;
+	} else {
+		queue->queues_with_items ^= 1 << (NUM_PRIORITIES - 1 - priority);
+		return 0;
+	}
 }
 
 int Queue_IsValidPriority(QueuePriority priority) {

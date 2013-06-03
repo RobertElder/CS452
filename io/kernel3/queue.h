@@ -29,6 +29,9 @@ typedef struct Queue {
 
 typedef struct PriorityQueue {
 	Queue queues[NUM_PRIORITIES];
+	
+	// leading bit = 0th priority, trailing bit = 31st priority
+	unsigned int queues_with_items;
 } PriorityQueue;
 
 void Queue_Initialize(Queue * queue);
