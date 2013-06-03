@@ -40,67 +40,40 @@ int Queue_CurrentCount(Queue * queue) {
 }
 
 void PriorityQueue_Initialize(PriorityQueue * queue) {
-	Queue_Initialize(&(queue->highest));
-	Queue_Initialize(&(queue->high));
-	Queue_Initialize(&(queue->normal));
-	Queue_Initialize(&(queue->low));
-	Queue_Initialize(&(queue->lowest));
+	int i;
+	for (i = 0; i < NUM_PRIORITIES; i++) {
+		Queue_Initialize(&(queue->queues[i]));
+	}
 }
 
 int PriorityQueue_Put(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority priority) {
-	switch(priority){
-	case HIGHEST:
-		return Queue_PushEnd(&(queue->highest), item);
-	case HIGH:
-		return Queue_PushEnd(&(queue->high), item);
-	case NORMAL:
-		return Queue_PushEnd(&(queue->normal), item);
-	case LOW:
-		return Queue_PushEnd(&(queue->low), item);
-	case LOWEST:
-		return Queue_PushEnd(&(queue->lowest), item);
-	default:
+	if (!Queue_IsValidPriority(priority)) {
+		assertf(0, "PriorityQueue_Put: Unknown priority %d", priority);
 		return ERR_QUEUE_PRIORITY;
 	}
+	
+	return Queue_PushEnd(&(queue->queues[priority]), item);
 }
 
 QUEUE_ITEM_TYPE PriorityQueue_Get(PriorityQueue * queue) {
 	QUEUE_ITEM_TYPE item;
 
-	// TODO: this looks messy
-	item = Queue_PopStart(&(queue->highest));
-	if (item) {
-		return item;
+	// TODO: make this constant time somehow
+	int i;
+	for (i = 0; i < NUM_PRIORITIES; i++) {
+		item = Queue_PopStart(&(queue->queues[i]));
+		if (item) {
+			return item;
+		}
 	}
-	item = Queue_PopStart(&(queue->high));
-	if (item) {
-		return item;
-	}
-	item = Queue_PopStart(&(queue->normal));
-	if (item) {
-		return item;
-	}
-	item = Queue_PopStart(&(queue->low));
-	if (item) {
-		return item;
-	}
-	item = Queue_PopStart(&(queue->lowest));
-	if (item) {
-		return item;
-	}
-
+	
 	return 0;
 }
 
 int Queue_IsValidPriority(QueuePriority priority) {
-	switch(priority){
-	case HIGHEST:
-	case HIGH:
-	case NORMAL:
-	case LOW:
-	case LOWEST:
+	if (priority >= 0 || priority <= NUM_PRIORITIES - 1) {
 		return 1;
-	default:
+	} else {
 		return 0;
 	}
 }

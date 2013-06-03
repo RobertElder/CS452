@@ -3,12 +3,17 @@
 
 #define QUEUE_SIZE 50
 #define QUEUE_ITEM_TYPE void*
+#define NUM_PRIORITIES 32
 
 static const int ERR_QUEUE_FULL = -1;
 static const int ERR_QUEUE_PRIORITY = -2;
 
 typedef enum QueuePriority {
-	HIGHEST=1, HIGH=2, NORMAL=3, LOW=4, LOWEST=5
+	HIGHEST=0,
+	HIGH=8,
+	NORMAL=16,
+	LOW=24,
+	LOWEST=31,
 } QueuePriority;
 
 typedef struct QueueItem {
@@ -23,11 +28,7 @@ typedef struct Queue {
 } Queue;
 
 typedef struct PriorityQueue {
-	Queue highest;
-	Queue high;
-	Queue normal;
-	Queue low;
-	Queue lowest;
+	Queue queues[NUM_PRIORITIES];
 } PriorityQueue;
 
 void Queue_Initialize(Queue * queue);
