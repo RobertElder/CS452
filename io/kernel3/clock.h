@@ -29,6 +29,11 @@ void ClockServer_HandleDelayRequest(ClockServer * server, int source_tid, ClockM
 typedef struct ClockClient {
 	int server_tid;
 	int tid;
+	int parent_tid;
+	int delay_time;
+	int num_delays;
+	char send_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
 } ClockClient;
 
 void ClockClient_Start();
