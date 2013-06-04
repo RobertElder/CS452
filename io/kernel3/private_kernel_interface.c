@@ -22,6 +22,7 @@ TD * schedule_next_task(KernelState * k_state){
 	
 		if (td == 0) {
 			//  There are no ready tasks found.
+			robprintfbusy((const unsigned char *)"No tasks in queue!\n");
 			return 0;
 		} else if (td->state == READY) {
 			//  We're scheduling this task now, put it at the end of the queue
@@ -30,6 +31,7 @@ TD * schedule_next_task(KernelState * k_state){
 			return td;
 		} else if (td->state == RECEIVE_BLOCKED || td->state == SEND_BLOCKED || td->state == REPLY_BLOCKED) {
 			//  TODO:  this is inefficient, for now just put it at the end of the ready queue.
+			robprintfbusy((const unsigned char *)"%d was requeued\n", td->id);
 			PriorityQueue_Put(&(k_state->task_queue), td, td->priority);
 			//  Just keep executing in this loop until we find a ready task.
 		} else if (td->state == ZOMBIE) {

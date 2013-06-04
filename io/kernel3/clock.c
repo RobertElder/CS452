@@ -12,7 +12,7 @@ void ClockServer_Start() {
 	
 	robprintfbusy((const unsigned char *)"ClockServer TID=%d: start\n", server.tid);
 	
-	int return_code = RegisterAs(CLOCK_SERVER_NAME);
+	int return_code = RegisterAs((char *)CLOCK_SERVER_NAME);
 	assert(return_code == 0, "ClockServer: Failed to register name");
 
 	while (1) {
@@ -82,8 +82,8 @@ void ClockServer_HandleDelayRequest(ClockServer * server, int source_tid, ClockM
 void ClockClient_Start() {
 	ClockClient client;
 	ClockClient_Initialize(&client);
-	
 	robprintfbusy((const unsigned char *)"ClockClient TID=%d: start\n", client.tid);
+	
 	assertf(client.server_tid, "ClockClient: server not found. got=%d", client.server_tid);
 	assertf(client.server_tid, "ClockClient: parent not found. got=%d", client.parent_tid);
 	
@@ -107,7 +107,11 @@ void ClockClient_Start() {
 
 void ClockClient_Initialize(ClockClient * client) {
 	client->tid = MyTid();
+	robprintfbusy((const unsigned char *)"ClockClient asdfasdfsdfa");
 	client->server_tid = WhoIs((char*) CLOCK_SERVER_NAME);
+	
+
+	
 	client->parent_tid = MyParentTid();
 }
 

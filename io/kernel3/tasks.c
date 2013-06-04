@@ -21,7 +21,7 @@ void FirstTask_Start() {
 	int tid;
 	const int num_clients = 4;
 	
-	robprintfbusy((const unsigned char *)"FirstTask Start");
+	robprintfbusy((const unsigned char *)"FirstTask Start\n");
 	
 	tid = Create(NORMAL, &NameServer_Start);
 	assert(tid == 2, "NameServer tid not 2");
@@ -44,6 +44,9 @@ void FirstTask_Start() {
 	// 4
 	tid = Create(6, &ClockClient_Start);
 	assert(tid == 7, "ClockClient tid not 7");
+	
+	
+	robprintfbusy((const unsigned char *)"FirstTask begin receive\n");
 	
 	char receive_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
