@@ -94,9 +94,9 @@ int WhoIs( char *name ) {
 	return receive_message->num;
 }
 
-int AwaitEvent( int eventid, char *event, int eventlen ) {
+//int AwaitEvent( int eventid, char *event, int eventlen ) {
 // or 
-// int AwaitEvent( int eventid ) {
+int AwaitEvent( int eventid ) {
 	// TODO do something
 	
 	assert(0, "AwaitEvent not implemented");

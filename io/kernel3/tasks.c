@@ -6,7 +6,7 @@
 #include "random.h"
 #include "message.h"
 #include "nameserver.h"
-#include "rps.h"
+#include "clock.h"
 
 void KernelTask_Start() {
 	int tid = Create(NORMAL, &FirstTask_Start);
@@ -19,17 +19,17 @@ void KernelTask_Start() {
 
 void FirstTask_Start() {
 	int tid;
-	const int num_clients = 3;
+	const int num_clients = 4;
 	
 	tid = Create(NORMAL, &NameServer_Start);
 	assert(tid == 2, "NameServer tid not 2");
 	
-	tid = Create(NORMAL, &RPSServer_Start);
+	tid = Create(NORMAL, &ClockServer_Start);
 	assert(tid == 3, "RPServer tid not 3");
 	
 	int i;
 	for (i = 0; i < num_clients; i++) {
-		tid = Create(NORMAL, &RPSClient_Start);
+		tid = Create(NORMAL, &ClockClient_Start);
 		assert(tid == 3 + i + 1, "RPSClient tid not");
 	}
 	
