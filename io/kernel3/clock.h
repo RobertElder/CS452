@@ -10,6 +10,7 @@ typedef struct ClockMessage {
 } ClockMessage;
 
 typedef struct ClockServer {
+	int tid;
 	char receive_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
 } ClockServer;
