@@ -50,4 +50,6 @@ QUEUE_ITEM_TYPE PriorityQueue_Get(PriorityQueue * queue);
 
 int Queue_IsValidPriority(QueuePriority priority);
 
+int PriorityQueue_PrintItems(PriorityQueue * queue);
+
 #endif /* QUEUE_H_ */

@@ -53,7 +53,9 @@ int PriorityQueue_Put(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority
 		return ERR_QUEUE_PRIORITY;
 	}
 	
+	//robprintfbusy((const unsigned char *)"PQ: put %d at %d\n", item, priority);
 	queue->queues_with_items |= 1 << (NUM_PRIORITIES - 1 - priority);
+	//PriorityQueue_PrintItems(queue);
 	return Queue_PushEnd(&(queue->queues[priority]), item);
 }
 
@@ -67,7 +69,9 @@ QUEUE_ITEM_TYPE PriorityQueue_Get(PriorityQueue * queue) {
 	if (item) {
 		return item;
 	} else {
+		//robprintfbusy((const unsigned char *)"PQ: empty %d at %d\n", item, priority);
 		queue->queues_with_items ^= 1 << (NUM_PRIORITIES - 1 - priority);
+		//PriorityQueue_PrintItems(queue);
 		return 0;
 	}
 }
@@ -78,4 +82,15 @@ int Queue_IsValidPriority(QueuePriority priority) {
 	} else {
 		return 0;
 	}
+}
+
+int PriorityQueue_PrintItems(PriorityQueue * queue) {
+	int i;
+	int has_item;
+	
+	for (i = 0; i < NUM_PRIORITIES; i++) {
+		has_item = queue->queues_with_items & 1 << (NUM_PRIORITIES - 1 - i);
+		robprintfbusy((const unsigned char *)"PQ: %d %d   ", i, has_item);
+	}
+
 }
