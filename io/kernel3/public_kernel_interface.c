@@ -94,3 +94,32 @@ int WhoIs( char *name ) {
 	return receive_message->num;
 }
 
+int AwaitEvent( int eventid, char *event, int eventlen ) {
+// or 
+// int AwaitEvent( int eventid ) {
+	// TODO do something
+	
+	assert(0, "AwaitEvent not implemented");
+	return 123456789;
+}
+
+int Delay( int ticks ) {
+	// TODO do something
+	
+	assert(0, "Delay not implemented");
+	return 123456789;
+}
+
+int Time( ) {
+	// TODO do something
+	
+	assert(0, "Time not implemented");
+	return 123456789;
+}
+
+int DelayUntil( int ticks ) {
+	// TODO do something
+	
+	assert(0, "DelayUntil not implemented");
+	return 123456789;
+}
