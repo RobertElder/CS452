@@ -3,11 +3,23 @@
 
 void m_strcpy(char *dest, const char *src, int len) {
 	// FIXME: I'm not optimal
-	int i = 0;
+	unsigned int i = 0;
+	unsigned int temp;
 	
 	while (i < len) {
-		dest[i] = src[i];
-		i += 1;
+		if (len - i < 4) {
+			dest[i] = src[i];
+			i += 1;
+		} else {
+			// Copy word
+			asm (
+				"LDR %3, [%1, +%0]\n"
+				"STR %3, [%2, +%0]\n"
+				: // output
+				:"r"(i), "r"(src), "r"(dest), "r"(temp) // input
+			);
+			i += 4;
+		}
 
 		assert(i < 100000, "m_strcpy has been running for a really long time");
 	}
