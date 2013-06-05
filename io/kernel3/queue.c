@@ -60,10 +60,10 @@ int PriorityQueue_Put(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority
 }
 
 QUEUE_ITEM_TYPE PriorityQueue_Get(PriorityQueue * queue) {
-	return PriorityQueue_GetLower(queue, HIGHEST);
+	return PriorityQueue_GetLower(queue, HIGHEST, 0);
 }
 
-QUEUE_ITEM_TYPE PriorityQueue_GetLower(PriorityQueue * queue, QueuePriority min_priority) {	
+QUEUE_ITEM_TYPE PriorityQueue_GetLower(PriorityQueue * queue, QueuePriority min_priority, QueuePriority * next_min_priority) {
 	if (!Queue_IsValidPriority(min_priority)) {
 		assertf(0, "PriorityQueue_GetLower: Unknown min_priority %d", min_priority);
 		return ERR_QUEUE_PRIORITY;
@@ -75,6 +75,10 @@ QUEUE_ITEM_TYPE PriorityQueue_GetLower(PriorityQueue * queue, QueuePriority min_
 	queues_with_items &= (1 << (NUM_PRIORITIES - min_priority)) - 1;
 
 	int priority = __builtin_clz(queues_with_items);
+	
+	if (next_min_priority) {
+		*next_min_priority = priority;
+	}
 	
 	if (priority == NUM_PRIORITIES) {
 		// No items in any queue

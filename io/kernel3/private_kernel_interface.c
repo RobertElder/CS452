@@ -22,10 +22,10 @@ TD * schedule_next_task(KernelState * k_state){
 	// TODO: Make this better 
 	// In the best case, there is no need to search for lower priority tasks
 	// But to avoid deadlock by a blocked high priority task, we need to find if lower priority tasks can run
-	for (min_priority = 0; min_priority < NUM_PRIORITIES; min_priority++) {
+	while (min_priority < NUM_PRIORITIES) {
 		int i;
 		for (i = 0; i < MAX_TASKS + 2; i++) {
-			TD * td = PriorityQueue_GetLower(&(k_state->task_queue), min_priority);
+			TD * td = PriorityQueue_GetLower(&(k_state->task_queue), min_priority, &min_priority);
 	
 			if (td == 0) {
 				//  There are no ready tasks found.
@@ -49,6 +49,8 @@ TD * schedule_next_task(KernelState * k_state){
 			times++;
 			assertf(times < (MAX_TASKS + 2) * NUM_PRIORITIES,"Scheduler ran more than %d times, probably a bug.", (MAX_TASKS + 2) * NUM_PRIORITIES);
 		}
+		
+		min_priority++;
 	}
 	
 	robprintfbusy((const unsigned char *)"No tasks in queue!\n");
