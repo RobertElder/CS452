@@ -24,6 +24,7 @@ typedef struct KernelState {
 	TD task_descriptors[MAX_TASKS + 1];
 	short inited_td[MAX_TASKS + 1];
 	PriorityQueue task_queue;
+	unsigned int num_non_zombie_tasks;
 	unsigned int num_tasks;
 	void * redboot_sp_value;
 	void * redboot_lr_value;

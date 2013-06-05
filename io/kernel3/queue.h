@@ -53,6 +53,6 @@ QUEUE_ITEM_TYPE PriorityQueue_GetLower(PriorityQueue * queue, QueuePriority min_
 
 int Queue_IsValidPriority(QueuePriority priority);
 
-int PriorityQueue_PrintItems(PriorityQueue * queue);
+void PriorityQueue_PrintItems(PriorityQueue * queue);
 
 #endif /* QUEUE_H_ */

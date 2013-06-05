@@ -25,7 +25,7 @@ TD * schedule_next_task(KernelState * k_state){
 	while (min_priority < NUM_PRIORITIES) {
 		int i;
 		for (i = 0; i < MAX_TASKS + 2; i++) {
-			TD * td = PriorityQueue_GetLower(&(k_state->task_queue), min_priority, &min_priority);
+			TD * td = PriorityQueue_GetLower(&(k_state->task_queue), min_priority, (void*)&min_priority);
 	
 			if (td == 0) {
 				//  There are no ready tasks found.
@@ -36,13 +36,12 @@ TD * schedule_next_task(KernelState * k_state){
 				td->state = ACTIVE;
 				return td;
 			} else if (td->state == RECEIVE_BLOCKED || td->state == SEND_BLOCKED || td->state == REPLY_BLOCKED) {
-				//  TODO:  this is inefficient, for now just put it at the end of the ready queue.
-				//robprintfbusy((const unsigned char *)"%d was requeued\n", td->id);
-				PriorityQueue_Put(&(k_state->task_queue), td, td->priority);
+				// Remember to put the task back in the ready queue when its ready
 				//  Just keep executing in this loop until we find a ready task.
 			} else if (td->state == ZOMBIE) {
 				// TODO:
 				// Destroy the zombie task
+				k_state->num_non_zombie_tasks -= 1;
 			} else {
 				assertf(0,"Unknown task state: %d for tid=%d.",td->state, td->id);
 			}
@@ -52,6 +51,8 @@ TD * schedule_next_task(KernelState * k_state){
 		
 		min_priority++;
 	}
+	
+	assertf(k_state->num_non_zombie_tasks == 0,"Number of non-zombie tasks is not zero. Count=%d", k_state->num_non_zombie_tasks);
 	
 	robprintfbusy((const unsigned char *)"No tasks in queue!\n");
 	return 0;
@@ -154,6 +155,7 @@ void k_InitKernel(){
 	k_state->num_tasks = 1; /* There is one task, the start task we are creating now */
 	TD_Initialize(task_descriptor, task_id, task_priority, 99, get_stack_base(task_id), (void *)&KernelTask_Start);
 	PriorityQueue_Initialize(&k_state->task_queue);
+	k_state->num_non_zombie_tasks = 0;
 
 	int i;
 	for (i = 0; i < MAX_TASKS + 1; i++) {
@@ -161,7 +163,7 @@ void k_InitKernel(){
 	}
 
 	RingBufferIndex_Initialize(&k_state->messages_index, QUEUE_SIZE);
-
+	k_state->num_non_zombie_tasks += 1;
 	safely_add_task_to_priority_queue(&k_state->task_queue, task_descriptor, task_priority);
 	schedule_and_set_next_task_state(k_state);
 	asm_KernelExit();
@@ -192,6 +194,7 @@ int k_Create( int priority, void (*code)( ) ){
 		rtn = td->id;
 	}
 	
+	k_state->num_non_zombie_tasks += 1;
 	save_current_task_state(k_state);
 	k_state->current_task_descriptor->return_value = rtn;
 	k_state->current_task_descriptor->state = READY;
@@ -250,23 +253,27 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 	if (is_inited_tid(k_state, tid)) {
 		k_state->current_task_descriptor->reply_msg = reply;
 		k_state->current_task_descriptor->reply_len = replylen;
-		if(k_state->task_descriptors[tid].state == SEND_BLOCKED){
+		
+		TD * target_td = &k_state->task_descriptors[tid];
+		
+		if(target_td->state == SEND_BLOCKED){
 			//robprintfbusy((unsigned const char *)"Task: %d sends to task %d and unblocks it because it was waiting for send.\n",k_state->current_task_descriptor->id, tid);
 			//  That task is now ready to be scheduled
-			k_state->task_descriptors[tid].state = READY;
-			k_state->task_descriptors[tid].return_value = msglen;
-			assert((int) k_state->task_descriptors[tid].receive_msg, "k_Send: receive_msg isn't set");
-			m_strcpy(k_state->task_descriptors[tid].receive_msg, msg, msglen);
+			target_td->state = READY;
+			PriorityQueue_Put(&(k_state->task_queue), target_td, target_td->priority);
+			target_td->return_value = msglen;
+			assert((int) target_td->receive_msg, "k_Send: receive_msg isn't set");
+			m_strcpy(target_td->receive_msg, msg, msglen);
 			//  This task is now blocked on a reply
 			k_state->current_task_descriptor->state = REPLY_BLOCKED;
-			*(k_state->task_descriptors[tid].origin_tid) = k_state->current_task_descriptor->id;
+			*(target_td->origin_tid) = k_state->current_task_descriptor->id;
 			schedule_and_set_next_task_state(k_state);
 		}else{
 			//robprintfbusy((unsigned const char *)"Task %d sends a message to: %d and blocks because the destination is not blocked on send.\n",k_state->current_task_descriptor->id, tid);
 			int index = RingBufferIndex_Put(&k_state->messages_index);
 			KernelMessage * km = &k_state->messages[index];
 			KernelMessage_Initialize(km, current_td->id, tid, msg, reply, msglen, replylen);
-			Queue_PushEnd(&k_state->task_descriptors[tid].messages, km);
+			Queue_PushEnd(&target_td->messages, km);
 			k_state->current_task_descriptor->state = RECEIVE_BLOCKED;
 			schedule_and_set_next_task_state(k_state);
 		}
@@ -327,17 +334,20 @@ int k_Reply(int tid, char *reply, int replylen){
 	k_state->current_task_descriptor->reply_msg = reply;
 	if (is_inited_tid(k_state, tid)) {
 		//robprintfbusy((unsigned const char *)"Task %d replies to task %d\n",k_state->current_task_descriptor->id,tid);
-		assert(k_state->task_descriptors[tid].state == REPLY_BLOCKED, "Impossible state, replying to non reply blocked task.");
+		TD * target_td = &k_state->task_descriptors[tid];
+		
+		assert(target_td->state == REPLY_BLOCKED, "Impossible state, replying to non reply blocked task.");
 
-		if (k_state->task_descriptors[tid].state != REPLY_BLOCKED) {
+		if (target_td->state != REPLY_BLOCKED) {
 			return_value = ERR_K_TASK_NOT_REPLY_BLOCKED;
-		} else if (k_state->task_descriptors[tid].reply_len > replylen) {
+		} else if (target_td->reply_len > replylen) {
 			assert(0, "k_Reply: Insufficient space in destination");
 			return_value = ERR_K_INSUFFICIENT_SPACE;
 		} else {
-			assert((int) k_state->task_descriptors[tid].reply_msg, "k_Reply: reply_msg isn't set");
-			m_strcpy(k_state->task_descriptors[tid].reply_msg, reply, replylen);
-			k_state->task_descriptors[tid].state = READY;
+			assert((int) target_td->reply_msg, "k_Reply: reply_msg isn't set");
+			m_strcpy(target_td->reply_msg, reply, replylen);
+			target_td->state = READY;
+			PriorityQueue_Put(&(k_state->task_queue), target_td, target_td->priority);
 		}
 	} else {
 		if (!is_tid_in_range(tid)) {

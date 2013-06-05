@@ -66,7 +66,7 @@ QUEUE_ITEM_TYPE PriorityQueue_Get(PriorityQueue * queue) {
 QUEUE_ITEM_TYPE PriorityQueue_GetLower(PriorityQueue * queue, QueuePriority min_priority, QueuePriority * next_min_priority) {
 	if (!Queue_IsValidPriority(min_priority)) {
 		assertf(0, "PriorityQueue_GetLower: Unknown min_priority %d", min_priority);
-		return ERR_QUEUE_PRIORITY;
+		return (QUEUE_ITEM_TYPE) ERR_QUEUE_PRIORITY;
 	}
 
 	int queues_with_items = queue->queues_with_items;
@@ -108,7 +108,7 @@ int Queue_IsValidPriority(QueuePriority priority) {
 	}
 }
 
-int PriorityQueue_PrintItems(PriorityQueue * queue) {
+void PriorityQueue_PrintItems(PriorityQueue * queue) {
 	int i;
 	int has_item;
 	
