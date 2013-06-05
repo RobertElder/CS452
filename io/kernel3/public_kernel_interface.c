@@ -2,6 +2,7 @@
 #include "message.h"
 #include "nameserver.h"
 #include "robio.h"
+#include "clock.h"
 
 void asm_KernelInitEntry();
 int asm_CreateEntry();
@@ -111,10 +112,22 @@ int Delay( int ticks ) {
 }
 
 int Time( ) {
-	// TODO do something
-	
-	assert(0, "Time not implemented");
-	return 123456789;
+	int clock_tid = WhoIs(CLOCK_SERVER_NAME);
+	ClockMessage * send_message;
+	ClockMessage * receive_message;
+
+	char send_buffer[MESSAGE_SIZE];
+	char receive_buffer[MESSAGE_SIZE];
+
+	send_message = (ClockMessage *) send_buffer;
+	send_message->message_type = MESSAGE_TYPE_TIME_REQUEST;
+
+	Send(clock_tid, send_buffer, MESSAGE_SIZE, receive_buffer, MESSAGE_SIZE);
+
+	receive_message = (ClockMessage *) receive_buffer;
+	assert(receive_message->message_type == MESSAGE_TYPE_TIME_REQUEST_REPLY, "Didn't get back TIME_REQUEST_REPLY message type");
+
+	return receive_message->num;
 }
 
 int DelayUntil( int ticks ) {

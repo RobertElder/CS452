@@ -23,6 +23,9 @@ int Receive( int *, char *, int);
 int Reply( int , char *, int );
 int RegisterAs( char *name );
 int WhoIs( char *name );
-
+int AwaitEvent( int eventid );
+int Delay( int ticks );
+int Time( );
+int DelayUntil( int ticks );
 
 #endif

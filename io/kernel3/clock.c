@@ -1,8 +1,8 @@
 #include "clock.h"
-#include "public_kernel_interface.h"
 #include "robio.h"
 #include "message.h"
 #include "tasks.h"
+#include "public_kernel_interface.h"
 
 void ClockServer_Start() {
 	ClockServer server;
@@ -100,8 +100,13 @@ void ClockClient_Start() {
 	client.delay_time = reply_message->delay_time;
 	client.num_delays = reply_message->num_delays;
 	
-	robprintfbusy((const unsigned char *)"ClockClient TID=%d: Got delay_time=%d, num_delays=%dt\n", client.tid, client.delay_time, client.num_delays);
+	robprintfbusy((const unsigned char *)"ClockClient TID=%d: Got delay_time=%d, num_delays=%d\n", client.tid, client.delay_time, client.num_delays);
 	
+	int i;
+	for (i = 0; i < client.num_delays; i++) {
+		Delay(client.delay_time);
+		robprintfbusy((const unsigned char *)"ClockClient TID=%d: I just delayed delay_time=%d, i=%d\n", client.tid, client.delay_time, i);
+	}
 	
 	robprintfbusy((const unsigned char *)"ClockClient TID=%d: Exit\n", client.tid);
 	
