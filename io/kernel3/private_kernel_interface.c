@@ -9,83 +9,6 @@
 
 void asm_KernelExit();
 
-void safely_add_task_to_priority_queue(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority priority){
-	int queue_return_code = PriorityQueue_Put(queue, item, priority);
-	assert(queue_return_code != ERR_QUEUE_FULL,"priority queue full");
-	assert(queue_return_code != ERR_QUEUE_PRIORITY,"priority queue wrong priority");
-}
-
-TD * schedule_next_task(KernelState * k_state){
-	int times = 0;
-	int min_priority = 0;
-	
-	// TODO: Make this better 
-	// In the best case, there is no need to search for lower priority tasks
-	// But to avoid deadlock by a blocked high priority task, we need to find if lower priority tasks can run
-	while (min_priority < NUM_PRIORITIES) {
-		int i;
-		for (i = 0; i < MAX_TASKS + 2; i++) {
-			TD * td = PriorityQueue_GetLower(&(k_state->task_queue), min_priority, (void*)&min_priority);
-	
-			if (td == 0) {
-				//  There are no ready tasks found.
-				break;
-			} else if (td->state == READY) {
-				//  We're scheduling this task now, put it at the end of the queue
-				PriorityQueue_Put(&(k_state->task_queue), td, td->priority);
-				td->state = ACTIVE;
-				return td;
-			} else if (td->state == RECEIVE_BLOCKED || td->state == SEND_BLOCKED || td->state == REPLY_BLOCKED) {
-				// Remember to put the task back in the ready queue when its ready
-				//  Just keep executing in this loop until we find a ready task.
-			} else if (td->state == ZOMBIE) {
-				// TODO:
-				// Destroy the zombie task
-				k_state->num_non_zombie_tasks -= 1;
-			} else {
-				assertf(0,"Unknown task state: %d for tid=%d.",td->state, td->id);
-			}
-			times++;
-			assertf(times < (MAX_TASKS + 2) * NUM_PRIORITIES,"Scheduler ran more than %d times, probably a bug.", (MAX_TASKS + 2) * NUM_PRIORITIES);
-		}
-		
-		min_priority++;
-	}
-	
-	assertf(k_state->num_non_zombie_tasks == 0,"Number of non-zombie tasks is not zero. Count=%d", k_state->num_non_zombie_tasks);
-	
-	robprintfbusy((const unsigned char *)"No tasks in queue!\n");
-	return 0;
-	
-	assert(0, "Shouldn't get here");
-}
-
-void save_current_task_state(KernelState * k_state) {
-	k_state->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
-	k_state->current_task_descriptor->link_register = k_state->user_proc_lr_value;
-	k_state->current_task_descriptor->spsr_register = k_state->user_proc_spsr;
-}
-
-void set_next_task_state(KernelState * k_state) {
-	if (k_state->current_task_descriptor == 0) {
-		/* Nothing to do, exit to redboot. */
-		k_state->user_proc_sp_value = k_state->redboot_sp_value;
-		k_state->user_proc_lr_value = k_state->redboot_lr_value;
-		k_state->user_proc_return_value = 0;
-		k_state->user_proc_spsr = k_state->redboot_spsr_value;
-	}else{
-		k_state->user_proc_sp_value = k_state->current_task_descriptor->stack_pointer;
-		k_state->user_proc_lr_value = k_state->current_task_descriptor->link_register;
-		k_state->user_proc_return_value = k_state->current_task_descriptor->return_value;
-		k_state->user_proc_spsr = k_state->current_task_descriptor->spsr_register;
-	}
-}
-
-void schedule_and_set_next_task_state(KernelState * k_state) {
-	k_state->current_task_descriptor = schedule_next_task(k_state);
-	set_next_task_state(k_state);
-}
-
 void print_kernel_state(KernelState * k_state){
 	//TD * current_t = k_state->current_task_descriptor;
 	//robprintfbusy((const unsigned char *)"---- Kernel State ----.\n");
@@ -122,83 +45,25 @@ void validate_stack_value(TD * td){
 
 }
 
-int is_tid_in_range(int tid) {
-	if (tid < 0 || tid > MAX_TASKS + 1) {
-		return 0;
-	}
-	return 1;
-}
-
-int is_inited_tid(KernelState * k_state, int tid) {
-	if (!is_tid_in_range(tid)) {
-		return 0;
-	}
-
-	if (k_state->inited_td[tid]) {
-		return 1;
-	}
-
-	return 0;
-}
-
 void k_InitKernel(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	TD * task_descriptor = &(k_state->task_descriptors[0]);
-	int task_priority = LOWEST;
-	int task_id = 0;
+	
 	/*  Remember where to return to, in case we want to hand control back to redboot */
 	k_state->redboot_sp_value = k_state->user_proc_sp_value;
 	k_state->redboot_lr_value = k_state->user_proc_lr_value;
 	k_state->redboot_spsr_value = k_state->user_proc_spsr;
 	//  Directly set the kernel state structure values on the stack.
-	k_state->max_tasks = MAX_TASKS;
-	k_state->num_tasks = 1; /* There is one task, the start task we are creating now */
-	TD_Initialize(task_descriptor, task_id, task_priority, 99, get_stack_base(task_id), (void *)&KernelTask_Start);
-	PriorityQueue_Initialize(&k_state->task_queue);
-	k_state->num_non_zombie_tasks = 0;
-
-	int i;
-	for (i = 0; i < MAX_TASKS + 1; i++) {
-		k_state->inited_td[i] = 0;
-	}
+	Scheduler_Initialize(&k_state->scheduler);
+	Scheduler_InitAndSetKernelTask(&k_state->scheduler, k_state);
 
 	RingBufferIndex_Initialize(&k_state->messages_index, QUEUE_SIZE);
-	k_state->num_non_zombie_tasks += 1;
-	safely_add_task_to_priority_queue(&k_state->task_queue, task_descriptor, task_priority);
-	schedule_and_set_next_task_state(k_state);
+	
 	asm_KernelExit();
 }
 
 int k_Create( int priority, void (*code)( ) ){
-	int rtn = ERR_K_DEFAULT;
-
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	
-	
-	if (k_state->num_tasks >= k_state->max_tasks) {
-		assert(0,"out of tds");
-		rtn = ERR_K_OUT_OF_TD;
-	}else if (!Queue_IsValidPriority(priority)) {
-		assert(0,"invalid priority");
-		rtn = ERR_K_INVALID_PRIORITY;
-	}else{
-		int new_task_id = k_state->num_tasks;
-		
-		TD * td = &(k_state->task_descriptors[k_state->num_tasks]);
-		TD_Initialize(td, new_task_id, priority, k_state->current_task_descriptor->id, get_stack_base(new_task_id), code);
-		k_state->num_tasks += 1;
-		k_state->inited_td[new_task_id] = 1;
-
-		safely_add_task_to_priority_queue(&k_state->task_queue, td, priority);
-
-		rtn = td->id;
-	}
-	
-	k_state->num_non_zombie_tasks += 1;
-	save_current_task_state(k_state);
-	k_state->current_task_descriptor->return_value = rtn;
-	k_state->current_task_descriptor->state = READY;
-	schedule_and_set_next_task_state(k_state);
+	Scheduler_CreateAndScheduleNewTask(&k_state->scheduler, k_state, priority, code);
 
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
@@ -206,76 +71,108 @@ int k_Create( int priority, void (*code)( ) ){
 
 int k_MyTid(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	save_current_task_state(k_state);
-	k_state->current_task_descriptor->return_value = k_state->current_task_descriptor->id;
-	set_next_task_state(k_state);
+	Scheduler * scheduler = &k_state->scheduler;
+	
+	Scheduler_SaveCurrentTaskState(scheduler, k_state);
+	
+	scheduler->current_task_descriptor->return_value = scheduler->current_task_descriptor->id;
+	
+	Scheduler_SetNextTaskState(scheduler, k_state);
+	
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
 
 int k_MyParentTid(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	save_current_task_state(k_state);
-	k_state->current_task_descriptor->return_value = k_state->current_task_descriptor->parent_id;
-	set_next_task_state(k_state);
+	Scheduler * scheduler = &k_state->scheduler;
+	
+	Scheduler_SaveCurrentTaskState(scheduler, k_state);
+	
+	scheduler->current_task_descriptor->return_value = scheduler->current_task_descriptor->parent_id;
+	
+	Scheduler_SetNextTaskState(scheduler, k_state);
+	
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
 
 void k_Pass(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	save_current_task_state(k_state);
+	Scheduler * scheduler = &k_state->scheduler;
+	
+	Scheduler_SaveCurrentTaskState(scheduler, k_state);
+	
 	//  Check for stack overflow and underflows
-	validate_stack_value(k_state->current_task_descriptor);
-	k_state->current_task_descriptor->state = READY;
-	schedule_and_set_next_task_state(k_state);
+	validate_stack_value(scheduler->current_task_descriptor);
+	
+	scheduler->current_task_descriptor->state = READY;
+	
+	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 
 	asm_KernelExit();
 }
 
 void k_Exit(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	save_current_task_state(k_state);
-	validate_stack_value(k_state->current_task_descriptor);
-	k_state->current_task_descriptor->state = ZOMBIE;
-	schedule_and_set_next_task_state(k_state);
+	Scheduler * scheduler = &k_state->scheduler;
+	
+	Scheduler_SaveCurrentTaskState(scheduler, k_state);
+	validate_stack_value(scheduler->current_task_descriptor);
+	
+	scheduler->current_task_descriptor->state = ZOMBIE;
+	
+	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 	
 	asm_KernelExit();
 }
 
 int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	save_current_task_state(k_state);
+	Scheduler * scheduler = &k_state->scheduler;
+		
+	Scheduler_SaveCurrentTaskState(scheduler, k_state);
 
 	int return_value = 8;
-	TD * current_td = k_state->current_task_descriptor;
+	TD * current_td = scheduler->current_task_descriptor;
 
-	if (is_inited_tid(k_state, tid)) {
-		k_state->current_task_descriptor->reply_msg = reply;
-		k_state->current_task_descriptor->reply_len = replylen;
+	if (Scheduler_IsInitedTid(scheduler, tid)) {
+		scheduler->current_task_descriptor->reply_msg = reply;
+		scheduler->current_task_descriptor->reply_len = replylen;
 		
-		TD * target_td = &k_state->task_descriptors[tid];
+		TD * target_td = &scheduler->task_descriptors[tid];
 		
 		if(target_td->state == SEND_BLOCKED){
 			//robprintfbusy((unsigned const char *)"Task: %d sends to task %d and unblocks it because it was waiting for send.\n",k_state->current_task_descriptor->id, tid);
+			
 			//  That task is now ready to be scheduled
 			target_td->state = READY;
-			PriorityQueue_Put(&(k_state->task_queue), target_td, target_td->priority);
+	
+			PriorityQueue_Put(&(scheduler->task_queue), target_td,
+				target_td->priority);
+	
 			target_td->return_value = msglen;
+	
 			assert((int) target_td->receive_msg, "k_Send: receive_msg isn't set");
+	
 			m_strcpy(target_td->receive_msg, msg, msglen);
+	
 			//  This task is now blocked on a reply
-			k_state->current_task_descriptor->state = REPLY_BLOCKED;
-			*(target_td->origin_tid) = k_state->current_task_descriptor->id;
-			schedule_and_set_next_task_state(k_state);
+			current_td->state = REPLY_BLOCKED;
+			*(target_td->origin_tid) = scheduler->current_task_descriptor->id;
+	
+			Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 		}else{
 			//robprintfbusy((unsigned const char *)"Task %d sends a message to: %d and blocks because the destination is not blocked on send.\n",k_state->current_task_descriptor->id, tid);
 			int index = RingBufferIndex_Put(&k_state->messages_index);
 			KernelMessage * km = &k_state->messages[index];
+	
 			KernelMessage_Initialize(km, current_td->id, tid, msg, reply, msglen, replylen);
 			Queue_PushEnd(&target_td->messages, km);
-			k_state->current_task_descriptor->state = RECEIVE_BLOCKED;
-			schedule_and_set_next_task_state(k_state);
+	
+			scheduler->current_task_descriptor->state = RECEIVE_BLOCKED;
+	
+			Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 		}
 	} else {
 		if (!is_tid_in_range(tid)) {
@@ -285,8 +182,9 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 		}
 	}
 
-	k_state->current_task_descriptor->return_value = return_value;
-	set_next_task_state(k_state);
+	scheduler->current_task_descriptor->return_value = return_value;
+	Scheduler_SetNextTaskState(scheduler, k_state);
+	
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
@@ -295,31 +193,42 @@ int k_Receive(int *tid, char *msg, int msglen){
 	assert(msglen >= MESSAGE_SIZE, "k_Receive user space msg len is too small for our message");
 
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	save_current_task_state(k_state);
+	Scheduler * scheduler = &k_state->scheduler;
+		
+	Scheduler_SaveCurrentTaskState(scheduler, k_state);
+	
 	//  Attempt to receive a message from the queue associated with that process.
-	KernelMessage * message = (KernelMessage *) Queue_PopStart(&k_state->current_task_descriptor->messages);
+	KernelMessage * message = (KernelMessage *) Queue_PopStart(&scheduler->current_task_descriptor->messages);
+	
 	//  Remember where to store the message one we get it
-	k_state->current_task_descriptor->receive_msg = msg;
-	k_state->current_task_descriptor->origin_tid = tid;
+	scheduler->current_task_descriptor->receive_msg = msg;
+	scheduler->current_task_descriptor->origin_tid = tid;
+	
 	if(message == 0){
 		//robprintfbusy((unsigned const char *)"Task: %d is blocking in receive because there are no messages.\n",k_state->current_task_descriptor->id);
+		
 		//  No messages, block this task
-		k_state->current_task_descriptor->state = SEND_BLOCKED;
-		k_state->current_task_descriptor->return_value = MESSAGE_SIZE;
+		scheduler->current_task_descriptor->state = SEND_BLOCKED;
+		scheduler->current_task_descriptor->return_value = MESSAGE_SIZE;
+		
 		//  Switch to the next ready process.
-		schedule_and_set_next_task_state(k_state);
+		Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 	}else{
 		//robprintfbusy((unsigned const char *)"Task %d receives a message from %d because there is a message waiting.\n",k_state->current_task_descriptor->id,message->origin);
+		
 		//  There is a message, give it to the task
 		RingBufferIndex_Get(&k_state->messages_index);
 		m_strcpy(msg, message->msg, msglen);
 
 		*tid = message->origin;
 		assert(message->origin, "k_Receive: no message origin");
-		k_state->current_task_descriptor->return_value = message->origin_size;
-		assert(k_state->task_descriptors[message->origin].state == RECEIVE_BLOCKED, "Impossible state, sender shoudl be receive blocked.");
-		k_state->task_descriptors[message->origin].state = REPLY_BLOCKED;
-		set_next_task_state(k_state);
+		
+		scheduler->current_task_descriptor->return_value = message->origin_size;
+		assert(scheduler->task_descriptors[message->origin].state == RECEIVE_BLOCKED, "Impossible state, sender shoudl be receive blocked.");
+		
+		scheduler->task_descriptors[message->origin].state = REPLY_BLOCKED;
+		Scheduler_SetNextTaskState(scheduler, k_state);
+
 	}
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
@@ -327,16 +236,19 @@ int k_Receive(int *tid, char *msg, int msglen){
 
 int k_Reply(int tid, char *reply, int replylen){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-	save_current_task_state(k_state);
+	Scheduler * scheduler = &k_state->scheduler;
+		
+	Scheduler_SaveCurrentTaskState(scheduler, k_state);
 
 	int return_value = 0;
 
-	k_state->current_task_descriptor->reply_msg = reply;
-	if (is_inited_tid(k_state, tid)) {
+	scheduler->current_task_descriptor->reply_msg = reply;
+	if (Scheduler_IsInitedTid(scheduler, tid)) {
 		//robprintfbusy((unsigned const char *)"Task %d replies to task %d\n",k_state->current_task_descriptor->id,tid);
-		TD * target_td = &k_state->task_descriptors[tid];
+		TD * target_td = &scheduler->task_descriptors[tid];
 		
-		assert(target_td->state == REPLY_BLOCKED, "Impossible state, replying to non reply blocked task.");
+		assert(target_td->state == REPLY_BLOCKED,
+			"Impossible state, replying to non reply blocked task.");
 
 		if (target_td->state != REPLY_BLOCKED) {
 			return_value = ERR_K_TASK_NOT_REPLY_BLOCKED;
@@ -347,7 +259,8 @@ int k_Reply(int tid, char *reply, int replylen){
 			assert((int) target_td->reply_msg, "k_Reply: reply_msg isn't set");
 			m_strcpy(target_td->reply_msg, reply, replylen);
 			target_td->state = READY;
-			PriorityQueue_Put(&(k_state->task_queue), target_td, target_td->priority);
+			PriorityQueue_Put(&(scheduler->task_queue), target_td, 
+				target_td->priority);
 		}
 	} else {
 		if (!is_tid_in_range(tid)) {
@@ -357,8 +270,9 @@ int k_Reply(int tid, char *reply, int replylen){
 		}
 	}
 
-	k_state->current_task_descriptor->return_value = return_value;
-	set_next_task_state(k_state);
+	scheduler->current_task_descriptor->return_value = return_value;
+	
+	Scheduler_SetNextTaskState(scheduler, k_state);
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }

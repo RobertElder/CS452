@@ -31,4 +31,6 @@ typedef struct TaskDescriptor {
 
 void TD_Initialize(TD * td, int id, QueuePriority priority, int parent_id, void *, void *);
 
+int is_tid_in_range(int tid);
+
 #endif /* TASK_DESCRIPTOR_H_ */
