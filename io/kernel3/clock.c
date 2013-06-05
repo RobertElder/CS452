@@ -7,6 +7,7 @@
 void ClockServer_Start() {
 	ClockServer server;
 	ClockServer_Initialize(&server);
+	
 	ClockMessage * receive_msg = (ClockMessage *) server.receive_buffer;
 	int source_tid;
 	
@@ -90,6 +91,8 @@ void ClockClient_Start() {
 	K3Message * send_message = (K3Message *) client.send_buffer;
 	K3Message * reply_message = (K3Message *) client.reply_buffer;
 	
+	send_message->message_type = MESSAGE_TYPE_HELLO;
+	
 	Send(client.parent_tid, client.send_buffer, MESSAGE_SIZE, client.reply_buffer, MESSAGE_SIZE);
 	
 	assertf(reply_message->message_type == MESSAGE_TYPE_ACK, "ClockClient TID=%d: failed to get ACK message\n");
@@ -107,11 +110,8 @@ void ClockClient_Start() {
 
 void ClockClient_Initialize(ClockClient * client) {
 	client->tid = MyTid();
-	robprintfbusy((const unsigned char *)"ClockClient asdfasdfsdfa");
+	robprintfbusy((const unsigned char *)"ClockClient_Initialize TID=%d here\n", client->tid);
 	client->server_tid = WhoIs((char*) CLOCK_SERVER_NAME);
-	
-
-	
 	client->parent_tid = MyParentTid();
 }
 

@@ -9,7 +9,7 @@
 #include "clock.h"
 
 void KernelTask_Start() {
-	int tid = Create(NORMAL, &FirstTask_Start);
+	int tid = Create(HIGHEST, &FirstTask_Start);
 	
 	assert(tid == 1, "FirstTask tid not 1");
 	
@@ -23,15 +23,15 @@ void FirstTask_Start() {
 	
 	robprintfbusy((const unsigned char *)"FirstTask Start\n");
 	
-	tid = Create(NORMAL, &NameServer_Start);
+	tid = Create(HIGHEST, &NameServer_Start);
 	assert(tid == 2, "NameServer tid not 2");
 	
-	tid = Create(NORMAL, &ClockServer_Start);
+	tid = Create(HIGHEST, &ClockServer_Start);
 	assert(tid == 3, "RPServer tid not 3");
 	
 	// 1
 	tid = Create(3, &ClockClient_Start);
-	assert(tid == 4, "ClockClient tid not 4");
+	assertf(tid == 4, "ClockClient tid not 4, got %d", tid);
 	
 	// 2
 	tid = Create(4, &ClockClient_Start);
@@ -79,24 +79,24 @@ void FirstTask_Start() {
 	// 1
 	reply_message->delay_time = 10;
 	reply_message->num_delays = 20;
-	Reply(source_tid, reply_buffer, MESSAGE_SIZE);
+	Reply(4, reply_buffer, MESSAGE_SIZE);
 	
 	// 2
-	reply_message->delay_time = 10;
-	reply_message->num_delays = 20;
-	Reply(source_tid, reply_buffer, MESSAGE_SIZE);
+	reply_message->delay_time = 23;
+	reply_message->num_delays = 9;
+	Reply(5, reply_buffer, MESSAGE_SIZE);
 	
 	// 3
-	reply_message->delay_time = 10;
-	reply_message->num_delays = 20;
-	Reply(source_tid, reply_buffer, MESSAGE_SIZE);
+	reply_message->delay_time = 33;
+	reply_message->num_delays = 6;
+	Reply(6, reply_buffer, MESSAGE_SIZE);
 	
 	// 4
-	reply_message->delay_time = 10;
-	reply_message->num_delays = 20;
-	Reply(source_tid, reply_buffer, MESSAGE_SIZE);
+	reply_message->delay_time = 71;
+	reply_message->num_delays = 3;
+	Reply(7, reply_buffer, MESSAGE_SIZE);
 	
-	robprintfbusy((const unsigned char *)"FirstTask Exit");
+	robprintfbusy((const unsigned char *)"FirstTask Exit\n");
 	Exit();
 	
 	assert(0, "Shouldn't see me\n");
