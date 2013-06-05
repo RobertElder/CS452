@@ -17,32 +17,42 @@ void safely_add_task_to_priority_queue(PriorityQueue * queue, QUEUE_ITEM_TYPE it
 
 TD * schedule_next_task(KernelState * k_state){
 	int times = 0;
-	while (1) {
-		TD * td = PriorityQueue_Get(&(k_state->task_queue));
+	int min_priority = 0;
 	
-		if (td == 0) {
-			//  There are no ready tasks found.
-			robprintfbusy((const unsigned char *)"No tasks in queue!\n");
-			return 0;
-		} else if (td->state == READY) {
-			//  We're scheduling this task now, put it at the end of the queue
-			PriorityQueue_Put(&(k_state->task_queue), td, td->priority);
-			td->state = ACTIVE;
-			return td;
-		} else if (td->state == RECEIVE_BLOCKED || td->state == SEND_BLOCKED || td->state == REPLY_BLOCKED) {
-			//  TODO:  this is inefficient, for now just put it at the end of the ready queue.
-			robprintfbusy((const unsigned char *)"%d was requeued\n", td->id);
-			PriorityQueue_Put(&(k_state->task_queue), td, td->priority);
-			//  Just keep executing in this loop until we find a ready task.
-		} else if (td->state == ZOMBIE) {
-			// TODO:
-			// Destroy the zombie task
-		} else {
-			assertf(0,"Unknown task state: %d.",td->state);
+	// TODO: Make this better 
+	// In the best case, there is no need to search for lower priority tasks
+	// But to avoid deadlock by a blocked high priority task, we need to find if lower priority tasks can run
+	for (min_priority = 0; min_priority < NUM_PRIORITIES; min_priority++) {
+		int i;
+		for (i = 0; i < MAX_TASKS + 2; i++) {
+			TD * td = PriorityQueue_GetLower(&(k_state->task_queue), min_priority);
+	
+			if (td == 0) {
+				//  There are no ready tasks found.
+				break;
+			} else if (td->state == READY) {
+				//  We're scheduling this task now, put it at the end of the queue
+				PriorityQueue_Put(&(k_state->task_queue), td, td->priority);
+				td->state = ACTIVE;
+				return td;
+			} else if (td->state == RECEIVE_BLOCKED || td->state == SEND_BLOCKED || td->state == REPLY_BLOCKED) {
+				//  TODO:  this is inefficient, for now just put it at the end of the ready queue.
+				//robprintfbusy((const unsigned char *)"%d was requeued\n", td->id);
+				PriorityQueue_Put(&(k_state->task_queue), td, td->priority);
+				//  Just keep executing in this loop until we find a ready task.
+			} else if (td->state == ZOMBIE) {
+				// TODO:
+				// Destroy the zombie task
+			} else {
+				assertf(0,"Unknown task state: %d for tid=%d.",td->state, td->id);
+			}
+			times++;
+			assertf(times < (MAX_TASKS + 2) * NUM_PRIORITIES,"Scheduler ran more than %d times, probably a bug.", (MAX_TASKS + 2) * NUM_PRIORITIES);
 		}
-		times++;
-		assertf(times < MAX_TASKS + 2,"Scheduler ran more than %d times, probably a bug.", MAX_TASKS + 2);
 	}
+	
+	robprintfbusy((const unsigned char *)"No tasks in queue!\n");
+	return 0;
 	
 	assert(0, "Shouldn't get here");
 }
