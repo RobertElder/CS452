@@ -60,9 +60,29 @@ int PriorityQueue_Put(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority
 }
 
 QUEUE_ITEM_TYPE PriorityQueue_Get(PriorityQueue * queue) {
-	int priority = __builtin_clz(queue->queues_with_items);
+	return PriorityQueue_GetLower(queue, HIGHEST);
+}
+
+QUEUE_ITEM_TYPE PriorityQueue_GetLower(PriorityQueue * queue, QueuePriority min_priority) {	
+	if (!Queue_IsValidPriority(min_priority)) {
+		assertf(0, "PriorityQueue_GetLower: Unknown min_priority %d", min_priority);
+		return ERR_QUEUE_PRIORITY;
+	}
+
+	int queues_with_items = queue->queues_with_items;
 	
-	assertf(Queue_IsValidPriority(priority), "PriorityQueue_Get: Got bad priority %d from CLZ", priority);
+	// Make leading bits zeros for higher priorities we don't want to check
+	queues_with_items &= (1 << (NUM_PRIORITIES - min_priority)) - 1;
+
+	int priority = __builtin_clz(queues_with_items);
+	
+	if (priority == NUM_PRIORITIES) {
+		// No items in any queue
+		return 0;
+	}
+	
+	assertf(Queue_IsValidPriority(priority), "PriorityQueue_GetLower: Got bad priority %d from CLZ", priority);
+	assertf(priority >= min_priority, "PriorityQueue_GetLower: Got bad priority %d from CLZ  -- b", priority);
 	
 	QUEUE_ITEM_TYPE item = Queue_PopStart(&(queue->queues[priority]));
 	
@@ -77,7 +97,7 @@ QUEUE_ITEM_TYPE PriorityQueue_Get(PriorityQueue * queue) {
 }
 
 int Queue_IsValidPriority(QueuePriority priority) {
-	if (priority >= 0 || priority <= NUM_PRIORITIES - 1) {
+	if (priority >= 0 && priority <= NUM_PRIORITIES - 1) {
 		return 1;
 	} else {
 		return 0;
@@ -88,9 +108,12 @@ int PriorityQueue_PrintItems(PriorityQueue * queue) {
 	int i;
 	int has_item;
 	
+	robprintfbusy((const unsigned char *)"PQ=%d ", queue);
+	
 	for (i = 0; i < NUM_PRIORITIES; i++) {
 		has_item = queue->queues_with_items & 1 << (NUM_PRIORITIES - 1 - i);
-		robprintfbusy((const unsigned char *)"PQ: %d %d   ", i, has_item);
+		robprintfbusy((const unsigned char *)"%d=%d ", i, has_item);
 	}
-
+	
+	robprintfbusy((const unsigned char *)"\n", queue);
 }

@@ -48,6 +48,9 @@ int PriorityQueue_Put(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority
 
 QUEUE_ITEM_TYPE PriorityQueue_Get(PriorityQueue * queue);
 
+QUEUE_ITEM_TYPE PriorityQueue_GetLower(PriorityQueue * queue, QueuePriority min_priority);
+
+
 int Queue_IsValidPriority(QueuePriority priority);
 
 int PriorityQueue_PrintItems(PriorityQueue * queue);
