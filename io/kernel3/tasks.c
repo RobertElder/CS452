@@ -21,7 +21,7 @@ void KernelTask_Start() {
 }
 
 void FirstTask_Start() {
-	Exit();
+//	Exit();
 	int tid;
 	
 	robprintfbusy((const unsigned char *)"FFirstTask Start\n");

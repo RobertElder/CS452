@@ -71,7 +71,7 @@ void ClockServer_HandleTimeRequest(ClockServer * server, int source_tid, ClockMe
 	robprintfbusy((const unsigned char *)"ClockServer TID=%d: Handle Time Request from %d. Current tick=%d\n", server->tid, source_tid, server->ticks);
 	
 	ClockMessage * reply_message = (ClockMessage *) server->reply_buffer;
-	reply_message->message_type = MESSAGE_TYPE_ACK;
+	reply_message->message_type = MESSAGE_TYPE_TIME_REPLY;
 	reply_message->num = server->ticks;
 	
 	Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
@@ -84,7 +84,7 @@ void ClockServer_HandleDelayRequest(ClockServer * server, int source_tid, ClockM
 		robprintfbusy((const unsigned char *)"ClockServer TID=%d: WARNING delay value in the past!");
 	
 		ClockMessage * reply_message = (ClockMessage *) server->reply_buffer;
-		reply_message->message_type = MESSAGE_TYPE_ACK;
+		reply_message->message_type = MESSAGE_TYPE_DELAY_REPLY;
 	
 		Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
 	} else {
@@ -118,7 +118,7 @@ void ClockServer_UnblockDelayedTasks(ClockServer * server) {
 		}
 		
 		ClockMessage * reply_message = (ClockMessage *) server->reply_buffer;
-		reply_message->message_type = MESSAGE_TYPE_ACK;
+		reply_message->message_type = MESSAGE_TYPE_DELAY_REPLY;
 	
 		Reply(tid, server->reply_buffer, MESSAGE_SIZE);
 		

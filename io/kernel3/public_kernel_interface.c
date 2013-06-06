@@ -112,6 +112,7 @@ int DelayUntil( int ticks ) {
 
 	send_message = (ClockMessage *) send_buffer;
 	send_message->message_type = MESSAGE_TYPE_DELAY_REQUEST;
+	send_message->num = ticks;
 
 	Send(clock_tid, send_buffer, MESSAGE_SIZE, receive_buffer, MESSAGE_SIZE);
 
