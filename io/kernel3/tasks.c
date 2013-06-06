@@ -7,6 +7,7 @@
 #include "message.h"
 #include "nameserver.h"
 #include "clock.h"
+#include "notifier.h"
 
 void KernelTask_Start() {
 	int tid = Create(HIGHEST, &FirstTask_Start);
@@ -23,27 +24,30 @@ void FirstTask_Start() {
 	
 	robprintfbusy((const unsigned char *)"FirstTask Start\n");
 	
-	tid = Create(HIGHEST, &NameServer_Start);
+	tid = Create(HIGHEST + 1, &NameServer_Start);
 	assert(tid == 2, "NameServer tid not 2");
 	
-	tid = Create(HIGHEST, &ClockServer_Start);
-	assert(tid == 3, "RPServer tid not 3");
+	tid = Create(HIGHEST + 1, &ClockServer_Start);
+	assert(tid > 0, "ClockServer tid not positive");
+	
+	tid = Create(HIGHEST, ClockNotifier_Start);
+	assert(tid > 0, "ClockNotifier tid not positive");
 	
 	// 1
 	tid = Create(3, &ClockClient_Start);
-	assertf(tid == 4, "ClockClient tid not 4, got %d", tid);
+	assertf(tid > 0, "ClockClient tid not positive, got %d", tid);
 	
 	// 2
 	tid = Create(4, &ClockClient_Start);
-	assert(tid == 5, "ClockClient tid not 5");
+	assert(tid > 0, "ClockClient tid not positive");
 	
 	// 3
 	tid = Create(5, &ClockClient_Start);
-	assert(tid == 6, "ClockClient tid not 6");
+	assert(tid > 0, "ClockClient tid not positive");
 	
 	// 4
 	tid = Create(6, &ClockClient_Start);
-	assert(tid == 7, "ClockClient tid not 7");
+	assert(tid > 0, "ClockClient tid not positive");
 	
 	
 	robprintfbusy((const unsigned char *)"FirstTask begin receive\n");

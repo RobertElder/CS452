@@ -101,14 +101,27 @@ int AwaitEvent( int eventid ) {
 	// TODO do something
 	
 	assert(0, "AwaitEvent not implemented");
+	
 	return 123456789;
 }
 
 int Delay( int ticks ) {
-	// TODO do something
-	
-	assert(0, "Delay not implemented");
-	return 123456789;
+	int clock_tid = WhoIs(CLOCK_SERVER_NAME);
+	ClockMessage * send_message;
+	ClockMessage * receive_message;
+
+	char send_buffer[MESSAGE_SIZE];
+	char receive_buffer[MESSAGE_SIZE];
+
+	send_message = (ClockMessage *) send_buffer;
+	send_message->message_type = MESSAGE_TYPE_DELAY_REQUEST;
+
+	Send(clock_tid, send_buffer, MESSAGE_SIZE, receive_buffer, MESSAGE_SIZE);
+
+	receive_message = (ClockMessage *) receive_buffer;
+	assert(receive_message->message_type == MESSAGE_TYPE_DELAY_REPLY, "Didn't get back TIME_DELAY_REPLY message type");
+
+	return 0;
 }
 
 int Time( ) {
@@ -125,14 +138,11 @@ int Time( ) {
 	Send(clock_tid, send_buffer, MESSAGE_SIZE, receive_buffer, MESSAGE_SIZE);
 
 	receive_message = (ClockMessage *) receive_buffer;
-	assert(receive_message->message_type == MESSAGE_TYPE_TIME_REQUEST_REPLY, "Didn't get back TIME_REQUEST_REPLY message type");
+	assert(receive_message->message_type == MESSAGE_TYPE_TIME_REPLY, "Didn't get back TIME_REPLY message type");
 
 	return receive_message->num;
 }
 
 int DelayUntil( int ticks ) {
-	// TODO do something
-	
-	assert(0, "DelayUntil not implemented");
-	return 123456789;
+	return Delay(Time() + ticks);
 }

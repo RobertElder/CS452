@@ -3,6 +3,7 @@
 #include "message.h"
 #include "tasks.h"
 #include "public_kernel_interface.h"
+#include "queue.h"
 
 void ClockServer_Start() {
 	ClockServer server;
@@ -15,7 +16,7 @@ void ClockServer_Start() {
 	
 	int return_code = RegisterAs((char *)CLOCK_SERVER_NAME);
 	assert(return_code == 0, "ClockServer: Failed to register name");
-
+	
 	while (1) {
 		Receive(&source_tid, server.receive_buffer, MESSAGE_SIZE);
 		

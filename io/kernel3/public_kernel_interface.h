@@ -12,6 +12,10 @@ static const int ERR_K_TID_DOES_NOT_EXIST = -2;
 static const int ERR_K_TASK_NOT_REPLY_BLOCKED = -3;
 static const int ERR_K_INSUFFICIENT_SPACE = -4;
 
+typedef enum EventID {
+	CLOCK_TICK_EVENT,
+} EventID;
+
 void InitKernel();
 int Create( int priority, void (*code)( ) );
 int MyTid();
