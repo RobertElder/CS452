@@ -1,4 +1,5 @@
 #include "queue.h"
+#include "public_kernel_interface.h"
 
 #ifndef TASK_DESCRIPTOR_H_
 #define TASK_DESCRIPTOR_H_
@@ -27,6 +28,7 @@ typedef struct TaskDescriptor {
 	unsigned int reply_len;
 	char * reply_msg;
 	int * origin_tid;
+	EventID event_id;
 } TD;
 
 void TD_Initialize(TD * td, int id, QueuePriority priority, int parent_id, void *, void *);

@@ -14,6 +14,7 @@
 .global asm_SendEntry
 .global asm_ReceiveEntry
 .global asm_ReplyEntry
+.global asm_AwaitEventEntry
 
 /* Functions to get/set user process state */
 .global asm_GetStoredUserSp
@@ -66,6 +67,11 @@ asm_ReplyEntry:
 	mov	ip, sp
 	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 8;
+	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
+asm_AwaitEventEntry:
+	mov	ip, sp
+	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	SWI 9;
 	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 
 /*  This function executes when exiting from all kernel functions */
@@ -173,4 +179,5 @@ B k_Exit
 B k_Send
 B k_Receive
 B k_Reply
+B k_AwaitEvent
 

@@ -276,3 +276,19 @@ int k_Reply(int tid, char *reply, int replylen){
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
+
+int k_AwaitEvent(EventID event_id) {
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	Scheduler * scheduler = &k_state->scheduler;
+		
+	Scheduler_SaveCurrentTaskState(scheduler, k_state);
+
+	scheduler->current_task_descriptor->state = EVENT_BLOCKED;
+	scheduler->current_task_descriptor->event_id = event_id;
+	// TODO do something
+		
+	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
+		
+	asm_KernelExit();
+	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
+}

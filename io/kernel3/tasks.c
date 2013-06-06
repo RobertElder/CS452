@@ -60,45 +60,49 @@ void FirstTask_Start() {
 	
 	// 1
 	Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
-	assertf(source_tid == 4, "Receive 1: wrong tid=%d", source_tid);
+	assertf(source_tid > 0, "Receive 1: wrong tid=%d", source_tid);
 	assertf(receive_message->message_type == MESSAGE_TYPE_HELLO, "Receive 1: wrong message type");
+	int client_1_tid = source_tid;
 	
 	// 2
 	Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
-	assertf(source_tid == 5, "Receive 2: wrong tid=%d", source_tid);
+	assertf(source_tid > 0, "Receive 2: wrong tid=%d", source_tid);
 	assertf(receive_message->message_type == MESSAGE_TYPE_HELLO, "Receive 2: wrong message type");
+	int client_2_tid = source_tid;
 	
 	// 3
 	Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
-	assertf(source_tid == 6, "Receive 3: wrong tid=%d", source_tid);
+	assertf(source_tid > 0, "Receive 3: wrong tid=%d", source_tid);
 	assertf(receive_message->message_type == MESSAGE_TYPE_HELLO, "Receive 3: wrong message type");
+	int client_3_tid = source_tid;
 	
 	// 4
 	Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
-	assertf(source_tid == 7, "Receive 4: wrong tid=%d", source_tid);
+	assertf(source_tid > 0, "Receive 4: wrong tid=%d", source_tid);
 	assertf(receive_message->message_type == MESSAGE_TYPE_HELLO, "Receive 4: wrong message type");
+	int client_4_tid = source_tid;
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 	
 	// 1
 	reply_message->delay_time = 10;
 	reply_message->num_delays = 20;
-	Reply(4, reply_buffer, MESSAGE_SIZE);
+	Reply(client_1_tid, reply_buffer, MESSAGE_SIZE);
 	
 	// 2
 	reply_message->delay_time = 23;
 	reply_message->num_delays = 9;
-	Reply(5, reply_buffer, MESSAGE_SIZE);
+	Reply(client_2_tid, reply_buffer, MESSAGE_SIZE);
 	
 	// 3
 	reply_message->delay_time = 33;
 	reply_message->num_delays = 6;
-	Reply(6, reply_buffer, MESSAGE_SIZE);
+	Reply(client_3_tid, reply_buffer, MESSAGE_SIZE);
 	
 	// 4
 	reply_message->delay_time = 71;
 	reply_message->num_delays = 3;
-	Reply(7, reply_buffer, MESSAGE_SIZE);
+	Reply(client_4_tid, reply_buffer, MESSAGE_SIZE);
 	
 	robprintfbusy((const unsigned char *)"FirstTask Exit\n");
 	Exit();

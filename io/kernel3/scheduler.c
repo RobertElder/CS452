@@ -48,7 +48,7 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 				PriorityQueue_Put(&(scheduler->task_queue), td, td->priority);
 				td->state = ACTIVE;
 				return td;
-			} else if (td->state == RECEIVE_BLOCKED || td->state == SEND_BLOCKED || td->state == REPLY_BLOCKED) {
+			} else if (td->state == RECEIVE_BLOCKED || td->state == SEND_BLOCKED || td->state == REPLY_BLOCKED || td->state == EVENT_BLOCKED) {
 				// Remember to put the task back in the ready queue when its ready
 				//  Just keep executing in this loop until we find a ready task.
 			} else if (td->state == ZOMBIE) {

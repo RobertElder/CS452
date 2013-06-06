@@ -13,6 +13,7 @@ void asm_ExitEntry();
 int asm_SendEntry();
 int asm_ReceiveEntry();
 int asm_ReplyEntry();
+int asm_AwaitEventEntry();
 
 void InitKernel(){
 	asm_KernelInitEntry();
@@ -98,11 +99,7 @@ int WhoIs( char *name ) {
 //int AwaitEvent( int eventid, char *event, int eventlen ) {
 // or 
 int AwaitEvent( int eventid ) {
-	// TODO do something
-	
-	assert(0, "AwaitEvent not implemented");
-	
-	return 123456789;
+	return asm_AwaitEventEntry();
 }
 
 int Delay( int ticks ) {
