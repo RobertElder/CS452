@@ -5,6 +5,9 @@
 #include "robio.h"
 #include "public_kernel_interface.h"
 
+
+extern int _EndOfProgram;
+
 void Scheduler_Initialize(Scheduler * scheduler) {
 	scheduler->max_tasks = MAX_TASKS;
 	scheduler->num_tasks = 1; /* There is one task, the start task we are creating now */
@@ -70,7 +73,29 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 	assert(0, "Shouldn't get here");
 }
 
+void validate_stack_value(TD * td){
+	int empty_stack_value = (int)get_stack_base(td->id);
+	int full_stack_value = empty_stack_value - USER_TASK_STACK_SIZE;
+	assertf(
+		((int)td->stack_pointer) <= empty_stack_value,
+		"User task id %d has stack underflow. SP is %x, but shouldn't be more than %x.",
+		td->id,
+		td->stack_pointer,
+		empty_stack_value
+	);
+	assertf(
+		((int)td->stack_pointer) >= full_stack_value,
+		"User task id %d has stack overflow. SP is %x, but shouldn't be less than %x.",
+		td->id,
+		td->stack_pointer,
+		full_stack_value
+	);
+
+}
+
 void Scheduler_SaveCurrentTaskState(Scheduler * scheduler, KernelState * k_state) {
+	//  Make sure the stack is within acceptable bounds.
+	validate_stack_value(scheduler->current_task_descriptor);
 	scheduler->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
 	scheduler->current_task_descriptor->link_register = k_state->user_proc_lr_value;
 	scheduler->current_task_descriptor->spsr_register = k_state->user_proc_spsr;
@@ -122,6 +147,9 @@ void Scheduler_CreateAndScheduleNewTask(Scheduler * scheduler, KernelState * k_s
 		int parent_id = scheduler->current_task_descriptor->id;
 		
 		TD * td = &(scheduler->task_descriptors[new_task_id]);
+		int stack_end = ((int)get_stack_base(new_task_id) - USER_TASK_STACK_SIZE) + 4;
+		assertf(stack_end > (int)&_EndOfProgram, "Attempted to create a new task, but this task's stack space goes down to %x, but the kernel ends at %x.  This means we the stack will overwrite the kernel.", stack_end, (int)&_EndOfProgram);
+
 		TD_Initialize(td, new_task_id, priority, parent_id, get_stack_base(new_task_id), code);
 		scheduler->num_tasks += 1;
 		scheduler->inited_td[new_task_id] = 1;

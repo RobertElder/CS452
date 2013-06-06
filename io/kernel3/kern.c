@@ -23,7 +23,6 @@ void asm_SwiCallEntry();
 
 int main(){
 
-	int * first_swi_instruction_address = (int *)(0x8); // SWI Vector address
 	int * swi_call_entry_address = (int *)(0x28); // SWI jump to address
 	*swi_call_entry_address = (int)&asm_SwiCallEntry;
 

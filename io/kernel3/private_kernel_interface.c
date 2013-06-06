@@ -9,6 +9,12 @@
 
 void asm_KernelExit();
 
+extern int _DataStart;
+extern int _DataEnd;
+extern int _BssStart;
+extern int _BssEnd;
+extern int _EndOfProgram;
+
 void print_kernel_state(KernelState * k_state){
 	//TD * current_t = k_state->current_task_descriptor;
 	//robprintfbusy((const unsigned char *)"---- Kernel State ----.\n");
@@ -21,31 +27,72 @@ void print_kernel_state(KernelState * k_state){
 /* TODO:  Calling a kernel function from inside another kernel function is currently not supported. */
 
 void * get_stack_base(unsigned int task_id){
-	/*TODO: actually figure out how to place the stacks so they don't do crazy things and overwrite memory */
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	assertf(task_id <= k_state->scheduler.num_tasks,"Get stack base was passed the value %d, which should be less or equal to max tasks: %d.", task_id, k_state->scheduler.num_tasks);
 	return (void*)(USER_TASKS_STACK_START - (task_id * USER_TASK_STACK_SIZE));
 }
 
-void validate_stack_value(TD * td){
-	int empty_stack_value = (int)get_stack_base(td->id);
-	int full_stack_value = empty_stack_value - USER_TASK_STACK_SIZE;
-	assertf(
-		((int)td->stack_pointer) <= empty_stack_value,
-		"User task id %d has stack underflow. SP is %x, but shouldn't be more than %x.",
-		td->id,
-		td->stack_pointer,
-		empty_stack_value
-	);
-	assertf(
-		((int)td->stack_pointer) >= full_stack_value,
-		"User task id %d has stack overflow. SP is %x, but shouldn't be less than %x.",
-		td->id,
-		td->stack_pointer,
-		full_stack_value
-	);
+void print_memory_status(){
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	
+	robprintfbusy((const unsigned char *)"--  Printing map of how our 32MB of memory is currently allocated.  --\n");
+	robprintfbusy((const unsigned char *)"Redboot Stuff:    0x00000000 - 0000x%x\n",((unsigned int)&_DataStart) - 1);
+	robprintfbusy((const unsigned char *)"The Kernel:       0x000%x - 0x000%x\n",(unsigned int)&_DataStart, ((unsigned int)&_EndOfProgram) - 1);
+	int user_stacks_end = USER_TASKS_STACK_START - (USER_TASK_STACK_SIZE * k_state->scheduler.num_tasks);
+	robprintfbusy((const unsigned char *)"Unallocated:      0x000%x - 0x0%x\n",(unsigned int)&_EndOfProgram, user_stacks_end);
 
+	int i;
+	for(i = k_state->scheduler.num_tasks -1; i > -1; i--){
+		int stack_base = (int)get_stack_base(i);
+		int stack_end = (stack_base - USER_TASK_STACK_SIZE) + 4;
+		int last_sp = (int)k_state->scheduler.task_descriptors[i].stack_pointer;
+		int kb_used = (stack_base - last_sp) / 1024;
+		int kb_total = USER_TASK_STACK_SIZE / 1024;
+		robprintfbusy((const unsigned char *)"Stack of task %d:  0x0%x - 0x0%x (Was %x on last ctxt switch.  %d of %d kb used.)\n",i, stack_end, stack_base, last_sp, kb_used, kb_total);
+	}
+
+	int kernel_stack_base = (int) KERNEL_STACK_START;
+	int kernel_stack_end = (kernel_stack_base - KERNEL_STACK_SIZE) + 4;
+	robprintfbusy((const unsigned char *)"Kernel Stack:     0x0%x - 0x0%x\n",kernel_stack_end, kernel_stack_base);
+	robprintfbusy((const unsigned char *)"Unallocated:      0x0%x - 0x0%x\n",kernel_stack_base + 4, k_state->redboot_sp_value -1);
+	robprintfbusy((const unsigned char *)"Redboot Stack:    0x0%x - 0x01FFFFFF\n",k_state->redboot_sp_value);
+	robprintfbusy((const unsigned char *)"All memory        0x00000000 - 0x01FFFFFF\n");
+
+	int unallocated1 = user_stacks_end - (unsigned int)&_EndOfProgram + 1;
+	int unallocated2 = (((int)k_state->redboot_sp_value) -1) - (kernel_stack_base + 4) + 1;
+	int total_unallocated = unallocated1 + unallocated2;
+
+	/*  Set all memory to zeros as a test to see if it breaks anything:
+	//  Validate that we actually can control this memory
+	char * ch = (char *)&_EndOfProgram;
+	for(i = 0; i < (user_stacks_end - (unsigned int)&_EndOfProgram + 1); i++){
+		if(i % 10000 == 0)
+			robprintfbusy((const unsigned char *)"%x\n", i);
+
+		ch[i] = 0;
+	}
+
+	ch = (char *)(kernel_stack_base + 4);
+	for(i = 0; i < ((((int)k_state->redboot_sp_value) -1) - (kernel_stack_base + 4) + 1); i++){
+		if(i % 10000 == 0)
+			robprintfbusy((const unsigned char *)"%x\n", i);
+		ch[i] = 0;
+	}
+
+	*/
+
+
+	int unallocated_megs = total_unallocated / 1048576;
+	int unallocated_kibs = (total_unallocated - (1048576 * unallocated_megs)) / 1024;
+	int unallocated_bytes = total_unallocated - (1048576 * unallocated_megs) - (unallocated_kibs * 1024);
+
+
+	robprintfbusy((const unsigned char *)"There are currently %d MB, %d KB and %d bytes of memory unallocated.\n", unallocated_megs, unallocated_kibs, unallocated_bytes);
 }
 
 void k_InitKernel(){
+		
+
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
 	/*  Remember where to return to, in case we want to hand control back to redboot */
@@ -103,9 +150,6 @@ void k_Pass(){
 	
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
 	
-	//  Check for stack overflow and underflows
-	validate_stack_value(scheduler->current_task_descriptor);
-	
 	scheduler->current_task_descriptor->state = READY;
 	
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
@@ -118,7 +162,6 @@ void k_Exit(){
 	Scheduler * scheduler = &k_state->scheduler;
 	
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
-	validate_stack_value(scheduler->current_task_descriptor);
 	
 	scheduler->current_task_descriptor->state = ZOMBIE;
 	
