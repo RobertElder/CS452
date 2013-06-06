@@ -32,9 +32,6 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 	int times = 0;
 	int min_priority = 0;
 	
-	// TODO: Make this better 
-	// In the best case, there is no need to search for lower priority tasks
-	// But to avoid deadlock by a blocked high priority task, we need to find if lower priority tasks can run
 	while (min_priority < NUM_PRIORITIES) {
 		int i;
 		for (i = 0; i < MAX_TASKS + 2; i++) {
@@ -142,7 +139,6 @@ void Scheduler_CreateAndScheduleNewTask(Scheduler * scheduler, KernelState * k_s
 
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 }
-
 
 
 void safely_add_task_to_priority_queue(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority priority){

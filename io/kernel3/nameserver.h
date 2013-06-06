@@ -1,9 +1,11 @@
 #include "message.h"
 #include "kernel_state.h"
+#include "robio.h"
 
 #ifndef NAMESERVER_H_
 #define NAMESERVER_H_
 
+// FIXME if the max name is not a multiple of 4, infinite loop happens
 #define MAX_CLIENT_NAME_LENGTH 100
 
 typedef struct NameServerMessage {

@@ -59,6 +59,8 @@ void NameServer_Initialize(NameServer * ns) {
 }
 
 void NameServer_SetName(NameServer * ns, int tid, char * name) {
+	assert(m_strlen(name) + 1 < MAX_CLIENT_NAME_LENGTH, "NameServer: name too long");
+
 	if (0 <= tid && tid < MAX_TASKS + 1) {
 		m_strcpy(ns->names[tid], name, m_strlen(name) + 1);
 		ns->filled[tid] = 1;
