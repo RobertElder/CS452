@@ -3,6 +3,7 @@
 #include "tasks.h"
 #include "task_descriptor.h"
 #include "robio.h"
+#include "rps.h"
 #include "public_kernel_interface.h"
 
 

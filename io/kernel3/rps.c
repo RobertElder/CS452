@@ -6,6 +6,28 @@
 #include "queue.h"
 #include "nameserver.h"
 
+
+void RPSTestStart() {
+	int tid;
+	const int num_clients = 3;
+
+	tid = Create(NORMAL, &NameServer_Start);
+	assert(tid == 2, "NameServer tid not 2");
+
+	tid = Create(NORMAL, &RPSServer_Start);
+	assert(tid == 3, "RPServer tid not 3");
+
+	int i;
+	for (i = 0; i < num_clients; i++) {
+		tid = Create(NORMAL, &RPSClient_Start);
+		assert(tid == 3 + i + 1, "RPSClient tid not");
+	}
+
+	Exit();
+
+	assert(0, "Shouldn't see me\n");
+}
+
 void RPSServer_Start() {
 	robprintfbusy((const unsigned char *)"RPSServer created tid=%d\n", MyTid());
 
@@ -380,8 +402,6 @@ void RPSClient_PlayARound(RPSClient * client) {
 		break;
 	}
 
-	robprintfbusy((const unsigned char *)"RPSClient=%d: Press Enter to continue...", MyTid());
-	robgetcbusy(COM2);
 	robprintfbusy((const unsigned char *)"\n", MyTid());
 }
 
