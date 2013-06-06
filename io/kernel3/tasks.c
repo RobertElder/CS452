@@ -20,7 +20,6 @@ void KernelTask_Start() {
 
 void FirstTask_Start() {
 	int tid;
-	const int num_clients = 4;
 	
 	robprintfbusy((const unsigned char *)"FirstTask Start\n");
 	

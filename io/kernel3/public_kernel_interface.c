@@ -103,7 +103,7 @@ int AwaitEvent( int eventid ) {
 }
 
 int Delay( int ticks ) {
-	int clock_tid = WhoIs(CLOCK_SERVER_NAME);
+	int clock_tid = WhoIs((char *)CLOCK_SERVER_NAME);
 	ClockMessage * send_message;
 	ClockMessage * receive_message;
 
@@ -122,7 +122,7 @@ int Delay( int ticks ) {
 }
 
 int Time( ) {
-	int clock_tid = WhoIs(CLOCK_SERVER_NAME);
+	int clock_tid = WhoIs((char *)CLOCK_SERVER_NAME);
 	ClockMessage * send_message;
 	ClockMessage * receive_message;
 
