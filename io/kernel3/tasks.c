@@ -1,5 +1,6 @@
 #include "tasks.h"
 #include "public_kernel_interface.h"
+#include "private_kernel_interface.h"
 #include "robio.h"
 #include "queue.h"
 #include "memory.h"
@@ -13,15 +14,17 @@ void KernelTask_Start() {
 	int tid = Create(HIGHEST, &FirstTask_Start);
 	
 	assert(tid == 1, "FirstTask tid not 1");
+	print_memory_status();
 	
 	Exit();
 	assert(0, "Shouldn't see me\n");
 }
 
 void FirstTask_Start() {
+	Exit();
 	int tid;
 	
-	robprintfbusy((const unsigned char *)"FirstTask Start\n");
+	robprintfbusy((const unsigned char *)"FFirstTask Start\n");
 	
 	tid = Create(HIGHEST + 1, &NameServer_Start);
 	assert(tid == 2, "NameServer tid not 2");
