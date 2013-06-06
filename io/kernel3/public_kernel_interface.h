@@ -11,6 +11,7 @@ static const int ERR_K_TID_OUT_OF_RANGE = -1;
 static const int ERR_K_TID_DOES_NOT_EXIST = -2;
 static const int ERR_K_TASK_NOT_REPLY_BLOCKED = -3;
 static const int ERR_K_INSUFFICIENT_SPACE = -4;
+static const int TICK_SIZE = 10; // milliseconds
 
 typedef enum EventID {
 	CLOCK_TICK_EVENT,

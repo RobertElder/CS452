@@ -39,6 +39,12 @@ typedef struct KernelMessage {
 
 } KernelMessage;
 
+
+// This message is used for passing messages of different types
+typedef struct GenericMessage {
+	MessageType message_type;  // This member should always be first.
+} GenericMessage;
+
 void KernelMessage_Initialize(KernelMessage * km,
 		int origin, int destination, char * msg, char * dest_buffer,
 		unsigned int origin_size, unsigned int destination_size);

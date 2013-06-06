@@ -9,7 +9,7 @@ void ClockServer_Start() {
 	ClockServer server;
 	ClockServer_Initialize(&server);
 	
-	ClockMessage * receive_msg = (ClockMessage *) server.receive_buffer;
+	GenericMessage * receive_msg = (GenericMessage *) server.receive_buffer;
 	int source_tid;
 	
 	robprintfbusy((const unsigned char *)"ClockServer TID=%d: start\n", server.tid);
@@ -22,19 +22,20 @@ void ClockServer_Start() {
 		
 		switch(receive_msg->message_type) {
 		case MESSAGE_TYPE_NOTIFIER:
-			ClockServer_HandleNotifier(&server, source_tid, receive_msg);
+			ClockServer_HandleNotifier(&server, source_tid, (NotifyMessage*) receive_msg);
 			break;
 		case MESSAGE_TYPE_TIME_REQUEST:
-			ClockServer_HandleTimeRequest(&server, source_tid, receive_msg);
+			ClockServer_HandleTimeRequest(&server, source_tid, (ClockMessage*) receive_msg);
 			break;
 		case MESSAGE_TYPE_DELAY_REQUEST:
-			ClockServer_HandleDelayRequest(&server, source_tid, receive_msg);
+			ClockServer_HandleDelayRequest(&server, source_tid, (ClockMessage*) receive_msg);
 			break;
 		default:
 			assertf(0, "ClockServer: unknown message type %d", receive_msg->message_type);
 			break;
 		}
 		
+		ClockServer_UnblockDelayedTasks(&server);
 		Pass();
 	}
 	
@@ -44,39 +45,87 @@ void ClockServer_Start() {
 
 void ClockServer_Initialize(ClockServer * server) {
 	server->tid = MyTid();
+	server->ticks = 0;
+	
+	int tid;
+	for (tid = 0; tid < MAX_TASKS + 1; tid++) {
+		server->tid_to_delay_until[tid] = 0;
+	}
 }
 
 
-void ClockServer_HandleNotifier(ClockServer * server, int source_tid, ClockMessage * receive_msg) {
-	//TODO
-	
+void ClockServer_HandleNotifier(ClockServer * server, int source_tid, NotifyMessage * receive_msg) {
 	robprintfbusy((const unsigned char *)"ClockServer TID=%d: Handle Notifer from %d\n", server->tid, source_tid);
+	
+	assert(receive_msg->event_id == CLOCK_TICK_EVENT, "ClockServer didn't get a clock tick event id");
+	
 	ClockMessage * reply_message = (ClockMessage *) server->reply_buffer;
-	reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
+	reply_message->message_type = MESSAGE_TYPE_ACK;
 	
 	Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
 	
+	server->ticks += 1;
 }
 
 void ClockServer_HandleTimeRequest(ClockServer * server, int source_tid, ClockMessage * receive_msg) {
-	//TODO
+	robprintfbusy((const unsigned char *)"ClockServer TID=%d: Handle Time Request from %d. Current tick=%d\n", server->tid, source_tid, server->ticks);
 	
-	robprintfbusy((const unsigned char *)"ClockServer TID=%d: Handle Time Request from %d\n", server->tid, source_tid);
 	ClockMessage * reply_message = (ClockMessage *) server->reply_buffer;
-	reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
+	reply_message->message_type = MESSAGE_TYPE_ACK;
+	reply_message->num = server->ticks;
 	
 	Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
-	
 }
 
 void ClockServer_HandleDelayRequest(ClockServer * server, int source_tid, ClockMessage * receive_msg) {
-	//TODO
+	robprintfbusy((const unsigned char *)"ClockServer TID=%d: Handle Delay Request from %d with value %d\n", server->tid, source_tid, receive_msg->num);
 	
-	robprintfbusy((const unsigned char *)"ClockServer TID=%d: Handle Delay Request from %d\n", server->tid, source_tid);
-	ClockMessage * reply_message = (ClockMessage *) server->reply_buffer;
-	reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
+	if (receive_msg->num <= server->ticks) {
+		robprintfbusy((const unsigned char *)"ClockServer TID=%d: WARNING delay value in the past!");
 	
-	Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
+		ClockMessage * reply_message = (ClockMessage *) server->reply_buffer;
+		reply_message->message_type = MESSAGE_TYPE_ACK;
+	
+		Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
+	} else {
+		server->tid_to_delay_until[source_tid] = receive_msg->num;
+	}
+}
+
+
+int ClockServer_GetNextTask(ClockServer * server) {
+	// TODO do we need a sorted list, heap, or not?
+	
+	int tid;
+	for (tid = 0; tid < MAX_TASKS + 1; tid++) {
+		if (server->tid_to_delay_until[tid] <= server->ticks) {
+			return tid;
+		}
+	}
+
+	return 0;
+}
+
+void ClockServer_UnblockDelayedTasks(ClockServer * server) {
+	int tid;
+	int count = 0;
+	
+	while (1) {
+		tid = ClockServer_GetNextTask(server);
+		
+		if (tid == 0) {
+			break;
+		}
+		
+		ClockMessage * reply_message = (ClockMessage *) server->reply_buffer;
+		reply_message->message_type = MESSAGE_TYPE_ACK;
+	
+		Reply(tid, server->reply_buffer, MESSAGE_SIZE);
+		
+		count++;
+		
+		assert(count <= MAX_TASKS + 1, "ClockServer_UnblockDelayedTasks running for too long");
+	}
 	
 }
 

@@ -102,7 +102,7 @@ int AwaitEvent( int eventid ) {
 	return asm_AwaitEventEntry();
 }
 
-int Delay( int ticks ) {
+int DelayUntil( int ticks ) {
 	int clock_tid = WhoIs(CLOCK_SERVER_NAME);
 	ClockMessage * send_message;
 	ClockMessage * receive_message;
@@ -140,6 +140,6 @@ int Time( ) {
 	return receive_message->num;
 }
 
-int DelayUntil( int ticks ) {
-	return Delay(Time() + ticks);
+int Delay( int ticks ) {
+	return DelayUntil(Time() + ticks);
 }
