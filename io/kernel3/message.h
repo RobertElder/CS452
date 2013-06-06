@@ -1,8 +1,12 @@
 #ifndef MESSAGE_H_
 #define MESSAGE_H_
 
+#include "queue.h"
+
 #define MESSAGE_SIZE 100
-#define MAX_MESSAGES 50
+
+/* TODO: remove this coupline between message size and queues */
+#define MAX_MESSAGES QUEUE_SIZE
 
 typedef enum MessageType {
 	MESSAGE_TYPE_REGISTER_AS = 0,
