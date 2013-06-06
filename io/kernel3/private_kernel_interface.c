@@ -25,25 +25,7 @@ void * get_stack_base(unsigned int task_id){
 	return (void*)(USER_TASKS_STACK_START - (task_id * USER_TASK_STACK_SIZE));
 }
 
-void validate_stack_value(TD * td){
-	int empty_stack_value = (int)get_stack_base(td->id);
-	int full_stack_value = empty_stack_value - USER_TASK_STACK_SIZE;
-	assertf(
-		((int)td->stack_pointer) <= empty_stack_value,
-		"User task id %d has stack underflow. SP is %x, but shouldn't be more than %x.",
-		td->id,
-		td->stack_pointer,
-		empty_stack_value
-	);
-	assertf(
-		((int)td->stack_pointer) >= full_stack_value,
-		"User task id %d has stack overflow. SP is %x, but shouldn't be less than %x.",
-		td->id,
-		td->stack_pointer,
-		full_stack_value
-	);
 
-}
 
 void k_InitKernel(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
@@ -103,9 +85,6 @@ void k_Pass(){
 	
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
 	
-	//  Check for stack overflow and underflows
-	validate_stack_value(scheduler->current_task_descriptor);
-	
 	scheduler->current_task_descriptor->state = READY;
 	
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
@@ -118,7 +97,6 @@ void k_Exit(){
 	Scheduler * scheduler = &k_state->scheduler;
 	
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
-	validate_stack_value(scheduler->current_task_descriptor);
 	
 	scheduler->current_task_descriptor->state = ZOMBIE;
 	

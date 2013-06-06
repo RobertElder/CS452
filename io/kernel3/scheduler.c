@@ -70,7 +70,29 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 	assert(0, "Shouldn't get here");
 }
 
+void validate_stack_value(TD * td){
+	int empty_stack_value = (int)get_stack_base(td->id);
+	int full_stack_value = empty_stack_value - USER_TASK_STACK_SIZE;
+	assertf(
+		((int)td->stack_pointer) <= empty_stack_value,
+		"User task id %d has stack underflow. SP is %x, but shouldn't be more than %x.",
+		td->id,
+		td->stack_pointer,
+		empty_stack_value
+	);
+	assertf(
+		((int)td->stack_pointer) >= full_stack_value,
+		"User task id %d has stack overflow. SP is %x, but shouldn't be less than %x.",
+		td->id,
+		td->stack_pointer,
+		full_stack_value
+	);
+
+}
+
 void Scheduler_SaveCurrentTaskState(Scheduler * scheduler, KernelState * k_state) {
+	//  Make sure the stack is within acceptable bounds.
+	validate_stack_value(scheduler->current_task_descriptor);
 	scheduler->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
 	scheduler->current_task_descriptor->link_register = k_state->user_proc_lr_value;
 	scheduler->current_task_descriptor->spsr_register = k_state->user_proc_spsr;
