@@ -2,12 +2,13 @@
 #include "task_descriptor.h"
 #include "queue.h"
 #include "message.h"
+#include "memory.h"
 #include "buffer.h"
 
 #ifndef KERNEL_STATE_H_
 #define KERNEL_STATE_H_
 
-#define MAX_TASKS 10
+#define MAX_TASKS 310
 
 typedef struct KernelState KernelState;
 #include "scheduler.h"
@@ -20,13 +21,12 @@ struct KernelState {
 	void * user_proc_lr_value;  /* MUST BE 2nd item in struct */
 	int user_proc_return_value;  /* MUST BE 3rd item in struct */
 	int user_proc_spsr;  /* MUST BE 4th item in struct */
-	/* The maximum number of tasks that the kernel currently supports. */
+	unsigned char memory_blocks_status[NUM_MEMORY_BLOCKS];
+	unsigned char memory_blocks[NUM_MEMORY_BLOCKS * (MEMORY_BLOCK_SIZE + SANITY_BYTE_SIZE)];
 	Scheduler scheduler;
 	void * redboot_sp_value;
 	void * redboot_lr_value;
 	int redboot_spsr_value;
-	KernelMessage messages[MAX_MESSAGES];
-	RingBufferIndex messages_index;
 };
 
 

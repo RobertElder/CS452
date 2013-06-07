@@ -74,6 +74,8 @@ void RPSServer_HandleQuit(RPSServer * server, RPSMessage * message, int source_t
 
 void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_tid);
 
+void RPSTestStart();
+
 void RPSClient_Start();
 
 void RPSClient_Initialize(RPSClient * client);

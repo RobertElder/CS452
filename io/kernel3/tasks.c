@@ -1,4 +1,5 @@
 #include "tasks.h"
+#include "rps.h"
 #include "public_kernel_interface.h"
 #include "private_kernel_interface.h"
 #include "robio.h"
@@ -12,7 +13,7 @@
 #include "notifier.h"
 
 void KernelTask_Start() {
-	int tid = Create(HIGHEST, &FirstTask_Start);
+	int tid = Create(HIGHEST, &RPSTestStart);
 	
 	assert(tid == 1, "FirstTask tid not 1");
 	print_memory_status();
