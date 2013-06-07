@@ -5,19 +5,18 @@
 void irq_handler() {
 	robprintfbusy((const unsigned char *)" [INTERRUPT MODE] \n");
 	
-	//robprintfbusy((const unsigned char *)"Press Enter to continue...");
-	//robgetcbusy(COM2);
+//	robprintfbusy((const unsigned char *)"Press Enter to continue...");
+//	robgetcbusy(COM2);
 	
-	IRQ_DisableTimerInterrupts();
-
 	// TODO: i'm not sure if we need this
-	int * VIC2VectAddr = (int *)0x800C0030;
+	/*int * VIC2VectAddr = (int *)0x800C0030;
 	int temp = *VIC2VectAddr;
 	*VIC2VectAddr = 0;
+	*/
 	
-	robprintfbusy((const unsigned char *)"Exit interrupt mode\n");
+	IRQ_ClearTimerInterrupt();
 	
-	//IRQ_EnableTimerInterrupts();
+	robprintfbusy((const unsigned char *)" [Exit interrupt mode] \n");
 	
 	asm(
 //		"MSR cpsr_c, r2\n"
@@ -44,10 +43,19 @@ void IRQ_EnableTimerInterrupts() {
 	*VIC2IntSelect &= 0;
 	// Enable the interrupt
 	*VIC2IntEnable |= 1 << (TC3OI - 32);
+	//*VIC2SoftInt |= 1 << (TC3OI - 32);
+	// Enable vector for this interrupt
+	//int * VIC2VectCntl0 = (int*)0x800C0200;
+	//*VIC2VectCntl0 = (TC3OI - 32) + 5;
 }
 
 void IRQ_DisableTimerInterrupts() {
 	*VIC2IntEnClear |= 1 << (TC3OI - 32);
+	//*VIC2SoftIntClear |= 1 << (TC3OI - 32);
+}
+
+void IRQ_ClearTimerInterrupt() {
+	*timer_clear = 1;
 }
 
 void IRQ_EnableInterrupts() {
