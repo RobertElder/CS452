@@ -11,9 +11,9 @@ extern int _EndOfProgram;
 
 void Scheduler_Initialize(Scheduler * scheduler) {
 	scheduler->max_tasks = MAX_TASKS;
-	scheduler->num_tasks = 1; /* There is one task, the start task we are creating now */
+	scheduler->num_tasks = 0; 
 	PriorityQueue_Initialize(&scheduler->task_queue);
-	scheduler->num_non_zombie_tasks = 1;
+	scheduler->num_non_zombie_tasks = 0;
 	
 	int i;
 	for (i = 0; i < MAX_TASKS + 1; i++) {
@@ -30,6 +30,7 @@ void Scheduler_InitAndSetKernelTask(Scheduler * scheduler, KernelState * k_state
 	TD_Initialize(task_descriptor, task_id, task_priority, 99, get_stack_base(task_id), (void *)&KernelTask_Start);
 	
 	scheduler->num_non_zombie_tasks += 1;
+	scheduler->num_tasks++; 
 	safely_add_task_to_priority_queue(&scheduler->task_queue, task_descriptor, task_priority);
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 }
