@@ -258,23 +258,24 @@ void Scheduler_ChangeTDState(Scheduler * scheduler, TD * td, TaskState new_state
 void Scheduler_PrintTDCounts(Scheduler * scheduler) {
 	robprintfbusy((const unsigned char *)"\033[1mScheduler_PrintTDCounts\033[0m\n");
 	robprintfbusy((const unsigned char *)" NUM_TASKS = %d\n", scheduler->num_tasks);
-	robprintfbusy((const unsigned char *)" 0 READY = %d\n", scheduler->num_ready);
-	robprintfbusy((const unsigned char *)" 1 ACTIVE = %d\n", scheduler->num_active);
-	robprintfbusy((const unsigned char *)" 2 ZOMBIE = %d\n", scheduler->num_zombie);
-	robprintfbusy((const unsigned char *)" 3 SEND_BLOCKED = %d\n", scheduler->num_send_blocked);
-	robprintfbusy((const unsigned char *)" 4 RECEIVE_BLOCKED = %d\n", scheduler->num_receive_blocked);
-	robprintfbusy((const unsigned char *)" 5 REPLY_BLOCKED = %d\n", scheduler->num_reply_blocked);
-	robprintfbusy((const unsigned char *)" 6 EVENT_BLOCKED = %d\n", scheduler->num_event_blocked);
+	robprintfbusy((const unsigned char *)" 0. READY = %d\n", scheduler->num_ready);
+	robprintfbusy((const unsigned char *)" 1. ACTIVE = %d\n", scheduler->num_active);
+	robprintfbusy((const unsigned char *)" 2. ZOMBIE = %d\n", scheduler->num_zombie);
+	robprintfbusy((const unsigned char *)" 3. SEND_BLOCKED = %d\n", scheduler->num_send_blocked);
+	robprintfbusy((const unsigned char *)" 4. RECEIVE_BLOCKED = %d\n", scheduler->num_receive_blocked);
+	robprintfbusy((const unsigned char *)" 5. REPLY_BLOCKED = %d\n", scheduler->num_reply_blocked);
+	robprintfbusy((const unsigned char *)" 6. EVENT_BLOCKED = %d\n", scheduler->num_event_blocked);
 	
 	robprintfbusy((const unsigned char *)" TDs: ");
 	
-	int i, count;
+	int i;
+	int count = 0;
 	for (i = 0; i < MAX_TASKS + 1; i++) {
 		if (Scheduler_IsInitedTid(scheduler, i)) {
-			robprintfbusy((const unsigned char *)" %d:%d  ", i, scheduler->task_descriptors[i].state);
+			robprintfbusy((const unsigned char *)" TID=%d: %d   ", i, scheduler->task_descriptors[i].state);
 			count++;
 		}
-		if (count % 20 == 0) {
+		if (count % 5 == 0) {
 			robprintfbusy((const unsigned char *)"\n");
 		}
 	}
