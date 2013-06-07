@@ -546,3 +546,8 @@ char robgetcbusy( int channel ) {
 	c = *data;
 	return c;
 }
+
+void set_led(int value) {
+	int * led_address = (int *) LED_ADDRESS;
+	*led_address = value;
+}

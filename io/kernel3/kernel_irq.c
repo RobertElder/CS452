@@ -1,9 +1,11 @@
 #include "kernel_irq.h"
 #include "robio.h"
+#include "ts7200.h"
 
 
 void irq_handler() {
-	robprintfbusy((const unsigned char *)" [INTERRUPT MODE] \n");
+	//set_led(LED_BOTH);
+	robprintfbusy((const unsigned char *)"\033[33m[INTERRUPT MODE] \n");
 	
 //	robprintfbusy((const unsigned char *)"Press Enter to continue...");
 //	robgetcbusy(COM2);
@@ -16,10 +18,10 @@ void irq_handler() {
 	
 	IRQ_ClearTimerInterrupt();
 	
-	robprintfbusy((const unsigned char *)" [Exit interrupt mode] \n");
+	robprintfbusy((const unsigned char *)" [Exit interrupt mode]\033[0m\n");
+	//set_led(LED_GREEN);
 	
 	asm(
-//		"MSR cpsr_c, r2\n"
 		"SUBS pc, r14, #4"
 	);
 }

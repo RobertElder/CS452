@@ -75,4 +75,6 @@ void assertf( int expr, const char * message, ...);
 void assert( int expr, const char * message);
 char robgetcbusy(int channel);
 
+void set_led(int value);
+
 #endif
