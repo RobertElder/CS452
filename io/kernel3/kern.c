@@ -6,8 +6,10 @@
 #include "tasks.h"
 #include "queue.h"
 #include "ts7200.h"
+#include "kernel_irq.h"
 
 void asm_SwiCallEntry();
+void asm_IrqCallEntry();
 
 
 /*
@@ -21,10 +23,6 @@ void asm_SwiCallEntry();
         bl robputrbusy(PLT)
  *
  * */
-
-void irq_handler() {
-	robprintfbusy((const unsigned char *)"NONVECTOR INTERRUPT MODE");
-}
 
 int main(){
 

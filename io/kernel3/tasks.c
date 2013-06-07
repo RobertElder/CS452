@@ -121,10 +121,10 @@ void IdleTask_Start() {
 	unsigned int i = 0;
 	int * timer_val = (int*)(TIMER3_BASE + VAL_OFFSET);
 	
-	while(i < 10000) {
+	while(i < 100000) {
 		if (i % 1000 == 0) {
-			//robprintfbusy((const unsigned char *)"IdleTask ... i=%d \n", i);
-			robprintfbusy((const unsigned char *)"IdleTask ... timer=%d \n", *timer_val);
+			robprintfbusy((const unsigned char *)"IdleTask ... i=%d \n", i);
+			//robprintfbusy((const unsigned char *)"IdleTask ... timer=%d \n", *timer_val);
 			Pass();
 		}
 		i++;

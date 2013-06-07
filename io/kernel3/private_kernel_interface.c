@@ -7,6 +7,7 @@
 #include "queue.h"
 #include "memory.h"
 #include "ts7200.h"
+#include "kernel_irq.h"
 
 void asm_KernelExit();
 
@@ -15,10 +16,6 @@ extern int _DataEnd;
 extern int _BssStart;
 extern int _BssEnd;
 extern int _EndOfProgram;
-
-void irq_vector_handler() {
-	assert(0, "VECTOR INTERRUPT MODE");
-}
 
 void print_kernel_state(KernelState * k_state){
 	//TD * current_t = k_state->current_task_descriptor;
@@ -110,35 +107,8 @@ void k_InitKernel(){
 
 	RingBufferIndex_Initialize(&k_state->messages_index, QUEUE_SIZE);
 	
-	// TODO put the clock interrupts into a nice place
-	int * timer_ldr = (int*)(TIMER3_BASE + LDR_OFFSET);
-	int * timer_val = (int*)(TIMER3_BASE + VAL_OFFSET);
-	int * timer_ctrl = (int*)(TIMER3_BASE + CRTL_OFFSET);
-	const int TC3OI = 51;
-	int * VIC2IntSelect = (int *)0x800C000C;
-	int * VIC2IntEnable = (int *)0x800C0010;
-	int * VIC2VectAddr = (int *)0x800C0030;
-	
-	// 508000 cycles per second, means a tick (100ms) has 50800 cycles
-	unsigned int cycles_per_tick = 508000 / 1000 * TICK_SIZE;
-	
-	robprintfbusy((const unsigned char *)"CYCLES PER TICK=%d\n", cycles_per_tick);
-	
-	//  Disable the timer before we set the load value
-	*timer_ctrl = (*timer_ctrl) ^ ENABLE_MASK;
-	*timer_ldr = cycles_per_tick;
-	
-	// TODO: I don't think we will be using vectored interrupts
-	// Set address of handler
-	*VIC2VectAddr = (int)&irq_vector_handler;
-	
-	// Select interrupt type to be IRQ
-	*VIC2IntSelect &= 0;
-	// Enable the interrupt
-	*VIC2IntEnable |= 1 << (TC3OI - 32);
-	
-	//  Turn the timer on enabled, with clock 508khz and periodic mode
-	*timer_ctrl = ENABLE_MASK | CLKSEL_MASK | MODE_MASK;
+	IRQ_EnableTimer();
+	IRQ_EnableTimerInterrupts();
 	
 	asm_KernelExit();
 }
@@ -188,7 +158,7 @@ void k_Pass(){
 	scheduler->current_task_descriptor->state = READY;
 	
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
-
+	
 	asm_KernelExit();
 }
 
