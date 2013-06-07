@@ -263,9 +263,6 @@ int k_Receive(int *tid, char *msg, int msglen){
 	scheduler->current_task_descriptor->origin_tid = tid;
 	
 	if(message == 0){
-		robprintfbusy((const unsigned char *)"no message to receive km %x, mytid is %d\n", message, scheduler->current_task_descriptor->id);
-		//robprintfbusy((unsigned const char *)"Task: %d is blocking in receive because there are no messages.\n",k_state->current_task_descriptor->id);
-		
 		//  No messages, block this task
 		Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, SEND_BLOCKED);
 		scheduler->current_task_descriptor->return_value = MESSAGE_SIZE;
@@ -273,9 +270,6 @@ int k_Receive(int *tid, char *msg, int msglen){
 		//  Switch to the next ready process.
 		Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 	}else{
-		robprintfbusy((const unsigned char *)"in receive message km %x, mytid is %d\n", message, scheduler->current_task_descriptor->id);
-		//robprintfbusy((unsigned const char *)"Task %d receives a message from %d because there is a message waiting.\n",k_state->current_task_descriptor->id,message->origin);
-		
 		//  There is a message, give it to the task
 		assert(msglen == 100, "msglen not 100");	
 		m_strcpy(msg, message->msg, msglen);

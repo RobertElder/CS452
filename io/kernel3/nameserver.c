@@ -37,7 +37,6 @@ void NameServer_Start() {
 				outgoing_message->message_type = MESSAGE_TYPE_ACK;
 				Reply(sender_id, ns.reply_buffer, MESSAGE_SIZE);
 				Exit();
-				return;
 			}case MESSAGE_TYPE_PLAY: {
 				assertf(0,"Got message to play from: %d\n",sender_id);
 			}default:{

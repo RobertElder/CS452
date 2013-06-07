@@ -10,7 +10,7 @@
 
 void RPSTestStart() {
 	int tid;
-	const int num_clients = 3;
+	const int num_clients = 300;
 
 	tid = Create(NORMAL, &NameServer_Start);
 	assert(tid == 2, "NameServer tid not 2");
@@ -31,8 +31,6 @@ void RPSTestStart() {
 
 void RPSServer_Start() {
 	robprintfbusy((const unsigned char *)"RPSServer created tid=%d\n", MyTid());
-
-	print_memory_status();
 
 	int result = RegisterAs((char*) RPS_SERVER_NAME);
 
@@ -62,6 +60,7 @@ void RPSServer_Start() {
 	Send(NAMESERVER_TID, server.send_buffer, MESSAGE_SIZE, server.reply_buffer, MESSAGE_SIZE);
 	assert(reply_message->message_type==MESSAGE_TYPE_ACK, "RPSServer didn't get ACK from name server");
 
+	robprintfbusy((const unsigned char *)"About to call exit from rpsserver.\n");
 	Exit();
 
 	assert(0, "Shouldn't see me\n");
@@ -108,11 +107,14 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 
 	RPSServer_SelectPlayers(server);
 
-	Pass();
-
 	if (Queue_CurrentCount(&server->player_tid_queue) == 0) {
+		robprintfbusy((const unsigned char *)"QUEUE COUNT IS ZERO.\n");
 		server->running = 0;
+	}else{
+		robprintfbusy((const unsigned char *)"QUEUE COUNT IS not ZERO its %d.\n",Queue_CurrentCount(&server->player_tid_queue) );
+		robprintfbusy((const unsigned char *)"player is %d.\n",server->player_tid_queue.items[server->player_tid_queue.start] );
 	}
+	Pass();
 }
 
 void RPSServer_SelectPlayers(RPSServer * server) {
@@ -248,6 +250,18 @@ void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_t
 		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
 		assert(return_code == 0, "RPSServer couldn't send SHUTDOWN to client");
 		server->signed_in_players[source_tid] = 0;
+
+		//  Make sure they are removed from the queue.
+		QUEUE_ITEM_TYPE it = Queue_PopStart(&server->player_tid_queue);
+		int i = 0;
+		while(it != (QUEUE_ITEM_TYPE)source_tid){
+			it = Queue_PopStart(&server->player_tid_queue);
+			if(it != (QUEUE_ITEM_TYPE)source_tid){
+				Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)source_tid);
+			}
+			assert(i < 99999,"Iterated too many times trying to remove frmo queue\n");
+			i++;
+		}
 
 	} else if (server->is_playing_game) {
 		// Grab choices from the ones we are interested in

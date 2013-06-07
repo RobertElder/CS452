@@ -16,7 +16,6 @@ void KernelTask_Start() {
 	int tid = Create(HIGHEST, &RPSTestStart);
 	
 	assert(tid == 1, "FirstTask tid not 1");
-	print_memory_status();
 	
 	Exit();
 	assert(0, "Shouldn't see me\n");

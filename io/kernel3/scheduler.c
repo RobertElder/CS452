@@ -28,7 +28,6 @@ void Scheduler_Initialize(Scheduler * scheduler) {
 }
 
 void Scheduler_InitAndSetKernelTask(Scheduler * scheduler, KernelState * k_state) {
-	print_memory_status();
 	TD * task_descriptor = &(scheduler->task_descriptors[0]);
 	int task_priority = LOWEST;
 	int task_id = 0;
@@ -76,7 +75,6 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 	}
 	
 	robprintfbusy((const unsigned char *)"No tasks in queue!\n");
-	Scheduler_PrintTDCounts(scheduler);
 	
 	assertf(scheduler->num_ready == 0,
 		"Number of ready tasks is not zero. Count=%d", scheduler->num_ready);
@@ -88,15 +86,19 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 	assertf(scheduler->num_reply_blocked == 0,
 		"Number of reply_blocked tasks is not zero. Count=%d",
 		scheduler->num_reply_blocked);
+	/*
 	assertf(scheduler->num_receive_blocked == 0,
 		"Number of recive_blocked tasks is not zero. Count=%d",
 		scheduler->num_receive_blocked);
+	*/
 	assertf(scheduler->num_event_blocked == 0,
 		"Number of event_blocked tasks is not zero. Count=%d",
 		scheduler->num_event_blocked);
+	/*
 	assertf(scheduler->num_zombie == scheduler->num_tasks,
 		"Number of zombie tasks is not %d. Count=%d", scheduler->num_zombie,
 		scheduler->num_tasks);
+	*/
 	
 	return 0;
 	
