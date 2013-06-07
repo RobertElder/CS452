@@ -110,8 +110,8 @@ void k_InitKernel(){
 	Scheduler_Initialize(&k_state->scheduler);
 	Scheduler_InitAndSetKernelTask(&k_state->scheduler, k_state);
 
-	IRQ_EnableTimer();
-	IRQ_EnableTimerInterrupts();
+	//IRQ_EnableTimer();
+	//IRQ_EnableTimerInterrupts();
 	
 	asm_KernelExit();
 }
@@ -158,7 +158,7 @@ void k_Pass(){
 	
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
 	
-	scheduler->current_task_descriptor->state = READY;
+	Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, READY);
 	
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 
@@ -171,7 +171,7 @@ void k_Exit(){
 	
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
 	
-	scheduler->current_task_descriptor->state = ZOMBIE;
+	Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, ZOMBIE);
 	
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 	
@@ -204,7 +204,7 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			//robprintfbusy((unsigned const char *)"Task: %d sends to task %d and unblocks it because it was waiting for send.\n",k_state->current_task_descriptor->id, tid);
 			
 			//  That task is now ready to be scheduled
-			target_td->state = READY;
+			Scheduler_ChangeTDState(scheduler, target_td, READY);
 	
 			PriorityQueue_Put(&(scheduler->task_queue), target_td,
 				target_td->priority);
@@ -216,7 +216,7 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			m_strcpy(target_td->receive_msg, msg, msglen);
 	
 			//  This task is now blocked on a reply
-			current_td->state = REPLY_BLOCKED;
+			Scheduler_ChangeTDState(scheduler, current_td, REPLY_BLOCKED);
 			*(target_td->origin_tid) = scheduler->current_task_descriptor->id;
 	
 			Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
@@ -229,7 +229,7 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			assert((int)km, "Pushed a null message\n");
 			robprintfbusy((const unsigned char *)"pushing km %x, my tid is %d \n", km, scheduler->current_task_descriptor->id);
 	
-			scheduler->current_task_descriptor->state = RECEIVE_BLOCKED;
+			Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, RECEIVE_BLOCKED);
 	
 			Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 		}
@@ -268,7 +268,7 @@ int k_Receive(int *tid, char *msg, int msglen){
 		//robprintfbusy((unsigned const char *)"Task: %d is blocking in receive because there are no messages.\n",k_state->current_task_descriptor->id);
 		
 		//  No messages, block this task
-		scheduler->current_task_descriptor->state = SEND_BLOCKED;
+		Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, SEND_BLOCKED);
 		scheduler->current_task_descriptor->return_value = MESSAGE_SIZE;
 		
 		//  Switch to the next ready process.
@@ -287,7 +287,7 @@ int k_Receive(int *tid, char *msg, int msglen){
 		scheduler->current_task_descriptor->return_value = message->origin_size;
 		assert(scheduler->task_descriptors[message->origin].state == RECEIVE_BLOCKED, "Impossible state, sender shoudl be receive blocked.");
 		
-		scheduler->task_descriptors[message->origin].state = REPLY_BLOCKED;
+		Scheduler_ChangeTDState(scheduler, &scheduler->task_descriptors[message->origin], REPLY_BLOCKED);
 		Scheduler_SetNextTaskState(scheduler, k_state);
 		release_memory(k_state->memory_blocks_status, k_state->memory_blocks, message);	
 	}
@@ -320,7 +320,7 @@ int k_Reply(int tid, char *reply, int replylen){
 			assert((int) target_td->reply_msg, "k_Reply: reply_msg isn't set");
 			assert(replylen == 100, "msglen not 100");	
 			m_strcpy(target_td->reply_msg, reply, replylen);
-			target_td->state = READY;
+			Scheduler_ChangeTDState(scheduler, target_td, READY);
 			PriorityQueue_Put(&(scheduler->task_queue), target_td, 
 				target_td->priority);
 		}
@@ -344,8 +344,8 @@ int k_AwaitEvent(EventID event_id) {
 	Scheduler * scheduler = &k_state->scheduler;
 		
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
-
-	scheduler->current_task_descriptor->state = EVENT_BLOCKED;
+	
+	Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, EVENT_BLOCKED);
 	scheduler->current_task_descriptor->event_id = event_id;
 	// TODO do something
 	

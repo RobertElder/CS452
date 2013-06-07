@@ -13,7 +13,13 @@ void Scheduler_Initialize(Scheduler * scheduler) {
 	scheduler->max_tasks = MAX_TASKS;
 	scheduler->num_tasks = 0; 
 	PriorityQueue_Initialize(&scheduler->task_queue);
-	scheduler->num_non_zombie_tasks = 0;
+	scheduler->num_ready = 0;
+	scheduler->num_receive_blocked = 0;
+	scheduler->num_send_blocked = 0;
+	scheduler->num_reply_blocked = 0;
+	scheduler->num_event_blocked = 0;
+	scheduler->num_active = 0;
+	scheduler->num_zombie = 0;
 	
 	int i;
 	for (i = 0; i < MAX_TASKS + 1; i++) {
@@ -29,7 +35,7 @@ void Scheduler_InitAndSetKernelTask(Scheduler * scheduler, KernelState * k_state
 	/* TODO: add define special case for partent of first task */
 	TD_Initialize(task_descriptor, task_id, task_priority, 99, get_stack_base(task_id), (void *)&KernelTask_Start);
 	
-	scheduler->num_non_zombie_tasks += 1;
+	scheduler->num_ready += 1;
 	scheduler->num_tasks++; 
 	safely_add_task_to_priority_queue(&scheduler->task_queue, task_descriptor, task_priority);
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
@@ -50,7 +56,7 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 			} else if (td->state == READY) {
 				//  We're scheduling this task now, put it at the end of the queue
 				PriorityQueue_Put(&(scheduler->task_queue), td, td->priority);
-				td->state = ACTIVE;
+				Scheduler_ChangeTDState(scheduler, td, ACTIVE);
 				return td;
 			} else if (td->state == RECEIVE_BLOCKED || td->state == SEND_BLOCKED || td->state == REPLY_BLOCKED || td->state == EVENT_BLOCKED) {
 				// Remember to put the task back in the ready queue when its ready
@@ -58,7 +64,7 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 			} else if (td->state == ZOMBIE) {
 				// TODO:
 				// Destroy the zombie task
-				scheduler->num_non_zombie_tasks -= 1;
+				Scheduler_ChangeTDState(scheduler, td, ZOMBIE);
 			} else {
 				assertf(0,"Unknown task state: %d for tid=%d.",td->state, td->id);
 			}
@@ -69,9 +75,29 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 		min_priority++;
 	}
 	
-	assertf(scheduler->num_non_zombie_tasks == 0,"Number of non-zombie tasks is not zero. Count=%d", scheduler->num_non_zombie_tasks);
-	
 	robprintfbusy((const unsigned char *)"No tasks in queue!\n");
+	Scheduler_PrintTDCounts(scheduler);
+	
+	assertf(scheduler->num_ready == 0,
+		"Number of ready tasks is not zero. Count=%d", scheduler->num_ready);
+	assertf(scheduler->num_active == 0,
+		"Number of active tasks is not zero. Count=%d", scheduler->num_active);
+	assertf(scheduler->num_send_blocked == 0,
+		"Number of send_blocked tasks is not zero. Count=%d",
+		scheduler->num_send_blocked);
+	assertf(scheduler->num_reply_blocked == 0,
+		"Number of reply_blocked tasks is not zero. Count=%d",
+		scheduler->num_reply_blocked);
+	assertf(scheduler->num_receive_blocked == 0,
+		"Number of recive_blocked tasks is not zero. Count=%d",
+		scheduler->num_receive_blocked);
+	assertf(scheduler->num_event_blocked == 0,
+		"Number of event_blocked tasks is not zero. Count=%d",
+		scheduler->num_event_blocked);
+	assertf(scheduler->num_zombie == scheduler->num_tasks,
+		"Number of zombie tasks is not %d. Count=%d", scheduler->num_zombie,
+		scheduler->num_tasks);
+	
 	return 0;
 	
 	assert(0, "Shouldn't get here");
@@ -157,7 +183,7 @@ void Scheduler_CreateAndScheduleNewTask(Scheduler * scheduler, KernelState * k_s
 		TD_Initialize(td, new_task_id, priority, parent_id, get_stack_base(new_task_id), code);
 		scheduler->num_tasks += 1;
 		scheduler->inited_td[new_task_id] = 1;
-		scheduler->num_non_zombie_tasks += 1;
+		scheduler->num_ready += 1;
 
 		safely_add_task_to_priority_queue(&scheduler->task_queue, td, priority);
 
@@ -167,9 +193,78 @@ void Scheduler_CreateAndScheduleNewTask(Scheduler * scheduler, KernelState * k_s
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
 
 	scheduler->current_task_descriptor->return_value = rtn;
-	scheduler->current_task_descriptor->state = READY;
+	Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, READY);
 
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
+}
+
+void Scheduler_ChangeTDState(Scheduler * scheduler, TD * td, TaskState new_state) {
+	switch(td->state) {
+	case READY:
+		scheduler->num_ready--;
+		break;
+	case ACTIVE:
+		scheduler->num_active--;
+		break;
+	case SEND_BLOCKED:
+		scheduler->num_send_blocked--;
+		break;
+	case REPLY_BLOCKED:
+		scheduler->num_reply_blocked--;
+		break;
+	case RECEIVE_BLOCKED:
+		scheduler->num_receive_blocked--;
+		break;
+	case EVENT_BLOCKED:
+		scheduler->num_event_blocked--;
+		break;
+	case ZOMBIE:
+		scheduler->num_zombie--;
+		break;
+	default:
+		assert(0,"Scheduler_ChangePriority: invalid old state");
+	}
+	
+	switch(new_state) {
+	case READY:
+		scheduler->num_ready++;
+		break;
+	case ACTIVE:
+		scheduler->num_active++;
+		break;
+	case SEND_BLOCKED:
+		scheduler->num_send_blocked++;
+		break;
+	case REPLY_BLOCKED:
+		scheduler->num_reply_blocked++;
+		break;
+	case RECEIVE_BLOCKED:
+		scheduler->num_receive_blocked++;
+		break;
+	case EVENT_BLOCKED:
+		scheduler->num_event_blocked++;
+		break;
+	case ZOMBIE:
+		scheduler->num_zombie++;
+		break;
+	default:
+		assert(0,"Scheduler_ChangePriority: invalid new state");
+	}
+	
+	td->state = new_state;
+}
+
+
+void Scheduler_PrintTDCounts(Scheduler * scheduler) {
+	robprintfbusy((const unsigned char *)"\033[1mScheduler_PrintTDCounts\033[0m\n");
+	robprintfbusy((const unsigned char *)" NUM_TASKS %d\n", scheduler->num_tasks);
+	robprintfbusy((const unsigned char *)" READY %d\n", scheduler->num_ready);
+	robprintfbusy((const unsigned char *)" ACTIVE %d\n", scheduler->num_active);
+	robprintfbusy((const unsigned char *)" SEND_BLOCKED %d\n", scheduler->num_send_blocked);
+	robprintfbusy((const unsigned char *)" REPLY_BLOCKED %d\n", scheduler->num_reply_blocked);
+	robprintfbusy((const unsigned char *)" RECEIVE_BLOCKED %d\n", scheduler->num_receive_blocked);
+	robprintfbusy((const unsigned char *)" EVENT_BLOCKED %d\n", scheduler->num_event_blocked);
+	robprintfbusy((const unsigned char *)" ZOMBIE %d\n", scheduler->num_zombie);
 }
 
 
