@@ -255,7 +255,6 @@ int k_Receive(int *tid, char *msg, int msglen){
 	Scheduler * scheduler = &k_state->scheduler;
 		
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
-	
 	//  Attempt to receive a message from the queue associated with that process.
 	KernelMessage * message = (KernelMessage *) Queue_PopStart(&scheduler->current_task_descriptor->messages);
 	
