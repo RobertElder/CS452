@@ -61,7 +61,13 @@ void assertf( int expr, const char * message, ...){
 	"\n\033[1;4;7mASSERTION FAILURE!!!\033[0m\n";
 		robputstrbusy((const unsigned char *)title);
 		bwformatbusy( (const unsigned char *)message, va );
-		while(1){};
+		int i;
+		while(1){
+			for(i = 0; i < 100000; i++) {}
+			set_led(LED_BOTH);
+			for(i = 0; i < 100000; i++) {}
+			set_led(LED_NONE);
+		};
 	}
 	va_end(va);
 }
