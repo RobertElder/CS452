@@ -13,7 +13,7 @@ void Scheduler_Initialize(Scheduler * scheduler) {
 	scheduler->max_tasks = MAX_TASKS;
 	scheduler->num_tasks = 1; /* There is one task, the start task we are creating now */
 	PriorityQueue_Initialize(&scheduler->task_queue);
-	scheduler->num_non_zombie_tasks = 0;
+	scheduler->num_non_zombie_tasks = 1;
 	
 	int i;
 	for (i = 0; i < MAX_TASKS + 1; i++) {
@@ -22,9 +22,11 @@ void Scheduler_Initialize(Scheduler * scheduler) {
 }
 
 void Scheduler_InitAndSetKernelTask(Scheduler * scheduler, KernelState * k_state) {
+	print_memory_status();
 	TD * task_descriptor = &(scheduler->task_descriptors[0]);
 	int task_priority = LOWEST;
 	int task_id = 0;
+	/* TODO: add define special case for partent of first task */
 	TD_Initialize(task_descriptor, task_id, task_priority, 99, get_stack_base(task_id), (void *)&KernelTask_Start);
 	
 	scheduler->num_non_zombie_tasks += 1;

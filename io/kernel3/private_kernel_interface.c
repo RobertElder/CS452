@@ -99,12 +99,15 @@ void k_InitKernel(){
 	k_state->redboot_sp_value = k_state->user_proc_sp_value;
 	k_state->redboot_lr_value = k_state->user_proc_lr_value;
 	k_state->redboot_spsr_value = k_state->user_proc_spsr;
+	//  Initialize all memory blocks to unallocated.
+	int i;
+	for(i = 0; i < NUM_MEMORY_BLOCKS; i++){
+		k_state->memory_blocks_status[i] = 0;
+	}
 	//  Directly set the kernel state structure values on the stack.
 	Scheduler_Initialize(&k_state->scheduler);
 	Scheduler_InitAndSetKernelTask(&k_state->scheduler, k_state);
 
-	RingBufferIndex_Initialize(&k_state->messages_index, QUEUE_SIZE);
-	
 	asm_KernelExit();
 }
 
@@ -184,8 +187,15 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 		scheduler->current_task_descriptor->reply_len = replylen;
 		
 		TD * target_td = &scheduler->task_descriptors[tid];
+
+		MessageType * mmm = (MessageType*)msg;
+		if( *mmm == MESSAGE_TYPE_PLAY)
+			robprintfbusy((const unsigned char *)"In k_Send for play message dest: %d source: %d, target state: %d\n",tid, k_state->scheduler.current_task_descriptor->id,target_td->state);
+		if( tid == 2)
+			robprintfbusy((const unsigned char *)"In k_Send message to nameserver from %d\n", k_state->scheduler.current_task_descriptor->id);
 		
 		if(target_td->state == SEND_BLOCKED){
+			robprintfbusy((const unsigned char *)"send blocked branch\n");
 			//robprintfbusy((unsigned const char *)"Task: %d sends to task %d and unblocks it because it was waiting for send.\n",k_state->current_task_descriptor->id, tid);
 			
 			//  That task is now ready to be scheduled
@@ -197,7 +207,7 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			target_td->return_value = msglen;
 	
 			assert((int) target_td->receive_msg, "k_Send: receive_msg isn't set");
-	
+			assert(msglen == 100, "msglen not 100");	
 			m_strcpy(target_td->receive_msg, msg, msglen);
 	
 			//  This task is now blocked on a reply
@@ -207,11 +217,12 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 		}else{
 			//robprintfbusy((unsigned const char *)"Task %d sends a message to: %d and blocks because the destination is not blocked on send.\n",k_state->current_task_descriptor->id, tid);
-			int index = RingBufferIndex_Put(&k_state->messages_index);
-			KernelMessage * km = &k_state->messages[index];
-	
+			KernelMessage * km = (KernelMessage *)request_memory(k_state->memory_blocks_status, k_state->memory_blocks);	
+
 			KernelMessage_Initialize(km, current_td->id, tid, msg, reply, msglen, replylen);
 			Queue_PushEnd(&target_td->messages, km);
+			assert((int)km, "Pushed a null message\n");
+			robprintfbusy((const unsigned char *)"pushing km %x, my tid is %d \n", km, scheduler->current_task_descriptor->id);
 	
 			scheduler->current_task_descriptor->state = RECEIVE_BLOCKED;
 	
@@ -248,6 +259,7 @@ int k_Receive(int *tid, char *msg, int msglen){
 	scheduler->current_task_descriptor->origin_tid = tid;
 	
 	if(message == 0){
+		robprintfbusy((const unsigned char *)"no message to receive km %x, mytid is %d\n", message, scheduler->current_task_descriptor->id);
 		//robprintfbusy((unsigned const char *)"Task: %d is blocking in receive because there are no messages.\n",k_state->current_task_descriptor->id);
 		
 		//  No messages, block this task
@@ -257,10 +269,11 @@ int k_Receive(int *tid, char *msg, int msglen){
 		//  Switch to the next ready process.
 		Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 	}else{
+		robprintfbusy((const unsigned char *)"in receive message km %x, mytid is %d\n", message, scheduler->current_task_descriptor->id);
 		//robprintfbusy((unsigned const char *)"Task %d receives a message from %d because there is a message waiting.\n",k_state->current_task_descriptor->id,message->origin);
 		
 		//  There is a message, give it to the task
-		RingBufferIndex_Get(&k_state->messages_index);
+		assert(msglen == 100, "msglen not 100");	
 		m_strcpy(msg, message->msg, msglen);
 
 		*tid = message->origin;
@@ -271,7 +284,7 @@ int k_Receive(int *tid, char *msg, int msglen){
 		
 		scheduler->task_descriptors[message->origin].state = REPLY_BLOCKED;
 		Scheduler_SetNextTaskState(scheduler, k_state);
-
+		release_memory(k_state->memory_blocks_status, k_state->memory_blocks, message);	
 	}
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
@@ -300,6 +313,7 @@ int k_Reply(int tid, char *reply, int replylen){
 			return_value = ERR_K_INSUFFICIENT_SPACE;
 		} else {
 			assert((int) target_td->reply_msg, "k_Reply: reply_msg isn't set");
+			assert(replylen == 100, "msglen not 100");	
 			m_strcpy(target_td->reply_msg, reply, replylen);
 			target_td->state = READY;
 			PriorityQueue_Put(&(scheduler->task_queue), target_td, 

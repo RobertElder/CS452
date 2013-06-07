@@ -5,9 +5,6 @@
 
 #define MESSAGE_SIZE 100
 
-/* TODO: remove this coupline between message size and queues */
-#define MAX_MESSAGES QUEUE_SIZE
-
 typedef enum MessageType {
 	MESSAGE_TYPE_REGISTER_AS = 0,
 	MESSAGE_TYPE_REGISTER_AS_OK,

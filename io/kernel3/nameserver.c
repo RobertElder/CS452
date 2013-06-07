@@ -12,6 +12,7 @@ void NameServer_Start() {
 	NameServerMessage * outgoing_message;
 
 	while(1){
+		robprintfbusy((const unsigned char *)"Nameserver about to block on receive\n");
 		Receive( &sender_id, ns.receive_buffer, MESSAGE_SIZE);
 		received_message = (NameServerMessage *) ns.receive_buffer;
 
@@ -37,8 +38,10 @@ void NameServer_Start() {
 				Reply(sender_id, ns.reply_buffer, MESSAGE_SIZE);
 				Exit();
 				return;
+			}case MESSAGE_TYPE_PLAY: {
+				assertf(0,"Got message to play from: %d\n",sender_id);
 			}default:{
-				assert(0,"Name server message type not found.");
+				assertf(0,"Name server message type not found: %d",received_message->message_type);
 				break;
 			}
 		}
