@@ -14,7 +14,6 @@ void irq_handler() {
 	/*int * VIC2VectAddr = (int *)0x800C0030;
 	int temp = *VIC2VectAddr;
 	*VIC2VectAddr = 0;
-	*/
 	
 	IRQ_ClearTimerInterrupt();
 	
@@ -24,9 +23,11 @@ void irq_handler() {
 	asm(
 		"SUBS pc, r14, #4"
 	);
+	*/
 }
 
 void IRQ_EnableTimer() {
+	/*
 	// 508000 cycles per second, means a tick (100ms) has 50800 cycles
 	unsigned const int cycles_per_tick = 508000 / 1000 * TICK_SIZE;
 	robprintfbusy((const unsigned char *)"CYCLES PER TICK=%d\n", cycles_per_tick);
@@ -37,30 +38,37 @@ void IRQ_EnableTimer() {
 	
 	//  Turn the timer on enabled, with clock 508khz and periodic mode
 	*timer_ctrl = ENABLE_MASK | CLKSEL_MASK | MODE_MASK;
-	
+	*/
 }
 
 void IRQ_EnableTimerInterrupts() {
+	/*
 	// Select interrupt type to be IRQ
 	*VIC2IntSelect &= 0;
 	// Enable the interrupt
 	*VIC2IntEnable |= 1 << (TC3OI - 32);
-	//*VIC2SoftInt |= 1 << (TC3OI - 32);
+	// *VIC2SoftInt |= 1 << (TC3OI - 32);
 	// Enable vector for this interrupt
 	//int * VIC2VectCntl0 = (int*)0x800C0200;
-	//*VIC2VectCntl0 = (TC3OI - 32) + 5;
+	// *VIC2VectCntl0 = (TC3OI - 32) + 5;
+	*/
 }
 
 void IRQ_DisableTimerInterrupts() {
+	/*
 	*VIC2IntEnClear |= 1 << (TC3OI - 32);
-	//*VIC2SoftIntClear |= 1 << (TC3OI - 32);
+	// *VIC2SoftIntClear |= 1 << (TC3OI - 32);
+	*/
 }
 
 void IRQ_ClearTimerInterrupt() {
+	/*
 	*timer_clear = 1;
+	*/
 }
 
 void IRQ_EnableInterrupts() {
+	/*
 	int temp;
 	asm(
 		"MRS %0, cpsr\n"
@@ -69,4 +77,5 @@ void IRQ_EnableInterrupts() {
 		: // output
 		: "r"(temp)
 	);
+	*/
 }

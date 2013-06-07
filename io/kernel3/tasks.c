@@ -120,7 +120,6 @@ void FirstTask_Start() {
 
 void IdleTask_Start() {
 	unsigned int i = 0;
-	int * timer_val = (int*)(TIMER3_BASE + VAL_OFFSET);
 	
 	while(i < 100000) {
 		if (i % 1000 == 0) {
