@@ -8,6 +8,7 @@
 #include "message.h"
 #include "nameserver.h"
 #include "clock.h"
+#include "ts7200.h"
 #include "notifier.h"
 
 void KernelTask_Start() {
@@ -106,10 +107,29 @@ void FirstTask_Start() {
 	reply_message->num_delays = 3;
 	Reply(client_4_tid, reply_buffer, MESSAGE_SIZE);
 	
+	// 4
+	tid = Create(LOWEST, &IdleTask_Start);
+	assert(tid > 0, "IdleTask tid not positive");
+	
 	robprintfbusy((const unsigned char *)"FirstTask Exit\n");
 	Exit();
 	
 	assert(0, "Shouldn't see me\n");
+}
+
+void IdleTask_Start() {
+	unsigned int i = 0;
+	int * timer_val = (int*)(TIMER3_BASE + VAL_OFFSET);
+	
+	while(i < 10000) {
+		if (i % 1000 == 0) {
+			//robprintfbusy((const unsigned char *)"IdleTask ... i=%d \n", i);
+			robprintfbusy((const unsigned char *)"IdleTask ... timer=%d \n", *timer_val);
+			Pass();
+		}
+		i++;
+	}
+	Exit();
 }
 
 int overflow(int times){

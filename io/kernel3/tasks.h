@@ -13,5 +13,6 @@ void KernelTask_Start();
 
 void FirstTask_Start();
 
+void IdleTask_Start();
 
 #endif
