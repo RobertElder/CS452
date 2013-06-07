@@ -37,7 +37,7 @@ void * get_stack_base(unsigned int task_id){
 void print_memory_status(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
-	robprintfbusy((const unsigned char *)"--  Printing map of how our 32MB of memory is currently allocated.  --\n");
+	robprintfbusy((const unsigned char *)"\033[1m--  Printing map of how our 32MB of memory is currently allocated.  --\033[0m\n");
 	robprintfbusy((const unsigned char *)"Redboot Stuff:    0x00000000 - 0000x%x\n",((unsigned int)&_DataStart) - 1);
 	robprintfbusy((const unsigned char *)"The Kernel:       0x000%x - 0x000%x\n",(unsigned int)&_DataStart, ((unsigned int)&_EndOfProgram) - 1);
 	int user_stacks_end = USER_TASKS_STACK_START - (USER_TASK_STACK_SIZE * k_state->scheduler.num_tasks);
