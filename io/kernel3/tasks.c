@@ -11,6 +11,7 @@
 #include "clock.h"
 #include "ts7200.h"
 #include "notifier.h"
+#include "rps.h"
 
 void KernelTask_Start() {
 	int tid = Create(HIGHEST, &RPSTestStart);

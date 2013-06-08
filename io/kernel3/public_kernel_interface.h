@@ -13,9 +13,13 @@ static const int ERR_K_TASK_NOT_REPLY_BLOCKED = -3;
 static const int ERR_K_INSUFFICIENT_SPACE = -4;
 static const int TICK_SIZE = 10; // milliseconds
 
+#define NUM_EVENTS 2
+
 typedef enum EventID {
+	NULL_EVENT = 0,
 	CLOCK_TICK_EVENT,
 } EventID;
+
 
 void InitKernel();
 int Create( int priority, void (*code)( ) );
