@@ -6,7 +6,7 @@
 #define NAMESERVER_H_
 
 // FIXME if the max name is not a multiple of 4, infinite loop happens
-#define MAX_CLIENT_NAME_LENGTH 100
+#define MAX_CLIENT_NAME_LENGTH 40
 
 typedef struct NameServerMessage {
 	MessageType message_type;
