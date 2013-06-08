@@ -55,6 +55,9 @@ void print_memory_status(){
 	}
 	*/
 
+	int timerirq_stack_base = (int) TIMER_IRQ_STACK_START;
+	int timerirq_stack_end = (timerirq_stack_base - TIMER_IRQ_STACK_SIZE) + 4;
+	robprintfbusy((const unsigned char *)"Timer IRQ Stack:  0x0%x - 0x0%x\n",timerirq_stack_end, timerirq_stack_base);
 	int kernel_stack_base = (int) KERNEL_STACK_START;
 	int kernel_stack_end = (kernel_stack_base - KERNEL_STACK_SIZE) + 4;
 	robprintfbusy((const unsigned char *)"Kernel Stack:     0x0%x - 0x0%x\n",kernel_stack_end, kernel_stack_base);
@@ -100,7 +103,9 @@ void k_InitKernel(){
 	//  a 32k wiggle room too.
 	int kernel_stack_end = (KERNEL_STACK_START - KERNEL_STACK_SIZE);
 	int current_stack = (int)k_state->last_kernel_sp_value;
-	assertf(kernel_stack_end + (1024 * 32) < current_stack,"The kernel's allocated stack end is %x but user process stacks start at %x.  Won't start unless there is at least 32k buffer room.", kernel_stack_end, current_stack) ;
+
+	assertf(kernel_stack_end + (1024 * 32) < current_stack,"The kernel's stack started at %x but the next stacks start at %x.  Won't start unless there is at least 32k buffer room.", kernel_stack_end, current_stack);
+
 	//  Make sure the kernel stack is starting further down than the redboot stack.
 	assertf(KERNEL_STACK_START < (int)k_state->user_proc_sp_value, "The kernel stack starts at %x, but the redboot stack ends at %x.",KERNEL_STACK_START, k_state->user_proc_sp_value);
 		
@@ -119,8 +124,11 @@ void k_InitKernel(){
 	Scheduler_Initialize(&k_state->scheduler);
 	Scheduler_InitAndSetKernelTask(&k_state->scheduler, k_state);
 
-	IRQ_EnableTimer();
-	IRQ_EnableTimerVIC2();
+	if(TIMER_INTERRUPTS_ENABLED){
+		IRQ_EnableTimer();
+		IRQ_EnableTimerVIC2();
+	}
+
 	asm_KernelExit();
 }
 
