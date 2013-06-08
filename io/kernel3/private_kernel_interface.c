@@ -119,9 +119,8 @@ void k_InitKernel(){
 	Scheduler_Initialize(&k_state->scheduler);
 	Scheduler_InitAndSetKernelTask(&k_state->scheduler, k_state);
 
-	//IRQ_EnableTimer();
-	//IRQ_EnableTimerInterrupts();
-	
+	IRQ_EnableTimer();
+	IRQ_EnableTimerVIC2();
 	asm_KernelExit();
 }
 

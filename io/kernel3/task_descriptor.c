@@ -10,7 +10,7 @@ void TD_Initialize(TD * td, int id, QueuePriority priority, int parent_id, void 
 	td->parent_id = parent_id;
 	td->stack_pointer = sp;
 	td->link_register = lr;
-	td->spsr_register = 16; /*  This will turn on user mode. */
+	td->spsr_register = 16 + 0x80; /*  This will turn on user mode. */
 	td->return_value = 0;
 	td->origin_tid = 0;
 	td->receive_msg = 0;

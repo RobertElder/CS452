@@ -1,8 +1,13 @@
 .global robputrbusy
+.global irq_handler
 
 /* Common entry/exit for all kernel functions */
 .global asm_KernelExit
 .global asm_SwiCallEntry
+.global asm_TimerIRQEntry
+
+
+.global asm_SetUpIRQStack
 
 /* Kernel functions entry points */
 .global asm_KernelInitEntry
@@ -22,6 +27,7 @@
 .global asm_GetStoredUserRtn
 .global asm_GetStoredUserSpsr
 
+.global _KernelStackBase
 
 asm_KernelInitEntry:
 	mov	ip, sp
@@ -73,6 +79,12 @@ asm_AwaitEventEntry:
 	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 9;
 	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
+asm_TimerIRQEntry:
+	stmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, lr}
+	BL irq_handler
+	ldmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, lr}
+	SUB LR, LR, #4
+	MOVS pc, LR
 
 /*  This function executes when exiting from all kernel functions */
 asm_KernelExit:
@@ -93,7 +105,7 @@ asm_KernelExit:
 	DONOTSWITCHTOSYSTEM1:
 	MSR CPSR, r6
         BL asm_GetStoredUserSp
-	MOV SP, R8
+	MOV SP, R8 /* Update their stack value, so when we return the SP is correct */
 	MSR CPSR, r7
 	/* --leave system */
         BL asm_GetStoredUserLr /* Do this one last so we don't overwrite LR with BL asm_...*/
@@ -114,6 +126,17 @@ asm_KernelExit:
 	these modes do not have an SPSR.  */
 
 	/* Interrups are now enabled!!! */
+
+asm_SetUpIRQStack:
+MRS r7, CPSR  /* Save current mode */
+AND r6, r6, #0 /*  clear the register */
+ORR r6, r6, #18 /*  Set mode bit to 18 for irq mode */
+MSR CPSR, r6
+LDR SP, [PC, #4] /* Load the value that we want for the IRQ stack */
+MSR CPSR, r7 /* Restore current mode */
+BX LR
+.4byte	0x00500000 
+
 
 asm_GetStoredUserSpsr:
 LDR r8, [PC, #148] /* load base stack pointer address */
@@ -169,7 +192,8 @@ LDR r9, [lr,#-4]; /*  Put the SWI instruction call in R9.  This contains the ker
 MOV r9, r9, LSL #8; /*  Get rid of the high 8 bits by doing a left logical shift of 16 to discard the high bits  */
 MOV r9, r9, LSR #6; /*  Only shift back 6 to get the function id times four, so we can jump to the correct branch location */
 ADD PC, PC, r9; /*  Use the function id times four to jump to the correct branch for our kernel function */
-.4byte	0x01fdcf00 /*  Dummy instruction that does not execute because we jump over it so the jump table works correctly.  Might as well use it to store the address of the base of the kernel stack  */
+_KernelStackBase:
+.4byte	0x00000000 /*  Dummy instruction that does not execute because we jump over it so the jump table works correctly.  Might as well use it to store the address of the base of the kernel stack.  We will set this in our main program  */
 /*  Do branches without link because the link register (R14_svc) currently stores the return address immediately after the SWI instruction */
 B k_InitKernel
 B k_Create
