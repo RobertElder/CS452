@@ -28,6 +28,7 @@
 .global asm_GetStoredUserSpsr
 
 .global _KernelStackBase
+.global _TimerIRQStackBase
 
 asm_KernelInitEntry:
 	mov	ip, sp
@@ -135,7 +136,8 @@ MSR CPSR, r6
 LDR SP, [PC, #4] /* Load the value that we want for the IRQ stack */
 MSR CPSR, r7 /* Restore current mode */
 BX LR
-.4byte	0x00500000 
+_TimerIRQStackBase:
+.4byte	0x00000000  /*  In kern.c we will set this to the value it needs to be */
 
 
 asm_GetStoredUserSpsr:
