@@ -193,16 +193,7 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 		
 		TD * target_td = &scheduler->task_descriptors[tid];
 
-		MessageType * mmm = (MessageType*)msg;
-		if( *mmm == MESSAGE_TYPE_PLAY)
-			robprintfbusy((const unsigned char *)"In k_Send for play message dest: %d source: %d, target state: %d\n",tid, k_state->scheduler.current_task_descriptor->id,target_td->state);
-		if( tid == 2)
-			robprintfbusy((const unsigned char *)"In k_Send message to nameserver from %d\n", k_state->scheduler.current_task_descriptor->id);
-		
 		if(target_td->state == SEND_BLOCKED){
-			robprintfbusy((const unsigned char *)"send blocked branch\n");
-			//robprintfbusy((unsigned const char *)"Task: %d sends to task %d and unblocks it because it was waiting for send.\n",k_state->current_task_descriptor->id, tid);
-			
 			//  That task is now ready to be scheduled
 			Scheduler_ChangeTDState(scheduler, target_td, READY);
 	
@@ -221,13 +212,11 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 	
 			Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 		}else{
-			//robprintfbusy((unsigned const char *)"Task %d sends a message to: %d and blocks because the destination is not blocked on send.\n",k_state->current_task_descriptor->id, tid);
 			KernelMessage * km = (KernelMessage *)request_memory(k_state->memory_blocks_status, k_state->memory_blocks);	
 
 			KernelMessage_Initialize(km, current_td->id, tid, msg, reply, msglen, replylen);
 			Queue_PushEnd(&target_td->messages, km);
 			assert((int)km, "Pushed a null message\n");
-			robprintfbusy((const unsigned char *)"pushing km %x, my tid is %d \n", km, scheduler->current_task_descriptor->id);
 	
 			Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, RECEIVE_BLOCKED);
 	

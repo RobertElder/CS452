@@ -180,7 +180,7 @@ void Scheduler_CreateAndScheduleNewTask(Scheduler * scheduler, KernelState * k_s
 		
 		TD * td = &(scheduler->task_descriptors[new_task_id]);
 		int stack_end = ((int)get_stack_base(new_task_id) - USER_TASK_STACK_SIZE) + 4;
-		assertf(stack_end > (int)&_EndOfProgram, "Attempted to create a new task, but this task's stack space goes down to %x, but the kernel ends at %x.  This means we the stack will overwrite the kernel.", stack_end, (int)&_EndOfProgram);
+		assertf(stack_end > (int)&_EndOfProgram, "Attempted to create a new task, but this task's stack space goes down to %x, but the kernel ends at %x.  This means we the stack will overwrite the kernel.  There are currently %d tasks.\n", stack_end, (int)&_EndOfProgram, scheduler->num_tasks);
 
 		TD_Initialize(td, new_task_id, priority, parent_id, get_stack_base(new_task_id), code);
 		scheduler->num_tasks += 1;

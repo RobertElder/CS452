@@ -12,33 +12,30 @@ void NameServer_Start() {
 	NameServerMessage * outgoing_message;
 
 	while(1){
-		robprintfbusy((const unsigned char *)"Nameserver about to block on receive\n");
 		Receive( &sender_id, ns.receive_buffer, MESSAGE_SIZE);
 		received_message = (NameServerMessage *) ns.receive_buffer;
 
 		switch (received_message->message_type) {
 			case MESSAGE_TYPE_REGISTER_AS:{
-				robprintfbusy((const unsigned char *)"Name server got request from %d to register '%s'\n", sender_id, received_message->str);
+				//robprintfbusy((const unsigned char *)"Name server got request from %d to register '%s'\n", sender_id, received_message->str);
 				NameServer_SetName(&ns, sender_id, received_message->str);
 				outgoing_message = (NameServerMessage *) ns.reply_buffer;
 				outgoing_message->message_type = MESSAGE_TYPE_REGISTER_AS_OK;
 				Reply(sender_id, ns.reply_buffer, MESSAGE_SIZE);
 				break;
 			}case MESSAGE_TYPE_WHOIS:{
-				robprintfbusy((const unsigned char *)"Name server got whois request from %d\n", sender_id);
+				//robprintfbusy((const unsigned char *)"Name server got whois request from %d\n", sender_id);
 				outgoing_message = (NameServerMessage *) ns.reply_buffer;
 				outgoing_message->message_type = MESSAGE_TYPE_WHOIS_REPLY;
 				outgoing_message->num = NameServer_GetName(&ns, received_message->str);
 				Reply(sender_id, ns.reply_buffer, MESSAGE_SIZE);
 				break;
 			}case MESSAGE_TYPE_NAME_SERVER_SHUTDOWN: {
-				robprintfbusy((const unsigned char *)"Name server got request from %d shutdown\n", sender_id);
+				//robprintfbusy((const unsigned char *)"Name server got request from %d shutdown\n", sender_id);
 				outgoing_message = (NameServerMessage *) ns.reply_buffer;
 				outgoing_message->message_type = MESSAGE_TYPE_ACK;
 				Reply(sender_id, ns.reply_buffer, MESSAGE_SIZE);
 				Exit();
-			}case MESSAGE_TYPE_PLAY: {
-				assertf(0,"Got message to play from: %d\n",sender_id);
 			}default:{
 				assertf(0,"Name server message type not found: %d",received_message->message_type);
 				break;
