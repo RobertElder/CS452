@@ -75,7 +75,7 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 		min_priority++;
 	}
 	
-	robprintfbusy((const unsigned char *)"No tasks in queue!\n");
+	robprintfbusy((const unsigned char *)"\033[44;37mNo tasks in queue!\033[0m\n");
 	
 	assertf(scheduler->num_ready == 0,
 		"Number of ready tasks is not zero. Count=%d", scheduler->num_ready);
@@ -102,6 +102,7 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 	*/
 	
 	print_memory_status();
+	Scheduler_PrintTDCounts(scheduler);
 
 	return 0;
 	
@@ -280,7 +281,7 @@ void Scheduler_PrintTDCounts(Scheduler * scheduler) {
 			robprintfbusy((const unsigned char *)" TID=%d: %d   ", i, scheduler->task_descriptors[i].state);
 			count++;
 		}
-		if (count % 5 == 0) {
+		if (count % 10 == 0) {
 			robprintfbusy((const unsigned char *)"\n");
 		}
 	}
