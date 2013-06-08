@@ -51,6 +51,7 @@ typedef struct RPSServer {
 	unsigned int games_played;
 	unsigned int num_signed_in;
 	RPSServerState state;
+	RNG rng;
 } RPSServer;
 
 typedef struct RPSClient {
