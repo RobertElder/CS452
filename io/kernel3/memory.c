@@ -7,7 +7,8 @@
 void m_strcpy(char *dest, const char *src, int len) {
 	// FIXME: I'm not optimal
 	unsigned int i = 0;
-	const int num_octets = 16;
+	const int num_octets_small = 8;
+	const int num_octets_big = 64;
 	int * dest_addr = (int *) dest;
 	int * src_addr = (int *) src;
 	
@@ -15,29 +16,46 @@ void m_strcpy(char *dest, const char *src, int len) {
 //	assert((int) src % 4 == 0, "m_strcpy: src not word aligned");
 	assert((int) dest_addr % 4 == 0, "m_strcpy: dest not word aligned 2");
 	assert((int) src_addr % 4 == 0, "m_strcpy: src not word aligned 2");
+	assert(len >= 0, "m_strcpy: len must not be negative");
+	assert(len < 1000, "m_strcpy: len is unusually large");
 	
 //	assert((int)dest_addr == (int) dest, "m_strcpy: not same dest");
 //	assert((int)src_addr == (int) src, "m_strcpy: not same src");
 	
+	int remaining;
+	
 	while (i < len) {
-		if (len - i < num_octets) {
+		remaining = len - 1;
+		
+		if (remaining < num_octets_small) {
 			dest[i] = src[i];
 			i += 1;
-		} else {
-			// Copy 4 words at a time
+		} else if (remaining < num_octets_big) {
+			// Copy 2 words at a time
 			asm (
-				"STMfd sp!, {r0-r3}\n"
-				"LDMia %[src]!, {r0-r3}\n"
-				"STMia %[dest]!, {r0-r3}\n"
-				"LDMfd sp!, {r0-r3}\n"
+				"STMfd sp!, {r0-r1}\n"
+				"LDMia %[src]!, {r0-r1}\n"
+				"STMia %[dest]!, {r0-r1}\n"
+				"LDMfd sp!, {r0-r1}\n"
 				: [src]"+r"(src_addr), [dest]"+r"(dest_addr) // output
 				: // input
-				: "lr", "sp", "ip", "pc", "fp", "r0","r1","r2", "r3" // clobber
+				: "lr", "sp", "ip", "pc", "fp", "r0","r1" // clobber
 			);
-			i += num_octets;
+			i += num_octets_small;
+		} else {
+			// Copy 8 words at a time
+			asm (
+				"STMfd sp!, {r0-r7}\n"
+				"LDMia %[src]!, {r0-r7}\n"
+				"STMia %[dest]!, {r0-r7}\n"
+				"LDMfd sp!, {r0-r7}\n"
+				: [src]"+r"(src_addr), [dest]"+r"(dest_addr) // output
+				: // input
+				: "lr", "sp", "ip", "pc", "fp", "r0","r1","r2", "r3", 
+					"r4", "r5", "r6", "r7" // clobber
+			);
+			i += num_octets_big;
 		}
-
-		assert(i < 100000, "m_strcpy has been running for a really long time");
 	}
 }
 
