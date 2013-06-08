@@ -22,6 +22,7 @@
 .global asm_GetStoredUserRtn
 .global asm_GetStoredUserSpsr
 
+.global _KernelStackBase
 
 asm_KernelInitEntry:
 	mov	ip, sp
@@ -169,7 +170,8 @@ LDR r9, [lr,#-4]; /*  Put the SWI instruction call in R9.  This contains the ker
 MOV r9, r9, LSL #8; /*  Get rid of the high 8 bits by doing a left logical shift of 16 to discard the high bits  */
 MOV r9, r9, LSR #6; /*  Only shift back 6 to get the function id times four, so we can jump to the correct branch location */
 ADD PC, PC, r9; /*  Use the function id times four to jump to the correct branch for our kernel function */
-.4byte	0x01fdcf00 /*  Dummy instruction that does not execute because we jump over it so the jump table works correctly.  Might as well use it to store the address of the base of the kernel stack  */
+_KernelStackBase:
+.4byte	0x00000000 /*  Dummy instruction that does not execute because we jump over it so the jump table works correctly.  Might as well use it to store the address of the base of the kernel stack.  We will set this in our main program  */
 /*  Do branches without link because the link register (R14_svc) currently stores the return address immediately after the SWI instruction */
 B k_InitKernel
 B k_Create
