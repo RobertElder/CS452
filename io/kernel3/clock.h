@@ -48,4 +48,6 @@ void ClockClient_Start();
 
 void ClockClient_Initialize(ClockClient * client);
 
+void print_current_time();
+
 #endif

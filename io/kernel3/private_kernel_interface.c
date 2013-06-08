@@ -347,7 +347,7 @@ int k_AwaitEvent(EventID event_id) {
 	scheduler->current_task_descriptor->event_id = event_id;
 	scheduler->has_tasks_event_blocked[event_id] = 1;
 	
-	robprintfbusy((const unsigned char *)"AwaitEvent called\n");
+	//robprintfbusy((const unsigned char *)"AwaitEvent called\n");
 		
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 		

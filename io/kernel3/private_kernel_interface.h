@@ -11,7 +11,7 @@ int k_Reply(int tid, char *reply, int replylen);
 void * get_stack_base(unsigned int task_id);
 void print_memory_status();
 
-#define TIMER_INTERRUPTS_ENABLED 0
+#define TIMER_INTERRUPTS_ENABLED 1
 
 #define KERNEL_STACK_START 0x01fdcf00
 #define KERNEL_STACK_SIZE 0x00130000

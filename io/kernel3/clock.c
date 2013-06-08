@@ -19,6 +19,7 @@ void ClockServer_Start() {
 	
 	while (1) {
 		Receive(&source_tid, server.receive_buffer, MESSAGE_SIZE);
+		//robprintfbusy((const unsigned char *)"ClockServer: received %d message type\n", receive_msg->message_type);
 		
 		switch(receive_msg->message_type) {
 		case MESSAGE_TYPE_NOTIFIER:
@@ -55,7 +56,7 @@ void ClockServer_Initialize(ClockServer * server) {
 
 
 void ClockServer_HandleNotifier(ClockServer * server, int source_tid, NotifyMessage * receive_msg) {
-	robprintfbusy((const unsigned char *)"ClockServer TID=%d: Handle Notifer from %d\n", server->tid, source_tid);
+	//robprintfbusy((const unsigned char *)"ClockServer TID=%d: Handle Notifer from %d\n", server->tid, source_tid);
 	
 	assert(receive_msg->event_id == CLOCK_TICK_EVENT, "ClockServer didn't get a clock tick event id");
 	
@@ -68,7 +69,7 @@ void ClockServer_HandleNotifier(ClockServer * server, int source_tid, NotifyMess
 }
 
 void ClockServer_HandleTimeRequest(ClockServer * server, int source_tid, ClockMessage * receive_msg) {
-	robprintfbusy((const unsigned char *)"ClockServer TID=%d: Handle Time Request from %d. Current tick=%d\n", server->tid, source_tid, server->ticks);
+	//robprintfbusy((const unsigned char *)"ClockServer TID=%d: Handle Time Request from %d. Current tick=%d\n", server->tid, source_tid, server->ticks);
 	
 	ClockMessage * reply_message = (ClockMessage *) server->reply_buffer;
 	reply_message->message_type = MESSAGE_TYPE_TIME_REPLY;
@@ -78,7 +79,7 @@ void ClockServer_HandleTimeRequest(ClockServer * server, int source_tid, ClockMe
 }
 
 void ClockServer_HandleDelayRequest(ClockServer * server, int source_tid, ClockMessage * receive_msg) {
-	robprintfbusy((const unsigned char *)"ClockServer TID=%d: Handle Delay Request from %d with value %d\n", server->tid, source_tid, receive_msg->num);
+	//robprintfbusy((const unsigned char *)"ClockServer TID=%d: Handle Delay Request from %d with value %d\n", server->tid, source_tid, receive_msg->num);
 	
 	if (receive_msg->num <= server->ticks) {
 		robprintfbusy((const unsigned char *)"ClockServer TID=%d: WARNING delay value in the past!");
@@ -119,6 +120,8 @@ void ClockServer_UnblockDelayedTasks(ClockServer * server) {
 		
 		ClockMessage * reply_message = (ClockMessage *) server->reply_buffer;
 		reply_message->message_type = MESSAGE_TYPE_DELAY_REPLY;
+		
+		//robprintfbusy((const unsigned char *)"ClockServer TID=%d: unblocking %d\n", server->tid, tid);
 	
 		Reply(tid, server->reply_buffer, MESSAGE_SIZE);
 		
@@ -168,5 +171,9 @@ void ClockClient_Initialize(ClockClient * client) {
 	robprintfbusy((const unsigned char *)"ClockClient_Initialize TID=%d here\n", client->tid);
 	client->server_tid = WhoIs((char*) CLOCK_SERVER_NAME);
 	client->parent_tid = MyParentTid();
+}
+
+void print_current_time() {
+	robprintfbusy((const unsigned char *)"\033[7m %dms \033[0m\n", Time() * TICK_SIZE);
 }
 

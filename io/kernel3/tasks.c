@@ -14,9 +14,9 @@
 #include "rps.h"
 
 void KernelTask_Start() {
-	int tid = Create(HIGHEST, &RPSTestStart);
+	int tid = Create(HIGHEST, &FirstTask_Start);
 	
-	assert(tid == 1, "FirstTask tid not 1");
+	assertf(tid == 1, "FirstTask tid not 1, got %d", tid);
 	
 	Exit();
 	assert(0, "Shouldn't see me\n");
@@ -26,7 +26,7 @@ void FirstTask_Start() {
 //	Exit();
 	int tid;
 	
-	robprintfbusy((const unsigned char *)"FFirstTask Start\n");
+	robprintfbusy((const unsigned char *)"FirstTask Start tid=%d\n", MyTid());
 	
 	tid = Create(HIGHEST + 1, &NameServer_Start);
 	assert(tid == 2, "NameServer tid not 2");
@@ -108,7 +108,6 @@ void FirstTask_Start() {
 	reply_message->num_delays = 3;
 	Reply(client_4_tid, reply_buffer, MESSAGE_SIZE);
 	
-	// 4
 	tid = Create(LOWEST, &IdleTask_Start);
 	assert(tid > 0, "IdleTask tid not positive");
 	
@@ -122,11 +121,12 @@ void IdleTask_Start() {
 	unsigned int i = 0;
 	
 	while(1) {
-		if (i % 1000 == 0) {
-			robprintfbusy((const unsigned char *)"IdleTask .... i=%d \n", i);
+		if (i % 10000 == 0) {
+			//robprintfbusy((const unsigned char *)"IdleTask .... i=%d \n", i);
+			print_current_time();
 			//robprintfbusy((const unsigned char *)"IdleTask ... timer=%d \n", *timer_val);
-			//Pass();
 		}
+		Pass();
 		i++;
 	}
 	Exit();
