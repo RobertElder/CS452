@@ -1,6 +1,7 @@
 #include "task_descriptor.h"
 #include "robio.h"
 #include "kernel_state.h"
+#include "public_kernel_interface.h"
 
 void TD_Initialize(TD * td, int id, QueuePriority priority, int parent_id, void * sp, void * lr) {
 	td->id = id;
@@ -15,6 +16,7 @@ void TD_Initialize(TD * td, int id, QueuePriority priority, int parent_id, void 
 	td->receive_msg = 0;
 	td->reply_msg = 0;
 	Queue_Initialize(&td->messages);
+	td->event_id = NULL_EVENT;
 }
 
 int is_tid_in_range(int tid) {

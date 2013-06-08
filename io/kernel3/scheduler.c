@@ -25,6 +25,9 @@ void Scheduler_Initialize(Scheduler * scheduler) {
 	for (i = 0; i < MAX_TASKS + 1; i++) {
 		scheduler->inited_td[i] = 0;
 	}
+	for (i = 0; i < NUM_EVENTS; i++) {
+		scheduler->has_tasks_event_blocked[i] = 0;
+	}
 }
 
 void Scheduler_InitAndSetKernelTask(Scheduler * scheduler, KernelState * k_state) {
@@ -289,6 +292,26 @@ void Scheduler_PrintTDCounts(Scheduler * scheduler) {
 	robprintfbusy((const unsigned char *)"    End Print\n");
 }
 
+void Scheduler_UnblockTasksOnEvent(Scheduler * scheduler, EventID event_id) {
+	int i;
+	TD * td;
+	
+	if (!scheduler->has_tasks_event_blocked[event_id]) {
+		return;
+	}
+	
+	// TODO poor performance with linear search?
+	for (i = 0; i < MAX_TASKS + 1; i++) {
+		td = &scheduler->task_descriptors[i];
+		
+		if (td->state == EVENT_BLOCKED && td->event_id == event_id) {
+			safely_add_task_to_priority_queue(&scheduler->task_queue, td, td->priority);
+			Scheduler_ChangeTDState(scheduler, td, READY);
+		}
+	}
+	
+	scheduler->has_tasks_event_blocked[event_id] = 0;
+}
 
 void safely_add_task_to_priority_queue(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority priority){
 	int queue_return_code = PriorityQueue_Put(queue, item, priority);

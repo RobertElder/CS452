@@ -1,6 +1,7 @@
 #include "task_descriptor.h"
 #include "queue.h"
 #include "kernel_state.h"
+#include "public_kernel_interface.h"
 
 #ifndef SCHEDULER_H_
 #define SCHEDULER_H_
@@ -21,6 +22,7 @@ typedef struct Scheduler {
 	unsigned int num_receive_blocked;
 	unsigned int num_event_blocked;
 	unsigned int num_tasks;
+	short has_tasks_event_blocked[NUM_EVENTS];
 } Scheduler;
 
 void Scheduler_Initialize(Scheduler * scheduler);
@@ -42,6 +44,8 @@ int Scheduler_IsInitedTid(Scheduler * scheduler, int tid);
 void Scheduler_ChangeTDState(Scheduler * scheduler, TD * td, TaskState new_state);
 
 void Scheduler_PrintTDCounts(Scheduler * scheduler);
+
+void Scheduler_UnblockTasksOnEvent(Scheduler * scheduler, EventID event_id);
 
 void safely_add_task_to_priority_queue(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority priority);
 
