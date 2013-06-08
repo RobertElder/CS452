@@ -4,6 +4,28 @@
 
 
 void irq_handler() {
+	asm(
+		"@ i need a stack space :)\n"
+		"LDR SP, =0x0150f000\n"
+	
+		"@ r8_irq is banked so we use it to not clobber r8_usr\n"
+		"@ Switch to system mode\n"
+		"MRS r8, cpsr\n"
+		"BIC r8, r8, #0x1f @ Modify by removing current mode\n"
+		"ORR r8, r8, #0b11111\n"
+		"MSR cpsr, r8\n"
+	
+		"@ Save user state\n"
+//		"mov ip, sp\n"
+		"stmfd sp!, {r0-r10, lr, ip}\n"
+	
+		"@ Switch to supervisor mode\n"
+		"MRS r0, cpsr\n"
+		"BIC r0, r0, #0x1f @ Modify by removing current mode\n"
+		"ORR r0, r0, #0b10011\n"
+		"MSR cpsr, r0\n"
+	);
+
 	//set_led(LED_BOTH);
 	robprintfbusy((const unsigned char *)"\033[33m[INTERRUPT MODE] \n");
 	
@@ -22,7 +44,19 @@ void irq_handler() {
 	//set_led(LED_GREEN);
 	
 	asm(
-		"SUBS pc, r14, #4"
+		"@ Switch to system mode\n"
+		"MRS r8, cpsr\n"
+		"BIC r8, r8, #0x1f @ Modify by removing current mode\n"
+		"ORR r8, r8, #0b11111\n"
+		"MSR cpsr, r8\n"
+		
+		"@ Enable back interrupts\n"
+		"MRS r8, cpsr\n"
+		"BIC r8, r8, #0x80\n"
+		"MSR cpsr, r8\n"
+	
+		"ldmfd sp!, {r0-r10, lr, ip}\n"
+		"SUBS pc, r14, #4\n"
 	);
 }
 
