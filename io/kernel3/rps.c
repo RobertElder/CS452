@@ -77,6 +77,7 @@ void RPSServer_Initialize(RPSServer * server) {
 	server->running = 1;
 	server->games_played = 0;
 	server->is_shutdown = 0;
+	server->num_signed_in = 0;
 
 	int i;
 	for (i = 0; i < MAX_TASKS + 1; i++) {
@@ -109,7 +110,7 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 
 	RPSServer_SelectPlayers(server);
 
-	if (Queue_CurrentCount(&server->player_tid_queue) == 0) {
+	if (server->num_signed_in == 0 && server->is_shutdown) {
 		server->running = 0;
 	}
 }
@@ -209,6 +210,7 @@ void RPSServer_HandleSignup(RPSServer * server, RPSMessage * message, int source
 
 	Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)source_tid);
 	server->signed_in_players[source_tid] = 1;
+	server->num_signed_in += 1;
 
 	RPSMessage * reply_message = (RPSMessage *) server->reply_buffer;
 	reply_message->message_type = MESSAGE_TYPE_SIGN_UP_OK;
@@ -225,6 +227,7 @@ void RPSServer_HandleQuit(RPSServer * server, RPSMessage * message, int source_t
 	server->is_playing_game = 0;
 	server->player_1_tid = 0;
 	server->player_2_tid = 0;
+	server->num_signed_in -= 1;
 
 	reply_message = (RPSMessage *) server->reply_buffer;
 	reply_message->message_type = MESSAGE_TYPE_GOODBYE;
@@ -246,18 +249,19 @@ void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_t
 		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
 		assert(return_code == 0, "RPSServer couldn't send SHUTDOWN to client");
 		server->signed_in_players[source_tid] = 0;
+		server->num_signed_in -= 1;
 
-		//  Make sure they are removed from the queue.
-		QUEUE_ITEM_TYPE it = Queue_PopStart(&server->player_tid_queue);
-		int i = 0;
-		while(it != (QUEUE_ITEM_TYPE)source_tid){
-			it = Queue_PopStart(&server->player_tid_queue);
-			if(it != (QUEUE_ITEM_TYPE)source_tid){
-				Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)source_tid);
-			}
-			assert(i < 99999,"Iterated too many times trying to remove frmo queue\n");
-			i++;
-		}
+/*		//  Make sure they are removed from the queue.*/
+/*		QUEUE_ITEM_TYPE it = Queue_PopStart(&server->player_tid_queue);*/
+/*		int i = 0;*/
+/*		while(it != (QUEUE_ITEM_TYPE)source_tid){*/
+/*			it = Queue_PopStart(&server->player_tid_queue);*/
+/*			if(it != (QUEUE_ITEM_TYPE)source_tid){*/
+/*				Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)source_tid);*/
+/*			}*/
+/*			assert(i < 99999,"Iterated too many times trying to remove frmo queue\n");*/
+/*			i++;*/
+/*		}*/
 
 	} else if (server->is_playing_game) {
 		// Grab choices from the ones we are interested in

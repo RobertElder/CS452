@@ -43,6 +43,7 @@ typedef struct RPSServer {
 	short running;
 	short is_shutdown;
 	unsigned int games_played;
+	unsigned int num_signed_in;
 } RPSServer;
 
 typedef struct RPSClient {

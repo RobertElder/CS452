@@ -90,11 +90,11 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 	assertf(scheduler->num_reply_blocked == 0,
 		"Number of reply_blocked tasks is not zero. Count=%d",
 		scheduler->num_reply_blocked);
-	/*
+	
 	assertf(scheduler->num_receive_blocked == 0,
 		"Number of recive_blocked tasks is not zero. Count=%d",
 		scheduler->num_receive_blocked);
-	*/
+	
 	assertf(scheduler->num_event_blocked == 0,
 		"Number of event_blocked tasks is not zero. Count=%d",
 		scheduler->num_event_blocked);
