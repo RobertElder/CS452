@@ -8,6 +8,7 @@
 #include "nameserver.h"
 #include "clock.h"
 #include "notifier.h"
+#include "rps.h"
 
 void KernelTask_Start() {
 	int tid = Create(HIGHEST, &FirstTask_Start);
