@@ -8,7 +8,7 @@
 #ifndef KERNEL_STATE_H_
 #define KERNEL_STATE_H_
 
-#define MAX_TASKS 510
+#define MAX_TASKS 480
 
 typedef struct KernelState KernelState;
 #include "scheduler.h"
