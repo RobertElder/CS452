@@ -32,7 +32,7 @@ void Scheduler_InitAndSetKernelTask(Scheduler * scheduler, KernelState * k_state
 	int task_priority = LOWEST;
 	int task_id = 0;
 	/* TODO: add define special case for partent of first task */
-	TD_Initialize(task_descriptor, task_id, task_priority, 99, get_stack_base(task_id), (void *)&KernelTask_Start);
+	TD_Initialize(task_descriptor, task_id, task_priority, 99, get_stack_base(task_id), (void *)&IdleTask_Start);
 	
 	scheduler->num_ready += 1;
 	scheduler->num_tasks++; 

@@ -21,9 +21,9 @@ void irq_handler();
 
 void IRQ_EnableTimer();
 
-void IRQ_EnableTimerInterrupts();
+void IRQ_EnableTimerVIC2();
 
-void IRQ_DisableTimerInterrupts();
+void IRQ_DisableTimerVIC2();
 
 void IRQ_ClearTimerInterrupt();
 

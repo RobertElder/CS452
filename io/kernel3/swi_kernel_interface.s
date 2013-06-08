@@ -1,8 +1,13 @@
 .global robputrbusy
+.global irq_handler
 
 /* Common entry/exit for all kernel functions */
 .global asm_KernelExit
 .global asm_SwiCallEntry
+.global asm_TimerIRQEntry
+
+
+.global asm_SetUpIRQStack
 
 /* Kernel functions entry points */
 .global asm_KernelInitEntry
@@ -74,6 +79,12 @@ asm_AwaitEventEntry:
 	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 9;
 	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
+asm_TimerIRQEntry:
+	stmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, lr}
+	BL irq_handler
+	ldmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, lr}
+	SUB LR, LR, #4
+	MOVS pc, LR
 
 /*  This function executes when exiting from all kernel functions */
 asm_KernelExit:
@@ -94,7 +105,7 @@ asm_KernelExit:
 	DONOTSWITCHTOSYSTEM1:
 	MSR CPSR, r6
         BL asm_GetStoredUserSp
-	MOV SP, R8
+	MOV SP, R8 /* Update their stack value, so when we return the SP is correct */
 	MSR CPSR, r7
 	/* --leave system */
         BL asm_GetStoredUserLr /* Do this one last so we don't overwrite LR with BL asm_...*/
@@ -115,6 +126,17 @@ asm_KernelExit:
 	these modes do not have an SPSR.  */
 
 	/* Interrups are now enabled!!! */
+
+asm_SetUpIRQStack:
+MRS r7, CPSR  /* Save current mode */
+AND r6, r6, #0 /*  clear the register */
+ORR r6, r6, #18 /*  Set mode bit to 18 for irq mode */
+MSR CPSR, r6
+LDR SP, [PC, #4] /* Load the value that we want for the IRQ stack */
+MSR CPSR, r7 /* Restore current mode */
+BX LR
+.4byte	0x00500000 
+
 
 asm_GetStoredUserSpsr:
 LDR r8, [PC, #148] /* load base stack pointer address */
