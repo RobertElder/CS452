@@ -80,6 +80,8 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 	
 	robprintfbusy((const unsigned char *)"\033[44;37mNo tasks in queue!\033[0m\n");
 	
+	Scheduler_PrintTDCounts(scheduler);
+
 	assertf(scheduler->num_ready == 0,
 		"Number of ready tasks is not zero. Count=%d", scheduler->num_ready);
 	assertf(scheduler->num_active == 0,
@@ -105,7 +107,6 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 	*/
 	
 	print_memory_status();
-	Scheduler_PrintTDCounts(scheduler);
 
 	return 0;
 	

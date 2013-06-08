@@ -28,6 +28,14 @@ typedef struct RPSMessage {
 	RPS_OUTCOME outcome;
 } RPSMessage;
 
+typedef enum RPSServerState {
+	WAITING_FOR_PLAYERS,
+	WAITING_FOR_CHOICES,
+	GOT_CHOICES,
+	SENDING_RESULTS,
+	SHUTDOWN,
+} RPSServerState;
+
 typedef struct RPSServer {
 	int tid;
 	char receive_buffer[MESSAGE_SIZE];
@@ -39,11 +47,10 @@ typedef struct RPSServer {
 	RPS_CHOICE player_1_choice;
 	RPS_CHOICE player_2_choice;
 	short signed_in_players[MAX_TASKS + 1];
-	short is_playing_game;
 	short running;
-	short is_shutdown;
 	unsigned int games_played;
 	unsigned int num_signed_in;
+	RPSServerState state;
 } RPSServer;
 
 typedef struct RPSClient {
@@ -65,7 +72,7 @@ void RPSServer_ProcessMessage(RPSServer * server);
 
 void RPSServer_SelectPlayers(RPSServer * server);
 
-void RPSServer_ReplyResult(RPSServer * server);
+void RPSServer_ReplyResult(RPSServer * server, int source_tid);
 
 void RPSServer_Shutdown(RPSServer * server);
 

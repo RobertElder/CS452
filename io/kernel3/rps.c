@@ -71,12 +71,11 @@ void RPSServer_Initialize(RPSServer * server) {
 	Queue_Initialize(&server->player_tid_queue);
 	server->player_1_tid = 0;
 	server->player_2_tid = 0;
-	server->is_playing_game = 0;
 	server->player_1_choice = NO_CHOICE;
 	server->player_2_choice = NO_CHOICE;
 	server->running = 1;
 	server->games_played = 0;
-	server->is_shutdown = 0;
+	server->state = WAITING_FOR_PLAYERS;
 	server->num_signed_in = 0;
 
 	int i;
@@ -88,6 +87,10 @@ void RPSServer_Initialize(RPSServer * server) {
 void RPSServer_ProcessMessage(RPSServer * server) {
 	RPSMessage * receive_message;
 	int source_tid;
+	
+	assert(server->num_signed_in < 1000000, "num signed in underflow");
+	assert(server->running == 1, "not running");
+	
 	Receive(&source_tid, server->receive_buffer, MESSAGE_SIZE);
 	receive_message = (RPSMessage*)server->receive_buffer;
 
@@ -105,23 +108,23 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 		assert(0, "RPSServer: Unknown message type from client");
 		break;
 	}
+	
+	if (server->state == WAITING_FOR_PLAYERS) {
+		RPSServer_SelectPlayers(server);
+	}
 
-	Pass();
-
-	RPSServer_SelectPlayers(server);
-
-	if (server->num_signed_in == 0 && server->is_shutdown) {
+	if (server->num_signed_in == 0 && server->state == SHUTDOWN) {
 		server->running = 0;
 	}
+	assert(server->num_signed_in < 1000000, "num signed in underflow");
+	//robprintfbusy((const unsigned char *)"Server: Num signed in=%d\n", server->num_signed_in);
+	
+	Pass();
 }
 
 void RPSServer_SelectPlayers(RPSServer * server) {
 	if (Queue_CurrentCount(&server->player_tid_queue) <= 1) {
 		//robprintfbusy((const unsigned char *)"Server: There's only %d person in queue.\n", Queue_CurrentCount(&server->player_tid_queue));
-		return;
-	}
-
-	if (server->is_playing_game) {
 		return;
 	}
 
@@ -164,10 +167,10 @@ void RPSServer_SelectPlayers(RPSServer * server) {
 		return;
 	}
 
-	server->is_playing_game = 1;
+	server->state = WAITING_FOR_CHOICES;
 }
 
-void RPSServer_ReplyResult(RPSServer * server) {
+void RPSServer_ReplyResult(RPSServer * server, int source_tid) {
 	RPSMessage * reply_message;
 	RPS_OUTCOME player_1_outcome;
 	RPS_OUTCOME player_2_outcome;
@@ -184,22 +187,40 @@ void RPSServer_ReplyResult(RPSServer * server) {
 		player_1_outcome = LOSE;
 		player_2_outcome = WIN;
 	}
+	
+	if (source_tid == server->player_1_tid) {
+		reply_message = (RPSMessage *) server->reply_buffer;
+		reply_message->message_type = MESSAGE_TYPE_RESULT;
+		reply_message->outcome = player_1_outcome;
+		reply_message->choice = server->player_2_choice;
 
-	reply_message = (RPSMessage *) server->reply_buffer;
-	reply_message->message_type = MESSAGE_TYPE_RESULT;
-	reply_message->outcome = player_1_outcome;
-	reply_message->choice = server->player_2_choice;
+		return_code = Reply(server->player_1_tid, server->reply_buffer, MESSAGE_SIZE);
+		assert(return_code == 0, "Failed to reply RESULT message to player 1");
+		
+		server->player_1_tid = 0;
+	} else if (source_tid == server->player_2_tid) {
 
-	return_code = Reply(server->player_1_tid, server->reply_buffer, MESSAGE_SIZE);
-	assert(return_code == 0, "Failed to reply RESULT message to player 1");
+		reply_message = (RPSMessage *) server->reply_buffer;
+		reply_message->message_type = MESSAGE_TYPE_RESULT;
+		reply_message->outcome = player_2_outcome;
+		reply_message->choice = server->player_1_choice;
 
-	reply_message = (RPSMessage *) server->reply_buffer;
-	reply_message->message_type = MESSAGE_TYPE_RESULT;
-	reply_message->outcome = player_2_outcome;
-	reply_message->choice = server->player_1_choice;
-
-	return_code = Reply(server->player_2_tid, server->reply_buffer, MESSAGE_SIZE);
-	assert(return_code == 0, "Failed to send RESULT message to player 2");
+		return_code = Reply(server->player_2_tid, server->reply_buffer, MESSAGE_SIZE);
+		assert(return_code == 0, "Failed to send RESULT message to player 2");
+		server->player_2_tid = 0;
+	} else {
+		// Ping back wait
+		reply_message = (RPSMessage *) server->reply_buffer;
+		reply_message->message_type = MESSAGE_TYPE_WAIT;
+		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
+		assert(return_code == 0, "RPSServer couldn't send WAIT to client");
+	}
+	
+	if (!server->player_1_tid && !server->player_2_tid) {
+		server->player_1_choice = NO_CHOICE;
+		server->player_2_choice = NO_CHOICE;
+		server->state  =WAITING_FOR_PLAYERS;
+	}
 
 	//robprintfbusy((const unsigned char *)"Server: ***** P1=%d chose %d, P2=%d chose %d *****\n", server->player_1_tid, server->player_1_choice, server->player_2_tid, server->player_2_choice);
 }
@@ -224,10 +245,10 @@ void RPSServer_HandleQuit(RPSServer * server, RPSMessage * message, int source_t
 
 	RPSMessage * reply_message = (RPSMessage *) server->reply_buffer;
 	server->signed_in_players[source_tid] = 0;
-	server->is_playing_game = 0;
+	server->num_signed_in -= 1;
 	server->player_1_tid = 0;
 	server->player_2_tid = 0;
-	server->num_signed_in -= 1;
+	server->state = SHUTDOWN;
 
 	reply_message = (RPSMessage *) server->reply_buffer;
 	reply_message->message_type = MESSAGE_TYPE_GOODBYE;
@@ -236,58 +257,46 @@ void RPSServer_HandleQuit(RPSServer * server, RPSMessage * message, int source_t
 	assert(return_code == 0, "RPSServer couldn't send GOODBYE to client");
 
 	robprintfbusy((const unsigned char *)"Server: We are shutting down\n");
-	server->is_shutdown = 1;
 }
 
 void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_tid) {
 	int return_code;
 	RPSMessage * reply_message = (RPSMessage *) server->reply_buffer;
 
-	if (server->is_shutdown) {
+	if (server->state == SHUTDOWN) {
+		server->signed_in_players[source_tid] = 0;
+		server->num_signed_in -= 1;
 		reply_message->message_type = MESSAGE_TYPE_SHUTDOWN;
 		robprintfbusy((const unsigned char *)"Server: Telling %d that have shutdown\n", source_tid);
 		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
 		assert(return_code == 0, "RPSServer couldn't send SHUTDOWN to client");
-		server->signed_in_players[source_tid] = 0;
-		server->num_signed_in -= 1;
-
-/*		//  Make sure they are removed from the queue.*/
-/*		QUEUE_ITEM_TYPE it = Queue_PopStart(&server->player_tid_queue);*/
-/*		int i = 0;*/
-/*		while(it != (QUEUE_ITEM_TYPE)source_tid){*/
-/*			it = Queue_PopStart(&server->player_tid_queue);*/
-/*			if(it != (QUEUE_ITEM_TYPE)source_tid){*/
-/*				Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)source_tid);*/
-/*			}*/
-/*			assert(i < 99999,"Iterated too many times trying to remove frmo queue\n");*/
-/*			i++;*/
-/*		}*/
-
-	} else if (server->is_playing_game) {
+	} else if (server->state == WAITING_FOR_CHOICES) {
+	
 		// Grab choices from the ones we are interested in
 		if (source_tid == server->player_1_tid) {
 			server->player_1_choice = message->choice;
 		} else if (source_tid == server->player_2_tid) {
 			server->player_2_choice = message->choice;
-		} else {
-			// Not ready yet for playing
-			reply_message = (RPSMessage *) server->reply_buffer;
-			reply_message->message_type = MESSAGE_TYPE_WAIT;
-			return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
-			assert(return_code == 0, "RPSServer couldn't send WAIT to client");
 		}
-
+		
 		if (server->player_1_choice != NO_CHOICE && server->player_2_choice != NO_CHOICE) {
+			server->state = GOT_CHOICES;
 			// We can play now!
 			robprintfbusy((const unsigned char *)"Server: We got players! P1=%d, P2=%d\n", server->player_1_tid, server->player_2_tid);
-			RPSServer_ReplyResult(server);
-			server->player_1_choice = NO_CHOICE;
-			server->player_2_choice = NO_CHOICE;
-			server->player_1_tid = 0;
-			server->player_2_tid = 0;
-			server->is_playing_game = 0;
 			server->games_played += 1;
+			server->state = SENDING_RESULTS;
 		}
+		
+		// Ping back wait
+		reply_message = (RPSMessage *) server->reply_buffer;
+		reply_message->message_type = MESSAGE_TYPE_WAIT;
+		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
+		assert(return_code == 0, "RPSServer couldn't send WAIT to client");
+		
+		
+	} else if (server->state == SENDING_RESULTS 
+	&& (source_tid == server->player_1_tid || source_tid == server->player_2_tid)) {
+		RPSServer_ReplyResult(server, source_tid);
 	} else {
 		// Not ready yet for playing
 		reply_message = (RPSMessage *) server->reply_buffer;
