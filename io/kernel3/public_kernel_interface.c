@@ -102,8 +102,8 @@ int AwaitEvent( int eventid ) {
 	return asm_AwaitEventEntry();
 }
 
-int Delay( int ticks ) {
-	int clock_tid = WhoIs(CLOCK_SERVER_NAME);
+int DelayUntil( int ticks ) {
+	int clock_tid = WhoIs((char *)CLOCK_SERVER_NAME);
 	ClockMessage * send_message;
 	ClockMessage * receive_message;
 
@@ -112,6 +112,7 @@ int Delay( int ticks ) {
 
 	send_message = (ClockMessage *) send_buffer;
 	send_message->message_type = MESSAGE_TYPE_DELAY_REQUEST;
+	send_message->num = ticks;
 
 	Send(clock_tid, send_buffer, MESSAGE_SIZE, receive_buffer, MESSAGE_SIZE);
 
@@ -122,7 +123,7 @@ int Delay( int ticks ) {
 }
 
 int Time( ) {
-	int clock_tid = WhoIs(CLOCK_SERVER_NAME);
+	int clock_tid = WhoIs((char *)CLOCK_SERVER_NAME);
 	ClockMessage * send_message;
 	ClockMessage * receive_message;
 
@@ -140,6 +141,6 @@ int Time( ) {
 	return receive_message->num;
 }
 
-int DelayUntil( int ticks ) {
-	return Delay(Time() + ticks);
+int Delay( int ticks ) {
+	return DelayUntil(Time() + ticks);
 }

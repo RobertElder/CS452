@@ -5,8 +5,11 @@
 #include "kernel_state.h"
 #include "tasks.h"
 #include "queue.h"
+#include "ts7200.h"
+#include "kernel_irq.h"
 
 void asm_SwiCallEntry();
+void asm_IrqCallEntry();
 
 
 /*
@@ -23,9 +26,11 @@ void asm_SwiCallEntry();
 
 int main(){
 
-	int * first_swi_instruction_address = (int *)(0x8); // SWI Vector address
 	int * swi_call_entry_address = (int *)(0x28); // SWI jump to address
 	*swi_call_entry_address = (int)&asm_SwiCallEntry;
+	
+	//int * irq_call_entry_address = (int *)(0x38);
+	//* irq_call_entry_address = (int)&irq_handler;
 
 	//  The first thing on the stack, is going to be the sp value we always want a kernel function to start wtih.
 	int * kernel_saved_sp_loc = (int *)(KERNEL_STACK_START);
@@ -36,3 +41,5 @@ int main(){
 	
 	return 0;
 }
+
+

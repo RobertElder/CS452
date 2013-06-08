@@ -2,7 +2,7 @@ ENTRY (main)
 
 MEMORY
 {
-ram : ORIGIN = 0x00218000, LENGTH = 32M
+ram : ORIGIN = 0x00045000, LENGTH = 32M
 rom : ORIGIN = 0x60000000, LENGTH = 8M
 }
 
@@ -30,5 +30,6 @@ text : /* The actual instructions. */
 *(.rodata)
 *(.glue_7)
 *(.glue_7t)
+_EndOfProgram = . ;
 } >ram
 }

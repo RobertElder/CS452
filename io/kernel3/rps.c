@@ -1,10 +1,33 @@
 #include "rps.h"
 #include "robio.h"
 #include "public_kernel_interface.h"
+#include "private_kernel_interface.h"
 #include "random.h"
 #include "memory.h"
 #include "queue.h"
 #include "nameserver.h"
+
+
+void RPSTestStart() {
+	int tid;
+	const int num_clients = 480;
+
+	tid = Create(NORMAL, &NameServer_Start);
+	assert(tid == 2, "NameServer tid not 2");
+
+	tid = Create(NORMAL, &RPSServer_Start);
+	assert(tid == 3, "RPServer tid not 3");
+
+	int i;
+	for (i = 0; i < num_clients; i++) {
+		tid = Create(NORMAL, &RPSClient_Start);
+		assert(tid == 3 + i + 1, "RPSClient tid not");
+	}
+
+	Exit();
+
+	assert(0, "Shouldn't see me\n");
+}
 
 void RPSServer_Start() {
 	robprintfbusy((const unsigned char *)"RPSServer created tid=%d\n", MyTid());
@@ -37,6 +60,7 @@ void RPSServer_Start() {
 	Send(NAMESERVER_TID, server.send_buffer, MESSAGE_SIZE, server.reply_buffer, MESSAGE_SIZE);
 	assert(reply_message->message_type==MESSAGE_TYPE_ACK, "RPSServer didn't get ACK from name server");
 
+	robprintfbusy((const unsigned char *)"About to call exit from rpsserver.\n");
 	Exit();
 
 	assert(0, "Shouldn't see me\n");
@@ -81,9 +105,9 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 		break;
 	}
 
-	RPSServer_SelectPlayers(server);
-
 	Pass();
+
+	RPSServer_SelectPlayers(server);
 
 	if (Queue_CurrentCount(&server->player_tid_queue) == 0) {
 		server->running = 0;
@@ -92,8 +116,7 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 
 void RPSServer_SelectPlayers(RPSServer * server) {
 	if (Queue_CurrentCount(&server->player_tid_queue) <= 1) {
-		robprintfbusy((const unsigned char *)"Server: There's only %d person in queue.\n",
-				Queue_CurrentCount(&server->player_tid_queue));
+		//robprintfbusy((const unsigned char *)"Server: There's only %d person in queue.\n", Queue_CurrentCount(&server->player_tid_queue));
 		return;
 	}
 
@@ -177,12 +200,12 @@ void RPSServer_ReplyResult(RPSServer * server) {
 	return_code = Reply(server->player_2_tid, server->reply_buffer, MESSAGE_SIZE);
 	assert(return_code == 0, "Failed to send RESULT message to player 2");
 
-	robprintfbusy((const unsigned char *)"Server: ***** P1=%d chose %d, P2=%d chose %d *****\n", server->player_1_tid, server->player_1_choice, server->player_2_tid, server->player_2_choice);
+	//robprintfbusy((const unsigned char *)"Server: ***** P1=%d chose %d, P2=%d chose %d *****\n", server->player_1_tid, server->player_1_choice, server->player_2_tid, server->player_2_choice);
 }
 
 
 void RPSServer_HandleSignup(RPSServer * server, RPSMessage * message, int source_tid) {
-	robprintfbusy((const unsigned char *)"Server: Received sign up request from %d\n", source_tid);
+	//robprintfbusy((const unsigned char *)"RPSServer: Received sign up request from %d\n", source_tid);
 
 	Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)source_tid);
 	server->signed_in_players[source_tid] = 1;
@@ -194,7 +217,7 @@ void RPSServer_HandleSignup(RPSServer * server, RPSMessage * message, int source
 }
 
 void RPSServer_HandleQuit(RPSServer * server, RPSMessage * message, int source_tid) {
-	robprintfbusy((const unsigned char *)"Server: Received quit request from %d\n", source_tid);
+	//robprintfbusy((const unsigned char *)"Server: Received quit request from %d\n", source_tid);
 	int return_code;
 
 	RPSMessage * reply_message = (RPSMessage *) server->reply_buffer;
@@ -223,6 +246,18 @@ void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_t
 		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
 		assert(return_code == 0, "RPSServer couldn't send SHUTDOWN to client");
 		server->signed_in_players[source_tid] = 0;
+
+		//  Make sure they are removed from the queue.
+		QUEUE_ITEM_TYPE it = Queue_PopStart(&server->player_tid_queue);
+		int i = 0;
+		while(it != (QUEUE_ITEM_TYPE)source_tid){
+			it = Queue_PopStart(&server->player_tid_queue);
+			if(it != (QUEUE_ITEM_TYPE)source_tid){
+				Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)source_tid);
+			}
+			assert(i < 99999,"Iterated too many times trying to remove frmo queue\n");
+			i++;
+		}
 
 	} else if (server->is_playing_game) {
 		// Grab choices from the ones we are interested in
@@ -265,7 +300,7 @@ void RPSClient_Start() {
 	RPSClient_Initialize(&client);
 
 	// Want to play
-	robprintfbusy((const unsigned char *)"Client: %d - I want to play\n", client.tid);
+	//robprintfbusy((const unsigned char *)"Client: %d - I want to play\n", client.tid);
 
 	RPSMessage * send_message;
 	RPSMessage * reply_message;
@@ -296,7 +331,7 @@ void RPSClient_Initialize(RPSClient * client) {
 	client->tid = MyTid();
 	RNG_Initialize(&client->rng, client->tid);
 	client->server_id = WhoIs((char*) RPS_SERVER_NAME);
-	client->num_rounds_to_play = 5;
+	client->num_rounds_to_play = 10;
 	client->running = 1;
 }
 
@@ -314,6 +349,7 @@ void RPSClient_PlayARound(RPSClient * client) {
 	int counter = 0;
 	while (1) {
 		Send(client->server_id, client->send_buffer, MESSAGE_SIZE, client->reply_buffer, MESSAGE_SIZE);
+		//robprintfbusy((const unsigned char *)"Sending message to play from %d to %d.\n",MyTid(),client->server_id);
 
 		reply_message = (RPSMessage *) client->reply_buffer;
 
@@ -326,18 +362,18 @@ void RPSClient_PlayARound(RPSClient * client) {
 		assertf(reply_message->message_type == MESSAGE_TYPE_WAIT,
 				"Client wasn't told to wait. Got=%d, TID=%d", reply_message->message_type, client->tid);
 		counter +=1;
-		assertf(counter < 10, "Forever Alone: TID=%d hasn't played in a while", client->tid);
+		assertf(counter < 1000, "Forever Alone: TID=%d hasn't played in a while", client->tid);
 	}
 
 	switch(choice) {
 	case ROCK:
-		robprintfbusy((const unsigned char *)"Client: %d - I choose rock\n", client->tid);
+		//robprintfbusy((const unsigned char *)"Client: %d - I choose rock\n", client->tid);
 		break;
 	case PAPER:
-		robprintfbusy((const unsigned char *)"Client: %d - I choose paper\n", client->tid);
+		//robprintfbusy((const unsigned char *)"Client: %d - I choose paper\n", client->tid);
 		break;
 	case SCISSORS:
-		robprintfbusy((const unsigned char *)"Client: %d - I choose scissors\n", client->tid);
+		//robprintfbusy((const unsigned char *)"Client: %d - I choose scissors\n", client->tid);
 		break;
 	default:
 		assert(0, "RNG gave client something wrong");
@@ -380,8 +416,6 @@ void RPSClient_PlayARound(RPSClient * client) {
 		break;
 	}
 
-	robprintfbusy((const unsigned char *)"RPSClient=%d: Press Enter to continue...", MyTid());
-	robgetcbusy(COM2);
 	robprintfbusy((const unsigned char *)"\n", MyTid());
 }
 

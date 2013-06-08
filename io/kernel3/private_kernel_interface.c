@@ -6,8 +6,16 @@
 #include "message.h"
 #include "queue.h"
 #include "memory.h"
+#include "ts7200.h"
+#include "kernel_irq.h"
 
 void asm_KernelExit();
+
+extern int _DataStart;
+extern int _DataEnd;
+extern int _BssStart;
+extern int _BssEnd;
+extern int _EndOfProgram;
 
 void print_kernel_state(KernelState * k_state){
 	//TD * current_t = k_state->current_task_descriptor;
@@ -21,42 +29,98 @@ void print_kernel_state(KernelState * k_state){
 /* TODO:  Calling a kernel function from inside another kernel function is currently not supported. */
 
 void * get_stack_base(unsigned int task_id){
-	/*TODO: actually figure out how to place the stacks so they don't do crazy things and overwrite memory */
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	assertf(task_id <= k_state->scheduler.num_tasks,"Get stack base was passed the value %d, which should be less or equal to max tasks: %d.", task_id, k_state->scheduler.num_tasks);
 	return (void*)(USER_TASKS_STACK_START - (task_id * USER_TASK_STACK_SIZE));
 }
 
-void validate_stack_value(TD * td){
-	int empty_stack_value = (int)get_stack_base(td->id);
-	int full_stack_value = empty_stack_value - USER_TASK_STACK_SIZE;
-	assertf(
-		((int)td->stack_pointer) <= empty_stack_value,
-		"User task id %d has stack underflow. SP is %x, but shouldn't be more than %x.",
-		td->id,
-		td->stack_pointer,
-		empty_stack_value
-	);
-	assertf(
-		((int)td->stack_pointer) >= full_stack_value,
-		"User task id %d has stack overflow. SP is %x, but shouldn't be less than %x.",
-		td->id,
-		td->stack_pointer,
-		full_stack_value
-	);
+void print_memory_status(){
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	
+	robprintfbusy((const unsigned char *)"\033[1m--  Printing map of how our 32MB of memory is currently allocated.  --\033[0m\n");
+	robprintfbusy((const unsigned char *)"Redboot Stuff:    0x00000000 - 0000x%x\n",((unsigned int)&_DataStart) - 1);
+	robprintfbusy((const unsigned char *)"The Kernel:       0x000%x - 0x000%x\n",(unsigned int)&_DataStart, ((unsigned int)&_EndOfProgram) - 1);
+	int user_stacks_end = USER_TASKS_STACK_START - (USER_TASK_STACK_SIZE * k_state->scheduler.num_tasks);
+	robprintfbusy((const unsigned char *)"Unallocated:      0x000%x - 0x0%x\n",(unsigned int)&_EndOfProgram, user_stacks_end);
 
+	/*
+	int i;
+	for(i = k_state->scheduler.num_tasks -1; i > -1; i--){
+		int stack_base = (int)get_stack_base(i);
+		int stack_end = (stack_base - USER_TASK_STACK_SIZE) + 4;
+		int last_sp = (int)k_state->scheduler.task_descriptors[i].stack_pointer;
+		int kb_used = (stack_base - last_sp) / 1024;
+		int kb_total = USER_TASK_STACK_SIZE / 1024;
+		robprintfbusy((const unsigned char *)"Stack of task %d:  0x0%x - 0x0%x (Was %x on last ctxt switch.  %d of %d kb used.)\n",i, stack_end, stack_base, last_sp, kb_used, kb_total);
+	}
+	*/
+
+	int kernel_stack_base = (int) KERNEL_STACK_START;
+	int kernel_stack_end = (kernel_stack_base - KERNEL_STACK_SIZE) + 4;
+	robprintfbusy((const unsigned char *)"Kernel Stack:     0x0%x - 0x0%x\n",kernel_stack_end, kernel_stack_base);
+	robprintfbusy((const unsigned char *)"Unallocated:      0x0%x - 0x0%x\n",kernel_stack_base + 4, k_state->redboot_sp_value -1);
+	robprintfbusy((const unsigned char *)"Redboot Stack:    0x0%x - 0x01FFFFFF\n",k_state->redboot_sp_value);
+	robprintfbusy((const unsigned char *)"All memory        0x00000000 - 0x01FFFFFF\n");
+
+	int unallocated1 = user_stacks_end - (unsigned int)&_EndOfProgram + 1;
+	int unallocated2 = (((int)k_state->redboot_sp_value) -1) - (kernel_stack_base + 4) + 1;
+	int total_unallocated = unallocated1 + unallocated2;
+
+	/*  Set all memory to zeros as a test to see if it breaks anything:
+	//  Validate that we actually can control this memory
+	char * ch = (char *)&_EndOfProgram;
+	for(i = 0; i < (user_stacks_end - (unsigned int)&_EndOfProgram + 1); i++){
+		if(i % 10000 == 0)
+			robprintfbusy((const unsigned char *)"%x\n", i);
+
+		ch[i] = 0;
+	}
+
+	ch = (char *)(kernel_stack_base + 4);
+	for(i = 0; i < ((((int)k_state->redboot_sp_value) -1) - (kernel_stack_base + 4) + 1); i++){
+		if(i % 10000 == 0)
+			robprintfbusy((const unsigned char *)"%x\n", i);
+		ch[i] = 0;
+	}
+
+	*/
+
+
+	int unallocated_megs = total_unallocated / 1048576;
+	int unallocated_kibs = (total_unallocated - (1048576 * unallocated_megs)) / 1024;
+	int unallocated_bytes = total_unallocated - (1048576 * unallocated_megs) - (unallocated_kibs * 1024);
+
+
+	robprintfbusy((const unsigned char *)"There are currently %d MB, %d KB and %d bytes of memory unallocated.\n", unallocated_megs, unallocated_kibs, unallocated_bytes);
 }
 
 void k_InitKernel(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	//  Make sure the kernel stack is not already on top of the user stacks, and there is at least
+	//  a 32k wiggle room too.
+	int kernel_stack_end = (KERNEL_STACK_START - KERNEL_STACK_SIZE);
+	int current_stack = (int)k_state->last_kernel_sp_value;
+	assertf(kernel_stack_end + (1024 * 32) < current_stack,"The kernel's allocated stack end is %x but user process stacks start at %x.  Won't start unless there is at least 32k buffer room.", kernel_stack_end, current_stack) ;
+	//  Make sure the kernel stack is starting further down than the redboot stack.
+	assertf(KERNEL_STACK_START < (int)k_state->user_proc_sp_value, "The kernel stack starts at %x, but the redboot stack ends at %x.",KERNEL_STACK_START, k_state->user_proc_sp_value);
+		
+
 	
 	/*  Remember where to return to, in case we want to hand control back to redboot */
 	k_state->redboot_sp_value = k_state->user_proc_sp_value;
 	k_state->redboot_lr_value = k_state->user_proc_lr_value;
 	k_state->redboot_spsr_value = k_state->user_proc_spsr;
+	//  Initialize all memory blocks to unallocated.
+	int i;
+	for(i = 0; i < NUM_MEMORY_BLOCKS; i++){
+		k_state->memory_blocks_status[i] = 0;
+	}
 	//  Directly set the kernel state structure values on the stack.
 	Scheduler_Initialize(&k_state->scheduler);
 	Scheduler_InitAndSetKernelTask(&k_state->scheduler, k_state);
 
-	RingBufferIndex_Initialize(&k_state->messages_index, QUEUE_SIZE);
+	//IRQ_EnableTimer();
+	//IRQ_EnableTimerInterrupts();
 	
 	asm_KernelExit();
 }
@@ -103,10 +167,7 @@ void k_Pass(){
 	
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
 	
-	//  Check for stack overflow and underflows
-	validate_stack_value(scheduler->current_task_descriptor);
-	
-	scheduler->current_task_descriptor->state = READY;
+	Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, READY);
 	
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 
@@ -118,9 +179,8 @@ void k_Exit(){
 	Scheduler * scheduler = &k_state->scheduler;
 	
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
-	validate_stack_value(scheduler->current_task_descriptor);
 	
-	scheduler->current_task_descriptor->state = ZOMBIE;
+	Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, ZOMBIE);
 	
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 	
@@ -141,12 +201,10 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 		scheduler->current_task_descriptor->reply_len = replylen;
 		
 		TD * target_td = &scheduler->task_descriptors[tid];
-		
+
 		if(target_td->state == SEND_BLOCKED){
-			//robprintfbusy((unsigned const char *)"Task: %d sends to task %d and unblocks it because it was waiting for send.\n",k_state->current_task_descriptor->id, tid);
-			
 			//  That task is now ready to be scheduled
-			target_td->state = READY;
+			Scheduler_ChangeTDState(scheduler, target_td, READY);
 	
 			PriorityQueue_Put(&(scheduler->task_queue), target_td,
 				target_td->priority);
@@ -154,23 +212,22 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			target_td->return_value = msglen;
 	
 			assert((int) target_td->receive_msg, "k_Send: receive_msg isn't set");
-	
+			assert(msglen == 100, "msglen not 100");	
 			m_strcpy(target_td->receive_msg, msg, msglen);
 	
 			//  This task is now blocked on a reply
-			current_td->state = REPLY_BLOCKED;
+			Scheduler_ChangeTDState(scheduler, current_td, REPLY_BLOCKED);
 			*(target_td->origin_tid) = scheduler->current_task_descriptor->id;
 	
 			Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 		}else{
-			//robprintfbusy((unsigned const char *)"Task %d sends a message to: %d and blocks because the destination is not blocked on send.\n",k_state->current_task_descriptor->id, tid);
-			int index = RingBufferIndex_Put(&k_state->messages_index);
-			KernelMessage * km = &k_state->messages[index];
-	
+			KernelMessage * km = (KernelMessage *)request_memory(k_state->memory_blocks_status, k_state->memory_blocks);	
+
 			KernelMessage_Initialize(km, current_td->id, tid, msg, reply, msglen, replylen);
 			Queue_PushEnd(&target_td->messages, km);
+			assert((int)km, "Pushed a null message\n");
 	
-			scheduler->current_task_descriptor->state = RECEIVE_BLOCKED;
+			Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, RECEIVE_BLOCKED);
 	
 			Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 		}
@@ -196,7 +253,6 @@ int k_Receive(int *tid, char *msg, int msglen){
 	Scheduler * scheduler = &k_state->scheduler;
 		
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
-	
 	//  Attempt to receive a message from the queue associated with that process.
 	KernelMessage * message = (KernelMessage *) Queue_PopStart(&scheduler->current_task_descriptor->messages);
 	
@@ -205,19 +261,15 @@ int k_Receive(int *tid, char *msg, int msglen){
 	scheduler->current_task_descriptor->origin_tid = tid;
 	
 	if(message == 0){
-		//robprintfbusy((unsigned const char *)"Task: %d is blocking in receive because there are no messages.\n",k_state->current_task_descriptor->id);
-		
 		//  No messages, block this task
-		scheduler->current_task_descriptor->state = SEND_BLOCKED;
+		Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, SEND_BLOCKED);
 		scheduler->current_task_descriptor->return_value = MESSAGE_SIZE;
 		
 		//  Switch to the next ready process.
 		Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 	}else{
-		//robprintfbusy((unsigned const char *)"Task %d receives a message from %d because there is a message waiting.\n",k_state->current_task_descriptor->id,message->origin);
-		
 		//  There is a message, give it to the task
-		RingBufferIndex_Get(&k_state->messages_index);
+		assert(msglen == 100, "msglen not 100");	
 		m_strcpy(msg, message->msg, msglen);
 
 		*tid = message->origin;
@@ -226,9 +278,9 @@ int k_Receive(int *tid, char *msg, int msglen){
 		scheduler->current_task_descriptor->return_value = message->origin_size;
 		assert(scheduler->task_descriptors[message->origin].state == RECEIVE_BLOCKED, "Impossible state, sender shoudl be receive blocked.");
 		
-		scheduler->task_descriptors[message->origin].state = REPLY_BLOCKED;
+		Scheduler_ChangeTDState(scheduler, &scheduler->task_descriptors[message->origin], REPLY_BLOCKED);
 		Scheduler_SetNextTaskState(scheduler, k_state);
-
+		release_memory(k_state->memory_blocks_status, k_state->memory_blocks, message);	
 	}
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
@@ -257,8 +309,9 @@ int k_Reply(int tid, char *reply, int replylen){
 			return_value = ERR_K_INSUFFICIENT_SPACE;
 		} else {
 			assert((int) target_td->reply_msg, "k_Reply: reply_msg isn't set");
+			assert(replylen == 100, "msglen not 100");	
 			m_strcpy(target_td->reply_msg, reply, replylen);
-			target_td->state = READY;
+			Scheduler_ChangeTDState(scheduler, target_td, READY);
 			PriorityQueue_Put(&(scheduler->task_queue), target_td, 
 				target_td->priority);
 		}
@@ -282,8 +335,8 @@ int k_AwaitEvent(EventID event_id) {
 	Scheduler * scheduler = &k_state->scheduler;
 		
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
-
-	scheduler->current_task_descriptor->state = EVENT_BLOCKED;
+	
+	Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, EVENT_BLOCKED);
 	scheduler->current_task_descriptor->event_id = event_id;
 	// TODO do something
 	

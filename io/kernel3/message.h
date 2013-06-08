@@ -1,8 +1,9 @@
 #ifndef MESSAGE_H_
 #define MESSAGE_H_
 
+#include "queue.h"
+
 #define MESSAGE_SIZE 100
-#define MAX_MESSAGES 50
 
 typedef enum MessageType {
 	MESSAGE_TYPE_REGISTER_AS = 0,
@@ -38,6 +39,12 @@ typedef struct KernelMessage {
 	unsigned int destination_size;
 
 } KernelMessage;
+
+
+// This message is used for passing messages of different types
+typedef struct GenericMessage {
+	MessageType message_type;  // This member should always be first.
+} GenericMessage;
 
 void KernelMessage_Initialize(KernelMessage * km,
 		int origin, int destination, char * msg, char * dest_buffer,

@@ -16,7 +16,7 @@ void ClockNotifier_Start() {
 	robprintfbusy((const unsigned char *)"ClockNotifier TID=%d: start\n", MyTid());
 	
 	while (1) {
-		int return_code = AwaitEvent(CLOCK_TICK_EVENT);
+		AwaitEvent(CLOCK_TICK_EVENT);
 		
 		Send(clock_server_id, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		

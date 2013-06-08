@@ -1,5 +1,7 @@
 #include "tasks.h"
+#include "rps.h"
 #include "public_kernel_interface.h"
+#include "private_kernel_interface.h"
 #include "robio.h"
 #include "queue.h"
 #include "memory.h"
@@ -7,11 +9,12 @@
 #include "message.h"
 #include "nameserver.h"
 #include "clock.h"
+#include "ts7200.h"
 #include "notifier.h"
 #include "rps.h"
 
 void KernelTask_Start() {
-	int tid = Create(HIGHEST, &FirstTask_Start);
+	int tid = Create(HIGHEST, &RPSTestStart);
 	
 	assert(tid == 1, "FirstTask tid not 1");
 	
@@ -20,10 +23,10 @@ void KernelTask_Start() {
 }
 
 void FirstTask_Start() {
+//	Exit();
 	int tid;
-	const int num_clients = 4;
 	
-	robprintfbusy((const unsigned char *)"FirstTask Start\n");
+	robprintfbusy((const unsigned char *)"FFirstTask Start\n");
 	
 	tid = Create(HIGHEST + 1, &NameServer_Start);
 	assert(tid == 2, "NameServer tid not 2");
@@ -105,10 +108,28 @@ void FirstTask_Start() {
 	reply_message->num_delays = 3;
 	Reply(client_4_tid, reply_buffer, MESSAGE_SIZE);
 	
+	// 4
+	tid = Create(LOWEST, &IdleTask_Start);
+	assert(tid > 0, "IdleTask tid not positive");
+	
 	robprintfbusy((const unsigned char *)"FirstTask Exit\n");
 	Exit();
 	
 	assert(0, "Shouldn't see me\n");
+}
+
+void IdleTask_Start() {
+	unsigned int i = 0;
+	
+	while(i < 100000) {
+		if (i % 1000 == 0) {
+			robprintfbusy((const unsigned char *)"IdleTask ... i=%d \n", i);
+			//robprintfbusy((const unsigned char *)"IdleTask ... timer=%d \n", *timer_val);
+			Pass();
+		}
+		i++;
+	}
+	Exit();
 }
 
 int overflow(int times){
