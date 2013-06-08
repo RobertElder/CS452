@@ -43,6 +43,7 @@ void print_memory_status(){
 	int user_stacks_end = USER_TASKS_STACK_START - (USER_TASK_STACK_SIZE * k_state->scheduler.num_tasks);
 	robprintfbusy((const unsigned char *)"Unallocated:      0x000%x - 0x0%x\n",(unsigned int)&_EndOfProgram, user_stacks_end);
 
+	/*
 	int i;
 	for(i = k_state->scheduler.num_tasks -1; i > -1; i--){
 		int stack_base = (int)get_stack_base(i);
@@ -52,6 +53,7 @@ void print_memory_status(){
 		int kb_total = USER_TASK_STACK_SIZE / 1024;
 		robprintfbusy((const unsigned char *)"Stack of task %d:  0x0%x - 0x0%x (Was %x on last ctxt switch.  %d of %d kb used.)\n",i, stack_end, stack_base, last_sp, kb_used, kb_total);
 	}
+	*/
 
 	int kernel_stack_base = (int) KERNEL_STACK_START;
 	int kernel_stack_end = (kernel_stack_base - KERNEL_STACK_SIZE) + 4;
@@ -93,9 +95,16 @@ void print_memory_status(){
 }
 
 void k_InitKernel(){
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	//  Make sure the kernel stack is not already on top of the user stacks, and there is at least
+	//  a 32k wiggle room too.
+	int kernel_stack_end = (KERNEL_STACK_START - KERNEL_STACK_SIZE);
+	int current_stack = (int)k_state->last_kernel_sp_value;
+	assertf(kernel_stack_end + (1024 * 32) < current_stack,"The kernel's allocated stack end is %x but user process stacks start at %x.  Won't start unless there is at least 32k buffer room.", kernel_stack_end, current_stack) ;
+	//  Make sure the kernel stack is starting further down than the redboot stack.
+	assertf(KERNEL_STACK_START < (int)k_state->user_proc_sp_value, "The kernel stack starts at %x, but the redboot stack ends at %x.",KERNEL_STACK_START, k_state->user_proc_sp_value);
 		
 
-	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
 	/*  Remember where to return to, in case we want to hand control back to redboot */
 	k_state->redboot_sp_value = k_state->user_proc_sp_value;

@@ -38,6 +38,7 @@ void Scheduler_InitAndSetKernelTask(Scheduler * scheduler, KernelState * k_state
 	scheduler->num_tasks++; 
 	safely_add_task_to_priority_queue(&scheduler->task_queue, task_descriptor, task_priority);
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
+	print_memory_status();
 }
 
 TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
@@ -100,6 +101,8 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 		scheduler->num_tasks);
 	*/
 	
+	print_memory_status();
+
 	return 0;
 	
 	assert(0, "Shouldn't get here");

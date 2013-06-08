@@ -11,7 +11,7 @@ int k_Reply(int tid, char *reply, int replylen);
 void * get_stack_base(unsigned int task_id);
 void print_memory_status();
 
-#define KERNEL_STACK_START 0x01500000
-#define KERNEL_STACK_SIZE 0x00100000
+#define KERNEL_STACK_START 0x01fdcf00
+#define KERNEL_STACK_SIZE 0x00130000
 #define USER_TASKS_STACK_START (KERNEL_STACK_START - KERNEL_STACK_SIZE)
 #define USER_TASK_STACK_SIZE 0x00010000

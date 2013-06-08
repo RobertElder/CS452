@@ -1,7 +1,7 @@
 #ifndef QUEUE_H_
 #define QUEUE_H_
 
-#define QUEUE_SIZE 400
+#define QUEUE_SIZE 510
 #define QUEUE_ITEM_TYPE void*
 #define NUM_PRIORITIES 32
 

@@ -8,7 +8,7 @@ void * request_memory(unsigned char *, unsigned char *);
 void release_memory(unsigned char *, unsigned char *, void *);
 int validate_memory();
 
-#define NUM_MEMORY_BLOCKS 400
+#define NUM_MEMORY_BLOCKS 480
 #define MEMORY_BLOCK_SIZE sizeof(KernelMessage)
 #define SANITY_BYTE_SIZE 4
 
