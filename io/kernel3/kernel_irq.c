@@ -7,9 +7,6 @@
 #include "private_kernel_interface.h"
 
 void irq_handler() {
-	set_led(LED_BOTH);
-	//robprintfbusy((const unsigned char *)"\n\033[33m[INTERRUPT MODE] \n");
-	
 //	robprintfbusy((const unsigned char *)"Press Enter to continue...");
 //	robgetcbusy(COM2);
 	

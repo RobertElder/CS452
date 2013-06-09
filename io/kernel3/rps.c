@@ -345,7 +345,7 @@ void RPSClient_Initialize(RPSClient * client) {
 	client->tid = MyTid();
 	RNG_Initialize(&client->rng, client->tid);
 	client->server_id = WhoIs((char*) RPS_SERVER_NAME);
-	client->num_rounds_to_play = 7;
+	client->num_rounds_to_play = 4;
 	client->running = 1;
 }
 
