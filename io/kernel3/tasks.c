@@ -30,7 +30,8 @@ void FirstTask_Start() {
 	
 	tid = Create(HIGHEST + 1, &NameServer_Start);
 	assert(tid == 2, "NameServer tid not 2");
-Create(HIGHEST, &RPSTestStart);
+
+	//Create(HIGHEST, &RPSTestStart);
 	
 	tid = Create(HIGHEST + 1, &ClockServer_Start);
 	assert(tid > 0, "ClockServer tid not positive");
@@ -91,29 +92,32 @@ Create(HIGHEST, &RPSTestStart);
 	
 	// 1
 	reply_message->delay_time = 10;
-	reply_message->num_delays = 20;
+	reply_message->num_delays = 200;
 	Reply(client_1_tid, reply_buffer, MESSAGE_SIZE);
 	
 	// 2
 	reply_message->delay_time = 23;
-	reply_message->num_delays = 9;
+	reply_message->num_delays = 90;
 	Reply(client_2_tid, reply_buffer, MESSAGE_SIZE);
 	
 	// 3
 	reply_message->delay_time = 33;
-	reply_message->num_delays = 6;
+	reply_message->num_delays = 60;
 	Reply(client_3_tid, reply_buffer, MESSAGE_SIZE);
 	
 	// 4
 	reply_message->delay_time = 71;
-	reply_message->num_delays = 3;
+	reply_message->num_delays = 30;
 	Reply(client_4_tid, reply_buffer, MESSAGE_SIZE);
 	
+	tid = Create(LOWEST, &AdministratorTask_Start);
+	assertf(tid == ADMINISTRATOR_TASK_TID, "AdministratorTask_Start tid was %d it was not %d.",tid,ADMINISTRATOR_TASK_TID);
+
 	tid = Create(LOWEST, &IdleTask_Start);
-	assert(tid > 0, "IdleTask tid not positive");
+	assertf(tid == IDLE_TASK_TID , "IdleTask tid was %d it was not %d.",tid,IDLE_TASK_TID);
 	
-	tid = Create(LOW, &ClockPrintTask_Start);
-	assert(tid > 0, "ClockPrintTask_Start tid not positive");
+	//tid = Create(LOW, &ClockPrintTask_Start);
+	//assert(tid > 0, "ClockPrintTask_Start tid not positive");
 	
 	robprintfbusy((const unsigned char *)"FirstTask Exit\n");
 	Exit();
@@ -132,38 +136,86 @@ void ClockPrintTask_Start() {
 	Exit();
 }
 
-void IdleTask_Start() {
-	unsigned int i = 0;
-	
-	while(TimeSeconds() < 5) {
-		if (i % 10000 == 0) {
-			//robprintfbusy((const unsigned char *)"IdleTask .... i=%d \n", i);
-			//robprintfbusy((const unsigned char *)"IdleTask ... timer=%d \n", *timer_val);
-		}
-		Pass();
-		i++;
-	}
-	
-	robprintfbusy((const unsigned char *)"IdleTask begin shutdown\n");
-	
+void IdleTask_Start(){
+	/* While we are waiting for events, this task and the administrator just send messages back and forth */
 	char send_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
+	GenericMessage * send_message = (GenericMessage *) send_buffer;
+	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
+	send_message->message_type = MESSAGE_TYPE_HELLO;
+	while(1){
+		Send(ADMINISTRATOR_TASK_TID, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+		assertf(reply_message->message_type == MESSAGE_TYPE_ACK || reply_message->message_type == MESSAGE_TYPE_SHUTDOWN, "fail\n");
+		if(reply_message->message_type == MESSAGE_TYPE_SHUTDOWN){
+			break;
+			robprintfbusy((const unsigned char *)"Got shutdown in idle task\n" );
+		}
+
+	}
+
+	Exit();
+	assert(0,"Nope.");
+}
+
+void AdministratorTask_Start() {
+	unsigned int idletask_shutdown_sent = 0;
+	unsigned int shutdown_requests = 0;
+	unsigned int required_requests = 4;
+
+	char send_buffer[MESSAGE_SIZE];
+	char receive_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
+
+	GenericMessage * receive_msg = (GenericMessage *) receive_buffer;
+	GenericMessage * reply_msg = (GenericMessage *) reply_buffer;
+
+	int source_tid;
+	
+	//  Wait until all the clients tell us they are done
+	while((shutdown_requests < required_requests) || idletask_shutdown_sent == 0) {
+		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
+		switch(receive_msg->message_type) {
+			case MESSAGE_TYPE_SHUTDOWN:{
+				shutdown_requests++;
+				reply_msg->message_type = MESSAGE_TYPE_ACK;
+				Reply(source_tid, reply_buffer, MESSAGE_SIZE);
+				break;
+			}case MESSAGE_TYPE_HELLO:{
+				if(shutdown_requests == required_requests){
+					reply_msg->message_type = MESSAGE_TYPE_SHUTDOWN;
+					idletask_shutdown_sent = 1;
+					robprintfbusy((const unsigned char *)"Sending shutdown to idle task %d\n" ,source_tid );
+				}else{
+					reply_msg->message_type = MESSAGE_TYPE_ACK;
+				}
+				Reply(source_tid, reply_buffer, MESSAGE_SIZE);
+				break;
+			}default:{
+				assertf(0, "AdministratorTask_Start: unknown message type %d", receive_msg->message_type);
+			}
+		}
+
+		Pass();
+	}
+	robprintfbusy((const unsigned char *)"Got %d shutdowns needed %d, shutdown send %d\n" , shutdown_requests, required_requests, idletask_shutdown_sent);
+	
+	robprintfbusy((const unsigned char *)"AdministratorTask_Start begin shutdown\n");
 	
 	ClockMessage * clock_send_message = (ClockMessage *) send_buffer;
 	ClockMessage * clock_reply_message = (ClockMessage *) reply_buffer;
 	clock_send_message->message_type = MESSAGE_TYPE_SHUTDOWN;
 	
 	Send(WhoIs((char*) CLOCK_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
-	assertf(clock_reply_message->message_type == MESSAGE_TYPE_ACK, "IdleTask: did not get a ack from clock server");
+	assertf(clock_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from clock server");
 	
 	NameServerMessage * ns_send_message = (NameServerMessage *) send_buffer;
 	NameServerMessage * ns_reply_message = (NameServerMessage *) reply_buffer;
 	ns_send_message->message_type = MESSAGE_TYPE_NAME_SERVER_SHUTDOWN;
 	
 	Send(NAMESERVER_TID, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
-	assert(ns_reply_message->message_type==MESSAGE_TYPE_ACK, "IdleTask didn't get ACK from name server");
+	assert(ns_reply_message->message_type==MESSAGE_TYPE_ACK, "AdministratorTask_Start didn't get ACK from name server");
 
-	robprintfbusy((const unsigned char *)"IdleTask Exit\n");
+	robprintfbusy((const unsigned char *)"AdministratorTask Exit\n");
 	
 	Exit();
 }
