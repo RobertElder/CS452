@@ -1,10 +1,12 @@
 #include "kernel_irq.h"
 #include "robio.h"
 #include "ts7200.h"
-
+#include "scheduler.h"
+#include "kernel_state.h"
+#include "public_kernel_interface.h"
+#include "private_kernel_interface.h"
 
 void irq_handler() {
-	//set_led(LED_BOTH);
 //	robprintfbusy((const unsigned char *)"Press Enter to continue...");
 //	robgetcbusy(COM2);
 	
@@ -12,7 +14,13 @@ void irq_handler() {
 	int * VIC2VectAddr = (int *)0x800C0030;
 	//int temp = *VIC2VectAddr;
 	*VIC2VectAddr = 0;
-	//set_led(LED_GREEN);
+	
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	
+	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, CLOCK_TICK_EVENT);
+	
+	//robprintfbusy((const unsigned char *)"\n[Exit interrupt mode]\033[0m\n");
+	set_led(LED_GREEN);
 	IRQ_ClearTimerInterrupt();
 }
 
