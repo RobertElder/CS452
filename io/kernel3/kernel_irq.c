@@ -5,8 +5,6 @@
 
 void irq_handler() {
 	//set_led(LED_BOTH);
-	robprintfbusy((const unsigned char *)"\n\033[33m[INTERRUPT MODE] \n");
-	
 //	robprintfbusy((const unsigned char *)"Press Enter to continue...");
 //	robgetcbusy(COM2);
 	
@@ -14,9 +12,6 @@ void irq_handler() {
 	int * VIC2VectAddr = (int *)0x800C0030;
 	//int temp = *VIC2VectAddr;
 	*VIC2VectAddr = 0;
-	
-	
-	robprintfbusy((const unsigned char *)"\n[Exit interrupt mode]\033[0m\n");
 	//set_led(LED_GREEN);
 	IRQ_ClearTimerInterrupt();
 }
