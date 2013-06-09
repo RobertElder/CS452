@@ -8,7 +8,7 @@ void m_strcpy(char *dest, const char *src, int len) {
 	// FIXME: I'm not optimal
 	unsigned int i = 0;
 	const int num_octets_small = 8;
-	const int num_octets_big = 64;
+	const int num_octets_big = 32;
 	int * dest_addr = (int *) dest;
 	int * src_addr = (int *) src;
 	
@@ -25,7 +25,7 @@ void m_strcpy(char *dest, const char *src, int len) {
 	int remaining;
 	
 	while (i < len) {
-		remaining = len - 1;
+		remaining = len - i;
 		
 		if (remaining < num_octets_small) {
 			dest[i] = src[i];

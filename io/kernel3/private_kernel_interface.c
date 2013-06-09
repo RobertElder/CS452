@@ -222,7 +222,7 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			target_td->return_value = msglen;
 	
 			assert((int) target_td->receive_msg, "k_Send: receive_msg isn't set");
-			assert(msglen == 100, "msglen not 100");	
+			assert(msglen == MESSAGE_SIZE, "msglen not 100");	
 			m_strcpy(target_td->receive_msg, msg, msglen);
 	
 			//  This task is now blocked on a reply
@@ -276,7 +276,7 @@ int k_Receive(int *tid, char *msg, int msglen){
 		Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 	}else{
 		//  There is a message, give it to the task
-		assert(msglen == 100, "msglen not 100");	
+		assert(msglen == MESSAGE_SIZE, "msglen not 100");	
 		m_strcpy(msg, message->msg, msglen);
 
 		*tid = message->origin;
@@ -316,7 +316,7 @@ int k_Reply(int tid, char *reply, int replylen){
 			return_value = ERR_K_INSUFFICIENT_SPACE;
 		} else {
 			assert((int) target_td->reply_msg, "k_Reply: reply_msg isn't set");
-			assert(replylen == 100, "msglen not 100");	
+			assert(replylen == MESSAGE_SIZE, "msglen not 100");	
 			m_strcpy(target_td->reply_msg, reply, replylen);
 			Scheduler_ChangeTDState(scheduler, target_td, READY);
 			PriorityQueue_Put(&(scheduler->task_queue), target_td, 

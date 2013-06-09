@@ -10,6 +10,8 @@ void NameServer_Start() {
 	int sender_id;
 	NameServerMessage * received_message;
 	NameServerMessage * outgoing_message;
+	
+	assert(sizeof(NameServerMessage) <= MESSAGE_SIZE, "NameServerMessage size too big");
 
 	while(1){
 		Receive( &sender_id, ns.receive_buffer, MESSAGE_SIZE);

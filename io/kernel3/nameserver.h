@@ -5,12 +5,11 @@
 #ifndef NAMESERVER_H_
 #define NAMESERVER_H_
 
-// FIXME if the max name is not a multiple of 4, infinite loop happens
-#define MAX_CLIENT_NAME_LENGTH 40
+#define MAX_CLIENT_NAME_LENGTH 11
 
 typedef struct NameServerMessage {
 	MessageType message_type;
-	char * str;
+	char str[MAX_CLIENT_NAME_LENGTH + 1];
 	int num;
 } NameServerMessage;
 
@@ -18,7 +17,7 @@ typedef struct NameServer {
 	int tid;
 	char receive_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
-	char names[MAX_TASKS + 1][MAX_CLIENT_NAME_LENGTH];
+	char names[MAX_TASKS + 1][MAX_CLIENT_NAME_LENGTH + 1];
 	short filled[MAX_TASKS + 1];
 	unsigned int num_clients;
 } NameServer;

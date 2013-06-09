@@ -12,6 +12,9 @@ void ClockServer_Start() {
 	GenericMessage * receive_msg = (GenericMessage *) server.receive_buffer;
 	int source_tid;
 	
+	assert(sizeof(NotifyMessage) <= MESSAGE_SIZE, "NotifyMessage size too big");
+	assert(sizeof(ClockMessage) <= MESSAGE_SIZE, "ClockMessage size too big");
+	
 	robprintfbusy((const unsigned char *)"ClockServer TID=%d: start\n", server.tid);
 	
 	int return_code = RegisterAs((char *)CLOCK_SERVER_NAME);

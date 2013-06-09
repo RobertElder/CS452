@@ -4,7 +4,7 @@
 #ifndef CLOCK_H_
 #define CLOCK_H_
 
-static const char const CLOCK_SERVER_NAME[] = "clock_server";
+static const char const CLOCK_SERVER_NAME[] = "ClckSvr";
 static int * const TIMER4_VAL_LOW = (int*) 0x80810060;
 static int * const TIMER4_VAL_HIGH = (int*) 0x80810084;
 

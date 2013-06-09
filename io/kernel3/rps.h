@@ -6,7 +6,7 @@
 #ifndef RPS_H_
 #define RPS_H_
 
-static const char RPS_SERVER_NAME[] = "rps_server";
+static const char RPS_SERVER_NAME[] = "RPSSvr";
 
 typedef enum RPS_CHOICE {
 	NO_CHOICE=-1,
