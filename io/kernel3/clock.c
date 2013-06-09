@@ -197,9 +197,18 @@ void ClockClient_Start() {
 	
 	int i;
 	for (i = 0; i < client.num_delays; i++) {
+		//robprintfbusy((const unsigned char *)"ClockClient TID=%d: About to delay %d, i=%d\n", client.tid, client.delay_time, i);
 		Delay(client.delay_time);
 		robprintfbusy((const unsigned char *)"ClockClient TID=%d: I just delayed delay_time=%d, i=%d\n", client.tid, client.delay_time, i);
 	}
+
+	robprintfbusy((const unsigned char *)"ClockClient TID=%d: Finished, telling idletask we're shutting down.\n", client.tid);
+
+
+	send_message->message_type = MESSAGE_TYPE_SHUTDOWN;
+	
+	Send(ADMINISTRATOR_TASK_TID, client.send_buffer, MESSAGE_SIZE, client.reply_buffer, MESSAGE_SIZE);
+	assertf(reply_message->message_type == MESSAGE_TYPE_ACK, "ClockClient TID=%d: failed to get ACK message\n");
 	
 	robprintfbusy((const unsigned char *)"ClockClient TID=%d: Exit\n", client.tid);
 	

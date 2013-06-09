@@ -3,6 +3,9 @@
 #ifndef TASK_H_
 #define TASK_H_
 
+#define ADMINISTRATOR_TASK_TID 9
+#define IDLE_TASK_TID 10
+
 typedef struct K3Message {
 	MessageType message_type;
 	int delay_time;
@@ -12,6 +15,8 @@ typedef struct K3Message {
 void KernelTask_Start();
 
 void FirstTask_Start();
+
+void AdministratorTask_Start();
 
 void IdleTask_Start();
 
