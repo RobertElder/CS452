@@ -31,8 +31,20 @@ typedef struct TaskDescriptor {
 	EventID event_id;
 } TD;
 
+static const char const TASK_STATE_NAMES[][20] = {
+	"\033[37mready\033[0m",
+	"\033[32mactive\033[0m",
+	"\033[34mzombie\033[0m",
+	"\033[35msend_b\033[0m",
+	"\033[31mrecv_b\033[0m",
+	"\033[36mreply_b\033[0m",
+	"\033[33mevent_b\033[0m"
+};
+
 void TD_Initialize(TD * td, int id, QueuePriority priority, int parent_id, void *, void *);
 
 int is_tid_in_range(int tid);
+
+
 
 #endif /* TASK_DESCRIPTOR_H_ */
