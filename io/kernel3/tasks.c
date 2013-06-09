@@ -36,9 +36,6 @@ void FirstTask_Start() {
 	tid = Create(HIGHEST + 1, &ClockServer_Start);
 	assert(tid > 0, "ClockServer tid not positive");
 	
-	tid = Create(HIGHEST, ClockNotifier_Start);
-	assert(tid > 0, "ClockNotifier tid not positive");
-	
 	// 1
 	tid = Create(3, &ClockClient_Start);
 	assertf(tid > 0, "ClockClient tid not positive, got %d", tid);

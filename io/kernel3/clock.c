@@ -17,6 +17,9 @@ void ClockServer_Start() {
 	int return_code = RegisterAs((char *)CLOCK_SERVER_NAME);
 	assert(return_code == 0, "ClockServer: Failed to register name");
 	
+	int tid = Create(HIGHEST, ClockNotifier_Start);
+	assert(tid > 0, "ClockNotifier tid not positive");
+	
 	// For Debugging
 	*TIMER4_VAL_HIGH |= 1 << 8;
 	server.last_timer_value = *TIMER4_VAL_LOW;
