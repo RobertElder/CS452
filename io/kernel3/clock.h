@@ -5,6 +5,8 @@
 #define CLOCK_H_
 
 static const char CLOCK_SERVER_NAME[] = "clock_server";
+static int * const TIMER4_VAL_LOW = (int*) 0x80810060;
+static int * const TIMER4_VAL_HIGH = (int*) 0x80810084;
 
 typedef struct ClockMessage {
 	MessageType message_type;
@@ -19,6 +21,7 @@ typedef struct ClockServer {
 	int tid_to_delay_until[MAX_TASKS + 1];
 	short shutdown;
 	short running;
+	unsigned int last_timer_value; // for debugging
 } ClockServer;
 
 void ClockServer_Start();

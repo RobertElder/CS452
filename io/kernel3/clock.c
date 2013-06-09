@@ -17,6 +17,10 @@ void ClockServer_Start() {
 	int return_code = RegisterAs((char *)CLOCK_SERVER_NAME);
 	assert(return_code == 0, "ClockServer: Failed to register name");
 	
+	// For Debugging
+	*TIMER4_VAL_HIGH |= 1 << 8;
+	server.last_timer_value = *TIMER4_VAL_LOW;
+	
 	while (server.running) {
 		Receive(&source_tid, server.receive_buffer, MESSAGE_SIZE);
 		//robprintfbusy((const unsigned char *)"ClockServer: received %d message type\n", receive_msg->message_type);
@@ -76,7 +80,17 @@ void ClockServer_HandleNotifier(ClockServer * server, int source_tid, NotifyMess
 		reply_message->message_type = MESSAGE_TYPE_ACK;
 	}
 	
+	// Debugging code
+	int now = *TIMER4_VAL_LOW;
+	int diff = (now - server->last_timer_value) / 983;
+	server->last_timer_value = now;
+
 	Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
+	
+	// Debugging code
+	if (diff > TICK_SIZE + 1) {
+		robprintfbusy((const unsigned char *) "\033[1;31mSLOW! %d\033[0m\n", diff);
+	}
 	
 	server->ticks += 1;
 }
@@ -96,7 +110,7 @@ void ClockServer_HandleDelayRequest(ClockServer * server, int source_tid, ClockM
 	
 	if (receive_msg->num <= server->ticks) {
 		robprintfbusy((const unsigned char *)
-		"\033[1;31mClockServer: WARNING delay value in the past from tid=%d! "
+		"\033[1;33mClockServer: WARNING delay value in the past from tid=%d! "
 		"Got=%d, now=%d\033[0m\n", source_tid, receive_msg->num, server->ticks);
 	
 		ClockMessage * reply_message = (ClockMessage *) server->reply_buffer;
