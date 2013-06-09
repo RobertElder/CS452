@@ -205,7 +205,7 @@ void ClockClient_Start() {
 		robprintfbusy((const unsigned char *)"ClockClient TID=%d: I just delayed delay_time=%d, i=%d\n", client.tid, client.delay_time, i);
 	}
 
-	robprintfbusy((const unsigned char *)"ClockClient TID=%d: Finished, telling idletask we're shutting down.\n", client.tid);
+	//robprintfbusy((const unsigned char *)"ClockClient TID=%d: Finished, telling idletask we're shutting down.\n", client.tid);
 
 
 	send_message->message_type = MESSAGE_TYPE_SHUTDOWN;

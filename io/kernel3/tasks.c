@@ -202,9 +202,10 @@ void AdministratorTask_Start() {
 
 		Pass();
 	}
-	robprintfbusy((const unsigned char *)"Got %d shutdowns needed %d, shutdown send %d\n" , shutdown_requests, required_requests, idletask_shutdown_sent);
 	
-	robprintfbusy((const unsigned char *)"AdministratorTask_Start begin shutdown\n");
+	//robprintfbusy((const unsigned char *)"Got %d shutdowns needed %d, shutdown send %d\n" , shutdown_requests, required_requests, idletask_shutdown_sent);
+	
+	//robprintfbusy((const unsigned char *)"AdministratorTask_Start begin shutdown\n");
 	
 	ClockMessage * clock_send_message = (ClockMessage *) send_buffer;
 	ClockMessage * clock_reply_message = (ClockMessage *) reply_buffer;
