@@ -3,8 +3,8 @@
 #ifndef TASK_H_
 #define TASK_H_
 
-#define ADMINISTRATOR_TASK_TID 9
-#define IDLE_TASK_TID 10
+#define ADMINISTRATOR_TASK_TID 21
+#define IDLE_TASK_TID 22
 
 typedef struct K3Message {
 	MessageType message_type;
