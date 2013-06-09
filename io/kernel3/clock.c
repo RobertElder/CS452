@@ -17,6 +17,9 @@ void ClockServer_Start() {
 	int return_code = RegisterAs((char *)CLOCK_SERVER_NAME);
 	assert(return_code == 0, "ClockServer: Failed to register name");
 	
+	int tid = Create(HIGHEST, ClockNotifier_Start);
+	assert(tid > 0, "ClockNotifier tid not positive");
+	
 	// For Debugging
 	*TIMER4_VAL_HIGH |= 1 << 8;
 	server.last_timer_value = *TIMER4_VAL_LOW;
@@ -207,7 +210,7 @@ void ClockClient_Start() {
 
 	send_message->message_type = MESSAGE_TYPE_SHUTDOWN;
 	
-	Send(ADMINISTRATOR_TASK_TID, client.send_buffer, MESSAGE_SIZE, client.reply_buffer, MESSAGE_SIZE);
+	Send(WhoIs((char*) ADMINISTRATOR_TASK_NAME), client.send_buffer, MESSAGE_SIZE, client.reply_buffer, MESSAGE_SIZE);
 	assertf(reply_message->message_type == MESSAGE_TYPE_ACK, "ClockClient TID=%d: failed to get ACK message\n");
 	
 	robprintfbusy((const unsigned char *)"ClockClient TID=%d: Exit\n", client.tid);

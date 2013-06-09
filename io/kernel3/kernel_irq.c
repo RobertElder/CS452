@@ -7,9 +7,6 @@
 #include "private_kernel_interface.h"
 
 void irq_handler() {
-//	robprintfbusy((const unsigned char *)"Press Enter to continue...");
-//	robgetcbusy(COM2);
-	
 	// TODO: i'm not sure if we need this
 	int * VIC2VectAddr = (int *)0x800C0030;
 	//int temp = *VIC2VectAddr;
@@ -18,9 +15,7 @@ void irq_handler() {
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
 	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, CLOCK_TICK_EVENT);
-	
-	//robprintfbusy((const unsigned char *)"\n[Exit interrupt mode]\033[0m\n");
-	set_led(LED_GREEN);
+
 	IRQ_ClearTimerInterrupt();
 }
 
@@ -60,13 +55,10 @@ void IRQ_DisableTimerVIC2() {
 }
 
 void IRQ_ClearTimerInterrupt() {
-	
 	*timer_clear = 1;
-	
 }
 
 void IRQ_EnableInterrupts() {
-	
 	int temp;
 	asm(
 		"MRS %0, cpsr\n"

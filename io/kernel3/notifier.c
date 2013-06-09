@@ -14,17 +14,10 @@ void ClockNotifier_Start() {
 	send_message->event_id = CLOCK_TICK_EVENT;
 	
 	robprintfbusy((const unsigned char *)"ClockNotifier TID=%d: start\n", MyTid());
-
-	int i = 0;
-	while (1) {
-		clock_server_id = WhoIs((char*)CLOCK_SERVER_NAME);
-		
-		if (clock_server_id) {
-			break;
-		}
-		
-		assert(i < 100000, "ClockNotifier: did not get a clock server id");
-	}
+	
+	clock_server_id = WhoIs((char*)CLOCK_SERVER_NAME);
+	
+	assert(clock_server_id, "ClockNotifier: did not get a clock server id");
 
 	while (1) {
 		AwaitEvent(CLOCK_TICK_EVENT);
