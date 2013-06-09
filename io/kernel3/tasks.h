@@ -3,8 +3,9 @@
 #ifndef TASK_H_
 #define TASK_H_
 
-#define ADMINISTRATOR_TASK_TID 9
-#define IDLE_TASK_TID 10
+static const char const ADMINISTRATOR_TASK_NAME[] = "AdminTask";
+static const char const IDLE_TASK_NAME[] = "IdleTask";
+
 
 typedef struct K3Message {
 	MessageType message_type;

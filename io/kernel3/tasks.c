@@ -23,18 +23,23 @@ void KernelTask_Start() {
 }
 
 void FirstTask_Start() {
-//	Exit();
 	int tid;
 	
 	robprintfbusy((const unsigned char *)"FirstTask Start tid=%d\n", MyTid());
 	
+	// System user tasks
 	tid = Create(HIGHEST + 1, &NameServer_Start);
 	assert(tid == 2, "NameServer tid not 2");
 
-	//Create(HIGHEST, &RPSTestStart);
-	
 	tid = Create(HIGHEST + 1, &ClockServer_Start);
 	assert(tid > 0, "ClockServer tid not positive");
+	
+	tid = Create(LOWEST, &AdministratorTask_Start);
+	assert(tid > 0, "AdministratorTask tid not positive");
+	
+	
+	//Create(HIGHEST, &RPSTestStart);
+	
 	
 	// 1
 	tid = Create(3, &ClockClient_Start);
@@ -51,7 +56,6 @@ void FirstTask_Start() {
 	// 4
 	tid = Create(6, &ClockClient_Start);
 	assert(tid > 0, "ClockClient tid not positive");
-	
 	
 	robprintfbusy((const unsigned char *)"FirstTask begin receive\n");
 	
@@ -89,29 +93,26 @@ void FirstTask_Start() {
 	
 	// 1
 	reply_message->delay_time = 10;
-	reply_message->num_delays = 200;
+	reply_message->num_delays = 20;
 	Reply(client_1_tid, reply_buffer, MESSAGE_SIZE);
 	
 	// 2
 	reply_message->delay_time = 23;
-	reply_message->num_delays = 90;
+	reply_message->num_delays = 9;
 	Reply(client_2_tid, reply_buffer, MESSAGE_SIZE);
 	
 	// 3
 	reply_message->delay_time = 33;
-	reply_message->num_delays = 60;
+	reply_message->num_delays = 6;
 	Reply(client_3_tid, reply_buffer, MESSAGE_SIZE);
 	
 	// 4
 	reply_message->delay_time = 71;
-	reply_message->num_delays = 30;
+	reply_message->num_delays = 3;
 	Reply(client_4_tid, reply_buffer, MESSAGE_SIZE);
 	
-	tid = Create(LOWEST, &AdministratorTask_Start);
-	assertf(tid == ADMINISTRATOR_TASK_TID, "AdministratorTask_Start tid was %d it was not %d.",tid,ADMINISTRATOR_TASK_TID);
-
 	tid = Create(LOWEST, &IdleTask_Start);
-	assertf(tid == IDLE_TASK_TID , "IdleTask tid was %d it was not %d.",tid,IDLE_TASK_TID);
+	assertf(tid, "IdleTask tid not postive");
 	
 	//tid = Create(LOW, &ClockPrintTask_Start);
 	//assert(tid > 0, "ClockPrintTask_Start tid not positive");
@@ -134,14 +135,19 @@ void ClockPrintTask_Start() {
 }
 
 void IdleTask_Start(){
+	RegisterAs((char*) IDLE_TASK_NAME);
+
 	/* While we are waiting for events, this task and the administrator just send messages back and forth */
 	char send_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
 	GenericMessage * send_message = (GenericMessage *) send_buffer;
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
 	send_message->message_type = MESSAGE_TYPE_HELLO;
+	int admin_tid = WhoIs((char*) ADMINISTRATOR_TASK_NAME);
+	assert(admin_tid, "IdleTask: admin tid not found");
+	
 	while(1){
-		Send(ADMINISTRATOR_TASK_TID, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+		Send(admin_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		assertf(reply_message->message_type == MESSAGE_TYPE_ACK || reply_message->message_type == MESSAGE_TYPE_SHUTDOWN, "fail\n");
 		if(reply_message->message_type == MESSAGE_TYPE_SHUTDOWN){
 			break;
@@ -155,6 +161,8 @@ void IdleTask_Start(){
 }
 
 void AdministratorTask_Start() {
+	RegisterAs((const*) ADMINISTRATOR_TASK_NAME);
+
 	unsigned int idletask_shutdown_sent = 0;
 	unsigned int shutdown_requests = 0;
 	unsigned int required_requests = 4;
