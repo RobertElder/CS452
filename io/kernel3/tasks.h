@@ -6,7 +6,6 @@
 static const char const ADMINISTRATOR_TASK_NAME[] = "AdminTask";
 static const char const IDLE_TASK_NAME[] = "IdleTask";
 
-
 typedef struct K3Message {
 	MessageType message_type;
 	int delay_time;

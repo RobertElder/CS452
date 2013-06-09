@@ -197,6 +197,9 @@ void k_Exit(){
 int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	Scheduler * scheduler = &k_state->scheduler;
+
+	//Don't send messages to zombie tasks
+	assert(scheduler->task_descriptors[tid].state != ZOMBIE,"Sending a message to a zombie task.\n");
 		
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
 

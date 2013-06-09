@@ -31,14 +31,13 @@ void FirstTask_Start() {
 	tid = Create(HIGHEST + 1, &NameServer_Start);
 	assert(tid == 2, "NameServer tid not 2");
 
+	Create(HIGHEST, &RPSTestStart);
+	
 	tid = Create(HIGHEST + 1, &ClockServer_Start);
 	assert(tid > 0, "ClockServer tid not positive");
 	
 	tid = Create(LOWEST, &AdministratorTask_Start);
 	assert(tid > 0, "AdministratorTask tid not positive");
-	
-	
-	//Create(HIGHEST, &RPSTestStart);
 	
 	
 	// 1
@@ -93,22 +92,22 @@ void FirstTask_Start() {
 	
 	// 1
 	reply_message->delay_time = 10;
-	reply_message->num_delays = 20;
+	reply_message->num_delays = 2000;
 	Reply(client_1_tid, reply_buffer, MESSAGE_SIZE);
 	
 	// 2
 	reply_message->delay_time = 23;
-	reply_message->num_delays = 9;
+	reply_message->num_delays = 900;
 	Reply(client_2_tid, reply_buffer, MESSAGE_SIZE);
 	
 	// 3
 	reply_message->delay_time = 33;
-	reply_message->num_delays = 6;
+	reply_message->num_delays = 600;
 	Reply(client_3_tid, reply_buffer, MESSAGE_SIZE);
 	
 	// 4
 	reply_message->delay_time = 71;
-	reply_message->num_delays = 3;
+	reply_message->num_delays = 300;
 	Reply(client_4_tid, reply_buffer, MESSAGE_SIZE);
 	
 	tid = Create(LOWEST, &IdleTask_Start);
@@ -161,7 +160,7 @@ void IdleTask_Start(){
 }
 
 void AdministratorTask_Start() {
-	RegisterAs((const*) ADMINISTRATOR_TASK_NAME);
+	RegisterAs((char*) ADMINISTRATOR_TASK_NAME);
 
 	unsigned int idletask_shutdown_sent = 0;
 	unsigned int shutdown_requests = 0;
