@@ -52,14 +52,6 @@ void RPSServer_Start() {
 		}
 	}
 
-	robprintfbusy((const unsigned char *)"RPSServer exited\n");
-
-	NameServerMessage * name_server_message = (NameServerMessage *) server.send_buffer;
-	NameServerMessage * reply_message = (NameServerMessage *) server.reply_buffer;
-	name_server_message->message_type = MESSAGE_TYPE_NAME_SERVER_SHUTDOWN;
-	//Send(NAMESERVER_TID, server.send_buffer, MESSAGE_SIZE, server.reply_buffer, MESSAGE_SIZE);
-	//assert(reply_message->message_type==MESSAGE_TYPE_ACK, "RPSServer didn't get ACK from name server");
-
 	robprintfbusy((const unsigned char *)"About to call exit from rpsserver.\n");
 	Exit();
 

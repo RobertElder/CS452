@@ -160,7 +160,7 @@ void IdleTask_Start(){
 }
 
 void AdministratorTask_Start() {
-	RegisterAs((const*) ADMINISTRATOR_TASK_NAME);
+	RegisterAs((char*) ADMINISTRATOR_TASK_NAME);
 
 	unsigned int idletask_shutdown_sent = 0;
 	unsigned int shutdown_requests = 0;
