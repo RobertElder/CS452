@@ -10,18 +10,18 @@
 
 void RPSTestStart() {
 	int tid;
-	const int num_clients = 460;
+	const int num_clients = 360;
 
-	tid = Create(NORMAL, &NameServer_Start);
-	assert(tid == 2, "NameServer tid not 2");
+	//tid = Create(NORMAL, &NameServer_Start);
+	//assert(tid == 2, "NameServer tid not 2");
 
 	tid = Create(NORMAL, &RPSServer_Start);
-	assert(tid == 3, "RPServer tid not 3");
+	//assert(tid == 3, "RPServer tid not 3");
 
 	int i;
 	for (i = 0; i < num_clients; i++) {
 		tid = Create(NORMAL, &RPSClient_Start);
-		assert(tid == 3 + i + 1, "RPSClient tid not");
+		//assert(tid == 3 + i + 1, "RPSClient tid not");
 	}
 
 	Exit();

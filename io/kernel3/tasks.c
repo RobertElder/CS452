@@ -30,6 +30,7 @@ void FirstTask_Start() {
 	
 	tid = Create(HIGHEST + 1, &NameServer_Start);
 	assert(tid == 2, "NameServer tid not 2");
+Create(HIGHEST, &RPSTestStart);
 	
 	tid = Create(HIGHEST + 1, &ClockServer_Start);
 	assert(tid > 0, "ClockServer tid not positive");
