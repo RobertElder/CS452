@@ -34,6 +34,7 @@ void NameServer_Start() {
 				//robprintfbusy((const unsigned char *)"Name server got request from %d shutdown\n", sender_id);
 				outgoing_message = (NameServerMessage *) ns.reply_buffer;
 				outgoing_message->message_type = MESSAGE_TYPE_ACK;
+				NameServer_PrintTable(&ns);
 				Reply(sender_id, ns.reply_buffer, MESSAGE_SIZE);
 				Exit();
 			}default:{
@@ -84,3 +85,13 @@ int NameServer_GetName(NameServer * ns, char * name) {
 	return 0;
 }
 
+void NameServer_PrintTable(NameServer * ns) {
+	int tid;
+
+	for (tid = 0; tid < MAX_TASKS + 1; tid++) {
+		if (!ns->filled[tid]) {
+			continue;
+		}
+		robprintfbusy((const unsigned char *)"NameServer_PrintTable: Tid=%d Name=%s\n", tid, ns->names[tid]);
+	}
+}

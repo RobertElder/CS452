@@ -27,5 +27,6 @@ void NameServer_Start();
 void NameServer_Initialize(NameServer * ns);
 void NameServer_SetName(NameServer * ns, int tid, char * name);
 int NameServer_GetName(NameServer * ns, char * name);
+void NameServer_PrintTable(NameServer * ns);
 
 #endif /* NAMESERVER_H_ */
