@@ -14,7 +14,7 @@ void ClockNotifier_Start() {
 	send_message->event_id = CLOCK_TICK_EVENT;
 	
 	robprintfbusy((const unsigned char *)"ClockNotifier TID=%d: start\n", MyTid());
-	
+
 	int i = 0;
 	while (1) {
 		clock_server_id = WhoIs((char*)CLOCK_SERVER_NAME);
@@ -25,8 +25,7 @@ void ClockNotifier_Start() {
 		
 		assert(i < 100000, "ClockNotifier: did not get a clock server id");
 	}
-	
-	
+
 	while (1) {
 		AwaitEvent(CLOCK_TICK_EVENT);
 		
@@ -34,10 +33,16 @@ void ClockNotifier_Start() {
 		
 		Send(clock_server_id, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		
-		assert(reply_message->message_type == MESSAGE_TYPE_ACK, "ClockNotifier_Start did not get a ACK reply");
-	}
-	
-	robprintfbusy((const unsigned char *)"ClockNotifier TID=%d: exit\n", MyTid());
+		assert(reply_message->message_type == MESSAGE_TYPE_ACK ||
+			reply_message->message_type == MESSAGE_TYPE_SHUTDOWN, 
+			"ClockNotifier_Start did not get a ACK or SHUTDOWN reply");
 		
+		if (reply_message->message_type == MESSAGE_TYPE_SHUTDOWN) {
+			break;
+		}
+	}
+
+	robprintfbusy((const unsigned char *)"ClockNotifier TID=%d: exit\n", MyTid());
+
 	Exit();
 }

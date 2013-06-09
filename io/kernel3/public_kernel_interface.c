@@ -144,3 +144,15 @@ int Time( ) {
 int Delay( int ticks ) {
 	return DelayUntil(Time() + ticks);
 }
+
+int DelaySeconds( float seconds ) {
+	return Delay(seconds * 1000.0 / TICK_SIZE);
+}
+
+float TimeSeconds() {
+	return Time() / 1000.0 * TICK_SIZE;
+}
+
+int DelayUntilSeconds( float seconds ) {
+	return DelayUntil( seconds * 1000.0 / TICK_SIZE);
+}

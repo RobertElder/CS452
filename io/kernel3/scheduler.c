@@ -284,9 +284,9 @@ void Scheduler_PrintTDCounts(Scheduler * scheduler) {
 		if (Scheduler_IsInitedTid(scheduler, i)) {
 			robprintfbusy((const unsigned char *)" TID=%d: %d   ", i, scheduler->task_descriptors[i].state);
 			count++;
-		}
-		if (count % 10 == 0) {
-			robprintfbusy((const unsigned char *)"\n");
+			if (count % 10 == 0) {
+				robprintfbusy((const unsigned char *)"\n");
+			}
 		}
 	}
 	

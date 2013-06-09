@@ -17,6 +17,8 @@ typedef struct ClockServer {
 	char reply_buffer[MESSAGE_SIZE];
 	unsigned int ticks;
 	int tid_to_delay_until[MAX_TASKS + 1];
+	short shutdown;
+	short running;
 } ClockServer;
 
 void ClockServer_Start();
@@ -28,6 +30,8 @@ void ClockServer_HandleNotifier(ClockServer * server, int source_tid, NotifyMess
 void ClockServer_HandleTimeRequest(ClockServer * server, int source_tid, ClockMessage * receive_msg);
 
 void ClockServer_HandleDelayRequest(ClockServer * server, int source_tid, ClockMessage * receive_msg);
+
+void ClockServer_HandleShutdownRequest(ClockServer * server, int source_tid, ClockMessage * receive_msg);
 
 int ClockServer_GetNextTask(ClockServer * server);
 

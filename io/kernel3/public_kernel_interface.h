@@ -36,5 +36,8 @@ int AwaitEvent( int eventid );
 int Delay( int ticks );
 int Time( );
 int DelayUntil( int ticks );
+int DelaySeconds( float seconds );
+float TimeSeconds();
+int DelayUntilSeconds( float seconds );
 
 #endif

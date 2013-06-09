@@ -111,24 +111,59 @@ void FirstTask_Start() {
 	tid = Create(LOWEST, &IdleTask_Start);
 	assert(tid > 0, "IdleTask tid not positive");
 	
+	tid = Create(LOW, &ClockPrintTask_Start);
+	assert(tid > 0, "ClockPrintTask_Start tid not positive");
+	
 	robprintfbusy((const unsigned char *)"FirstTask Exit\n");
 	Exit();
 	
 	assert(0, "Shouldn't see me\n");
 }
 
+void ClockPrintTask_Start() {
+	while (TimeSeconds() < 4) {
+		print_current_time();
+		DelaySeconds(1);
+	}
+	
+	robprintfbusy((const unsigned char *)"ClockPrintTask Exit\n");
+	
+	Exit();
+}
+
 void IdleTask_Start() {
 	unsigned int i = 0;
 	
-	while(1) {
+	while(TimeSeconds() < 5) {
 		if (i % 10000 == 0) {
 			//robprintfbusy((const unsigned char *)"IdleTask .... i=%d \n", i);
-			print_current_time();
 			//robprintfbusy((const unsigned char *)"IdleTask ... timer=%d \n", *timer_val);
 		}
 		Pass();
 		i++;
 	}
+	
+	robprintfbusy((const unsigned char *)"IdleTask begin shutdown\n");
+	
+	char send_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
+	
+	ClockMessage * clock_send_message = (ClockMessage *) send_buffer;
+	ClockMessage * clock_reply_message = (ClockMessage *) reply_buffer;
+	clock_send_message->message_type = MESSAGE_TYPE_SHUTDOWN;
+	
+	Send(WhoIs((char*) CLOCK_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+	assertf(clock_reply_message->message_type == MESSAGE_TYPE_ACK, "IdleTask: did not get a ack from clock server");
+	
+	NameServerMessage * ns_send_message = (NameServerMessage *) send_buffer;
+	NameServerMessage * ns_reply_message = (NameServerMessage *) reply_buffer;
+	ns_send_message->message_type = MESSAGE_TYPE_NAME_SERVER_SHUTDOWN;
+	
+	Send(NAMESERVER_TID, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+	assert(ns_reply_message->message_type==MESSAGE_TYPE_ACK, "IdleTask didn't get ACK from name server");
+
+	robprintfbusy((const unsigned char *)"IdleTask Exit\n");
+	
 	Exit();
 }
 

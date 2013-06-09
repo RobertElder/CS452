@@ -15,4 +15,6 @@ void FirstTask_Start();
 
 void IdleTask_Start();
 
+void ClockPrintTask_Start();
+
 #endif
