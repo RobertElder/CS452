@@ -30,7 +30,8 @@ void FirstTask_Start() {
 	
 	tid = Create(HIGHEST + 1, &NameServer_Start);
 	assert(tid == 2, "NameServer tid not 2");
-Create(HIGHEST, &RPSTestStart);
+
+	Create(HIGHEST, &RPSTestStart);
 	
 	tid = Create(HIGHEST + 1, &ClockServer_Start);
 	assert(tid > 0, "ClockServer tid not positive");
@@ -135,7 +136,7 @@ void ClockPrintTask_Start() {
 void IdleTask_Start() {
 	unsigned int i = 0;
 	
-	while(TimeSeconds() < 5) {
+	while(TimeSeconds() < 50) {
 		if (i % 10000 == 0) {
 			//robprintfbusy((const unsigned char *)"IdleTask .... i=%d \n", i);
 			//robprintfbusy((const unsigned char *)"IdleTask ... timer=%d \n", *timer_val);

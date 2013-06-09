@@ -200,7 +200,7 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 		
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
 
-	int return_value = 8;
+	int return_value = msglen;
 	TD * current_td = scheduler->current_task_descriptor;
 
 	if (Scheduler_IsInitedTid(scheduler, tid)) {
@@ -225,8 +225,6 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			//  This task is now blocked on a reply
 			Scheduler_ChangeTDState(scheduler, current_td, REPLY_BLOCKED);
 			*(target_td->origin_tid) = scheduler->current_task_descriptor->id;
-	
-			Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 		}else{
 			KernelMessage * km = (KernelMessage *)request_memory(k_state->memory_blocks_status, k_state->memory_blocks);	
 
@@ -235,10 +233,9 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			assert((int)km, "Pushed a null message\n");
 	
 			Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, RECEIVE_BLOCKED);
-	
-			Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 		}
 	} else {
+		assert(0, "Sending message to invalid thing.\n");	
 		if (!is_tid_in_range(tid)) {
 			return_value = ERR_K_TID_OUT_OF_RANGE;
 		} else {
@@ -247,7 +244,7 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 	}
 
 	scheduler->current_task_descriptor->return_value = return_value;
-	Scheduler_SetNextTaskState(scheduler, k_state);
+	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 	
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
