@@ -26,6 +26,9 @@ Description
 Kernel
 ++++++
 
+* The SWI vector entry code has been fixed by setting it to the correct location.
+
+
 System Calls
 ------------
 
@@ -45,17 +48,33 @@ System Calls
     Same as above but in seconds. It simply converts the ticks into seconds before calling the system calls. These calls are simply for convenience.
 
 
-* The SWI vector entry code has been fixed by setting it to the correct location.
 
 Memory model
 ------------
 
 The memory model is now changed to look like this::
 
-    ascii diagram
+    +---------------+ 0x0020_0000
+    | RedBoot Stack |
+    +---------------+ 0x01fd_cf80 (typical)
+    | Kernel Stack  |
+    +---------------+ 0x01ea_cf04
+    | IRQ Stack     |
+    +---------------+ 0x01e2_cf04
+    | User Stack    |
+    |               |
+    +---------------+ 0x0005_2804 (_EndOfProgram specified in orex.ld)
+    | Kernel        |
+    +---------------+ 0x0004_5000 (%{FREEMEMLO} RedBoot alias)
+    | RedBoot       |
+    +---------------+ 0x0000_0000
 
 
 TODO: explain why the entry point moved
+
+* assert check on boundaries
+* checks on user stack overwrite kernel
+* configurable stack values
 
 
 Message Passing
@@ -87,6 +106,12 @@ Unblocking
 ----------
 
 After handling each received message, the Clock Server will check the array mapping for ticks that are in the past. If so, it will reply back. This search is linear. TODO: explain whether this is acceptable.
+
+Clock Slow Warning
+------------------
+
+TODO
+
 
 
 Interrupt Handler
@@ -159,6 +184,9 @@ Memory Allocation
 -----------------
 
 TODO
+
+* for messages
+* linear time
 
 
 RPS
