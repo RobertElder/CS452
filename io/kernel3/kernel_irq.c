@@ -8,9 +8,9 @@
 
 void irq_handler() {
 	// TODO: i'm not sure if we need this
-	int * VIC2VectAddr = (int *)0x800C0030;
+	// int * VIC2VectAddr = (int *)0x800C0030;
 	//int temp = *VIC2VectAddr;
-	*VIC2VectAddr = 0;
+	// *VIC2VectAddr = 0;
 	
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
