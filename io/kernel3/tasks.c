@@ -92,22 +92,22 @@ void FirstTask_Start() {
 	
 	// 1
 	reply_message->delay_time = 10;
-	reply_message->num_delays = 2000;
+	reply_message->num_delays = 200;
 	Reply(client_1_tid, reply_buffer, MESSAGE_SIZE);
 	
 	// 2
 	reply_message->delay_time = 23;
-	reply_message->num_delays = 900;
+	reply_message->num_delays = 90;
 	Reply(client_2_tid, reply_buffer, MESSAGE_SIZE);
 	
 	// 3
 	reply_message->delay_time = 33;
-	reply_message->num_delays = 600;
+	reply_message->num_delays = 60;
 	Reply(client_3_tid, reply_buffer, MESSAGE_SIZE);
 	
 	// 4
 	reply_message->delay_time = 71;
-	reply_message->num_delays = 300;
+	reply_message->num_delays = 30;
 	Reply(client_4_tid, reply_buffer, MESSAGE_SIZE);
 	
 	tid = Create(LOWEST, &IdleTask_Start);
@@ -145,14 +145,23 @@ void IdleTask_Start(){
 	int admin_tid = WhoIs((char*) ADMINISTRATOR_TASK_NAME);
 	assert(admin_tid, "IdleTask: admin tid not found");
 	
+	int i = 0;
 	while(1){
-		Send(admin_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
-		assertf(reply_message->message_type == MESSAGE_TYPE_ACK || reply_message->message_type == MESSAGE_TYPE_SHUTDOWN, "fail\n");
-		if(reply_message->message_type == MESSAGE_TYPE_SHUTDOWN){
-			break;
-			robprintfbusy((const unsigned char *)"Got shutdown in idle task\n" );
+		if (i > 5000) {
+			Send(admin_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+			assertf(reply_message->message_type == MESSAGE_TYPE_ACK || reply_message->message_type == MESSAGE_TYPE_SHUTDOWN, "fail\n");
+		
+			if(reply_message->message_type == MESSAGE_TYPE_SHUTDOWN){
+				break;
+				robprintfbusy((const unsigned char *)"IdleTask_Start: Got shutdown\n" );
+			}
+			
+			i = 0;
+		} else {
+			Pass();
 		}
-
+		
+		i++;
 	}
 
 	Exit();
@@ -188,7 +197,7 @@ void AdministratorTask_Start() {
 				if(shutdown_requests == required_requests){
 					reply_msg->message_type = MESSAGE_TYPE_SHUTDOWN;
 					idletask_shutdown_sent = 1;
-					robprintfbusy((const unsigned char *)"Sending shutdown to idle task %d\n" ,source_tid );
+					// robprintfbusy((const unsigned char *)"Sending shutdown to idle task %d\n" ,source_tid );
 				}else{
 					reply_msg->message_type = MESSAGE_TYPE_ACK;
 				}
@@ -202,9 +211,7 @@ void AdministratorTask_Start() {
 		Pass();
 	}
 	
-	//robprintfbusy((const unsigned char *)"Got %d shutdowns needed %d, shutdown send %d\n" , shutdown_requests, required_requests, idletask_shutdown_sent);
-	
-	//robprintfbusy((const unsigned char *)"AdministratorTask_Start begin shutdown\n");
+	robprintfbusy((const unsigned char *)"AdministratorTask_Start: Got %d shutdowns needed %d, shutdown send %d\n" , shutdown_requests, required_requests, idletask_shutdown_sent);
 	
 	ClockMessage * clock_send_message = (ClockMessage *) send_buffer;
 	ClockMessage * clock_reply_message = (ClockMessage *) reply_buffer;
