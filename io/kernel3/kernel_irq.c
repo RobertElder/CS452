@@ -48,7 +48,9 @@ void IRQ_EnableTimerVIC2() {
 }
 
 void IRQ_DisableTimerVIC2() {
-	
+
+	//  Doing both of these things at the same time is the only way I can actually disable the timer interrupts.	
+	*VIC2IntEnable &= (0xFFFFFFFF ^(1 << (TC3OI - 32)));
 	*VIC2IntEnClear |= 1 << (TC3OI - 32);
 	// *VIC2SoftIntClear |= 1 << (TC3OI - 32);
 	
