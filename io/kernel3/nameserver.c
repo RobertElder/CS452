@@ -64,7 +64,7 @@ void NameServer_SetName(NameServer * ns, int tid, char * name) {
 	assertf(m_strlen(name) <= MAX_CLIENT_NAME_LENGTH, "NameServer: name '%s' too long", name);
 
 	if (0 <= tid && tid < MAX_TASKS + 1) {
-		m_strcpy(ns->names[tid], name, m_strlen(name) + 1);
+		m_strcpy(ns->names[tid], name, CLIENT_NAME_SIZE);
 		ns->filled[tid] = 1;
 	} else {
 		assert(0,"Out of space for registered names in name server.");

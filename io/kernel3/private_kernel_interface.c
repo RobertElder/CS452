@@ -238,10 +238,13 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, RECEIVE_BLOCKED);
 		}
 	} else {
-		assert(0, "Sending message to invalid thing.\n");	
 		if (!is_tid_in_range(tid)) {
+			assertf(0, "k_Send: SourceTID=%d, TID %d out of range\n",
+				scheduler->current_task_descriptor->id, tid);
 			return_value = ERR_K_TID_OUT_OF_RANGE;
 		} else {
+			assertf(0, "k_Send: SourceTID=%d, TID %d does not exist\n",
+				scheduler->current_task_descriptor->id, tid);
 			return_value = ERR_K_TID_DOES_NOT_EXIST;
 		}
 	}
