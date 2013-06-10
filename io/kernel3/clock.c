@@ -141,11 +141,13 @@ void ClockServer_HandleDelayRequest(ClockServer * server, int source_tid, ClockM
 }
 
 
-int ClockServer_GetNextTask(ClockServer * server) {
+int ClockServer_GetNextTask(ClockServer * server, int min_tid) {
 	// TODO do we need a sorted list, heap, or not?
 	
+	assertf(is_tid_in_range(min_tid), "ClockServer_GetNextTask tid not in range");
+	
 	int tid;
-	for (tid = 0; tid < MAX_TASKS + 1; tid++) {
+	for (tid = min_tid; tid < MAX_TASKS + 1; tid++) {
 		if (server->tid_to_delay_until[tid] && server->tid_to_delay_until[tid] <= server->ticks) {
 			return tid;
 		}
@@ -155,11 +157,11 @@ int ClockServer_GetNextTask(ClockServer * server) {
 }
 
 void ClockServer_UnblockDelayedTasks(ClockServer * server) {
-	int tid;
+	int tid = 0;
 	int count = 0;
 	
 	while (1) {
-		tid = ClockServer_GetNextTask(server);
+		tid = ClockServer_GetNextTask(server, tid);
 		
 		if (tid == 0) {
 			break;

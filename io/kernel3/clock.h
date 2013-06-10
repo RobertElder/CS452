@@ -37,7 +37,7 @@ void ClockServer_HandleDelayRequest(ClockServer * server, int source_tid, ClockM
 
 void ClockServer_HandleShutdownRequest(ClockServer * server, int source_tid, ClockMessage * receive_msg);
 
-int ClockServer_GetNextTask(ClockServer * server);
+int ClockServer_GetNextTask(ClockServer * server, int min_tid);
 
 void ClockServer_UnblockDelayedTasks(ClockServer * server);
 
