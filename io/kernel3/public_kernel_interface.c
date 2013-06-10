@@ -102,7 +102,7 @@ int AwaitEvent( int eventid ) {
 	return asm_AwaitEventEntry();
 }
 
-int DelayUntil( int ticks ) {
+int Delay( int ticks ) {
 	int clock_tid = WhoIs((char *)CLOCK_SERVER_NAME);
 	ClockMessage * send_message;
 	ClockMessage * receive_message;
@@ -118,6 +118,26 @@ int DelayUntil( int ticks ) {
 
 	receive_message = (ClockMessage *) receive_buffer;
 	assert(receive_message->message_type == MESSAGE_TYPE_DELAY_REPLY, "Didn't get back TIME_DELAY_REPLY message type");
+
+	return 0;
+}
+
+int DelayUntil( int ticks ) {
+	int clock_tid = WhoIs((char *)CLOCK_SERVER_NAME);
+	ClockMessage * send_message;
+	ClockMessage * receive_message;
+
+	char send_buffer[MESSAGE_SIZE];
+	char receive_buffer[MESSAGE_SIZE];
+
+	send_message = (ClockMessage *) send_buffer;
+	send_message->message_type = MESSAGE_TYPE_DELAY_REQUEST;
+	send_message->num = ticks;
+
+	Send(clock_tid, send_buffer, MESSAGE_SIZE, receive_buffer, MESSAGE_SIZE);
+
+	receive_message = (ClockMessage *) receive_buffer;
+	assert(receive_message->message_type == MESSAGE_TYPE_DELAY_UNTIL_REPLY, "Didn't get back TIME_DELAY_UNTIL_REPLY message type");
 
 	return 0;
 }
@@ -141,9 +161,6 @@ int Time( ) {
 	return receive_message->num;
 }
 
-int Delay( int ticks ) {
-	return DelayUntil(Time() + ticks);
-}
 
 int DelaySeconds( float seconds ) {
 	return Delay(seconds * 1000.0 / TICK_SIZE);
