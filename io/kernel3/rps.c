@@ -434,8 +434,6 @@ void RPSClient_PlayARound(RPSClient * client) {
 		assert(0, "Client unable to explain why it won/lost");
 		break;
 	}
-
-	robprintfbusy((const unsigned char *)"\n", MyTid());
 }
 
 
