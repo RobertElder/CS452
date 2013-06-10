@@ -5,7 +5,8 @@
 #ifndef NAMESERVER_H_
 #define NAMESERVER_H_
 
-#define MAX_CLIENT_NAME_LENGTH 11
+#define MAX_CLIENT_NAME_LENGTH 7
+#define CLIENT_NAME_SIZE 8
 
 typedef struct NameServerMessage {
 	MessageType message_type;
@@ -17,7 +18,7 @@ typedef struct NameServer {
 	int tid;
 	char receive_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
-	char names[MAX_TASKS + 1][MAX_CLIENT_NAME_LENGTH + 1];
+	char names[MAX_TASKS + 1][CLIENT_NAME_SIZE];
 	short filled[MAX_TASKS + 1];
 	unsigned int num_clients;
 } NameServer;

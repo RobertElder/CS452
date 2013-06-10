@@ -60,7 +60,7 @@ int RegisterAs( char *name ) {
 
 	send_message = (NameServerMessage *) send_buffer;
 	send_message->message_type = MESSAGE_TYPE_REGISTER_AS;
-	m_strcpy(send_message->str, name, MAX_CLIENT_NAME_LENGTH + 1);
+	m_strcpy(send_message->str, name, CLIENT_NAME_SIZE);
 	send_message->num = MyTid();
 
 	Send(NAMESERVER_TID, send_buffer, MESSAGE_SIZE, receive_buffer, MESSAGE_SIZE);
@@ -84,7 +84,7 @@ int WhoIs( char *name ) {
 
 	send_message = (NameServerMessage *) send_buffer;
 	send_message->message_type = MESSAGE_TYPE_WHOIS;
-	m_strcpy(send_message->str, name, MAX_CLIENT_NAME_LENGTH + 1);
+	m_strcpy(send_message->str, name, CLIENT_NAME_SIZE);
 
 	Send(NAMESERVER_TID, send_buffer, MESSAGE_SIZE, receive_buffer, MESSAGE_SIZE);
 

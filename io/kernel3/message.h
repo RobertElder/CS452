@@ -3,7 +3,7 @@
 
 #include "queue.h"
 
-#define MESSAGE_SIZE 24
+#define MESSAGE_SIZE 16
 
 typedef enum MessageType {
 	MESSAGE_TYPE_REGISTER_AS = 0,
