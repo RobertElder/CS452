@@ -82,6 +82,11 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 	
 	robprintfbusy((const unsigned char *)"\033[44;37mNo tasks in queue!\033[0m\n");
 	
+	if(TIMER_INTERRUPTS_ENABLED){
+		IRQ_ClearTimerInterrupt();
+		IRQ_DisableTimerVIC2();
+	}
+	
 	Scheduler_PrintTDCounts(scheduler);
 
 	assertf(scheduler->num_ready == 0,
