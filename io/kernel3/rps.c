@@ -20,7 +20,7 @@ void RPSTestStart() {
 
 	int i;
 	for (i = 0; i < num_clients; i++) {
-		tid = Create(NORMAL, &RPSClient_Start);
+		tid = Create(LOW, &RPSClient_Start);
 		//assert(tid == 3 + i + 1, "RPSClient tid not");
 	}
 
@@ -102,7 +102,7 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 		break;
 	}
 	
-	if (server->state == WAITING_FOR_PLAYERS && RNG_GetFloat(&server->rng) > 0.5) {
+	if (server->state == WAITING_FOR_PLAYERS) {
 		RPSServer_SelectPlayers(server);
 	}
 
@@ -112,7 +112,7 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 	assert(server->num_signed_in < 1000000, "num signed in underflow");
 	//robprintfbusy((const unsigned char *)"Server: Num signed in=%d\n", server->num_signed_in);
 	
-	Pass();
+//	Pass();
 }
 
 void RPSServer_SelectPlayers(RPSServer * server) {
@@ -127,13 +127,17 @@ void RPSServer_SelectPlayers(RPSServer * server) {
 		if (server->signed_in_players[server->player_1_tid]) {
 			// Yay, found player 1!
 			Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)server->player_1_tid);
-			break;
+			
+			// Attempt at shuffling
+			if (RNG_GetFloat(&server->rng) > 0.75) {
+				break;
+			}
 		} else {
 			// Player 1 has quit
 			server->player_1_tid = 0;
 		}
 	}
-
+	
 	while (Queue_CurrentCount(&server->player_tid_queue)) {
 		server->player_2_tid = (int) Queue_PopStart(&server->player_tid_queue);
 
@@ -205,6 +209,7 @@ void RPSServer_ReplyResult(RPSServer * server, int source_tid) {
 		// Ping back wait
 		reply_message = (RPSMessage *) server->reply_buffer;
 		reply_message->message_type = MESSAGE_TYPE_WAIT;
+		reply_message->delay_time = RNG_GetRange(&server->rng, 1, 3);
 		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
 		assert(return_code == 0, "RPSServer couldn't send WAIT to client");
 	}
@@ -283,6 +288,7 @@ void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_t
 		// Ping back wait
 		reply_message = (RPSMessage *) server->reply_buffer;
 		reply_message->message_type = MESSAGE_TYPE_WAIT;
+		reply_message->delay_time = 0;
 		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
 		assert(return_code == 0, "RPSServer couldn't send WAIT to client");
 		
@@ -294,6 +300,7 @@ void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_t
 		// Not ready yet for playing
 		reply_message = (RPSMessage *) server->reply_buffer;
 		reply_message->message_type = MESSAGE_TYPE_WAIT;
+		reply_message->delay_time = RNG_GetRange(&server->rng, 1, 3);
 		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
 		assert(return_code == 0, "RPSServer couldn't send WAIT to client");
 	}
@@ -365,8 +372,14 @@ void RPSClient_PlayARound(RPSClient * client) {
 			client->running = 0;
 			return;
 		}
+		
 		assertf(reply_message->message_type == MESSAGE_TYPE_WAIT,
 				"Client wasn't told to wait. Got=%d, TID=%d", reply_message->message_type, client->tid);
+				
+		if (reply_message->delay_time) {
+			Delay(reply_message->delay_time);
+		}
+
 		counter +=1;
 		assertf(counter < 1000, "Forever Alone: TID=%d hasn't played in a while", client->tid);
 	}

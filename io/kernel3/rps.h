@@ -26,6 +26,7 @@ typedef struct RPSMessage {
 	MessageType message_type;
 	RPS_CHOICE choice;
 	RPS_OUTCOME outcome;
+	unsigned int delay_time;
 } RPSMessage;
 
 typedef enum RPSServerState {
