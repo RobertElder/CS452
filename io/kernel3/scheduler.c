@@ -6,6 +6,7 @@
 #include "rps.h"
 #include "public_kernel_interface.h"
 #include "kernel_state.h"
+#include "kernel_irq.h"
 
 extern int _EndOfProgram;
 
