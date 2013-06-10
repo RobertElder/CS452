@@ -91,14 +91,14 @@ void ClockServer_HandleNotifier(ClockServer * server, int source_tid, NotifyMess
 	
 	// Debugging code
 	int now = *TIMER4_VAL_LOW;
-	int diff = (now - server->last_timer_value) / 983;
+	int diff = (now - server->last_timer_value) / 983.0 * 1000.0;
 	server->last_timer_value = now;
 
 	Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
 	
 	// Debugging code
-	if (diff > TICK_SIZE + 1) {
-		robprintfbusy((const unsigned char *) "\033[1;31mSLOW! %d\033[0m\n", diff);
+	if (diff > TICK_SIZE * 1000 + 1000) {
+		robprintfbusy((const unsigned char *) "\033[1;31mSLOW! %dus\033[0m\n", diff);
 	}
 	
 	server->ticks += 1;
@@ -252,7 +252,7 @@ void ProfileStart() {
 
 void ProfileEnd() {
 	int now = *TIMER4_VAL_LOW;
-	int diff = (now - profile_last_time_value) / 983;
+	int diff = (now - profile_last_time_value) / 983.0 * 1000.0;
 	profile_last_time_value = now;
-	robprintfbusy((const unsigned char *) "\033[1;32mProfile %dms\033[0m\n", diff);
+	robprintfbusy((const unsigned char *) "\033[1;32mProfile %dus\033[0m\n", diff);
 }
