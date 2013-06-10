@@ -39,7 +39,10 @@ void ClockServer_Start() {
 			ClockServer_HandleTimeRequest(&server, source_tid, (ClockMessage*) receive_msg);
 			break;
 		case MESSAGE_TYPE_DELAY_REQUEST:
-			ClockServer_HandleDelayRequest(&server, source_tid, (ClockMessage*) receive_msg);
+			ClockServer_HandleDelayRequest(&server, source_tid, (ClockMessage*) receive_msg, 0);
+			break;
+		case MESSAGE_TYPE_DELAY_UNTIL_REQUEST:
+			ClockServer_HandleDelayRequest(&server, source_tid, (ClockMessage*) receive_msg, 1);
 			break;
 		case MESSAGE_TYPE_SHUTDOWN:
 			ClockServer_HandleShutdownRequest(&server, source_tid, (ClockMessage*) receive_msg);
@@ -111,8 +114,12 @@ void ClockServer_HandleTimeRequest(ClockServer * server, int source_tid, ClockMe
 	Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
 }
 
-void ClockServer_HandleDelayRequest(ClockServer * server, int source_tid, ClockMessage * receive_msg) {
+void ClockServer_HandleDelayRequest(ClockServer * server, int source_tid, ClockMessage * receive_msg, short absolute) {
 	//robprintfbusy((const unsigned char *)"ClockServer TID=%d: Handle Delay Request from %d with value %d\n", server->tid, source_tid, receive_msg->num);
+	
+	if (!absolute) {
+		receive_msg->num += server->ticks;
+	}
 	
 	if (receive_msg->num <= server->ticks) {
 		robprintfbusy((const unsigned char *)
@@ -120,7 +127,12 @@ void ClockServer_HandleDelayRequest(ClockServer * server, int source_tid, ClockM
 		"Got=%d, now=%d\033[0m\n", source_tid, receive_msg->num, server->ticks);
 	
 		ClockMessage * reply_message = (ClockMessage *) server->reply_buffer;
-		reply_message->message_type = MESSAGE_TYPE_DELAY_REPLY;
+		
+		if (absolute) {
+			reply_message->message_type = MESSAGE_TYPE_DELAY_UNTIL_REPLY;
+		} else {
+			reply_message->message_type = MESSAGE_TYPE_DELAY_REPLY;
+		}
 	
 		Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
 	} else {
@@ -234,3 +246,13 @@ void print_current_time() {
 	robprintfbusy((const unsigned char *)"\033[7m %dms \033[0m\n", Time() * TICK_SIZE);
 }
 
+void ProfileStart() {
+	profile_last_time_value = *TIMER4_VAL_LOW;
+}
+
+void ProfileEnd() {
+	int now = *TIMER4_VAL_LOW;
+	int diff = (now - profile_last_time_value) / 983;
+	profile_last_time_value = now;
+	robprintfbusy((const unsigned char *) "\033[1;32mProfile %dms\033[0m\n", diff);
+}

@@ -7,6 +7,7 @@
 static const char const CLOCK_SERVER_NAME[] = "ClckSvr";
 static int * const TIMER4_VAL_LOW = (int*) 0x80810060;
 static int * const TIMER4_VAL_HIGH = (int*) 0x80810084;
+static int profile_last_time_value = 0;
 
 typedef struct ClockMessage {
 	MessageType message_type;
@@ -32,7 +33,7 @@ void ClockServer_HandleNotifier(ClockServer * server, int source_tid, NotifyMess
 
 void ClockServer_HandleTimeRequest(ClockServer * server, int source_tid, ClockMessage * receive_msg);
 
-void ClockServer_HandleDelayRequest(ClockServer * server, int source_tid, ClockMessage * receive_msg);
+void ClockServer_HandleDelayRequest(ClockServer * server, int source_tid, ClockMessage * receive_msg, short absolute);
 
 void ClockServer_HandleShutdownRequest(ClockServer * server, int source_tid, ClockMessage * receive_msg);
 
@@ -56,5 +57,9 @@ void ClockClient_Start();
 void ClockClient_Initialize(ClockClient * client);
 
 void print_current_time();
+
+void ProfileStart();
+
+void ProfileEnd();
 
 #endif
