@@ -1,7 +1,7 @@
 #ifndef QUEUE_H_
 #define QUEUE_H_
 
-#define QUEUE_SIZE 510
+#define QUEUE_SIZE 790
 #define QUEUE_ITEM_TYPE void*
 #define NUM_PRIORITIES 32
 
@@ -25,7 +25,16 @@ typedef struct Queue {
 	unsigned int start;
 	unsigned int end;
 	unsigned int current_count;
+	unsigned int size;
 } Queue;
+
+typedef struct MessageQueue {
+	QueueItem items[10];
+	unsigned int start;
+	unsigned int end;
+	unsigned int current_count;
+	unsigned int size;
+} MessageQueue;
 
 typedef struct PriorityQueue {
 	Queue queues[NUM_PRIORITIES];
@@ -34,7 +43,7 @@ typedef struct PriorityQueue {
 	unsigned int queues_with_items;
 } PriorityQueue;
 
-void Queue_Initialize(Queue * queue);
+void Queue_Initialize(Queue * queue, unsigned int size);
 
 int Queue_PushEnd(Queue * queue, QUEUE_ITEM_TYPE item);
 

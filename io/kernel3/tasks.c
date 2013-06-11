@@ -110,6 +110,8 @@ void FirstTask_Start() {
 	tid = Create(LOWEST, &IdleTask_Start);
 	assertf(tid, "IdleTask tid not postive");
 	
+	Create(HIGHEST, &RPSTestStart);
+	
 	//tid = Create(LOW, &ClockPrintTask_Start);
 	//assert(tid > 0, "ClockPrintTask_Start tid not positive");
 	

@@ -10,7 +10,7 @@
 
 void RPSTestStart() {
 	int tid;
-	const int num_clients = 50;
+	const int num_clients = 700;
 
 	//tid = Create(NORMAL, &NameServer_Start);
 	//assert(tid == 2, "NameServer tid not 2");
@@ -60,7 +60,7 @@ void RPSServer_Start() {
 
 void RPSServer_Initialize(RPSServer * server) {
 	server->tid = MyTid();
-	Queue_Initialize(&server->player_tid_queue);
+	Queue_Initialize(&server->player_tid_queue, QUEUE_SIZE);
 	server->player_1_tid = 0;
 	server->player_2_tid = 0;
 	server->player_1_choice = NO_CHOICE;
@@ -381,7 +381,7 @@ void RPSClient_PlayARound(RPSClient * client) {
 		}
 
 		counter +=1;
-		assertf(counter < 1000, "Forever Alone: TID=%d hasn't played in a while", client->tid);
+		assertf(counter < 1000 * MAX_TASKS, "Forever Alone: TID=%d hasn't played in a while", client->tid);
 	}
 
 	switch(choice) {

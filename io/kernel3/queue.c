@@ -1,10 +1,11 @@
 #include "queue.h"
 #include "robio.h"
 
-void Queue_Initialize(Queue * queue) {
+void Queue_Initialize(Queue * queue, unsigned int size) {
 	queue->start = 0;
 	queue->end = 0;
 	queue->current_count = 0;
+	queue->size = size;
 }
 
 int Queue_PushEnd(Queue * queue, QUEUE_ITEM_TYPE item) {
@@ -42,7 +43,7 @@ int Queue_CurrentCount(Queue * queue) {
 void PriorityQueue_Initialize(PriorityQueue * queue) {
 	int i;
 	for (i = 0; i < NUM_PRIORITIES; i++) {
-		Queue_Initialize(&(queue->queues[i]));
+		Queue_Initialize(&(queue->queues[i]), QUEUE_SIZE);
 	}
 	queue->queues_with_items = 0;
 }
