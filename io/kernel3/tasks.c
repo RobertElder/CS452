@@ -141,8 +141,19 @@ void IdleTask_Start(){
 	GenericMessage * send_message = (GenericMessage *) send_buffer;
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
 	send_message->message_type = MESSAGE_TYPE_HELLO;
-	int admin_tid = WhoIs((char*) ADMINISTRATOR_TASK_NAME);
-	assert(admin_tid, "IdleTask: admin tid not found");
+	
+	int admin_tid;
+	int tid_i = 0;
+	while (1) {
+		admin_tid = WhoIs((char*) ADMINISTRATOR_TASK_NAME);
+		
+		if (admin_tid) {
+			break;
+		}
+		
+		tid_i++;
+		assert(tid_i < 1000, "IdleTask: admin tid not found");
+	}
 	
 	int i = 0;
 	while(1){
@@ -168,7 +179,9 @@ void IdleTask_Start(){
 }
 
 void AdministratorTask_Start() {
-	RegisterAs((char*) ADMINISTRATOR_TASK_NAME);
+	int return_code = RegisterAs((char*) ADMINISTRATOR_TASK_NAME);
+
+	assert(return_code == 0, "AdministratorTask_Start failed to register name");
 
 	unsigned int idletask_shutdown_sent = 0;
 	unsigned int shutdown_requests = 0;
