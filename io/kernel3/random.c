@@ -4,12 +4,12 @@
 void RNG_Initialize(RNG * gen, unsigned int seed) {
 	gen->a = 1103515245;
 	gen->c = 12345;
-	gen->x = (seed * 1234567890) % gen->m;
 	gen->m = 2147483648UL;
+	gen->x = (seed * 1234567890) % gen->m;
 }
 
 unsigned int RNG_Get(RNG * gen) {
-	unsigned int next_x = (gen->a * gen->x + gen->c) & 0x3fffffff;
+	unsigned int next_x = ((gen->a * gen->x + gen->c) % gen->m) & 0x3fffffff;
 	gen->x = next_x;
 	return next_x;
 }
