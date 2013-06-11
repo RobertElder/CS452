@@ -28,7 +28,7 @@ Kernel
 
 * The SWI vector entry code has been fixed by setting it to the correct location.
 * Caching improves the performance of the program and Clock Slow Warnings should only  appear on task creation and shutdown. We recognize that without caching more warnings may be printed. See Performance.
-* When a user task is interrupted by the timer IRQ handler, the user state is pushed onto the IRQ handler stack.  We recognize that this is not what we're supposed to do and we plan to fix this in the next deliverable.  For now we have focused on meeting the timing requirements, and making sure that the amount of time before we unblock event blocked tasks is less than 10ms.  The next step will be to push state onto the user stack, so that we can context switch directly to the clocknotifier task, instead of just unblocking it.
+* When a user task is interrupted by the timer IRQ handler, the user state is pushed onto the IRQ handler stack.  We recognize that this is not what we're supposed to do and we plan to fix this in the next deliverable.  For now we have focused on meeting the timing requirements, and making sure that the amount of time before we unblock event blocked tasks is less than 10ms.  The next step will be to push state onto the user stack, so that we can context switch directly to the Clock Notifier task, instead of just unblocking it.
 
 
 System Calls
@@ -102,7 +102,7 @@ Data Structures
 
 The Clock Server maintains a array mapping of TIDs to clock ticks in absolute time. Accesses to this mapping are constant time.
 
-In order to address a bug in managing message queue data, we implemented a heap that is used only by kernel when queueing messages.  The algorithm that performs the memory allocation is linear time, however this is ok because in practice this is bounded by the number of tasks, which is known to be less than 50.  We have stress tested our kernel with several hundred tasks, and the empirical measurements of timings still keeps us under our goal of 10ms for being able to respond to events.  We plan to further improve the run time of this function in the future.
+In order to address a bug in managing message queue data, we implemented a heap--the memory management kind--that is used only by kernel when queueing messages.  The algorithm that performs the memory allocation is linear time, however this is ok because in practice this is bounded by the number of tasks, which is known to be less than 50.  We have stress tested our kernel with several hundred tasks, and the empirical measurements of timings still keeps us under our goal of 10ms for being able to respond to events.  We plan to further improve the run time of this function in the future.
 
 
 Delay Requests
@@ -188,13 +188,13 @@ Memory
 
 File: ``memory.c``
 
-``m_strcpy`` has optimization improvements. It now can copy strings at 1, 8, or 64 octets at a time using block load and store instructions.
+``m_strcpy`` has optimization improvements. It now can copy strings at 1, 8, or 32 octets at a time using block load and store instructions.
 
 
 Dynamic Memory Allocation
 -------------------------
 
-A simple, but linear time, Dynamic Memory Allocation was implemented. It is currently used for storing Kernel Messages.
+A simple, but linear time, Dynamic Memory Allocation or heap was implemented. It is currently used for storing Kernel Messages.
 
 It uses an array of booleans to track which blocks of memory have been allocated. The blocks of memory are implemented as a ``char`` array.
 
@@ -213,6 +213,7 @@ Nameserver
 ++++++++++
 
 Maximum name length has been arbitrary reduced to 8 bytes (including the null terminator) to fit within the reduced size Kernel Message.
+
 
 IdleTask and AdministratorTask
 ++++++++++++++++++++++++++++++
@@ -235,17 +236,58 @@ The source code is located at ``/u4/chfoo/cs452/group/k3-submit/io/kernel3``. It
 
 Source code MD5 hashes::
 
-    Listings go here
-    Listings go here
-
+    chfoo@nettop40:~/cs452/group/k3-submit/io/kernel3$ md5sum */*.* *.*      
+    50ef0e1e3c71ab1e795fc3d39f75ef9d  include/bwio.h
+    9af226f127c1fd759530cd45236c37b8  include/ts7200.h
+    da5c58f5a70790d853646f4a76f4c540  buffer.c
+    1f9a730c5017ddd24e18523d27dc471e  buffer.h
+    7f0e23ca0b7a2d818ca0d89f44a9becc  clock.c
+    12a8e72b6edd3ce9d39eec8f40face92  clock.h
+    1eaabf4c531773b21a4476aa9fbc3e06  kern.c
+    84c480712ffdc5fc8c854eeddba7ee75  kern.elf
+    d41d8cd98f00b204e9800998ecf8427e  kern.h
+    61a363555055c09fa50cacbcf133fc3d  kernel_irq.c
+    7dd2e35c54b6e20fd30ccdc3f8cc8c78  kernel_irq.h
+    0a6099b9d838bf192589c5d18a73d6a9  kernel_state.h
+    eeea82060a8efac1f1846b8e49cfc699  memory.c
+    c69b2cd31667898de90b5ea6968b34d5  memory.h
+    adcff2244ac92050360eacd7ab4f5dd9  message.c
+    4a69b1710f2b62b62dc12034c5a061ef  message.h
+    586eb93d3bdbf0b0895d278286a42982  nameserver.c
+    83a806d2e93bb4fbc2316ba853e3ff6c  nameserver.h
+    b5dc849ede8d0e14e1b8c93b364c2c2f  notifier.c
+    e1068badfd5a00f1fc498907eaece5fc  notifier.h
+    8d46598b0da4113f701c348f64657a84  orex.ld
+    ebaa2b3e71275031c2a1ce6feabb5113  private_kernel_interface.c
+    0bb2f28edaa36009df8693eb8e70248c  private_kernel_interface.h
+    05dc90397d0064c2a0183fb5a904424b  public_kernel_interface.c
+    f7fa9aae27bde825d09f995b237bedbf  public_kernel_interface.h
+    8878081d654354ea6357008d0b757342  queue.c
+    edad985ef0a0e1364ff31f81fdce035b  queue.h
+    91fbdbffeb090806d35dc54cb2e0627a  random.c
+    7b31c57ff692317d816c839156382596  random.h
+    58251ec1b8c900d4627f03baaf8a793a  readme.rst
+    eb5a60f060d101d2536e96298aab4112  readme.tex
+    7e9cbadd0b0bfbb4cb42477bcd1d4cc7  robio.c
+    d85c51626cee0d148dc9506211b5b2b2  robio.h
+    a2f7a0f7b52cf98176cb215f8232497e  rps.c
+    616ea2c1d0d273b41c55cbba5096a145  rps.h
+    4825d154b846a1c8f566502f157c9fed  scheduler.c
+    f07b9c5a26befff2ca7ae5faef6f113b  scheduler.h
+    4778a48d9ab01c1ca35b914275a56641  swi_kernel_interface.s
+    3470592bb0bfcd96ff5c597d5692e644  task_descriptor.c
+    5dd67fbba64e041c0acaba983aca92e6  task_descriptor.h
+    eeb70ad77d28002eb76c8d02425e7db0  tasks.c
+    c7ac97c4750ffa3af955d3d329a9e42d  tasks.h
 
 
 Elf MD5 hash::
 
-    TODO
+    chfoo@nettop40:~$ md5sum '/u/cs452/tftp/ARM/relder-chfoo/k3-submit/kern.elf' 
+    84c480712ffdc5fc8c854eeddba7ee75  /u/cs452/tftp/ARM/relder-chfoo/k3-submit/kern.elf
 
 
-Git sha1 hash: ``TODO``
+Git sha1 hash: ``c20bb3a31e2fb6f507e9e6aace28e99c10d9f454``
 
 
 Output
