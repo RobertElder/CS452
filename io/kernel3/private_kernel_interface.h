@@ -13,7 +13,12 @@ void print_memory_status();
 
 #define TIMER_INTERRUPTS_ENABLED 1
 
-#define KERNEL_STACK_START 0x01fdcf00
+/*  We need to leave room for the redboot stack to grow down.
+ *  each time somebody executes a program, redboot pushes 0x50 onto the
+ *  stack, but does not pop it off.  If you don't reset the board, the redboot
+ *  stack will eventually grow down into all of memory.
+ *  */
+#define KERNEL_STACK_START (0x01fdcfdc - (0x50 * 100))
 #define KERNEL_STACK_SIZE 0x00130000
 #define TIMER_IRQ_STACK_START (KERNEL_STACK_START - KERNEL_STACK_SIZE)
 #define TIMER_IRQ_STACK_SIZE 0x0080000
