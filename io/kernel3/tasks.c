@@ -31,14 +31,11 @@ void FirstTask_Start() {
 	tid = Create(HIGHEST + 1, &NameServer_Start);
 	assert(tid == 2, "NameServer tid not 2");
 
-	Create(HIGHEST, &RPSTestStart);
-	
-	tid = Create(HIGHEST + 1, &ClockServer_Start);
+	tid = Create(HIGHEST, &ClockServer_Start);
 	assert(tid > 0, "ClockServer tid not positive");
 	
 	tid = Create(HIGHEST + 2, &AdministratorTask_Start);
 	assert(tid > 0, "AdministratorTask tid not positive");
-	
 	
 	// 1
 	tid = Create(3, &ClockClient_Start);
@@ -92,22 +89,22 @@ void FirstTask_Start() {
 	
 	// 1
 	reply_message->delay_time = 10;
-	reply_message->num_delays = 200;
+	reply_message->num_delays = 20;
 	Reply(client_1_tid, reply_buffer, MESSAGE_SIZE);
 	
 	// 2
 	reply_message->delay_time = 23;
-	reply_message->num_delays = 90;
+	reply_message->num_delays = 9;
 	Reply(client_2_tid, reply_buffer, MESSAGE_SIZE);
 	
 	// 3
 	reply_message->delay_time = 33;
-	reply_message->num_delays = 60;
+	reply_message->num_delays = 6;
 	Reply(client_3_tid, reply_buffer, MESSAGE_SIZE);
 	
 	// 4
 	reply_message->delay_time = 71;
-	reply_message->num_delays = 30;
+	reply_message->num_delays = 3;
 	Reply(client_4_tid, reply_buffer, MESSAGE_SIZE);
 	
 	tid = Create(LOWEST, &IdleTask_Start);
