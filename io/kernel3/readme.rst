@@ -35,7 +35,7 @@ System Calls
 ------------
 
 ``AwaitEvent``
-    Marks the task as ``EVENT_BLOCKED``. The task will be unblocked by the Scheduler via the timer interrupt.
+    Marks the task as ``EVENT_BLOCKED``. The task will be unblocked by the Scheduler via the timer interrupt. This call currently does not return anything useful. The next deliverable will decide on how data is communicated back to the task.
 
 ``Time``
     Wraps a ``Send`` to the Clock Server. It first queries the Name Server for the Clock Server and then sends a ``TIME_REQUEST`` message. It expects back a ``TIME_REPLY`` message and returns the time.
