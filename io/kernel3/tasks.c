@@ -185,7 +185,7 @@ void AdministratorTask_Start() {
 
 	unsigned int idletask_shutdown_sent = 0;
 	unsigned int shutdown_requests = 0;
-	unsigned int required_requests = 4;
+	unsigned int required_requests = 5;
 
 	char send_buffer[MESSAGE_SIZE];
 	char receive_buffer[MESSAGE_SIZE];

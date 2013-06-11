@@ -6,11 +6,12 @@
 #include "memory.h"
 #include "queue.h"
 #include "nameserver.h"
+#include "tasks.h"
 
 
 void RPSTestStart() {
 	int tid;
-	const int num_clients = 700;
+	const int num_clients = 500;
 
 	//tid = Create(NORMAL, &NameServer_Start);
 	//assert(tid == 2, "NameServer tid not 2");
@@ -51,6 +52,28 @@ void RPSServer_Start() {
 			break;
 		}
 	}
+	
+	GenericMessage * send_message = (GenericMessage*) server.send_buffer;
+	GenericMessage * reply_message = (GenericMessage*) server.reply_buffer;
+	send_message->message_type = MESSAGE_TYPE_SHUTDOWN;
+	
+	int i = 0;
+	int admin_tid;
+	
+	while (1) {
+		admin_tid = WhoIs((char*) ADMINISTRATOR_TASK_NAME);
+		
+		if (admin_tid) {
+			break;
+		}
+		i++;
+		
+		assertf(i < 1000, "ClockClient TID=%d: Didn't get an admin tid");
+	}
+	
+	Send(admin_tid, server.send_buffer, MESSAGE_SIZE, server.reply_buffer, MESSAGE_SIZE);
+	assertf(reply_message->message_type == MESSAGE_TYPE_ACK, "ClockClient TID=%d: failed to get ACK message\n");
+	
 
 	robprintfbusy((const unsigned char *)"About to call exit from rpsserver.\n");
 	Exit();
@@ -120,6 +143,8 @@ void RPSServer_SelectPlayers(RPSServer * server) {
 		//robprintfbusy((const unsigned char *)"Server: There's only %d person in queue.\n", Queue_CurrentCount(&server->player_tid_queue));
 		return;
 	}
+	
+	int i = 0;
 
 	while (Queue_CurrentCount(&server->player_tid_queue)) {
 		server->player_1_tid = (int) Queue_PopStart(&server->player_tid_queue);
@@ -136,7 +161,13 @@ void RPSServer_SelectPlayers(RPSServer * server) {
 			// Player 1 has quit
 			server->player_1_tid = 0;
 		}
+		
+		i++;
+		
+		assert(i < MAX_TASKS, "RPSServer_SelectPlayers: loop 1 too long");
 	}
+	
+	i = 0;
 	
 	while (Queue_CurrentCount(&server->player_tid_queue)) {
 		server->player_2_tid = (int) Queue_PopStart(&server->player_tid_queue);
@@ -149,6 +180,8 @@ void RPSServer_SelectPlayers(RPSServer * server) {
 			// Player 2 has quit
 			server->player_2_tid = 0;
 		}
+		
+		assert(i < MAX_TASKS, "RPSServer_SelectPlayers: loop 1 too long");
 	}
 
 	if (server->player_1_tid == server->player_2_tid) {
@@ -377,7 +410,8 @@ void RPSClient_PlayARound(RPSClient * client) {
 				"Client wasn't told to wait. Got=%d, TID=%d", reply_message->message_type, client->tid);
 				
 		if (reply_message->delay_time) {
-			Delay(reply_message->delay_time);
+			assertf(reply_message->delay_time >= 0 && reply_message->delay_time <= 10, "Too much delay, got=%d", reply_message->delay_time);
+			//Delay(reply_message->delay_time);
 		}
 
 		counter +=1;
