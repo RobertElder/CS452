@@ -305,7 +305,7 @@ Git sha1 hash: ``c20bb3a31e2fb6f507e9e6aace28e99c10d9f454``
 Output
 ======
 
-Based on the values described, the tasks should output in cronological order::
+Based on the values described, the tasks should output in chronological order::
 
     | 3, 4, 5, 6
     =============
