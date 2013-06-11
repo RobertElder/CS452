@@ -19,7 +19,7 @@ void print_memory_status();
  *  stack will eventually grow down into all of memory.
  *  */
 #define KERNEL_STACK_START (0x01fdcfdc - (0x50 * 100))
-#define KERNEL_STACK_SIZE 0x00130000
+#define KERNEL_STACK_SIZE (sizeof(KernelState) + 1024 * 100)
 #define TIMER_IRQ_STACK_START (KERNEL_STACK_START - KERNEL_STACK_SIZE)
 #define TIMER_IRQ_STACK_SIZE 0x0080000
 #define USER_TASKS_STACK_START (TIMER_IRQ_STACK_START - KERNEL_STACK_SIZE)

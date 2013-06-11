@@ -104,7 +104,7 @@ void k_InitKernel(){
 	int kernel_stack_end = (KERNEL_STACK_START - KERNEL_STACK_SIZE);
 	int current_stack = (int)k_state->last_kernel_sp_value;
 
-	assertf(kernel_stack_end + (1024 * 32) < current_stack,"The kernel's stack started at %x but the next stacks start at %x.  Won't start unless there is at least 32k buffer room.", kernel_stack_end, current_stack);
+	assertf(kernel_stack_end + (1024 * 32) < current_stack,"The kernel's stack started at %x but the next stacks start at %x.  Won't start unless there is at least 32k buffer room.  This means that the kernel stack overflowed.", kernel_stack_end, current_stack);
 
 	//  Make sure the kernel stack is starting further down than the redboot stack.
 	assertf(KERNEL_STACK_START < (int)k_state->user_proc_sp_value, "The kernel stack starts at %x, but the redboot stack ends at %x.",KERNEL_STACK_START, k_state->user_proc_sp_value);
