@@ -227,8 +227,19 @@ void ClockClient_Start() {
 
 	send_message->message_type = MESSAGE_TYPE_SHUTDOWN;
 	
-	int admin_tid = WhoIs((char*) ADMINISTRATOR_TASK_NAME);
-	assertf(admin_tid, "ClockClient TID=%d: Didn't get an admin tid");
+	i = 0;
+	int admin_tid;
+	
+	while (1) {
+		admin_tid = WhoIs((char*) ADMINISTRATOR_TASK_NAME);
+		
+		if (admin_tid) {
+			break;
+		}
+		i++;
+		
+		assertf(i < 1000, "ClockClient TID=%d: Didn't get an admin tid");
+	}
 	
 	Send(admin_tid, client.send_buffer, MESSAGE_SIZE, client.reply_buffer, MESSAGE_SIZE);
 	assertf(reply_message->message_type == MESSAGE_TYPE_ACK, "ClockClient TID=%d: failed to get ACK message\n");
