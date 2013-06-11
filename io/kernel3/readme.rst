@@ -97,6 +97,18 @@ File: ``clock.c``
 The Clock Server runs in a loop receiving messages from the Clock Notifier or user tasks via the Public Kernel Interface wrappers. Whenever it receives a Event Notification from the Clock Notifier, it increments its tick counter. The tick size is defined to be 10ms.
 
 
+Clock Notifier
+--------------
+
+File: ``notifier.c``
+
+The Clock Notifier runs in a loop:
+
+1. Call ``AwaitEvent``
+2. Send a ``NOTIFIER`` message with ``CLOCK_TICK_EVENT`` id to the Clock Server.
+3. Go to 1.
+
+
 Data Structures
 ---------------
 
