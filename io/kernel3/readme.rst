@@ -28,7 +28,7 @@ Kernel
 
 * The SWI vector entry code has been fixed by setting it to the correct location.
 * Caching improves the performance of the program and Clock Slow Warnings should only  appear on task creation and shutdown. We recognize that without caching more warnings may be printed. See Performance.
-* User state is still pushed into the wrong stack space. It is still being rewritten.
+* When a user task is interrupted by the timer IRQ handler, the user state is pushed onto the IRQ handler stack.  We recognize that this is not what we're supposed to do and we plan to fix this in the next deliverable.  For now we have focused on meeting the timing requirements, and making sure that the amount of time before we unblock event blocked tasks is less than 10ms.  The next step will be to push state onto the user stack, so that we can context switch directly to the clocknotifier task, instead of just unblocking it.
 
 
 System Calls
@@ -56,27 +56,29 @@ Memory model
 
 The memory model is now changed to look like this::
 
-    +---------------+ 0x0020_0000
-    | RedBoot Stack |
-    +---------------+ 0x01fd_cf80 (typical)
-    | Kernel Stack  |
-    +---------------+ 0x01ea_cf04
-    | IRQ Stack     |
-    +---------------+ 0x01e2_cf04
-    | User Stack    |
-    |               |
-    +---------------+ 0x0005_2804 (_EndOfProgram specified in orex.ld)
-    | Kernel        |
-    +---------------+ 0x0004_5000 (%{FREEMEMLO} RedBoot alias)
-    | RedBoot       |
-    +---------------+ 0x0000_0000
+    +----------------+ 0x0020_0000
+    | RedBoot Stack  |
+    +----------------+ 0x01fd_cfdc Starting value of redboot stack after box reset
+    | Redboot Buffer*|
+    +----------------+ 0x01FD_B09C 
+    | Kernel Stack   |
+    +----------------+ 0x01FD_B09C - sizeof(KernelState) - 400kb = KernelEnd
+    | IRQ Stack      |
+    +----------------+ KernelEnd - 500kb
+    | User Stacks    |
+    |                |
+    +----------------+ 0x0005_2804 (_EndOfProgram specified in orex.ld)
+    | Kernel         |
+    +----------------+ 0x0004_5000 (%{FREEMEMLO} RedBoot alias)
+    | RedBoot        |
+    +----------------+ 0x0000_0000
 
 
-After consulting the RedBoot documentation, the entry point was moved to ``0x00045000`` to free up more memory for user stacks. We believe that this new memory location is not used and we have not found any reason we cannot move the entry point to this location.
+After consulting the RedBoot documentation, the entry point was moved to ``0x00045000`` to free up more memory for user stacks. We believe that this new memory location marks the start of safe memory that is not used as a guarantee from redboot and we have not found any reason we cannot move the entry point to this location.  This values comes from the a redboot alias %{FREEMEMLO} that can be used when loading the program instead of the literal address.
 
-As well, we are able to have assert checks on stack boundaries. Using ``_EndOfProgram``, we can check if a user stack pointer overwrites the kernel. There are checks for each user stack as well.
+As well, we are able to have assert checks on stack boundaries. Using the ``_EndOfProgram`` linker symbol, we can check if a user stack pointer overwrites the kernel. There are checks for each user stack as well.
 
-Stack values can be adjusted if needed.
+Stack values and sizes are configurable, and will generally give appropriate assertions if the memory model has conflicts that can cause corruption.
 
 
 Message Passing
@@ -99,6 +101,8 @@ Data Structures
 ---------------
 
 The Clock Server maintains a array mapping of TIDs to clock ticks in absolute time. Accesses to this mapping are constant time.
+
+In order to address a bug in managing message queue data, we implemented a heap that is used only by kernel when queueing messages.  The algorithm that performs the memory allocation is linear time, however this is ok because in practice this is bounded by the number of tasks, which is known to be less than 50.  We have stress tested our kernel with several hundred tasks, and the empirical measurements of timings still keeps us under our goal of 10ms for being able to respond to events.  We plan to further improve the run time of this function in the future.
 
 
 Delay Requests
@@ -246,5 +250,61 @@ Git sha1 hash: ``TODO``
 
 Output
 ======
+
+Based on the values described, the tasks should output in cronological order::
+
+    | 3, 4, 5, 6
+    =============
+      10 .  .  .
+      20 .  .  .
+      .  23 .  .
+      30 .  .  .
+      .  .  33 .
+      40 .  .  .
+      .  46 .  .
+      50 .  .  .
+      60 .  .  .
+      .  .  66 .
+      .  69 .  .
+      70 .  .  .
+      .  .  .  71
+      80 .  .  .
+      90 .  .  .
+      .  92 .  .
+      .  .  99 .
+      100.  .  .
+      110.  .  .
+      .  115.  .
+      120.  .  .
+      130.  .  .
+      .  .  132.
+      .  138.  .
+      140.  .  .
+      .  .  .  142
+      150.  .  .
+      160.  .  .
+      .  161.  .
+      .  .  165.
+      170.  .  .
+      180.  .  .
+      .  184.  .
+      190.  .  .
+      .  .  198.
+      200.  .  .
+      .  207.  .
+      .  .  .  213
+
+
+This ordering gives and expected printing sequence of
+
+3-3-4-3-5-3-4-3-3-5-4-3-6-3-3-4-5-3-3-4-3-3-5-4-3-6-3-3-4-5-3-3-4-3-5-3-4-6
+
+which is identical to the ordering that our program produces.
+
+
+
+
+
+
 
 
