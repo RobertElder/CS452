@@ -299,9 +299,79 @@ This ordering gives and expected printing sequence of
 
 3-3-4-3-5-3-4-3-3-5-4-3-6-3-3-4-5-3-3-4-3-3-5-4-3-6-3-3-4-5-3-3-4-3-5-3-4-6
 
-which is identical to the ordering that our program produces.
+which is identical to the ordering that our program produces::
 
-
+    [...Output trimmed...]
+    FirstTask Start tid=1
+    ClockServer TID=3: start
+    FirstTask begin receive
+    RegisterAs for ClckSvr returned OK. tid=3
+    ClockNotifier TID=9: start
+    RegisterAs for Admin returned OK. tid=4
+    ClockClient TID=5: start
+    ClockClient TID=6: start
+    ClockClient TID=7: start
+    ClockClient TID=8: start
+    FirstTask Exit
+    ClockClient TID=5: Got delay_time=10, num_delays=20
+    ClockClient TID=6: Got delay_time=23, num_delays=9
+    ClockClient TID=7: Got delay_time=33, num_delays=6
+    ClockClient TID=8: Got delay_time=71, num_delays=3
+    SLOW! 13144us
+    RegisterAs for Idle returned OK. tid=10
+    ClockClient TID=5: I just delayed delay_time=10, i=0
+    ClockClient TID=5: I just delayed delay_time=10, i=1
+    ClockClient TID=6: I just delayed delay_time=23, i=0
+    ClockClient TID=5: I just delayed delay_time=10, i=2
+    ClockClient TID=7: I just delayed delay_time=33, i=0
+    ClockClient TID=5: I just delayed delay_time=10, i=3
+    ClockClient TID=6: I just delayed delay_time=23, i=1
+    ClockClient TID=5: I just delayed delay_time=10, i=4
+    ClockClient TID=5: I just delayed delay_time=10, i=5
+    ClockClient TID=7: I just delayed delay_time=33, i=1
+    ClockClient TID=6: I just delayed delay_time=23, i=2
+    ClockClient TID=5: I just delayed delay_time=10, i=6
+    ClockClient TID=8: I just delayed delay_time=71, i=0
+    ClockClient TID=5: I just delayed delay_time=10, i=7
+    ClockClient TID=5: I just delayed delay_time=10, i=8
+    ClockClient TID=6: I just delayed delay_time=23, i=3
+    ClockClient TID=7: I just delayed delay_time=33, i=2
+    ClockClient TID=5: I just delayed delay_time=10, i=9
+    ClockClient TID=5: I just delayed delay_time=10, i=10
+    ClockClient TID=6: I just delayed delay_time=23, i=4
+    ClockClient TID=5: I just delayed delay_time=10, i=11
+    ClockClient TID=5: I just delayed delay_time=10, i=12
+    ClockClient TID=7: I just delayed delay_time=33, i=3
+    ClockClient TID=6: I just delayed delay_time=23, i=5
+    ClockClient TID=5: I just delayed delay_time=10, i=13
+    ClockClient TID=8: I just delayed delay_time=71, i=1
+    ClockClient TID=5: I just delayed delay_time=10, i=14
+    ClockClient TID=5: I just delayed delay_time=10, i=15
+    ClockClient TID=6: I just delayed delay_time=23, i=6
+    ClockClient TID=7: I just delayed delay_time=33, i=4
+    ClockClient TID=5: I just delayed delay_time=10, i=16
+    ClockClient TID=5: I just delayed delay_time=10, i=17
+    ClockClient TID=6: I just delayed delay_time=23, i=7
+    ClockClient TID=5: I just delayed delay_time=10, i=18
+    ClockClient TID=7: I just delayed delay_time=33, i=5
+    ClockClient TID=7: Exit
+    ClockClient TID=5: I just delayed delay_time=10, i=19
+    ClockClient TID=5: Exit
+    ClockClient TID=6: I just delayed delay_time=23, i=8
+    ClockClient TID=6: Exit
+    ClockClient TID=8: I just delayed delay_time=71, i=2
+    ClockClient TID=8: Exit
+    AdministratorTask_Start: Got 4 shutdowns needed 4, shutdown send 1
+    SLOW! 12815us
+    NameServer_PrintTable: Tid=3 Name=ClckSvr
+    NameServer_PrintTable: Tid=4 Name=Admin
+    NameServer_PrintTable: Tid=10 Name=Idle
+    SLOW! 12885us
+    ClockServer TID=3: end
+    ClockNotifier TID=9: exit
+    AdministratorTask Exit
+    No tasks in queue!
+    [...Output trimmed...]
 
 
 
