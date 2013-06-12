@@ -13,6 +13,7 @@
 #include "notifier.h"
 #include "rps.h"
 #include "uart.h"
+#include "ui.h"
 
 void KernelTask_Start() {
 	int tid = Create(HIGHEST, &FirstTask_Start);
@@ -40,6 +41,9 @@ void FirstTask_Start() {
 	
 	tid = Create(HIGH, &UARTBootstrapTask_Start);
 	assert(tid > 0, "UARTBootstrapTask tid not positive");
+	
+	tid = Create(NORMAL, &UIServer_Start);
+	assert(tid > 0, "UIServer_Start tid not positive");
 	
 	// Begin testing tasks
 	
@@ -192,7 +196,7 @@ void AdministratorTask_Start() {
 
 	unsigned int idletask_shutdown_sent = 0;
 	unsigned int shutdown_requests = 0;
-	unsigned int required_requests = 4;
+	unsigned int required_requests = 5;
 
 	char send_buffer[MESSAGE_SIZE];
 	char receive_buffer[MESSAGE_SIZE];
