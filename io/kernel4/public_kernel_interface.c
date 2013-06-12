@@ -186,11 +186,21 @@ int Putc( int channel, char ch ) {
 
 int PutString( int channel, const char * message, ...) {
 	// TODO: send a message to the whatever server
+	
+	va_list va;
+	va_start(va,message);
+	bwformatbusy( (const unsigned char *) message, va );
+	va_end(va);
+	return 0;
+	
 	return 0;
 }
 
 int Print( const char * message, ...) {
 	// TODO: send a message to the whatever server
+	// This function would probably go to the ui and not directly to the serial server
+	// The ui would show the text into a textbox or lower half of the screen so it won't overwrite the ui
+	// The ui might have have started up yet so maybe fall back to busy wait if this happens
 	va_list va;
 	va_start(va,message);
 	bwformatbusy( (const unsigned char *) message, va );
