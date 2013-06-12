@@ -16,7 +16,6 @@ void irq_handler() {
 }
 
 void IRQ_TimerVIC2Handler() {
-	robprintfbusy((const unsigned char *)"YES!!!\n");
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
 	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, CLOCK_TICK_EVENT);
