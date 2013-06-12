@@ -63,7 +63,7 @@ void m_strcpy(char *dest, const char *src, int len) {
 int m_strlen(const char * str) {
 	// FIXME: I'm not optimal
 	int i = 0;
-	
+
 	while (1) {
 		if (str[i] == '\x00') {
 			return i;
@@ -72,6 +72,8 @@ int m_strlen(const char * str) {
 
 		assert(i < 100000, "m_strlen has been running for a really long time");
 	}
+
+	return -1; // Shouldn't get here; silence warning
 }
 
 int m_strcmp(const char *s1, const char *s2) {

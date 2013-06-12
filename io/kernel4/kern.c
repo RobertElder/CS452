@@ -9,7 +9,6 @@
 #include "kernel_irq.h"
 
 void asm_SwiCallEntry();
-void asm_IrqCallEntry();
 void asm_SetUpIRQStack();
 void asm_TimerIRQEntry();
 

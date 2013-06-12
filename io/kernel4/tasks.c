@@ -215,6 +215,7 @@ void AdministratorTask_Start() {
 				break;
 			}default:{
 				assertf(0, "AdministratorTask_Start: unknown message type %d", receive_msg->message_type);
+				break;
 			}
 		}
 

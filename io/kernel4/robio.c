@@ -149,6 +149,7 @@ void robsetspeed( ChannelDescription * channel) {
 	        break;
 	default:
 		assert(0,"Unknown Channel in robsetspeed.");
+		break;
 	}
 	switch( channel->speed ) {
 	case 115200:
@@ -161,6 +162,7 @@ void robsetspeed( ChannelDescription * channel) {
 		break;
 	default:
 		assert(0,"Unknown speed.");
+		break;
 	}
 	//  This will write to the high bytes and make the change apply.
 	robsetfifo( channel, OFF);

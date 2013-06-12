@@ -39,6 +39,7 @@ void NameServer_Start() {
 				NameServer_PrintTable(&ns);
 				Reply(sender_id, ns.reply_buffer, MESSAGE_SIZE);
 				Exit();
+				break;
 			}default:{
 				assertf(0,"Name server message type not found: %d",received_message->message_type);
 				break;

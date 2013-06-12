@@ -241,6 +241,7 @@ void Scheduler_ChangeTDState(Scheduler * scheduler, TD * td, TaskState new_state
 		break;
 	default:
 		assert(0,"Scheduler_ChangePriority: invalid old state");
+		break;
 	}
 	
 	switch(new_state) {
@@ -267,6 +268,7 @@ void Scheduler_ChangeTDState(Scheduler * scheduler, TD * td, TaskState new_state
 		break;
 	default:
 		assert(0,"Scheduler_ChangePriority: invalid new state");
+		break;
 	}
 	
 	td->state = new_state;
