@@ -18,7 +18,7 @@ ASFLAGS	= -mcpu=arm920t -mapcs-32
 LDFLAGS = -init main -Map kern.map -N  -T orex.ld -L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L../lib
 
 #  TODO: make things generic using the following method:
-SOURCES = kern.c public_kernel_interface.c private_kernel_interface.c swi_kernel_interface.c robio.c buffer.c queue.c task_descriptor.c tasks.c memory.c random.c nameserver.c rps.c message.c clock.c scheduler.c notifier.c kernel_irq.c
+SOURCES = kern.c public_kernel_interface.c private_kernel_interface.c swi_kernel_interface.c robio.c buffer.c queue.c task_descriptor.c tasks.c memory.c random.c nameserver.c rps.c message.c clock.c scheduler.c notifier.c kernel_irq.c ansi.c
 HEADERS = ${SOURCES:.c=.h}
 OBJECTS = ${SOURCES:.c=.o}
 
@@ -125,6 +125,12 @@ kernel_irq.s: kernel_irq.c kernel_irq.h
 
 kernel_irq.o: kernel_irq.s
 	$(AS) $(ASFLAGS) -o kernel_irq.o kernel_irq.s
+	
+ansi.s: ansi.c ansi.h
+	$(XCC) -S $(CFLAGS) ansi.c
+
+ansi.o: ansi.s
+	$(AS) $(ASFLAGS) -o ansi.o ansi.s
 
 kern.elf: $(OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ $(OBJECTS) -lgcc
@@ -132,4 +138,4 @@ kern.elf: $(OBJECTS)
 	chmod ugo+r /u/cs452/tftp/ARM/`whoami`/kern.elf
 
 clean:
-	-rm -f kern.elf kern.s public_kernel_interface.s private_kernel_interface.s robio.s buffer.s queue.s task_descriptor.s tasks.s memory.s random.s nameserver.s rps.s message.s clock.s scheduler.s notifier.s kernel_irq.s *.o kern.map
+	-rm -f kern.elf kern.s public_kernel_interface.s private_kernel_interface.s robio.s buffer.s queue.s task_descriptor.s tasks.s memory.s random.s nameserver.s rps.s message.s clock.s scheduler.s notifier.s kernel_irq.s ansi.s *.o kern.map
