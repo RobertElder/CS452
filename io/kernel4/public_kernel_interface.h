@@ -39,5 +39,9 @@ int DelayUntil( int ticks );
 int DelaySeconds( float seconds );
 float TimeSeconds();
 int DelayUntilSeconds( float seconds );
+int Getc( int channel );
+int Putc( int channel, char ch );
+int PutString(int channel, const char * message, ...);
+int Print(const char * message, ...);
 
 #endif

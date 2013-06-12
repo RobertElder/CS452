@@ -173,3 +173,28 @@ float TimeSeconds() {
 int DelayUntilSeconds( float seconds ) {
 	return DelayUntil( seconds * 1000.0 / TICK_SIZE);
 }
+
+int Getc( int channel ) {
+	// TODO: send a message to the whatever server
+	return 0;
+}
+
+int Putc( int channel, char ch ) {
+	// TODO: send a message to the whatever server
+	return 0;
+}
+
+int PutString( int channel, const char * message, ...) {
+	// TODO: send a message to the whatever server
+	return 0;
+}
+
+int Print( const char * message, ...) {
+	// TODO: send a message to the whatever server
+	va_list va;
+	va_start(va,message);
+	bwformatbusy( (const unsigned char *) message, va );
+	va_end(va);
+	return 0;
+}
+
