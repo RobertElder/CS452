@@ -1,14 +1,14 @@
 
+#ifndef KERNEL_STATE_H_
+#define KERNEL_STATE_H_
+
 #include "task_descriptor.h"
 #include "queue.h"
 #include "message.h"
 #include "memory.h"
 #include "buffer.h"
 
-#ifndef KERNEL_STATE_H_
-#define KERNEL_STATE_H_
-
-#define MAX_TASKS 480
+#define MAX_TASKS 100
 
 typedef struct KernelState KernelState;
 #include "scheduler.h"

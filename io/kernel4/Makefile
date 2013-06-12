@@ -27,7 +27,7 @@ all:  kern.s kern.elf
 kern.s: kern.c kern.h
 	$(XCC) -S $(CFLAGS) kern.c
 
-kern.o: kern.s kern.c kern.h
+kern.o: kern.s
 	$(AS) $(ASFLAGS) -o kern.o kern.s
 
 public_kernel_interface.s: public_kernel_interface.c public_kernel_interface.h

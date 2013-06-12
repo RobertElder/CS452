@@ -60,13 +60,10 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 				//  There are no ready tasks found.
 				break;
 			} else if (td->state == READY) {
-				//  We're scheduling this task now, put it at the end of the queue
-				PriorityQueue_Put(&(scheduler->task_queue), td, td->priority);
 				Scheduler_ChangeTDState(scheduler, td, ACTIVE);
 				return td;
 			} else if (td->state == RECEIVE_BLOCKED || td->state == SEND_BLOCKED || td->state == REPLY_BLOCKED || td->state == EVENT_BLOCKED) {
-				// Remember to put the task back in the ready queue when its ready
-				//  Just keep executing in this loop until we find a ready task.
+				assertf(0, "Task %d is %s but it is in the ready queue.\n", td->id, TASK_STATE_NAMES[td->state]);
 			} else if (td->state == ZOMBIE) {
 				// TODO:
 				// Destroy the zombie task
@@ -218,10 +215,11 @@ void Scheduler_CreateAndScheduleNewTask(Scheduler * scheduler, KernelState * k_s
 
 void Scheduler_ChangeTDState(Scheduler * scheduler, TD * td, TaskState new_state) {
 	switch(td->state) {
-	case READY:
+	case READY:{
+		assertf(new_state == ACTIVE,"A ready task is becomming %s. task: %d\n", TASK_STATE_NAMES[new_state], td->id);
 		scheduler->num_ready--;
 		break;
-	case ACTIVE:
+	}case ACTIVE:
 		scheduler->num_active--;
 		break;
 	case SEND_BLOCKED:
@@ -246,21 +244,37 @@ void Scheduler_ChangeTDState(Scheduler * scheduler, TD * td, TaskState new_state
 	
 	switch(new_state) {
 	case READY:
+		if(td->state != READY){
+			//  Any time we make a task ready, add it to the ready queue
+			safely_add_task_to_priority_queue(&scheduler->task_queue, td, td->priority);
+		}
 		scheduler->num_ready++;
 		break;
 	case ACTIVE:
 		scheduler->num_active++;
 		break;
 	case SEND_BLOCKED:
+		if(td->state != ACTIVE){
+			assertf(0,"We are send blocking an %s task: %d\n", TASK_STATE_NAMES[td->state], td->id);
+		}
 		scheduler->num_send_blocked++;
 		break;
 	case REPLY_BLOCKED:
+		if(td->state != RECEIVE_BLOCKED && td->state != ACTIVE){
+			assertf(0,"We are reply blocking an %s task: %d\n", TASK_STATE_NAMES[td->state], td->id);
+		}
 		scheduler->num_reply_blocked++;
 		break;
 	case RECEIVE_BLOCKED:
+		if(td->state != ACTIVE){
+			assertf(0,"We are receive blocking an %s task: %d\n", TASK_STATE_NAMES[td->state], td->id);
+		}
 		scheduler->num_receive_blocked++;
 		break;
 	case EVENT_BLOCKED:
+		if(td->state != ACTIVE){
+			assertf(0,"We are event blocking an %s task: %d\n", TASK_STATE_NAMES[td->state], td->id);
+		}
 		scheduler->num_event_blocked++;
 		break;
 	case ZOMBIE:
@@ -317,7 +331,6 @@ void Scheduler_UnblockTasksOnEvent(Scheduler * scheduler, EventID event_id) {
 		td = &scheduler->task_descriptors[i];
 		
 		if (td->state == EVENT_BLOCKED && td->event_id == event_id) {
-			safely_add_task_to_priority_queue(&scheduler->task_queue, td, td->priority);
 			Scheduler_ChangeTDState(scheduler, td, READY);
 		}
 	}

@@ -1,13 +1,13 @@
+#ifndef CLOCK_H_
+#define CLOCK_H_
+
 #include "message.h"
 #include "notifier.h"
 #include "kernel_state.h"
-#ifndef CLOCK_H_
-#define CLOCK_H_
 
 static const char const CLOCK_SERVER_NAME[] = "ClckSvr";
 static int * const TIMER4_VAL_LOW = (int*) 0x80810060;
 static int * const TIMER4_VAL_HIGH = (int*) 0x80810084;
-static int profile_last_time_value = 0;
 
 typedef struct ClockMessage {
 	MessageType message_type;

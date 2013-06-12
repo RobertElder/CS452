@@ -216,9 +216,6 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			//  That task is now ready to be scheduled
 			Scheduler_ChangeTDState(scheduler, target_td, READY);
 	
-			PriorityQueue_Put(&(scheduler->task_queue), target_td,
-				target_td->priority);
-	
 			target_td->return_value = msglen;
 	
 			assert((int) target_td->receive_msg, "k_Send: receive_msg isn't set");
@@ -232,7 +229,7 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			KernelMessage * km = (KernelMessage *)request_memory(k_state->memory_blocks_status, k_state->memory_blocks);	
 
 			KernelMessage_Initialize(km, current_td->id, tid, msg, reply, msglen, replylen);
-			Queue_PushEnd(&target_td->messages, km);
+			Queue_PushEnd((Queue*)&target_td->messages, km);
 			assert((int)km, "Pushed a null message\n");
 	
 			Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, RECEIVE_BLOCKED);
@@ -264,7 +261,7 @@ int k_Receive(int *tid, char *msg, int msglen){
 		
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
 	//  Attempt to receive a message from the queue associated with that process.
-	KernelMessage * message = (KernelMessage *) Queue_PopStart(&scheduler->current_task_descriptor->messages);
+	KernelMessage * message = (KernelMessage *) Queue_PopStart((Queue*)&scheduler->current_task_descriptor->messages);
 	
 	//  Remember where to store the message one we get it
 	scheduler->current_task_descriptor->receive_msg = msg;
@@ -322,8 +319,6 @@ int k_Reply(int tid, char *reply, int replylen){
 			assert(replylen == MESSAGE_SIZE, "msglen not 100");	
 			m_strcpy(target_td->reply_msg, reply, replylen);
 			Scheduler_ChangeTDState(scheduler, target_td, READY);
-			PriorityQueue_Put(&(scheduler->task_queue), target_td, 
-				target_td->priority);
 		}
 	} else {
 		if (!is_tid_in_range(tid)) {

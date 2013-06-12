@@ -37,6 +37,7 @@ void FirstTask_Start() {
 	tid = Create(HIGHEST + 2, &AdministratorTask_Start);
 	assert(tid > 0, "AdministratorTask tid not positive");
 	
+	tid = Create(HIGHEST + 3, &RPSTestStart);
 	// 1
 	tid = Create(3, &ClockClient_Start);
 	assertf(tid > 0, "ClockClient tid not positive, got %d", tid);

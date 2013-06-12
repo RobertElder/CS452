@@ -1,7 +1,7 @@
-#include "message.h"
-
 #ifndef TASK_H_
 #define TASK_H_
+
+#include "message.h"
 
 static const char const ADMINISTRATOR_TASK_NAME[] = "Admin";
 static const char const IDLE_TASK_NAME[] = "Idle";

@@ -5,6 +5,8 @@
 #include "public_kernel_interface.h"
 #include "queue.h"
 
+static int profile_last_time_value = 0;
+
 void ClockServer_Start() {
 	ClockServer server;
 	ClockServer_Initialize(&server);

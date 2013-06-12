@@ -248,7 +248,6 @@ Nameserver
 
 Maximum name length has been arbitrary reduced to 8 bytes (including the null terminator) to fit within the reduced size Kernel Message.
 
-
 IdleTask and AdministratorTask
 ++++++++++++++++++++++++++++++
 
@@ -450,7 +449,5 @@ which is identical to the ordering that our program produces::
     [...Output trimmed...]
 
 The 'SLOW' statements occur when it would have taken more than 10ms to unblock a task that was blocked on ``AwaitEvent``.  For now, these situations only occur during startup and shutdown, and we plan to address this before the next part of the kernel.  Note that this does not occur during the required testing.
-
-
 
 
