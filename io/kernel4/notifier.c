@@ -47,3 +47,21 @@ void ClockNotifier_Start() {
 
 	Exit();
 }
+
+void KeyboardInputNotifier_Start() {
+	Exit();
+}
+
+void KeyboardOutputNotifier_Start() {
+	Exit();
+}
+
+void TrainInputNotifier_Start() {
+	Exit();
+}
+
+void TrainOutputNotifier_Start() {
+	Exit();
+}
+
+

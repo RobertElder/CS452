@@ -18,6 +18,10 @@ static const int TICK_SIZE = 10; // milliseconds
 typedef enum EventID {
 	NULL_EVENT = 0,
 	CLOCK_TICK_EVENT,
+	UART1_RX_EVENT,
+	UART1_TX_EVENT,
+	UART2_RX_EVENT,
+	UART2_TX_EVENT,
 } EventID;
 
 
