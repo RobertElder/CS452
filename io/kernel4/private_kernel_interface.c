@@ -216,9 +216,6 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			//  That task is now ready to be scheduled
 			Scheduler_ChangeTDState(scheduler, target_td, READY);
 	
-			PriorityQueue_Put(&(scheduler->task_queue), target_td,
-				target_td->priority);
-	
 			target_td->return_value = msglen;
 	
 			assert((int) target_td->receive_msg, "k_Send: receive_msg isn't set");
@@ -322,8 +319,6 @@ int k_Reply(int tid, char *reply, int replylen){
 			assert(replylen == MESSAGE_SIZE, "msglen not 100");	
 			m_strcpy(target_td->reply_msg, reply, replylen);
 			Scheduler_ChangeTDState(scheduler, target_td, READY);
-			PriorityQueue_Put(&(scheduler->task_queue), target_td, 
-				target_td->priority);
 		}
 	} else {
 		if (!is_tid_in_range(tid)) {

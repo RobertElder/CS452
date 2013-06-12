@@ -10,7 +10,7 @@
 
 void RPSTestStart() {
 	int tid;
-	const int num_clients = 50;
+	const int num_clients = 10;
 
 	//tid = Create(NORMAL, &NameServer_Start);
 	//assert(tid == 2, "NameServer tid not 2");
@@ -60,7 +60,7 @@ void RPSServer_Start() {
 
 void RPSServer_Initialize(RPSServer * server) {
 	server->tid = MyTid();
-	Queue_Initialize(&server->player_tid_queue);
+	Queue_Initialize(&server->player_tid_queue, TASK_QUEUE_SIZE);
 	server->player_1_tid = 0;
 	server->player_2_tid = 0;
 	server->player_1_choice = NO_CHOICE;

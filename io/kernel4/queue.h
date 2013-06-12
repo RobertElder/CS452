@@ -1,7 +1,8 @@
 #ifndef QUEUE_H_
 #define QUEUE_H_
 
-#define QUEUE_SIZE 510
+#define TASK_QUEUE_SIZE 610
+#define MESSAGE_QUEUE_SIZE 10
 #define QUEUE_ITEM_TYPE void*
 #define NUM_PRIORITIES 32
 
@@ -21,22 +22,42 @@ typedef struct QueueItem {
 } QueueItem;
 
 typedef struct Queue {
-	QueueItem items[QUEUE_SIZE];
+	/* DON'T CREATE INSTANCES OF THIS TYPE WILL CORRUPT MEMORY, just a container for common methods */
 	unsigned int start;
 	unsigned int end;
 	unsigned int current_count;
+	unsigned int size;
+	QueueItem items[0];
 } Queue;
 
+typedef struct TaskQueue {
+	unsigned int start;
+	unsigned int end;
+	unsigned int current_count;
+	unsigned int size;
+	QueueItem items[TASK_QUEUE_SIZE];
+} TaskQueue;
+
+typedef struct MessageQueue {
+	unsigned int start;
+	unsigned int end;
+	unsigned int current_count;
+	unsigned int size;
+	QueueItem items[MESSAGE_QUEUE_SIZE];
+} MessageQueue;
+
 typedef struct PriorityQueue {
-	Queue queues[NUM_PRIORITIES];
+	TaskQueue queues[NUM_PRIORITIES];
 	
 	// leading bit = 0th priority, trailing bit = 31st priority
 	unsigned int queues_with_items;
 } PriorityQueue;
 
-void Queue_Initialize(Queue * queue);
+void Queue_Initialize(Queue * queue, unsigned int);
 
 int Queue_PushEnd(Queue * queue, QUEUE_ITEM_TYPE item);
+
+QUEUE_ITEM_TYPE Queue_RemoveItem(Queue * queue, QUEUE_ITEM_TYPE item);
 
 QUEUE_ITEM_TYPE Queue_PopStart(Queue * queue);
 
@@ -45,6 +66,8 @@ int Queue_CurrentCount(Queue * queue);
 void PriorityQueue_Initialize(PriorityQueue * queue);
 
 int PriorityQueue_Put(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority priority);
+
+QUEUE_ITEM_TYPE PriorityQueue_Remove(PriorityQueue * queue, QueuePriority p, QUEUE_ITEM_TYPE it);
 
 QUEUE_ITEM_TYPE PriorityQueue_Get(PriorityQueue * queue);
 

@@ -1,21 +1,23 @@
 #include "queue.h"
 #include "robio.h"
 
-void Queue_Initialize(Queue * queue) {
+void Queue_Initialize(Queue * queue, unsigned int size) {
 	queue->start = 0;
 	queue->end = 0;
 	queue->current_count = 0;
+	queue->size = size;
 }
 
 int Queue_PushEnd(Queue * queue, QUEUE_ITEM_TYPE item) {
-	if ((queue->end + 1) % QUEUE_SIZE == queue->start) {
+	if ((queue->end + 1) % queue->size == queue->start) {
+		assertf(0,"Queue is full. Size is %d.\n",queue->size);
 		return ERR_QUEUE_FULL;
 	}
 	
 	assert((int)item, "Queue_PushEnd: item=0");
 
 	queue->items[queue->end].item = item;
-	queue->end = (queue->end + 1) % QUEUE_SIZE;
+	queue->end = (queue->end + 1) % queue->size;
 	queue->current_count += 1;
 	
 	return 0;
@@ -30,7 +32,7 @@ QUEUE_ITEM_TYPE Queue_PopStart(Queue * queue) {
 
 	assert((int)item, "Queue_PopStart: item=0");
 
-	queue->start = (queue->start + 1) % QUEUE_SIZE;
+	queue->start = (queue->start + 1) % queue->size;
 	queue->current_count -= 1;
 	return item;
 }
@@ -39,10 +41,39 @@ int Queue_CurrentCount(Queue * queue) {
 	return queue->current_count;
 }
 
+
+QUEUE_ITEM_TYPE Queue_RemoveItem(Queue * queue, QUEUE_ITEM_TYPE item){
+	assert(0,"This function has a bug in it because I though we needed it but I guess not.  Gonna leave it here just in case.");
+
+	/*  !!! THIS FUNCTION WILL ONLY WORK AS LONG AS QUEUEITEM ONLY CONTAINS QUEUE ITEM TYPE !!! */
+	assert(sizeof(QUEUE_ITEM_TYPE) == sizeof(QueueItem),"Precondition violated.");
+	/*  This function will remove an arbitrary element from the queue by 
+	 *  figuring out its index via pointer math, then putting the last element
+	 *  in the queue into its position.  Pretty scary eh?
+	 *  */
+	QUEUE_ITEM_TYPE buffer_start = &(queue->items[0].item);
+	int item_index = (item - buffer_start) / sizeof(QUEUE_ITEM_TYPE);
+	assertf(item_index >= 0 && item_index < queue->size, "Attempting to remove item %d from queue of size %d.\n", item_index, queue->size);
+
+	assert(queue->start != queue->end, "Attempting to remove item from empty queue.\n");
+
+	//  Modulus math with negatives is not well defined, avoid negatives.
+	if(item_index == queue->start && queue->start == (queue->end + (queue->size -1)) % queue->size){
+		//  There was only one item in the queue.
+		queue->end = queue->start;
+	}else{
+		//  Otherwise there must be more than one item in the queue.
+		queue->items[item_index].item = queue->items[queue->end].item;
+		queue->end = (queue->end + (queue->size -1)) % queue->size;
+	}
+	queue->current_count -= 1;
+	return item;
+}
+
 void PriorityQueue_Initialize(PriorityQueue * queue) {
 	int i;
 	for (i = 0; i < NUM_PRIORITIES; i++) {
-		Queue_Initialize(&(queue->queues[i]));
+		Queue_Initialize(&(queue->queues[i]),TASK_QUEUE_SIZE);
 	}
 	queue->queues_with_items = 0;
 }
@@ -61,6 +92,15 @@ int PriorityQueue_Put(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority
 
 QUEUE_ITEM_TYPE PriorityQueue_Get(PriorityQueue * queue) {
 	return PriorityQueue_GetLower(queue, HIGHEST, 0);
+}
+
+QUEUE_ITEM_TYPE PriorityQueue_Remove(PriorityQueue * queue, QueuePriority p, QUEUE_ITEM_TYPE it) {
+	QUEUE_ITEM_TYPE item = Queue_RemoveItem(&(queue->queues[p]), it);
+
+	if (!item) {
+		queue->queues_with_items ^= 1 << (NUM_PRIORITIES - 1 - p);
+	}
+	return item;
 }
 
 QUEUE_ITEM_TYPE PriorityQueue_GetLower(PriorityQueue * queue, QueuePriority min_priority, QueuePriority * next_min_priority) {
@@ -90,14 +130,10 @@ QUEUE_ITEM_TYPE PriorityQueue_GetLower(PriorityQueue * queue, QueuePriority min_
 	
 	QUEUE_ITEM_TYPE item = Queue_PopStart(&(queue->queues[priority]));
 	
-	if (item) {
-		return item;
-	} else {
-		//robprintfbusy((const unsigned char *)"PQ: empty %d at %d\n", item, priority);
+	if (!item) {
 		queue->queues_with_items ^= 1 << (NUM_PRIORITIES - 1 - priority);
-		//PriorityQueue_PrintItems(queue);
-		return 0;
 	}
+	return item;
 }
 
 int Queue_IsValidPriority(QueuePriority priority) {
