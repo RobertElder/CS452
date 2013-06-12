@@ -83,7 +83,7 @@ int PriorityQueue_Put(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority
 		return ERR_QUEUE_PRIORITY;
 	}
 	
-	//robprintfbusy((const unsigned char *)"PQ: put %d at %d\n", item, priority);
+	//Print("PQ: put %d at %d\n", item, priority);
 	queue->queues_with_items |= 1 << (NUM_PRIORITIES - 1 - priority);
 	//PriorityQueue_PrintItems(queue);
 	return Queue_PushEnd((Queue*)&(queue->queues[priority]), item);
@@ -147,12 +147,12 @@ void PriorityQueue_PrintItems(PriorityQueue * queue) {
 	int i;
 	int has_item;
 	
-	robprintfbusy((const unsigned char *)"PQ=%d ", queue);
+	Print("PQ=%d ", queue);
 	
 	for (i = 0; i < NUM_PRIORITIES; i++) {
 		has_item = queue->queues_with_items & 1 << (NUM_PRIORITIES - 1 - i);
-		robprintfbusy((const unsigned char *)"%d=%d ", i, has_item);
+		Print("%d=%d ", i, has_item);
 	}
 	
-	robprintfbusy((const unsigned char *)"\n", queue);
+	Print("\n", queue);
 }

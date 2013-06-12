@@ -30,7 +30,7 @@ void RPSTestStart() {
 }
 
 void RPSServer_Start() {
-	robprintfbusy((const unsigned char *)"RPSServer created tid=%d\n", MyTid());
+	Print("RPSServer created tid=%d\n", MyTid());
 
 	int result = RegisterAs((char*) RPS_SERVER_NAME);
 
@@ -52,7 +52,7 @@ void RPSServer_Start() {
 		}
 	}
 
-	robprintfbusy((const unsigned char *)"About to call exit from rpsserver.\n");
+	Print("About to call exit from rpsserver.\n");
 	Exit();
 
 	assert(0, "Shouldn't see me\n");
@@ -110,14 +110,14 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 		server->running = 0;
 	}
 	assert(server->num_signed_in < 1000000, "num signed in underflow");
-	//robprintfbusy((const unsigned char *)"Server: Num signed in=%d\n", server->num_signed_in);
+	//Print("Server: Num signed in=%d\n", server->num_signed_in);
 	
 //	Pass();
 }
 
 void RPSServer_SelectPlayers(RPSServer * server) {
 	if (Queue_CurrentCount((Queue*)&server->player_tid_queue) <= 1) {
-		//robprintfbusy((const unsigned char *)"Server: There's only %d person in queue.\n", Queue_CurrentCount(&server->player_tid_queue));
+		//Print("Server: There's only %d person in queue.\n", Queue_CurrentCount(&server->player_tid_queue));
 		return;
 	}
 
@@ -220,12 +220,12 @@ void RPSServer_ReplyResult(RPSServer * server, int source_tid) {
 		server->state  =WAITING_FOR_PLAYERS;
 	}
 
-	//robprintfbusy((const unsigned char *)"Server: ***** P1=%d chose %d, P2=%d chose %d *****\n", server->player_1_tid, server->player_1_choice, server->player_2_tid, server->player_2_choice);
+	//Print("Server: ***** P1=%d chose %d, P2=%d chose %d *****\n", server->player_1_tid, server->player_1_choice, server->player_2_tid, server->player_2_choice);
 }
 
 
 void RPSServer_HandleSignup(RPSServer * server, RPSMessage * message, int source_tid) {
-	//robprintfbusy((const unsigned char *)"RPSServer: Received sign up request from %d\n", source_tid);
+	//Print("RPSServer: Received sign up request from %d\n", source_tid);
 
 	Queue_PushEnd((Queue*)&server->player_tid_queue, (QUEUE_ITEM_TYPE)source_tid);
 	server->signed_in_players[source_tid] = 1;
@@ -238,7 +238,7 @@ void RPSServer_HandleSignup(RPSServer * server, RPSMessage * message, int source
 }
 
 void RPSServer_HandleQuit(RPSServer * server, RPSMessage * message, int source_tid) {
-	//robprintfbusy((const unsigned char *)"Server: Received quit request from %d\n", source_tid);
+	//Print("Server: Received quit request from %d\n", source_tid);
 	int return_code;
 
 	RPSMessage * reply_message = (RPSMessage *) server->reply_buffer;
@@ -250,11 +250,11 @@ void RPSServer_HandleQuit(RPSServer * server, RPSMessage * message, int source_t
 
 	reply_message = (RPSMessage *) server->reply_buffer;
 	reply_message->message_type = MESSAGE_TYPE_GOODBYE;
-	robprintfbusy((const unsigned char *)"Server: Telling %d goodbye message\n", source_tid);
+	Print("Server: Telling %d goodbye message\n", source_tid);
 	return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
 	assert(return_code == 0, "RPSServer couldn't send GOODBYE to client");
 
-	robprintfbusy((const unsigned char *)"Server: We are shutting down\n");
+	Print("Server: We are shutting down\n");
 }
 
 void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_tid) {
@@ -265,7 +265,7 @@ void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_t
 		server->signed_in_players[source_tid] = 0;
 		server->num_signed_in -= 1;
 		reply_message->message_type = MESSAGE_TYPE_SHUTDOWN;
-		robprintfbusy((const unsigned char *)"Server: Telling %d that have shutdown\n", source_tid);
+		Print("Server: Telling %d that have shutdown\n", source_tid);
 		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
 		assert(return_code == 0, "RPSServer couldn't send SHUTDOWN to client");
 	} else if (server->state == WAITING_FOR_CHOICES) {
@@ -280,7 +280,7 @@ void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_t
 		if (server->player_1_choice != NO_CHOICE && server->player_2_choice != NO_CHOICE) {
 			server->state = GOT_CHOICES;
 			// We can play now!
-			robprintfbusy((const unsigned char *)"Server: We got players! P1=%d, P2=%d\n", server->player_1_tid, server->player_2_tid);
+			Print("Server: We got players! P1=%d, P2=%d\n", server->player_1_tid, server->player_2_tid);
 			server->games_played += 1;
 			server->state = SENDING_RESULTS;
 		}
@@ -308,12 +308,12 @@ void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_t
 
 
 void RPSClient_Start() {
-	robprintfbusy((const unsigned char *)"RPSClient created, tid=%d\n", MyTid());
+	Print("RPSClient created, tid=%d\n", MyTid());
 	RPSClient client;
 	RPSClient_Initialize(&client);
 
 	// Want to play
-	//robprintfbusy((const unsigned char *)"Client: %d - I want to play\n", client.tid);
+	//Print("Client: %d - I want to play\n", client.tid);
 
 	RPSMessage * send_message;
 	RPSMessage * reply_message;
@@ -330,7 +330,7 @@ void RPSClient_Start() {
 		RPSClient_PlayARound(&client);
 		Pass();
 		if (!client.running) {
-			robprintfbusy((const unsigned char *)"Client: %d - Quiting due to server shutdown\n", client.tid);
+			Print("Client: %d - Quiting due to server shutdown\n", client.tid);
 			Exit();
 		}
 	}
@@ -362,7 +362,7 @@ void RPSClient_PlayARound(RPSClient * client) {
 	int counter = 0;
 	while (1) {
 		Send(client->server_id, client->send_buffer, MESSAGE_SIZE, client->reply_buffer, MESSAGE_SIZE);
-		//robprintfbusy((const unsigned char *)"Sending message to play from %d to %d.\n",MyTid(),client->server_id);
+		//Print("Sending message to play from %d to %d.\n",MyTid(),client->server_id);
 
 		reply_message = (RPSMessage *) client->reply_buffer;
 
@@ -386,13 +386,13 @@ void RPSClient_PlayARound(RPSClient * client) {
 
 	switch(choice) {
 	case ROCK:
-		//robprintfbusy((const unsigned char *)"Client: %d - I choose rock\n", client->tid);
+		//Print("Client: %d - I choose rock\n", client->tid);
 		break;
 	case PAPER:
-		//robprintfbusy((const unsigned char *)"Client: %d - I choose paper\n", client->tid);
+		//Print("Client: %d - I choose paper\n", client->tid);
 		break;
 	case SCISSORS:
-		//robprintfbusy((const unsigned char *)"Client: %d - I choose scissors\n", client->tid);
+		//Print("Client: %d - I choose scissors\n", client->tid);
 		break;
 	default:
 		assert(0, "RNG gave client something wrong");
@@ -404,13 +404,13 @@ void RPSClient_PlayARound(RPSClient * client) {
 
 	switch (outcome) {
 	case WIN:
-		robprintfbusy((const unsigned char *)"Client: %d - I won ", client->tid);
+		Print("Client: %d - I won ", client->tid);
 		break;
 	case LOSE:
-		robprintfbusy((const unsigned char *)"Client: %d - I lost ", client->tid);
+		Print("Client: %d - I lost ", client->tid);
 		break;
 	case TIE:
-		robprintfbusy((const unsigned char *)"Client: %d - It was a tie ", client->tid);
+		Print("Client: %d - It was a tie ", client->tid);
 		break;
 	default:
 		assert(0, "Client not sure whether its win or lose");
@@ -419,16 +419,16 @@ void RPSClient_PlayARound(RPSClient * client) {
 
 	switch (reason) {
 	case ROCK:
-		robprintfbusy((const unsigned char *)" because opponent chose rock\n");
+		Print(" because opponent chose rock\n");
 		break;
 	case PAPER:
-		robprintfbusy((const unsigned char *)" because opponent chose paper\n");
+		Print(" because opponent chose paper\n");
 		break;
 	case SCISSORS:
-		robprintfbusy((const unsigned char *)" because opponent chose scissors\n");
+		Print(" because opponent chose scissors\n");
 		break;
 	case FORFEIT:
-		robprintfbusy((const unsigned char *)" because opponent gave up\n");
+		Print(" because opponent gave up\n");
 		break;
 	default:
 		assert(0, "Client unable to explain why it won/lost");
@@ -461,7 +461,7 @@ void RPSClient_Quit(RPSClient * client) {
 	Send(client->server_id, client->send_buffer, MESSAGE_SIZE, client->reply_buffer,MESSAGE_SIZE);
 	reply_message = (RPSMessage *) client->reply_buffer;
 	assert(reply_message->message_type == MESSAGE_TYPE_GOODBYE, "Client didn't get a goodbye from server");
-	robprintfbusy((const unsigned char *)"Client: %d - I decided to quit.\n", client->tid);
+	Print("Client: %d - I decided to quit.\n", client->tid);
 }
 
 

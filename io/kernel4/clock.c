@@ -17,7 +17,7 @@ void ClockServer_Start() {
 	assert(sizeof(NotifyMessage) <= MESSAGE_SIZE, "NotifyMessage size too big");
 	assert(sizeof(ClockMessage) <= MESSAGE_SIZE, "ClockMessage size too big");
 	
-	robprintfbusy((const unsigned char *)"ClockServer TID=%d: start\n", server.tid);
+	Print("ClockServer TID=%d: start\n", server.tid);
 	
 	int return_code = RegisterAs((char *)CLOCK_SERVER_NAME);
 	assert(return_code == 0, "ClockServer: Failed to register name");
@@ -31,7 +31,7 @@ void ClockServer_Start() {
 	
 	while (server.running) {
 		Receive(&source_tid, server.receive_buffer, MESSAGE_SIZE);
-		//robprintfbusy((const unsigned char *)"ClockServer: received %d message type\n", receive_msg->message_type);
+		//Print("ClockServer: received %d message type\n", receive_msg->message_type);
 		
 		switch(receive_msg->message_type) {
 		case MESSAGE_TYPE_NOTIFIER:
@@ -58,7 +58,7 @@ void ClockServer_Start() {
 		Pass();
 	}
 	
-	robprintfbusy((const unsigned char *)"ClockServer TID=%d: end\n", server.tid);
+	Print("ClockServer TID=%d: end\n", server.tid);
 	
 	Exit();
 }
@@ -78,7 +78,7 @@ void ClockServer_Initialize(ClockServer * server) {
 
 
 void ClockServer_HandleNotifier(ClockServer * server, int source_tid, NotifyMessage * receive_msg) {
-	//robprintfbusy((const unsigned char *)"ClockServer TID=%d: Handle Notifer from %d\n", server->tid, source_tid);
+	//Print("ClockServer TID=%d: Handle Notifer from %d\n", server->tid, source_tid);
 	
 	assert(receive_msg->event_id == CLOCK_TICK_EVENT, "ClockServer didn't get a clock tick event id");
 	
@@ -100,14 +100,14 @@ void ClockServer_HandleNotifier(ClockServer * server, int source_tid, NotifyMess
 	
 	// Debugging code
 	if (diff > TICK_SIZE * 1000 + 1000) {
-		robprintfbusy((const unsigned char *) "\033[1;31mSLOW! %dus\033[0m\n", diff);
+		Print( "\033[1;31mSLOW! %dus\033[0m\n", diff);
 	}
 	
 	server->ticks += 1;
 }
 
 void ClockServer_HandleTimeRequest(ClockServer * server, int source_tid, ClockMessage * receive_msg) {
-	//robprintfbusy((const unsigned char *)"ClockServer TID=%d: Handle Time Request from %d. Current tick=%d\n", server->tid, source_tid, server->ticks);
+	//Print("ClockServer TID=%d: Handle Time Request from %d. Current tick=%d\n", server->tid, source_tid, server->ticks);
 	
 	ClockMessage * reply_message = (ClockMessage *) server->reply_buffer;
 	reply_message->message_type = MESSAGE_TYPE_TIME_REPLY;
@@ -117,14 +117,14 @@ void ClockServer_HandleTimeRequest(ClockServer * server, int source_tid, ClockMe
 }
 
 void ClockServer_HandleDelayRequest(ClockServer * server, int source_tid, ClockMessage * receive_msg, short absolute) {
-	//robprintfbusy((const unsigned char *)"ClockServer TID=%d: Handle Delay Request from %d with value %d\n", server->tid, source_tid, receive_msg->num);
+	//Print("ClockServer TID=%d: Handle Delay Request from %d with value %d\n", server->tid, source_tid, receive_msg->num);
 	
 	if (!absolute) {
 		receive_msg->num += server->ticks;
 	}
 	
 	if (receive_msg->num <= server->ticks) {
-		robprintfbusy((const unsigned char *)
+		Print(
 		"\033[1;33mClockServer: WARNING delay value in the past from tid=%d! "
 		"Got=%d, now=%d\033[0m\n", source_tid, receive_msg->num, server->ticks);
 	
@@ -174,7 +174,7 @@ void ClockServer_UnblockDelayedTasks(ClockServer * server) {
 		ClockMessage * reply_message = (ClockMessage *) server->reply_buffer;
 		reply_message->message_type = MESSAGE_TYPE_DELAY_REPLY;
 		
-		//robprintfbusy((const unsigned char *)"ClockServer TID=%d: unblocking %d\n", server->tid, tid);
+		//Print("ClockServer TID=%d: unblocking %d\n", server->tid, tid);
 	
 		Reply(tid, server->reply_buffer, MESSAGE_SIZE);
 		
@@ -198,7 +198,7 @@ void ClockServer_HandleShutdownRequest(ClockServer * server, int source_tid, Clo
 void ClockClient_Start() {
 	ClockClient client;
 	ClockClient_Initialize(&client);
-	robprintfbusy((const unsigned char *)"ClockClient TID=%d: start\n", client.tid);
+	Print("ClockClient TID=%d: start\n", client.tid);
 	
 	assertf(client.server_tid, "ClockClient: server not found. got=%d", client.server_tid);
 	assertf(client.server_tid, "ClockClient: parent not found. got=%d", client.parent_tid);
@@ -215,16 +215,16 @@ void ClockClient_Start() {
 	client.delay_time = reply_message->delay_time;
 	client.num_delays = reply_message->num_delays;
 	
-	robprintfbusy((const unsigned char *)"ClockClient TID=%d: Got delay_time=%d, num_delays=%d\n", client.tid, client.delay_time, client.num_delays);
+	Print("ClockClient TID=%d: Got delay_time=%d, num_delays=%d\n", client.tid, client.delay_time, client.num_delays);
 	
 	int i;
 	for (i = 0; i < client.num_delays; i++) {
-		//robprintfbusy((const unsigned char *)"ClockClient TID=%d: About to delay %d, i=%d\n", client.tid, client.delay_time, i);
+		//Print("ClockClient TID=%d: About to delay %d, i=%d\n", client.tid, client.delay_time, i);
 		Delay(client.delay_time);
-		robprintfbusy((const unsigned char *)"ClockClient TID=%d: I just delayed delay_time=%d, i=%d\n", client.tid, client.delay_time, i);
+		Print("ClockClient TID=%d: I just delayed delay_time=%d, i=%d\n", client.tid, client.delay_time, i);
 	}
 
-	//robprintfbusy((const unsigned char *)"ClockClient TID=%d: Finished, telling idletask we're shutting down.\n", client.tid);
+	//Print("ClockClient TID=%d: Finished, telling idletask we're shutting down.\n", client.tid);
 
 
 	send_message->message_type = MESSAGE_TYPE_SHUTDOWN;
@@ -246,7 +246,7 @@ void ClockClient_Start() {
 	Send(admin_tid, client.send_buffer, MESSAGE_SIZE, client.reply_buffer, MESSAGE_SIZE);
 	assertf(reply_message->message_type == MESSAGE_TYPE_ACK, "ClockClient TID=%d: failed to get ACK message\n");
 	
-	robprintfbusy((const unsigned char *)"ClockClient TID=%d: Exit\n", client.tid);
+	Print("ClockClient TID=%d: Exit\n", client.tid);
 	
 	Exit();
 }
@@ -258,7 +258,7 @@ void ClockClient_Initialize(ClockClient * client) {
 }
 
 void print_current_time() {
-	robprintfbusy((const unsigned char *)"\033[7m %dms \033[0m\n", Time() * TICK_SIZE);
+	Print("\033[7m %dms \033[0m\n", Time() * TICK_SIZE);
 }
 
 void ProfileStart() {
@@ -269,5 +269,5 @@ void ProfileEnd() {
 	int now = *TIMER4_VAL_LOW;
 	int diff = (now - profile_last_time_value) / 983.0 * 1000.0;
 	profile_last_time_value = now;
-	robprintfbusy((const unsigned char *) "\033[1;32mProfile %dus\033[0m\n", diff);
+	Print( "\033[1;32mProfile %dus\033[0m\n", diff);
 }

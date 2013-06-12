@@ -38,7 +38,7 @@ void IRQ_UART2TransmitHandler() {
 void IRQ_EnableTimer() {
 	// 508000 cycles per second, means a tick (100ms) has 50800 cycles
 	unsigned const int cycles_per_tick = 508000 / 1000 * TICK_SIZE;
-	robprintfbusy((const unsigned char *)"CYCLES PER TICK=%d\n", cycles_per_tick);
+	Print("CYCLES PER TICK=%d\n", cycles_per_tick);
 	
 	//  Disable the timer before we set the load value
 	*timer_ctrl = (*timer_ctrl) ^ ENABLE_MASK;

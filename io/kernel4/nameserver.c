@@ -19,21 +19,21 @@ void NameServer_Start() {
 
 		switch (received_message->message_type) {
 			case MESSAGE_TYPE_REGISTER_AS:{
-				//robprintfbusy((const unsigned char *)"Name server got request from %d to register '%s'\n", sender_id, received_message->str);
+				//Print("Name server got request from %d to register '%s'\n", sender_id, received_message->str);
 				NameServer_SetName(&ns, sender_id, received_message->str);
 				outgoing_message = (NameServerMessage *) ns.reply_buffer;
 				outgoing_message->message_type = MESSAGE_TYPE_REGISTER_AS_OK;
 				Reply(sender_id, ns.reply_buffer, MESSAGE_SIZE);
 				break;
 			}case MESSAGE_TYPE_WHOIS:{
-				//robprintfbusy((const unsigned char *)"Name server got whois request from %d\n", sender_id);
+				//Print("Name server got whois request from %d\n", sender_id);
 				outgoing_message = (NameServerMessage *) ns.reply_buffer;
 				outgoing_message->message_type = MESSAGE_TYPE_WHOIS_REPLY;
 				outgoing_message->num = NameServer_GetName(&ns, received_message->str);
 				Reply(sender_id, ns.reply_buffer, MESSAGE_SIZE);
 				break;
 			}case MESSAGE_TYPE_NAME_SERVER_SHUTDOWN: {
-				//robprintfbusy((const unsigned char *)"Name server got request from %d shutdown\n", sender_id);
+				//Print("Name server got request from %d shutdown\n", sender_id);
 				outgoing_message = (NameServerMessage *) ns.reply_buffer;
 				outgoing_message->message_type = MESSAGE_TYPE_ACK;
 				NameServer_PrintTable(&ns);
@@ -95,6 +95,6 @@ void NameServer_PrintTable(NameServer * ns) {
 		if (!ns->filled[tid]) {
 			continue;
 		}
-		robprintfbusy((const unsigned char *)"NameServer_PrintTable: Tid=%d Name=%s\n", tid, ns->names[tid]);
+		Print("NameServer_PrintTable: Tid=%d Name=%s\n", tid, ns->names[tid]);
 	}
 }

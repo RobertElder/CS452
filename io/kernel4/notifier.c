@@ -13,7 +13,7 @@ void ClockNotifier_Start() {
 	send_message->message_type = MESSAGE_TYPE_NOTIFIER;
 	send_message->event_id = CLOCK_TICK_EVENT;
 	
-	robprintfbusy((const unsigned char *)"ClockNotifier TID=%d: start\n", MyTid());
+	Print("ClockNotifier TID=%d: start\n", MyTid());
 	
 	int i = 0;
 	while (1) {
@@ -30,7 +30,7 @@ void ClockNotifier_Start() {
 	while (1) {
 		AwaitEvent(CLOCK_TICK_EVENT);
 		
-		//robprintfbusy((const unsigned char *)"ClockNotifier TID=%d: Send msg to %d\n", MyTid(), clock_server_id);
+		//Print("ClockNotifier TID=%d: Send msg to %d\n", MyTid(), clock_server_id);
 		
 		Send(clock_server_id, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		
@@ -43,7 +43,7 @@ void ClockNotifier_Start() {
 		}
 	}
 
-	robprintfbusy((const unsigned char *)"ClockNotifier TID=%d: exit\n", MyTid());
+	Print("ClockNotifier TID=%d: exit\n", MyTid());
 
 	Exit();
 }
