@@ -1,0 +1,16 @@
+4 bytes	off	yes	off	2	549
+64 bytes	off	yes	off	2	2088
+4 bytes	on	yes	off	2	broken
+64 bytes	on	yes	off	2	broken
+4 bytes	off	no	off	2	547
+64 bytes	off	no	off	2	2090
+4 bytes	on	no	off	2	broken
+64 bytes	on	no	off	2	broken
+4 bytes	off	yes	on	2	broken
+64 bytes	off	yes	on	2	broken
+4 bytes	on	yes	on	2	broken
+64 bytes	on	yes	on	2	broken
+4 bytes	off	no	on	2	broken
+64 bytes	off	no	on	2	broken
+4 bytes	on	no	on	2	broken
+64 bytes	on	no	on	2	broken
