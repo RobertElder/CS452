@@ -23,6 +23,18 @@ void IRQ_TimerVIC2Handler() {
 	IRQ_ClearTimerInterrupt();
 }
 
+void IRQ_UART1RecieveHandler() {
+}
+
+void IRQ_UART1TransmitHandler() {
+}
+
+void IRQ_UART2RecieveHandler() {
+}
+
+void IRQ_UART2TransmitHandler() {
+}
+
 void IRQ_EnableTimer() {
 	// 508000 cycles per second, means a tick (100ms) has 50800 cycles
 	unsigned const int cycles_per_tick = 508000 / 1000 * TICK_SIZE;
@@ -44,7 +56,7 @@ void IRQ_EnableTimerVIC2() {
 	
 	// Set the address of the handler on VIC2-0
 	int * VIC2VectAddr0 = (int*) 0x800C0100;
-	*VIC2VectAddr0 = IRQ_TimerVIC2Handler;
+	*VIC2VectAddr0 = (int) &IRQ_TimerVIC2Handler;
 	
 	// Enable vectored interrupt on VIC2-0 by setting the source number
 	// and the enable bit (5)
@@ -62,13 +74,33 @@ void IRQ_ClearTimerInterrupt() {
 	*timer_clear = 1;
 }
 
-void IRQ_EnableInterrupts() {
-	int temp;
-	asm(
-		"MRS %0, cpsr\n"
-		"BIC %0, %0, #0x80\n"
-		"MSR cpsr_c, %0\n"
-		: // output
-		: "r"(temp)
-	);
+void IRQ_EnableUARTInterrupts() {
+	*VIC1IntEnable |= 1 << UART1RXINTR1;
+	*VIC1IntEnable |= 1 << UART1TXINTR1;
+	*VIC1IntEnable |= 1 << UART2RXINTR2;
+	*VIC1IntEnable |= 1 << UART2TXINTR2;
+	
+	// UART 1 Receive on VIC1-1
+	int * VIC1VectAddr1 = (int*) 0x800B0104;
+	*VIC1VectAddr1 = (int) &IRQ_UART1RecieveHandler;
+	int * VIC1VectCntl1 = (int*) 0x800B0204;
+	*VIC1VectCntl1 = UART1RXINTR1 | 1 << 5;
+	
+	// UART 1 Transmit on VIC1-2
+	int * VIC1VectAddr2 = (int*) 0x800B0108;
+	*VIC1VectAddr2 = (int) &IRQ_UART1TransmitHandler;
+	int * VIC1VectCntl2 = (int*) 0x800B0208;
+	*VIC1VectCntl2 = UART1TXINTR1 | 1 << 5;
+	
+	// UART 2 Receive on VIC1-3
+	int * VIC1VectAddr3 = (int*) 0x800B010C;
+	*VIC1VectAddr3 = (int) &IRQ_UART2RecieveHandler;
+	int * VIC1VectCntl3 = (int*) 0x800B020C;
+	*VIC1VectCntl3 = UART2RXINTR2 | 1 << 5;
+	
+	// UART 2 Transmit on VIC1-4
+	int * VIC1VectAddr4 = (int*) 0x800B0110;
+	*VIC1VectAddr4 = (int) &IRQ_UART2TransmitHandler;
+	int * VIC1VectCntl4 = (int*) 0x800B0210;
+	*VIC1VectCntl4 = UART2TXINTR2 | 1 << 5;
 }
