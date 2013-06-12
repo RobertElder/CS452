@@ -73,6 +73,28 @@ The memory model is now changed to look like this::
     | RedBoot        |
     +----------------+ 0x0000_0000
 
+Redboot Buffer
+--------------
+
+After investigating some problems related to observing program crashes on the second and third execution of the 'go' command, it was discovered that redboot does not properly clean up its stack each time you run a program.  Each time someone runs a program on a board, redboot pushes 80 bytes onto its stack and never removes it, unless you reset the board.  This means that if no one ever reset the board, eventually the redboot stack will crawl through all of memory, and overwrite the user's kernel.  It looks like no one else ever encountered this because they don't any data near the redboot stack like we do.
+
+To prove that this is the case, you can create a simple program as follows::
+
+	int main(){
+		asm (
+			"LDR r1, [PC, #0]\n" // Load r1 with a memory address we can save the sp into 
+			"ADD PC, PC, #0\n" // Jump over the address 
+			".4byte 0x01000000\n" // SP gets saved here every time the program executes 
+			"STR SP, [r1, #0]\n" // Save the stack pointer, then do dump -b 0x01000000 -l 4, values increases by 0x50 each time until reset.
+		);
+
+		return 0;
+	}
+
+Each time you run this program, you will observe that the saved stack value decreases by 0x50.  I attempted to account for this on the exit of my main method, by creating a modified exit routine in assembly that pops the extra information off the stack, but this does not seem to matter.
+
+${FREEMEMLO}
+------------
 
 After consulting the RedBoot documentation, the entry point was moved to ``0x00045000`` to free up more memory for user stacks. We believe that this new memory location marks the start of safe memory that is not used as a guarantee from redboot and we have not found any reason we cannot move the entry point to this location.  This values comes from the a redboot alias %{FREEMEMLO} that can be used when loading the program instead of the literal address.
 
@@ -218,7 +240,7 @@ See Performance.
 RPS
 +++
 
-The ``RPSServer`` has been refactored to fix synchronization problems. It is used for stress testing the OS. At least 300 tasks should run without problems.
+The ``RPSServer`` has been refactored to fix synchronization problems. It is used for stress testing the OS. At least 480 tasks should run without problems.
 
 
 Nameserver
@@ -427,7 +449,7 @@ which is identical to the ordering that our program produces::
     No tasks in queue!
     [...Output trimmed...]
 
-
+The 'SLOW' statements occur when it would have taken more than 10ms to unblock a task that was block on awaitevent.  For now, these situaions only occur during startup and shutdown, and we plan to address this before the next part of the kernel.  Note that this does not occur durring the required testing.
 
 
 
