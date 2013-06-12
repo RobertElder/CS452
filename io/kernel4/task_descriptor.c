@@ -16,7 +16,7 @@ void TD_Initialize(TD * td, int id, QueuePriority priority, int parent_id, void 
 	td->origin_tid = 0;
 	td->receive_msg = 0;
 	td->reply_msg = 0;
-	Queue_Initialize(&td->messages, MESSAGE_QUEUE_SIZE);
+	Queue_Initialize((Queue*)&td->messages, MESSAGE_QUEUE_SIZE);
 	td->event_id = NULL_EVENT;
 }
 

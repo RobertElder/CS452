@@ -73,7 +73,7 @@ QUEUE_ITEM_TYPE Queue_RemoveItem(Queue * queue, QUEUE_ITEM_TYPE item){
 void PriorityQueue_Initialize(PriorityQueue * queue) {
 	int i;
 	for (i = 0; i < NUM_PRIORITIES; i++) {
-		Queue_Initialize(&(queue->queues[i]),TASK_QUEUE_SIZE);
+		Queue_Initialize((Queue*)&(queue->queues[i]),TASK_QUEUE_SIZE);
 	}
 	queue->queues_with_items = 0;
 }
@@ -87,7 +87,7 @@ int PriorityQueue_Put(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority
 	//robprintfbusy((const unsigned char *)"PQ: put %d at %d\n", item, priority);
 	queue->queues_with_items |= 1 << (NUM_PRIORITIES - 1 - priority);
 	//PriorityQueue_PrintItems(queue);
-	return Queue_PushEnd(&(queue->queues[priority]), item);
+	return Queue_PushEnd((Queue*)&(queue->queues[priority]), item);
 }
 
 QUEUE_ITEM_TYPE PriorityQueue_Get(PriorityQueue * queue) {
@@ -95,7 +95,7 @@ QUEUE_ITEM_TYPE PriorityQueue_Get(PriorityQueue * queue) {
 }
 
 QUEUE_ITEM_TYPE PriorityQueue_Remove(PriorityQueue * queue, QueuePriority p, QUEUE_ITEM_TYPE it) {
-	QUEUE_ITEM_TYPE item = Queue_RemoveItem(&(queue->queues[p]), it);
+	QUEUE_ITEM_TYPE item = Queue_RemoveItem((Queue*)&(queue->queues[p]), it);
 
 	if (!item) {
 		queue->queues_with_items ^= 1 << (NUM_PRIORITIES - 1 - p);
@@ -128,7 +128,7 @@ QUEUE_ITEM_TYPE PriorityQueue_GetLower(PriorityQueue * queue, QueuePriority min_
 	assertf(Queue_IsValidPriority(priority), "PriorityQueue_GetLower: Got bad priority %d from CLZ", priority);
 	assertf(priority >= min_priority, "PriorityQueue_GetLower: Got bad priority %d from CLZ  -- b", priority);
 	
-	QUEUE_ITEM_TYPE item = Queue_PopStart(&(queue->queues[priority]));
+	QUEUE_ITEM_TYPE item = Queue_PopStart((Queue*)&(queue->queues[priority]));
 	
 	if (!item) {
 		queue->queues_with_items ^= 1 << (NUM_PRIORITIES - 1 - priority);

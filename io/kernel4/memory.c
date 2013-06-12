@@ -77,12 +77,13 @@ int m_strlen(const char * str) {
 int m_strcmp(const char *s1, const char *s2) {
 	// FIXME: I'm probably not optimal
 	
-	int word_i = 0;
 	int i = 0;
+	/*
+	int word_i = 0;
 	int * word_s1;
 	int * word_s2;
 	
-/*	while (1) {
+	while (1) {
 		word_s1 = (int*)s1 + word_i;
 		word_s2 = (int*)s2 + word_i;
 		

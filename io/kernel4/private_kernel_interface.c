@@ -229,7 +229,7 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			KernelMessage * km = (KernelMessage *)request_memory(k_state->memory_blocks_status, k_state->memory_blocks);	
 
 			KernelMessage_Initialize(km, current_td->id, tid, msg, reply, msglen, replylen);
-			Queue_PushEnd(&target_td->messages, km);
+			Queue_PushEnd((Queue*)&target_td->messages, km);
 			assert((int)km, "Pushed a null message\n");
 	
 			Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, RECEIVE_BLOCKED);
@@ -261,7 +261,7 @@ int k_Receive(int *tid, char *msg, int msglen){
 		
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
 	//  Attempt to receive a message from the queue associated with that process.
-	KernelMessage * message = (KernelMessage *) Queue_PopStart(&scheduler->current_task_descriptor->messages);
+	KernelMessage * message = (KernelMessage *) Queue_PopStart((Queue*)&scheduler->current_task_descriptor->messages);
 	
 	//  Remember where to store the message one we get it
 	scheduler->current_task_descriptor->receive_msg = msg;

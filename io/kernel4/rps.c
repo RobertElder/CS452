@@ -60,7 +60,7 @@ void RPSServer_Start() {
 
 void RPSServer_Initialize(RPSServer * server) {
 	server->tid = MyTid();
-	Queue_Initialize(&server->player_tid_queue, TASK_QUEUE_SIZE);
+	Queue_Initialize((Queue*)&server->player_tid_queue, TASK_QUEUE_SIZE);
 	server->player_1_tid = 0;
 	server->player_2_tid = 0;
 	server->player_1_choice = NO_CHOICE;
@@ -116,17 +116,17 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 }
 
 void RPSServer_SelectPlayers(RPSServer * server) {
-	if (Queue_CurrentCount(&server->player_tid_queue) <= 1) {
+	if (Queue_CurrentCount((Queue*)&server->player_tid_queue) <= 1) {
 		//robprintfbusy((const unsigned char *)"Server: There's only %d person in queue.\n", Queue_CurrentCount(&server->player_tid_queue));
 		return;
 	}
 
-	while (Queue_CurrentCount(&server->player_tid_queue)) {
-		server->player_1_tid = (int) Queue_PopStart(&server->player_tid_queue);
+	while (Queue_CurrentCount((Queue*)&server->player_tid_queue)) {
+		server->player_1_tid = (int) Queue_PopStart((Queue*)&server->player_tid_queue);
 
 		if (server->signed_in_players[server->player_1_tid]) {
 			// Yay, found player 1!
-			Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)server->player_1_tid);
+			Queue_PushEnd((Queue*)&server->player_tid_queue, (QUEUE_ITEM_TYPE)server->player_1_tid);
 			
 			// Attempt at shuffling
 			if (RNG_GetFloat(&server->rng) > 0.75) {
@@ -138,12 +138,12 @@ void RPSServer_SelectPlayers(RPSServer * server) {
 		}
 	}
 	
-	while (Queue_CurrentCount(&server->player_tid_queue)) {
-		server->player_2_tid = (int) Queue_PopStart(&server->player_tid_queue);
+	while (Queue_CurrentCount((Queue*)&server->player_tid_queue)) {
+		server->player_2_tid = (int) Queue_PopStart((Queue*)&server->player_tid_queue);
 
 		if (server->signed_in_players[server->player_2_tid]) {
 			// Yay, found player 2!
-			Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)server->player_2_tid);
+			Queue_PushEnd((Queue*)&server->player_tid_queue, (QUEUE_ITEM_TYPE)server->player_2_tid);
 			break;
 		} else {
 			// Player 2 has quit
@@ -227,7 +227,7 @@ void RPSServer_ReplyResult(RPSServer * server, int source_tid) {
 void RPSServer_HandleSignup(RPSServer * server, RPSMessage * message, int source_tid) {
 	//robprintfbusy((const unsigned char *)"RPSServer: Received sign up request from %d\n", source_tid);
 
-	Queue_PushEnd(&server->player_tid_queue, (QUEUE_ITEM_TYPE)source_tid);
+	Queue_PushEnd((Queue*)&server->player_tid_queue, (QUEUE_ITEM_TYPE)source_tid);
 	server->signed_in_players[source_tid] = 1;
 	server->num_signed_in += 1;
 
