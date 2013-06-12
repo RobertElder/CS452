@@ -1,4 +1,3 @@
-
 #ifndef KERNEL_STATE_H_
 #define KERNEL_STATE_H_
 
@@ -7,6 +6,7 @@
 #include "message.h"
 #include "memory.h"
 #include "buffer.h"
+#include "uart.h"
 
 #define MAX_TASKS 100
 
@@ -28,6 +28,7 @@ struct KernelState {
 	void * redboot_sp_value;
 	void * redboot_lr_value;
 	int redboot_spsr_value;
+	UART uart;
 };
 
 

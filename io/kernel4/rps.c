@@ -36,11 +36,6 @@ void RPSServer_Start() {
 
 	assert(result == 0, "RPSServer_Start failed to register name");
 
-	ChannelDescription terminal_channel;
-	terminal_channel.channel = COM2;
-	terminal_channel.speed = 115200;
-	robsetspeed( &terminal_channel);
-
 	RPSServer server;
 	RPSServer_Initialize(&server);
 

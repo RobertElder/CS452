@@ -24,15 +24,19 @@ void IRQ_TimerVIC2Handler() {
 }
 
 void IRQ_UART1RecieveHandler() {
+	Print("IRQ_UART1RecieveHandler\n");
 }
 
 void IRQ_UART1TransmitHandler() {
+	Print("IRQ_UART1TransmitHandler\n");
 }
 
 void IRQ_UART2RecieveHandler() {
+	Print("IRQ_UART2RecieveHandler\n");
 }
 
 void IRQ_UART2TransmitHandler() {
+	Print("IRQ_UART2TransmitHandler\n");
 }
 
 void IRQ_EnableTimer() {
