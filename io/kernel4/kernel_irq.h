@@ -19,6 +19,8 @@ static int * const VIC2SoftIntClear = (int*) 0x800C001C;
 
 void irq_handler();
 
+void IRQ_TimerVIC2Handler();
+
 void IRQ_EnableTimer();
 
 void IRQ_EnableTimerVIC2();
