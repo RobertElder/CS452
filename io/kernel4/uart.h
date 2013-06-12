@@ -1,13 +1,22 @@
-#include "robio.h"
+#include "buffer.h"
 
 #ifndef UART_H_
 #define UART_H_
 
-typedef struct UART {
-	ChannelDescription terminal_channel;
-	ChannelDescription train_channel;
-} UART;
+typedef struct ChannelDescription2 {
+	unsigned int channel;
+	unsigned int speed;
+	CharBuffer char_buffer;
+	
+} ChannelDescription2;
 
-void UART_Initialize(UART * uart);
+typedef struct UARTBootstrapTask {
+	ChannelDescription2 terminal_channel;
+	ChannelDescription2 train_channel;
+} UARTBootstrapTask;
+
+void UARTBootstrapTask_Start();
+
+void UARTBootstrapTask_Initialize(UARTBootstrapTask * uart);
 
 #endif

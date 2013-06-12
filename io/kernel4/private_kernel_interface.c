@@ -8,7 +8,6 @@
 #include "memory.h"
 #include "ts7200.h"
 #include "kernel_irq.h"
-#include "uart.h"
 
 void asm_KernelExit();
 
@@ -130,8 +129,6 @@ void k_InitKernel(){
 		IRQ_EnableTimerVIC2();
 		// IRQ_EnableUARTInterrupts();
 	}
-	
-	UART_Initialize(&k_state->uart);
 
 	asm_KernelExit();
 }

@@ -12,6 +12,7 @@
 #include "ts7200.h"
 #include "notifier.h"
 #include "rps.h"
+#include "uart.h"
 
 void KernelTask_Start() {
 	int tid = Create(HIGHEST, &FirstTask_Start);
@@ -36,6 +37,11 @@ void FirstTask_Start() {
 	
 	tid = Create(HIGHEST + 2, &AdministratorTask_Start);
 	assert(tid > 0, "AdministratorTask tid not positive");
+	
+	tid = Create(HIGH, &UARTBootstrapTask_Start);
+	assert(tid > 0, "UARTBootstrapTask tid not positive");
+	
+	// Begin testing tasks
 	
 	tid = Create(HIGHEST + 3, &RPSTestStart);
 	// 1
@@ -107,6 +113,8 @@ void FirstTask_Start() {
 	reply_message->delay_time = 71;
 	reply_message->num_delays = 3;
 	Reply(client_4_tid, reply_buffer, MESSAGE_SIZE);
+	
+	// End testing tasks above
 	
 	tid = Create(LOWEST, &IdleTask_Start);
 	assertf(tid, "IdleTask tid not postive");
