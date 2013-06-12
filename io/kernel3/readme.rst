@@ -58,12 +58,12 @@ The memory model is now changed to look like this::
 
     +----------------+ 0x0020_0000
     | RedBoot Stack  |
-    +----------------+ 0x01fd_cfdc Starting value of redboot stack after box reset
-    | Redboot Buffer*|
+    +----------------+ 0x01fd_cfdc Starting value of redboot stack 
+    | Redboot Buffer*|             after box reset
     +----------------+ 0x01FD_B09C 
     | Kernel Stack   |
-    +----------------+ 0x01FD_B09C - sizeof(KernelState) - 400kb = KernelEnd
-    | IRQ Stack      |
+    +----------------+ 0x01FD_B09C - sizeof(KernelState) - 400kb 
+    | IRQ Stack      |             = KernelEnd
     +----------------+ KernelEnd - 500kb
     | User Stacks    |
     |                |
@@ -80,21 +80,21 @@ After investigating some problems related to observing program crashes on the se
 
 To prove that this is the case, you can create a simple program as follows::
 
-	int main(){
-		asm (
-			"LDR r1, [PC, #0]\n" // Load r1 with a memory address we can save the sp into 
-			"ADD PC, PC, #0\n" // Jump over the address 
-			".4byte 0x01000000\n" // SP gets saved here every time the program executes 
-			"STR SP, [r1, #0]\n" // Save the stack pointer, then do dump -b 0x01000000 -l 4, values increases by 0x50 each time until reset.
-		);
+    int main(){
+        asm (
+            "LDR r1, [PC, #0]\n" // Load r1 with a memory address we can save the sp into 
+            "ADD PC, PC, #0\n" // Jump over the address 
+            ".4byte 0x01000000\n" // SP gets saved here every time the program executes 
+            "STR SP, [r1, #0]\n" // Save the stack pointer, then do dump -b 0x01000000 -l 4, values increases by 0x50 each time until reset.
+        );
 
-		return 0;
-	}
+        return 0;
+    }
 
 Each time you run this program, you will observe that the saved stack value decreases by 0x50.  I attempted to account for this on the exit of my main method, by creating a modified exit routine in assembly that pops the extra information off the stack, but this does not seem to matter.
 
-${FREEMEMLO}
-------------
+``${FREEMEMLO}``
+----------------
 
 After consulting the RedBoot documentation, the entry point was moved to ``0x00045000`` to free up more memory for user stacks. We believe that this new memory location marks the start of safe memory that is not used as a guarantee from redboot and we have not found any reason we cannot move the entry point to this location.  This values comes from the a redboot alias %{FREEMEMLO} that can be used when loading the program instead of the literal address.
 
@@ -136,7 +136,7 @@ Data Structures
 
 The Clock Server maintains a array mapping of TIDs to clock ticks in absolute time. Accesses to this mapping are constant time.
 
-In order to address a bug in managing message queue data, we implemented a heap--the memory management kind--that is used only by kernel when queueing messages.  The algorithm that performs the memory allocation is linear time, however this is ok because in practice this is bounded by the number of tasks, which is known to be less than 50.  We have stress tested our kernel with several hundred tasks, and the empirical measurements of timings still keeps us under our goal of 10ms for being able to respond to events.  We plan to further improve the run time of this function in the future.
+In order to address a bug in managing message queue data, we implemented a heap—the memory management kind—that is used only by kernel when queueing messages.  The algorithm that performs the memory allocation is linear time, however this is ok because in practice this is bounded by the number of tasks, which is known to be less than 50.  We have stress tested our kernel with several hundred tasks, and the empirical measurements of timings still keeps us under our goal of 10ms for being able to respond to events.  We plan to further improve the run time of this function in the future.
 
 
 Delay Requests
@@ -449,7 +449,7 @@ which is identical to the ordering that our program produces::
     No tasks in queue!
     [...Output trimmed...]
 
-The 'SLOW' statements occur when it would have taken more than 10ms to unblock a task that was block on awaitevent.  For now, these situaions only occur during startup and shutdown, and we plan to address this before the next part of the kernel.  Note that this does not occur durring the required testing.
+The 'SLOW' statements occur when it would have taken more than 10ms to unblock a task that was blocked on ``AwaitEvent``.  For now, these situations only occur during startup and shutdown, and we plan to address this before the next part of the kernel.  Note that this does not occur during the required testing.
 
 
 
