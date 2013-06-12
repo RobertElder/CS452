@@ -10,7 +10,7 @@
 
 void RPSTestStart() {
 	int tid;
-	const int num_clients = 10;
+	const int num_clients = 1550;
 
 	//tid = Create(NORMAL, &NameServer_Start);
 	//assert(tid == 2, "NameServer tid not 2");
@@ -381,7 +381,7 @@ void RPSClient_PlayARound(RPSClient * client) {
 		}
 
 		counter +=1;
-		assertf(counter < 1000, "Forever Alone: TID=%d hasn't played in a while", client->tid);
+		assertf(counter < 1000 * MAX_TASKS, "Forever Alone: TID=%d hasn't played in a while", client->tid);
 	}
 
 	switch(choice) {

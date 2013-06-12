@@ -1,7 +1,7 @@
 #ifndef QUEUE_H_
 #define QUEUE_H_
 
-#define TASK_QUEUE_SIZE 610
+#define TASK_QUEUE_SIZE 1570
 #define MESSAGE_QUEUE_SIZE 10
 #define QUEUE_ITEM_TYPE void*
 #define NUM_PRIORITIES 32
