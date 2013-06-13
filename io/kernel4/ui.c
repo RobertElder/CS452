@@ -54,7 +54,9 @@ void UIServer_Render(UIServer * server) {
 	Pass();
 	UIServer_PrintTime(server);
 	PutString(COM2, " } ");
+	Pass();
 	ANSI_CursorNextLine(1);
+	UIServer_PrintCommandLine(server);
 }
 
 void UIServer_PrintTime(UIServer * server) {
@@ -66,6 +68,13 @@ void UIServer_PrintTime(UIServer * server) {
 	unsigned int min = time % 60;
 
 	PutString(COM2, "%d:%d,%d", min, sec, ms);
+}
+
+void UIServer_PrintCommandLine(UIServer * server) {
+	ANSI_Style(BOLD_STYLE);
+	PutString(COM2, "C:\\> ");
+	ANSI_Style(NORMAL_STYLE);
+	PutString(COM2, "KERNEL~1.EXE");
 }
 
 void UITimer_Start() {

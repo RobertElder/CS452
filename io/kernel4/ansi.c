@@ -44,7 +44,7 @@ void ANSI_Style(ANSIStyle style) {
 			}
 		}
 	} else {
-		PutString(COM2, "0m");
+		PutString(COM2, "22;24;25;27m");
 	}
 }
 
