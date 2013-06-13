@@ -1,14 +1,30 @@
 #include "uart.h"
 #include "robio.h"
 #include "public_kernel_interface.h"
+#include "queue.h"
 
 
 void UARTBootstrapTask_Start() {
-	// It seems like the buffers are supposed to be on user space
+	Print("UARTBootstrapTask_Start tid=%d", MyTid());
+	// TODO It seems like the buffers are supposed to be on user space but where???
 	UARTBootstrapTask uart;
 	
 	UARTBootstrapTask_Initialize(&uart);
-	// TODO: start up servers and notifiers
+	
+	int tid;
+	
+	tid = Create(NORMAL, &KeyboardInputServer_Start);
+	assert(tid, "KeyboardInputServer create failed");
+	
+	tid = Create(NORMAL, &KeyboardOutputServer_Start);
+	assert(tid, "KeyboardOutputServer create failed");
+	
+	tid = Create(NORMAL, &TrainInputServer_Start);
+	assert(tid, "TrainInputServer create failed");
+	
+	tid = Create(NORMAL, &TrainOutputServer_Start);
+	assert(tid, "TrainOutputServer create failed");
+	
 	Exit();
 }
 
@@ -17,7 +33,7 @@ void UARTBootstrapTask_Initialize(UARTBootstrapTask * uart) {
 	uart->terminal_channel.speed = 115200;
 	CharBuffer_Initialize(&uart->train_channel.char_buffer);
 	CharBuffer_Initialize(&uart->terminal_channel.char_buffer);
-	robsetspeed( &uart->terminal_channel);
+	Channel_SetSpeed( &uart->terminal_channel);
 }
 
 
@@ -78,3 +94,22 @@ void Channel_SetSpeed( Channel * channel) {
 	Channel_SetFifo( channel, OFF);
 }
 
+void KeyboardInputServer_Start() {
+	//TODO do something
+	Exit();
+}
+
+void KeyboardOutputServer_Start() {
+	//TODO do something
+	Exit();
+}
+
+void TrainInputServer_Start() {
+	//TODO do something
+	Exit();
+}
+
+void TrainOutputServer_Start() {
+	//TODO do something
+	Exit();
+}

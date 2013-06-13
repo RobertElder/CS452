@@ -24,4 +24,12 @@ void Channel_SetFifo( Channel * channel, int state );
 
 void Channel_SetSpeed( Channel * channel);
 
+void KeyboardInputServer_Start();
+
+void KeyboardOutputServer_Start();
+
+void TrainInputServer_Start();
+
+void TrainOutputServer_Start();
+
 #endif
