@@ -56,7 +56,7 @@ void UIServer_Render(UIServer * server) {
 }
 
 void UIServer_HandlePrint(UIServer * server, int source_tid, GenericMessage * receive_message) {
-	UIMessage * ui_message = (UIMessage *) receive_message;
+//	UIMessage * ui_message = (UIMessage *) receive_message;
 	UIMessage * reply_message = (UIMessage *) server->reply_buffer;
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 	reply_message->row = 20 + server->print_message_count;

@@ -120,11 +120,11 @@ void FirstTask_Start() {
 	
 	// End testing tasks above
 	
-	//tid = Create(LOWEST, &IdleTask_Start);
-	//assertf(tid, "IdleTask tid not postive");
+	tid = Create(LOWEST, &IdleTask_Start);
+	assertf(tid, "IdleTask tid not postive");
 	
-	tid = Create(LOW, &ClockPrintTask_Start);
-	assert(tid > 0, "ClockPrintTask_Start tid not positive");
+	//tid = Create(LOW, &ClockPrintTask_Start);
+	//assert(tid > 0, "ClockPrintTask_Start tid not positive");
 	
 	robprintfbusy((const unsigned char *)"FirstTask Exit\n");
 	Exit();

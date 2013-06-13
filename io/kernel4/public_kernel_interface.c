@@ -198,14 +198,15 @@ int PutString( int channel, const char * message, ...) {
 }
 
 int Print( const char * message, ...) {
-	char send_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
-	UIMessage* send_message = (UIMessage*) send_buffer;
-	UIMessage * reply_message = (UIMessage*) reply_buffer;
-	int ui_server_tid = WhoIs((char*) UI_SERVER_NAME);
+//	char send_buffer[MESSAGE_SIZE];
+//	char reply_buffer[MESSAGE_SIZE];
+//	UIMessage* send_message = (UIMessage*) send_buffer;
+//	UIMessage * reply_message = (UIMessage*) reply_buffer;
+//	int ui_server_tid = WhoIs((char*) UI_SERVER_NAME);
 	
 	// TODO: If the UI server is available, query the location to move cursor to a place
 	// that won't clutter up the ui
+	// TODO: or perhaps it would be better to pass the message to the ui server but i don't know how to format the string before 
 /*	if (ui_server_tid) {
 		send_message->message_type = MESSAGE_TYPE_PRINT;
 		
