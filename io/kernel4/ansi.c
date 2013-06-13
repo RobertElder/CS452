@@ -18,20 +18,20 @@ void ANSI_Style(ANSIStyle style) {
 
 		while (1) {
 			if (style2 & BOLD_STYLE) {
-				PutString(COM2, "%d", BOLD_STYLE);
-				style2 ^= BOLD_STYLE;
+				PutString(COM2, "%d", BOLD_STYLE_CODE);
+				style2 &= ~BOLD_STYLE;
 			} else if (style2 & REVERSE_STYLE) {
-				PutString(COM2, "%d", REVERSE_STYLE);
-				style2 ^= REVERSE_STYLE;
+				PutString(COM2, "%d", REVERSE_STYLE_CODE);
+				style2 &= ~REVERSE_STYLE;
 			} else if (style2 & FAINT_STYLE) {
-				PutString(COM2, "%d", FAINT_STYLE);
-				style2 ^= FAINT_STYLE;
+				PutString(COM2, "%d", FAINT_STYLE_CODE);
+				style2 &= ~FAINT_STYLE;
 			} else if (style2 & UNDERLINE_STYLE) {
-				PutString(COM2, "%d", UNDERLINE_STYLE);
-				style2 ^= UNDERLINE_STYLE;
+				PutString(COM2, "%d", UNDERLINE_STYLE_CODE);
+				style2 &= ~UNDERLINE_STYLE;
 			} else if (style2 & BLINK_STYLE) {
-				PutString(COM2, "%d", BLINK_STYLE);
-				style2 ^= BLINK_STYLE;
+				PutString(COM2, "%d", BLINK_STYLE_CODE);
+				style2 &= ~BLINK_STYLE;
 			} else {
 				assert(0, "ANSI_Style unknown style");
 			}
@@ -40,6 +40,7 @@ void ANSI_Style(ANSIStyle style) {
 				PutString(COM2, ";");
 			} else {
 				PutString(COM2, "m");
+				break;
 			}
 		}
 	} else {

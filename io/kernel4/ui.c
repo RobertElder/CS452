@@ -30,9 +30,6 @@ void UIServer_Start() {
 			Reply(source_tid, server.reply_buffer, MESSAGE_SIZE);
 			UIServer_Render(&server);
 			break;
-		case MESSAGE_TYPE_PRINT:
-			UIServer_HandlePrint(&server, source_tid, receive_message);
-			break;
 		default:
 			assert(0, "UIServer_Start: unknown message type");
 			break;
@@ -51,9 +48,24 @@ void UIServer_Render(UIServer * server) {
 	ANSI_Color(WHITE, BLUE);
 	ANSI_ClearScreen(CLEAR_ALL);
 	ANSI_Cursor(1, 1);
-	PutString(COM2, "> THOMAS TANK ENGINE (TM) TRAIN MASTER CONTROL SYSTEM CS-452-2013 <");
+	PutString(COM2, 
+		"> THOMAS TANK ENGINE (TM) TRAIN MASTER CONTROL SYSTEM CS-452-2013 <"
+		" .. { SYSTIME = ");
+	Pass();
+	UIServer_PrintTime(server);
+	PutString(COM2, " } ");
 	ANSI_CursorNextLine(1);
-	PutString(COM2, "The time now is %d", (int)TimeSeconds());
+}
+
+void UIServer_PrintTime(UIServer * server) {
+	unsigned int time = (unsigned int) (TimeSeconds() * 1000);
+	unsigned int ms = time % 1000;
+	time /= 1000;
+	unsigned int sec = time % 60;
+	time /= 60;
+	unsigned int min = time % 60;
+
+	PutString(COM2, "%d:%d,%d", min, sec, ms);
 }
 
 void UITimer_Start() {
@@ -67,7 +79,7 @@ void UITimer_Start() {
 	send_message->message_type = MESSAGE_TYPE_HELLO;
 	
 	while (1) {
-		DelaySeconds(0.5);
+		DelaySeconds(1);
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		assert(reply_message->message_type == MESSAGE_TYPE_ACK, 
 			"UITimer_Start: didn't get ACK message");

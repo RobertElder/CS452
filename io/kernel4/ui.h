@@ -22,6 +22,8 @@ void UIServer_Initialize(UIServer * server);
 
 void UIServer_Render(UIServer * server);
 
+void UIServer_PrintTime(UIServer * server);
+
 void UITimer_Start();
 
 #endif
