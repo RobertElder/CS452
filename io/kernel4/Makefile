@@ -6,6 +6,7 @@ CC = $(XCC)
 AS	= /u/wbcowan/gnuarm-4.0.2/arm-elf/bin/as
 LD      = /u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ld
 CFLAGS  = -g -c -fPIC -Wall -I. -I./include -mcpu=arm920t -msoft-float -DASSERTS
+C_OPTIMIZATION_FLAGS = -O1
 # -g: include hooks for gdb
 # -c: only compile
 # -mcpu=arm920t: generate code for the 920t architecture
@@ -31,13 +32,13 @@ kern.o: kern.s
 	$(AS) $(ASFLAGS) -o kern.o kern.s
 
 public_kernel_interface.s: public_kernel_interface.c public_kernel_interface.h
-	$(XCC) -S $(CFLAGS) public_kernel_interface.c
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) public_kernel_interface.c
 
 public_kernel_interface.o: public_kernel_interface.s
 	$(AS) $(ASFLAGS) -o public_kernel_interface.o public_kernel_interface.s
 
 private_kernel_interface.s: private_kernel_interface.c private_kernel_interface.h
-	$(XCC) -S $(CFLAGS) private_kernel_interface.c
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) private_kernel_interface.c
 
 private_kernel_interface.o: private_kernel_interface.s
 	$(AS) $(ASFLAGS) -o private_kernel_interface.o private_kernel_interface.s
@@ -49,25 +50,25 @@ robio.o: robio.s
 	$(AS) $(ASFLAGS) -o robio.o robio.s
 
 buffer.s: buffer.c buffer.h
-	$(XCC) -S $(CFLAGS) buffer.c
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) buffer.c
 
 buffer.o: buffer.s
 	$(AS) $(ASFLAGS) -o buffer.o buffer.s
 
 queue.s: queue.c queue.h
-	$(XCC) -S $(CFLAGS) queue.c
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) queue.c
 
 queue.o: queue.s
 	$(AS) $(ASFLAGS) -o queue.o queue.s
 
 task_descriptor.s: task_descriptor.c task_descriptor.h
-	$(XCC) -S $(CFLAGS) task_descriptor.c
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) task_descriptor.c
 
 task_descriptor.o: task_descriptor.s
 	$(AS) $(ASFLAGS) -o task_descriptor.o task_descriptor.s
 
 tasks.s: tasks.c tasks.h
-	$(XCC) -S $(CFLAGS) tasks.c
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) tasks.c
 
 tasks.o: tasks.s
 	$(AS) $(ASFLAGS) -o tasks.o tasks.s
@@ -79,67 +80,67 @@ memory.o: memory.s
 	$(AS) $(ASFLAGS) -o memory.o memory.s
 
 random.s: random.c random.h
-	$(XCC) -S $(CFLAGS) random.c
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) random.c
 
 random.o: random.s
 	$(AS) $(ASFLAGS) -o random.o random.s
 
 nameserver.s: nameserver.c nameserver.h
-	$(XCC) -S $(CFLAGS) nameserver.c
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) nameserver.c
 
 nameserver.o: nameserver.s
 	$(AS) $(ASFLAGS) -o nameserver.o nameserver.s
 
 rps.s: rps.c rps.h
-	$(XCC) -S $(CFLAGS) rps.c
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) rps.c
 
 rps.o: rps.s
 	$(AS) $(ASFLAGS) -o rps.o rps.s
 
 message.s: message.c message.h
-	$(XCC) -S $(CFLAGS) message.c
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) message.c
 
 message.o: message.s
 	$(AS) $(ASFLAGS) -o message.o message.s
 	
 clock.s: clock.c clock.h
-	$(XCC) -S $(CFLAGS) clock.c
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) clock.c
 
 clock.o: clock.s
 	$(AS) $(ASFLAGS) -o clock.o clock.s
 	
 scheduler.s: scheduler.c scheduler.h
-	$(XCC) -S $(CFLAGS) scheduler.c
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) scheduler.c
 
 scheduler.o: scheduler.s
 	$(AS) $(ASFLAGS) -o scheduler.o scheduler.s
 	
 notifier.s: notifier.c notifier.h
-	$(XCC) -S $(CFLAGS) notifier.c
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) notifier.c
 
 notifier.o: notifier.s
 	$(AS) $(ASFLAGS) -o notifier.o notifier.s
 
 kernel_irq.s: kernel_irq.c kernel_irq.h
-	$(XCC) -S $(CFLAGS) kernel_irq.c
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) kernel_irq.c
 
 kernel_irq.o: kernel_irq.s
 	$(AS) $(ASFLAGS) -o kernel_irq.o kernel_irq.s
 	
 ansi.s: ansi.c ansi.h
-	$(XCC) -S $(CFLAGS) ansi.c
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) ansi.c
 
 ansi.o: ansi.s
 	$(AS) $(ASFLAGS) -o ansi.o ansi.s
 	
 uart.s: uart.c uart.h
-	$(XCC) -S $(CFLAGS) uart.c
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) uart.c
 
 uart.o: uart.s
 	$(AS) $(ASFLAGS) -o uart.o uart.s
 
 ui.s: ui.c ui.h
-	$(XCC) -S $(CFLAGS) ui.c
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) ui.c
 
 ui.o: ui.s
 	$(AS) $(ASFLAGS) -o ui.o ui.s
