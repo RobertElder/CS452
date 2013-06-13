@@ -74,7 +74,7 @@ tasks.o: tasks.s
 	$(AS) $(ASFLAGS) -o tasks.o tasks.s
 
 memory.s: memory.c memory.h
-	$(XCC) -S $(CFLAGS) memory.c
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) memory.c
 
 memory.o: memory.s
 	$(AS) $(ASFLAGS) -o memory.o memory.s
