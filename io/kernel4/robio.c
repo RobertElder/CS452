@@ -5,6 +5,7 @@
 void bwui2a( unsigned int num, unsigned int base, char *bf );
 
 void assertf( int expr, const char * message, ...){
+#ifdef ASSERTS
 	va_list va;
 	va_start(va,message);
 	if(!expr){
@@ -70,6 +71,7 @@ void assertf( int expr, const char * message, ...){
 		};
 	}
 	va_end(va);
+#endif
 }
 
 

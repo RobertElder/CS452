@@ -14,8 +14,16 @@
 #include "rps.h"
 #include "uart.h"
 #include "ui.h"
+#include "ansi.h"
 
 void KernelTask_Start() {
+#ifndef ASSERTS
+	ANSI_Color(WHITE, RED);
+	ANSI_Style(BOLD_STYLE);
+	robprintfbusy((const unsigned char *)"Asserts are OFF!\n");
+	ANSI_ResetColor();
+#endif
+
 	int tid = Create(HIGHEST, &FirstTask_Start);
 	
 	assertf(tid == 1, "FirstTask tid not 1, got %d", tid);
