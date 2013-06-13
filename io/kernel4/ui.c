@@ -25,6 +25,7 @@ void UIServer_Start() {
 		Receive(&source_tid, server.receive_buffer, MESSAGE_SIZE);
 		
 		switch(receive_message->message_type) {
+		// TODO: handle notifier messages from keyboard server and train server
 		case MESSAGE_TYPE_HELLO:
 			Reply(source_tid, server.reply_buffer, MESSAGE_SIZE);
 			UIServer_Render(&server);
@@ -53,18 +54,6 @@ void UIServer_Render(UIServer * server) {
 	PutString(COM2, "> THOMAS TANK ENGINE (TM) TRAIN MASTER CONTROL SYSTEM CS-452-2013 <");
 	ANSI_CursorNextLine(1);
 	PutString(COM2, "The time now is %d", (int)TimeSeconds());
-}
-
-void UIServer_HandlePrint(UIServer * server, int source_tid, GenericMessage * receive_message) {
-//	UIMessage * ui_message = (UIMessage *) receive_message;
-	UIMessage * reply_message = (UIMessage *) server->reply_buffer;
-	reply_message->message_type = MESSAGE_TYPE_ACK;
-	reply_message->row = 20 + server->print_message_count;
-	
-	Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
-	
-	server->print_message_count += 1;
-	server->print_message_count = server->print_message_count % 20;
 }
 
 void UITimer_Start() {

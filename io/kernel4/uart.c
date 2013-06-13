@@ -95,21 +95,30 @@ void Channel_SetSpeed( Channel * channel) {
 }
 
 void KeyboardInputServer_Start() {
-	//TODO do something
+	//TODO
+	// start notifier
+	// get characters
+	// send to ui server
 	Exit();
 }
 
 void ScreenOutputServer_Start() {
-	//TODO do something
+	//TODO start notifier
+	// then send
 	Exit();
 }
 
 void TrainInputServer_Start() {
-	//TODO do something
+	//TODO
+	// start notifier
+	// get characters
+	// send to train server which will process the data
 	Exit();
 }
 
 void TrainOutputServer_Start() {
-	//TODO do something
+	//TODO 
+	// start notifier
+	// then send
 	Exit();
 }

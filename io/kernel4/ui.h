@@ -22,8 +22,6 @@ void UIServer_Initialize(UIServer * server);
 
 void UIServer_Render(UIServer * server);
 
-void UIServer_HandlePrint(UIServer * server, int source_tid, GenericMessage * receive_message);
-
 void UITimer_Start();
 
 #endif
