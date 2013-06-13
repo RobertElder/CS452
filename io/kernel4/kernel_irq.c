@@ -24,25 +24,25 @@ void IRQ_TimerVIC2Handler() {
 }
 
 void IRQ_UART1RecieveHandler() {
-	Print("IRQ_UART1RecieveHandler\n");
+	robprintfbusy((const unsigned char *)"IRQ_UART1RecieveHandler\n");
 }
 
 void IRQ_UART1TransmitHandler() {
-	Print("IRQ_UART1TransmitHandler\n");
+	robprintfbusy((const unsigned char *)"IRQ_UART1TransmitHandler\n");
 }
 
 void IRQ_UART2RecieveHandler() {
-	Print("IRQ_UART2RecieveHandler\n");
+	robprintfbusy((const unsigned char *)"IRQ_UART2RecieveHandler\n");
 }
 
 void IRQ_UART2TransmitHandler() {
-	Print("IRQ_UART2TransmitHandler\n");
+	robprintfbusy((const unsigned char *)"IRQ_UART2TransmitHandler\n");
 }
 
 void IRQ_EnableTimer() {
 	// 508000 cycles per second, means a tick (100ms) has 50800 cycles
 	unsigned const int cycles_per_tick = 508000 / 1000 * TICK_SIZE;
-	Print("CYCLES PER TICK=%d\n", cycles_per_tick);
+	robprintfbusy((const unsigned char *)"CYCLES PER TICK=%d\n", cycles_per_tick);
 	
 	//  Disable the timer before we set the load value
 	*timer_ctrl = (*timer_ctrl) ^ ENABLE_MASK;

@@ -78,7 +78,7 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 		min_priority++;
 	}
 	
-	Print("\033[44;37mNo tasks in queue!\033[0m\n");
+	robprintfbusy((const unsigned char *)"\033[44;37mNo tasks in queue!\033[0m\n");
 	
 	if(TIMER_INTERRUPTS_ENABLED){
 		IRQ_ClearTimerInterrupt();
@@ -290,32 +290,32 @@ void Scheduler_ChangeTDState(Scheduler * scheduler, TD * td, TaskState new_state
 
 
 void Scheduler_PrintTDCounts(Scheduler * scheduler) {
-	Print("\033[1mScheduler_PrintTDCounts\033[0m\n");
-	Print(" NUM_TASKS = %d\n", scheduler->num_tasks);
-	Print(" 0. READY = %d\n", scheduler->num_ready);
-	Print(" 1. ACTIVE = %d\n", scheduler->num_active);
-	Print(" 2. ZOMBIE = %d\n", scheduler->num_zombie);
-	Print(" 3. SEND_BLOCKED = %d\n", scheduler->num_send_blocked);
-	Print(" 4. RECEIVE_BLOCKED = %d\n", scheduler->num_receive_blocked);
-	Print(" 5. REPLY_BLOCKED = %d\n", scheduler->num_reply_blocked);
-	Print(" 6. EVENT_BLOCKED = %d\n", scheduler->num_event_blocked);
+	robprintfbusy((const unsigned char *)"\033[1mScheduler_PrintTDCounts\033[0m\n");
+	robprintfbusy((const unsigned char *)" NUM_TASKS = %d\n", scheduler->num_tasks);
+	robprintfbusy((const unsigned char *)" 0. READY = %d\n", scheduler->num_ready);
+	robprintfbusy((const unsigned char *)" 1. ACTIVE = %d\n", scheduler->num_active);
+	robprintfbusy((const unsigned char *)" 2. ZOMBIE = %d\n", scheduler->num_zombie);
+	robprintfbusy((const unsigned char *)" 3. SEND_BLOCKED = %d\n", scheduler->num_send_blocked);
+	robprintfbusy((const unsigned char *)" 4. RECEIVE_BLOCKED = %d\n", scheduler->num_receive_blocked);
+	robprintfbusy((const unsigned char *)" 5. REPLY_BLOCKED = %d\n", scheduler->num_reply_blocked);
+	robprintfbusy((const unsigned char *)" 6. EVENT_BLOCKED = %d\n", scheduler->num_event_blocked);
 	
-	Print(" TDs: ");
+	robprintfbusy((const unsigned char *)" TDs: ");
 	
 	int i;
 	int count = 0;
 	for (i = 0; i < MAX_TASKS + 1; i++) {
 		if (Scheduler_IsInitedTid(scheduler, i)) {
-			Print(" %d: %s  ", i, 
+			robprintfbusy((const unsigned char *)" %d: %s  ", i, 
 				TASK_STATE_NAMES[scheduler->task_descriptors[i].state]);
 			count++;
 			if (count % 10 == 0) {
-				Print("\n");
+				robprintfbusy((const unsigned char *)"\n");
 			}
 		}
 	}
 	
-	Print("    End Print\n");
+	robprintfbusy((const unsigned char *)"    End Print\n");
 }
 
 void Scheduler_UnblockTasksOnEvent(Scheduler * scheduler, EventID event_id) {

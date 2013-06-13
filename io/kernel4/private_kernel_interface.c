@@ -19,11 +19,11 @@ extern int _EndOfProgram;
 
 void print_kernel_state(KernelState * k_state){
 	//TD * current_t = k_state->current_task_descriptor;
-	//Print("---- Kernel State ----.\n");
-	//Print("Max tasks: %d.\n",k_state->max_tasks);
-	//Print("SP value: %x task %d.\n",current_t->stack_pointer, current_t->id);
-	//Print("LR value: %x task %d.\n",current_t->link_register, current_t->id);
-	//Print("Return value (if applicable): %x.\n",k_state->user_proc_return_value);
+	//robprintfbusy((const unsigned char *)"---- Kernel State ----.\n");
+	//robprintfbusy((const unsigned char *)"Max tasks: %d.\n",k_state->max_tasks);
+	//robprintfbusy((const unsigned char *)"SP value: %x task %d.\n",current_t->stack_pointer, current_t->id);
+	//robprintfbusy((const unsigned char *)"LR value: %x task %d.\n",current_t->link_register, current_t->id);
+	//robprintfbusy((const unsigned char *)"Return value (if applicable): %x.\n",k_state->user_proc_return_value);
 }
 
 /* TODO:  Calling a kernel function from inside another kernel function is currently not supported. */
@@ -37,11 +37,11 @@ void * get_stack_base(unsigned int task_id){
 void print_memory_status(){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
-	Print("\033[1m--  Printing map of how our 32MB of memory is currently allocated.  --\033[0m\n");
-	Print("Redboot Stuff:    0x00000000 - 0000x%x\n",((unsigned int)&_DataStart) - 1);
-	Print("The Kernel:       0x000%x - 0x000%x\n",(unsigned int)&_DataStart, ((unsigned int)&_EndOfProgram) - 1);
+	robprintfbusy((const unsigned char *)"\033[1m--  Printing map of how our 32MB of memory is currently allocated.  --\033[0m\n");
+	robprintfbusy((const unsigned char *)"Redboot Stuff:    0x00000000 - 0000x%x\n",((unsigned int)&_DataStart) - 1);
+	robprintfbusy((const unsigned char *)"The Kernel:       0x000%x - 0x000%x\n",(unsigned int)&_DataStart, ((unsigned int)&_EndOfProgram) - 1);
 	int user_stacks_end = USER_TASKS_STACK_START - (USER_TASK_STACK_SIZE * k_state->scheduler.num_tasks);
-	Print("Unallocated:      0x000%x - 0x0%x\n",(unsigned int)&_EndOfProgram, user_stacks_end);
+	robprintfbusy((const unsigned char *)"Unallocated:      0x000%x - 0x0%x\n",(unsigned int)&_EndOfProgram, user_stacks_end);
 
 	/*
 	int i;
@@ -51,19 +51,19 @@ void print_memory_status(){
 		int last_sp = (int)k_state->scheduler.task_descriptors[i].stack_pointer;
 		int kb_used = (stack_base - last_sp) / 1024;
 		int kb_total = USER_TASK_STACK_SIZE / 1024;
-		Print("Stack of task %d:  0x0%x - 0x0%x (Was %x on last ctxt switch.  %d of %d kb used.)\n",i, stack_end, stack_base, last_sp, kb_used, kb_total);
+		robprintfbusy((const unsigned char *)"Stack of task %d:  0x0%x - 0x0%x (Was %x on last ctxt switch.  %d of %d kb used.)\n",i, stack_end, stack_base, last_sp, kb_used, kb_total);
 	}
 	*/
 
 	int timerirq_stack_base = (int) TIMER_IRQ_STACK_START;
 	int timerirq_stack_end = (timerirq_stack_base - TIMER_IRQ_STACK_SIZE) + 4;
-	Print("Timer IRQ Stack:  0x0%x - 0x0%x\n",timerirq_stack_end, timerirq_stack_base);
+	robprintfbusy((const unsigned char *)"Timer IRQ Stack:  0x0%x - 0x0%x\n",timerirq_stack_end, timerirq_stack_base);
 	int kernel_stack_base = (int) KERNEL_STACK_START;
 	int kernel_stack_end = (kernel_stack_base - KERNEL_STACK_SIZE) + 4;
-	Print("Kernel Stack:     0x0%x - 0x0%x\n",kernel_stack_end, kernel_stack_base);
-	Print("Unallocated:      0x0%x - 0x0%x\n",kernel_stack_base + 4, k_state->redboot_sp_value -1);
-	Print("Redboot Stack:    0x0%x - 0x01FFFFFF\n",k_state->redboot_sp_value);
-	Print("All memory        0x00000000 - 0x01FFFFFF\n");
+	robprintfbusy((const unsigned char *)"Kernel Stack:     0x0%x - 0x0%x\n",kernel_stack_end, kernel_stack_base);
+	robprintfbusy((const unsigned char *)"Unallocated:      0x0%x - 0x0%x\n",kernel_stack_base + 4, k_state->redboot_sp_value -1);
+	robprintfbusy((const unsigned char *)"Redboot Stack:    0x0%x - 0x01FFFFFF\n",k_state->redboot_sp_value);
+	robprintfbusy((const unsigned char *)"All memory        0x00000000 - 0x01FFFFFF\n");
 
 	int unallocated1 = user_stacks_end - (unsigned int)&_EndOfProgram + 1;
 	int unallocated2 = (((int)k_state->redboot_sp_value) -1) - (kernel_stack_base + 4) + 1;
@@ -74,7 +74,7 @@ void print_memory_status(){
 	char * ch = (char *)&_EndOfProgram;
 	for(i = 0; i < (user_stacks_end - (unsigned int)&_EndOfProgram + 1); i++){
 		if(i % 10000 == 0)
-			Print("%x\n", i);
+			robprintfbusy((const unsigned char *)"%x\n", i);
 
 		ch[i] = 0;
 	}
@@ -82,7 +82,7 @@ void print_memory_status(){
 	ch = (char *)(kernel_stack_base + 4);
 	for(i = 0; i < ((((int)k_state->redboot_sp_value) -1) - (kernel_stack_base + 4) + 1); i++){
 		if(i % 10000 == 0)
-			Print("%x\n", i);
+			robprintfbusy((const unsigned char *)"%x\n", i);
 		ch[i] = 0;
 	}
 
@@ -94,7 +94,7 @@ void print_memory_status(){
 	int unallocated_bytes = total_unallocated - (1048576 * unallocated_megs) - (unallocated_kibs * 1024);
 
 
-	Print("There are currently %d MB, %d KB and %d bytes of memory unallocated.\n", unallocated_megs, unallocated_kibs, unallocated_bytes);
+	robprintfbusy((const unsigned char *)"There are currently %d MB, %d KB and %d bytes of memory unallocated.\n", unallocated_megs, unallocated_kibs, unallocated_bytes);
 }
 
 void k_InitKernel(){
@@ -346,7 +346,7 @@ int k_AwaitEvent(EventID event_id) {
 	scheduler->current_task_descriptor->event_id = event_id;
 	scheduler->has_tasks_event_blocked[event_id] = 1;
 	
-	//Print("AwaitEvent called\n");
+	//robprintfbusy((const unsigned char *)"AwaitEvent called\n");
 		
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 		
