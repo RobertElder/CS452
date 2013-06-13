@@ -203,6 +203,9 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 	assert(scheduler->task_descriptors[tid].state != ZOMBIE,"Sending a message to a zombie task.\n");
 		
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
+	
+	// 5th argument check
+	assert(replylen == MESSAGE_SIZE, "k_Send replylen not match!");
 
 	int return_value = msglen;
 	TD * current_td = scheduler->current_task_descriptor;
@@ -313,7 +316,7 @@ int k_Reply(int tid, char *reply, int replylen){
 		if (target_td->state != REPLY_BLOCKED) {
 			return_value = ERR_K_TASK_NOT_REPLY_BLOCKED;
 		} else if (target_td->reply_len > replylen) {
-			assert(0, "k_Reply: Insufficient space in destination");
+			assertf(0, "k_Reply: Insufficient space in destination. Target len=%d, Len=%d", target_td->reply_len, replylen);
 			return_value = ERR_K_INSUFFICIENT_SPACE;
 		} else {
 			assert((int) target_td->reply_msg, "k_Reply: reply_msg isn't set");
