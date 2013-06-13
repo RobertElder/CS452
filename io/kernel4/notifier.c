@@ -14,7 +14,7 @@ void ClockNotifier_Start() {
 	send_message->message_type = MESSAGE_TYPE_NOTIFIER;
 	send_message->event_id = CLOCK_TICK_EVENT;
 	
-	Print("ClockNotifier TID=%d: start\n", MyTid());
+	robprintfbusy((const unsigned char *)"ClockNotifier TID=%d: start\n", MyTid());
 	
 	int i = 0;
 	while (1) {
@@ -44,7 +44,7 @@ void ClockNotifier_Start() {
 		}
 	}
 
-	Print("ClockNotifier TID=%d: exit\n", MyTid());
+	robprintfbusy((const unsigned char *)"ClockNotifier TID=%d: exit\n", MyTid());
 
 	Exit();
 }
@@ -60,7 +60,7 @@ void KeyboardInputNotifier_Start() {
 	send_message->message_type = MESSAGE_TYPE_NOTIFIER;
 	send_message->event_id = UART2_RX_EVENT;
 	
-	Print("KeyboardInputNotifier_Start: tid=%d", MyTid());
+	robprintfbusy((const unsigned char *)"KeyboardInputNotifier_Start: tid=%d", MyTid());
 	
 	while (1) {
 		AwaitEvent(UART2_RX_EVENT);
@@ -86,7 +86,7 @@ void ScreenOutputNotifier_Start() {
 	send_message->message_type = MESSAGE_TYPE_NOTIFIER;
 	send_message->event_id = UART2_TX_EVENT;
 	
-	Print("ScreenOutputNotifier_Start: tid=%d", MyTid());
+	robprintfbusy((const unsigned char *)"ScreenOutputNotifier_Start: tid=%d", MyTid());
 	
 	while (1) {
 		AwaitEvent(UART2_TX_EVENT);
@@ -112,7 +112,7 @@ void TrainInputNotifier_Start() {
 	send_message->message_type = MESSAGE_TYPE_NOTIFIER;
 	send_message->event_id = UART1_RX_EVENT;
 	
-	Print("TrainInputNotifier_Start: tid=%d", MyTid());
+	robprintfbusy((const unsigned char *)"TrainInputNotifier_Start: tid=%d", MyTid());
 	
 	while (1) {
 		AwaitEvent(UART2_RX_EVENT);
@@ -138,7 +138,7 @@ void TrainOutputNotifier_Start() {
 	send_message->message_type = MESSAGE_TYPE_NOTIFIER;
 	send_message->event_id = UART1_TX_EVENT;
 	
-	Print("TrainOutputNotifier_Start: tid=%d", MyTid());
+	robprintfbusy((const unsigned char *)"TrainOutputNotifier_Start: tid=%d", MyTid());
 	
 	while (1) {
 		AwaitEvent(UART2_RX_EVENT);

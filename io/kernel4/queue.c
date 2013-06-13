@@ -147,12 +147,12 @@ void PriorityQueue_PrintItems(PriorityQueue * queue) {
 	int i;
 	int has_item;
 	
-	Print("PQ=%d ", queue);
+	robprintfbusy((const unsigned char *)"PQ=%d ", queue);
 	
 	for (i = 0; i < NUM_PRIORITIES; i++) {
 		has_item = queue->queues_with_items & 1 << (NUM_PRIORITIES - 1 - i);
-		Print("%d=%d ", i, has_item);
+		robprintfbusy((const unsigned char *)"%d=%d ", i, has_item);
 	}
 	
-	Print("\n", queue);
+	robprintfbusy((const unsigned char *)"\n", queue);
 }

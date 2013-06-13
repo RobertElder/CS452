@@ -27,7 +27,7 @@ void KernelTask_Start() {
 void FirstTask_Start() {
 	int tid;
 	
-	Print("FirstTask Start tid=%d\n", MyTid());
+	robprintfbusy((const unsigned char *)"FirstTask Start tid=%d\n", MyTid());
 	
 	// System user tasks
 	tid = Create(HIGHEST + 1, &NameServer_Start);
@@ -64,7 +64,7 @@ void FirstTask_Start() {
 	tid = Create(6, &ClockClient_Start);
 	assert(tid > 0, "ClockClient tid not positive");
 	
-	Print("FirstTask begin receive\n");
+	robprintfbusy((const unsigned char *)"FirstTask begin receive\n");
 	
 	char receive_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
@@ -120,13 +120,13 @@ void FirstTask_Start() {
 	
 	// End testing tasks above
 	
-	tid = Create(LOWEST, &IdleTask_Start);
-	assertf(tid, "IdleTask tid not postive");
+	//tid = Create(LOWEST, &IdleTask_Start);
+	//assertf(tid, "IdleTask tid not postive");
 	
-	//tid = Create(LOW, &ClockPrintTask_Start);
-	//assert(tid > 0, "ClockPrintTask_Start tid not positive");
+	tid = Create(LOW, &ClockPrintTask_Start);
+	assert(tid > 0, "ClockPrintTask_Start tid not positive");
 	
-	Print("FirstTask Exit\n");
+	robprintfbusy((const unsigned char *)"FirstTask Exit\n");
 	Exit();
 	
 	assert(0, "Shouldn't see me\n");
@@ -138,7 +138,7 @@ void ClockPrintTask_Start() {
 		DelaySeconds(1);
 	}
 	
-	Print("ClockPrintTask Exit\n");
+	robprintfbusy((const unsigned char *)"ClockPrintTask Exit\n");
 	
 	Exit();
 }
@@ -174,7 +174,7 @@ void IdleTask_Start(){
 		
 			if(reply_message->message_type == MESSAGE_TYPE_SHUTDOWN){
 				break;
-				Print("IdleTask_Start: Got shutdown\n" );
+				robprintfbusy((const unsigned char *)"IdleTask_Start: Got shutdown\n" );
 			}
 			
 			i = 0;
@@ -235,7 +235,7 @@ void AdministratorTask_Start() {
 		Pass();
 	}
 	
-	Print("AdministratorTask_Start: Got %d shutdowns needed %d, shutdown send %d\n" , shutdown_requests, required_requests, idletask_shutdown_sent);
+	robprintfbusy((const unsigned char *)"AdministratorTask_Start: Got %d shutdowns needed %d, shutdown send %d\n" , shutdown_requests, required_requests, idletask_shutdown_sent);
 	
 	ClockMessage * clock_send_message = (ClockMessage *) send_buffer;
 	ClockMessage * clock_reply_message = (ClockMessage *) reply_buffer;
@@ -251,13 +251,13 @@ void AdministratorTask_Start() {
 	Send(NAMESERVER_TID, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 	assert(ns_reply_message->message_type==MESSAGE_TYPE_ACK, "AdministratorTask_Start didn't get ACK from name server");
 
-	Print("AdministratorTask Exit\n");
+	robprintfbusy((const unsigned char *)"AdministratorTask Exit\n");
 	
 	Exit();
 }
 
 int overflow(int times){
-	Print("Doing overflow in task %d with time as %d\n",times, MyTid());
+	robprintfbusy((const unsigned char *)"Doing overflow in task %d with time as %d\n",times, MyTid());
 	int i = 0;
 	Pass();
 	if(times != 0){

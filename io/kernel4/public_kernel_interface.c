@@ -68,7 +68,7 @@ int RegisterAs( char *name ) {
 
 	receive_message = (NameServerMessage *) receive_buffer;
 	assert(receive_message->message_type == MESSAGE_TYPE_REGISTER_AS_OK, "Didn't get back a register ok message type");
-	Print("RegisterAs for %s returned OK. tid=%d\n", name, MyTid());
+	robprintfbusy((const unsigned char *)"RegisterAs for %s returned OK. tid=%d\n", name, MyTid());
 
 
 	// TODO: I'm not sure if we ever send a message to the wrong server since
@@ -198,14 +198,36 @@ int PutString( int channel, const char * message, ...) {
 }
 
 int Print( const char * message, ...) {
-	// TODO: send a message to the whatever server
-	// This function would probably go to the ui and not directly to the serial server
-	// The ui would show the text into a textbox or lower half of the screen so it won't overwrite the ui
-	// The ui might have have started up yet so maybe fall back to busy wait if this happens
+	char send_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
+	UIMessage* send_message = (UIMessage*) send_buffer;
+	UIMessage * reply_message = (UIMessage*) reply_buffer;
+	int ui_server_tid = WhoIs((char*) UI_SERVER_NAME);
+	
+	// TODO: If the UI server is available, query the location to move cursor to a place
+	// that won't clutter up the ui
+/*	if (ui_server_tid) {
+		send_message->message_type = MESSAGE_TYPE_PRINT;
+		
+		Send(ui_server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+		
+		assert(reply_message->message_type == MESSAGE_TYPE_ACK,
+			"Print(): didn't get back an ACK message");
+		
+		ANSI_Cursor(reply_message->row, 1);
+	}*/
+	
+	// TODO put string
+	
+	// else
+	
+	// Fallback to busy wait io
+	// This should only happen on start up and shutdown
 	va_list va;
 	va_start(va,message);
 	bwformatbusy( (const unsigned char *) message, va );
 	va_end(va);
+	
 	return 0;
 }
 

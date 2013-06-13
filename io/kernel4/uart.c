@@ -5,7 +5,7 @@
 
 
 void UARTBootstrapTask_Start() {
-	Print("UARTBootstrapTask_Start tid=%d", MyTid());
+	robprintfbusy((const unsigned char *)"UARTBootstrapTask_Start tid=%d", MyTid());
 	// TODO It seems like the buffers are supposed to be on user space but where???
 	UARTBootstrapTask uart;
 	

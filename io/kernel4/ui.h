@@ -7,12 +7,13 @@ static const char const UI_SERVER_NAME[] = "UISvr";
 
 typedef struct UIMessage {
 	MessageType message_type;
-	char * message;
+	int row;
 } UIMessage;
 
 typedef struct UIServer {
 	char receive_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
+	unsigned int print_message_count;
 } UIServer;
 
 void UIServer_Start();
@@ -20,6 +21,8 @@ void UIServer_Start();
 void UIServer_Initialize(UIServer * server);
 
 void UIServer_Render(UIServer * server);
+
+void UIServer_HandlePrint(UIServer * server, int source_tid, GenericMessage * receive_message);
 
 void UITimer_Start();
 
