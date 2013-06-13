@@ -7,6 +7,7 @@ static const char const UI_SERVER_NAME[] = "UISvr";
 
 typedef struct UIMessage {
 	MessageType message_type;
+	char * message;
 } UIMessage;
 
 typedef struct UIServer {

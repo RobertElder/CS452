@@ -3,6 +3,7 @@
 #include "nameserver.h"
 #include "robio.h"
 #include "clock.h"
+#include "ui.h"
 
 void asm_KernelInitEntry();
 int asm_CreateEntry();

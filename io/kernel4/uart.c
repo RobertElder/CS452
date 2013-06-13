@@ -16,8 +16,8 @@ void UARTBootstrapTask_Start() {
 	tid = Create(NORMAL, &KeyboardInputServer_Start);
 	assert(tid, "KeyboardInputServer create failed");
 	
-	tid = Create(NORMAL, &KeyboardOutputServer_Start);
-	assert(tid, "KeyboardOutputServer create failed");
+	tid = Create(NORMAL, &ScreenOutputServer_Start);
+	assert(tid, "ScreenOutputServer create failed");
 	
 	tid = Create(NORMAL, &TrainInputServer_Start);
 	assert(tid, "TrainInputServer create failed");
@@ -99,7 +99,7 @@ void KeyboardInputServer_Start() {
 	Exit();
 }
 
-void KeyboardOutputServer_Start() {
+void ScreenOutputServer_Start() {
 	//TODO do something
 	Exit();
 }

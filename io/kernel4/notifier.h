@@ -13,7 +13,7 @@ void ClockNotifier_Start();
 
 void KeyboardInputNotifier_Start();
 
-void KeyboardOutputNotifier_Start();
+void ScreenOutputNotifier_Start();
 
 void TrainInputNotifier_Start();
 

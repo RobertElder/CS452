@@ -4,6 +4,11 @@
 #ifndef UART_H_
 #define UART_H_
 
+static const char const KEYBOARD_INPUT_SERVER_NAME[] = "KbISvr";
+static const char const KEYBOARD_OUTPUT_SERVER_NAME[] = "KbOSvr";
+static const char const TRAIN_INPUT_SERVER_NAME[] = "TrISvr";
+static const char const TRAIN_OUTPUT_SERVER_NAME[] = "TrOSvr";
+
 typedef struct Channel {
 	unsigned int channel;
 	unsigned int speed;
@@ -26,7 +31,7 @@ void Channel_SetSpeed( Channel * channel);
 
 void KeyboardInputServer_Start();
 
-void KeyboardOutputServer_Start();
+void ScreenOutputServer_Start();
 
 void TrainInputServer_Start();
 
