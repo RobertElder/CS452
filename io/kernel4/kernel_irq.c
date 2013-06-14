@@ -7,12 +7,15 @@
 #include "private_kernel_interface.h"
 
 void irq_handler() {
-	int * VIC2VectAddr = (int *)0x800C0030;
-	int (*function)(void) = (int (*)(void)) *VIC2VectAddr;
-	
-	function();
-	
-	*VIC2VectAddr = 0;
+	if (*VIC2VectAddr) {
+		int (*function)(void) = (int (*)(void)) *VIC2VectAddr;
+		function();
+		*VIC2VectAddr = 0;
+	} else if (*VIC1VectAddr) {
+		int (*function)(void) = (int (*)(void)) *VIC1VectAddr;
+		function();
+		*VIC1VectAddr = 0;
+	}
 }
 
 void IRQ_TimerVIC2Handler() {
@@ -24,18 +27,38 @@ void IRQ_TimerVIC2Handler() {
 }
 
 void IRQ_UART1RecieveHandler() {
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	
+	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, UART1_RX_EVENT);
+	
+	// TODO: do something to acknowledge the interrupt
 	robprintfbusy((const unsigned char *)"IRQ_UART1RecieveHandler\n");
 }
 
 void IRQ_UART1TransmitHandler() {
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	
+	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, UART1_TX_EVENT);
+	
+	// TODO: do something to acknowledge the interrupt
 	robprintfbusy((const unsigned char *)"IRQ_UART1TransmitHandler\n");
 }
 
 void IRQ_UART2RecieveHandler() {
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	
+	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, UART2_RX_EVENT);
+	
+	// TODO: do something to acknowledge the interrupt
 	robprintfbusy((const unsigned char *)"IRQ_UART2RecieveHandler\n");
 }
 
 void IRQ_UART2TransmitHandler() {
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	
+	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, UART2_TX_EVENT);
+	
+	// TODO: do something to acknowledge the interrupt
 	robprintfbusy((const unsigned char *)"IRQ_UART2TransmitHandler\n");
 }
 
@@ -79,10 +102,15 @@ void IRQ_ClearTimerInterrupt() {
 }
 
 void IRQ_EnableUARTInterrupts() {
+	*VIC1IntSelect &= 0;
+
+	// Enable the interrupt emitters
 	*VIC1IntEnable |= 1 << UART1RXINTR1;
 	*VIC1IntEnable |= 1 << UART1TXINTR1;
 	*VIC1IntEnable |= 1 << UART2RXINTR2;
 	*VIC1IntEnable |= 1 << UART2TXINTR2;
+	
+	// Set vectored interrupt handlers
 	
 	// UART 1 Receive on VIC1-1
 	int * VIC1VectAddr1 = (int*) 0x800B0104;
@@ -107,4 +135,12 @@ void IRQ_EnableUARTInterrupts() {
 	*VIC1VectAddr4 = (int) &IRQ_UART2TransmitHandler;
 	int * VIC1VectCntl4 = (int*) 0x800B0210;
 	*VIC1VectCntl4 = UART2TXINTR2 | 1 << 5;
+	
+	// Enable the interrupt types at the devices
+	
+	int * UART2Ctrl = (int*) (UART2_BASE | UART_CTLR_OFFSET);
+	*UART2Ctrl |= RIEN_MASK | RTIEN_MASK | TIEN_MASK;
+	
+	int * UART1Ctrl = (int*) (UART1_BASE | UART_CTLR_OFFSET);
+	*UART1Ctrl |= RIEN_MASK | RTIEN_MASK | TIEN_MASK;
 }

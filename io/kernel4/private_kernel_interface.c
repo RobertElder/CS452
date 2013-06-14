@@ -127,7 +127,7 @@ void k_InitKernel(){
 	if(TIMER_INTERRUPTS_ENABLED){
 		IRQ_EnableTimer();
 		IRQ_EnableTimerVIC2();
-		// IRQ_EnableUARTInterrupts();
+		IRQ_EnableUARTInterrupts();
 	}
 
 	asm_KernelExit();
