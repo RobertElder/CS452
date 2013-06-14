@@ -64,9 +64,7 @@ void KeyboardInputNotifier_Start() {
 	
 	while (1) {
 		AwaitEvent(UART2_RX_EVENT);
-
-		// TODO get the bytes from the kernel and send them
-		
+//		robprintfbusy((const unsigned char *)"KeyboardInputNotifier_Start: keypressed");
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		assert(reply_message->message_type == MESSAGE_TYPE_ACK,
 			"KeyboardInputNotifier didn't get an ACK");
@@ -90,9 +88,6 @@ void ScreenOutputNotifier_Start() {
 	
 	while (1) {
 		AwaitEvent(UART2_TX_EVENT);
-
-		// TODO maybe get number of bytes able to send and server notifier that info
-		
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		assert(reply_message->message_type == MESSAGE_TYPE_ACK,
 			"ScreenOutputNotifier didn't get an ACK");
@@ -116,9 +111,6 @@ void TrainInputNotifier_Start() {
 	
 	while (1) {
 		AwaitEvent(UART2_RX_EVENT);
-
-		// TODO get the bytes from the kernel and send them
-		
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		assert(reply_message->message_type == MESSAGE_TYPE_ACK,
 			"TrainInputNotifier didn't get an ACK");
@@ -142,9 +134,6 @@ void TrainOutputNotifier_Start() {
 	
 	while (1) {
 		AwaitEvent(UART2_RX_EVENT);
-
-		// TODO maybe get number of bytes able to send and tell server that info
-		
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		assert(reply_message->message_type == MESSAGE_TYPE_ACK,
 			"TrainOutputNotifier didn't get an ACK");

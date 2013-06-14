@@ -95,15 +95,31 @@ void Channel_SetSpeed( Channel * channel) {
 }
 
 void KeyboardInputServer_Start() {
+	char receive_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
+	int source_tid;
+	NotifyMessage * receive_message = (NotifyMessage *) receive_buffer;
+	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
+	reply_message->message_type = MESSAGE_TYPE_ACK;
+
 	int return_code = RegisterAs((char*)KEYBOARD_INPUT_SERVER_NAME);
 	assert(return_code == 0, "KeyboardInputServer_Start failed to register");
 
 	int notifier_tid = Create(HIGH, &KeyboardInputNotifier_Start);
 	assert(notifier_tid, "KeyboardInputServer_Start notifier did not start");
 	
-	//TODO
-	// get characters from device
-	// send to ui server
+	while (1) {
+		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
+		(void)receive_message;
+		Reply(source_tid, reply_buffer, MESSAGE_SIZE);
+		//TODO
+		// get characters from device
+		int * UART2DATA = (int*) (UART2_BASE + UART_DATA_OFFSET);
+		char data = *UART2DATA & DATA_MASK;
+		robprintfbusy((const unsigned char *)"KeyPressed=%d", data);
+		// send to ui server
+	}
+	
 	Exit();
 }
 
@@ -114,8 +130,12 @@ void ScreenOutputServer_Start() {
 	int notifier_tid = Create(HIGH, &ScreenOutputNotifier_Start);
 	assert(notifier_tid, "ScreenOutputServer_Start notifier did not start");
 	
-	//TODO
-	// send charcters from the buffer to device
+	while (1) {
+		DelaySeconds(1);
+		//TODO
+		// recieve message
+		// send charcters from the buffer to device
+	}
 	Exit();
 }
 
@@ -125,10 +145,14 @@ void TrainInputServer_Start() {
 
 	int notifier_tid = Create(HIGH, &TrainInputNotifier_Start);
 	assert(notifier_tid, "TrainInputServer_Start notifier did not start");
-
-	//TODO
-	// get characters from device
-	// send to train server which will process the data
+	
+	while (1) {
+		DelaySeconds(1);
+		//TODO
+		// receive message
+		// get characters from device
+		// send to train server which will process the data
+	}
 	Exit();
 }
 
@@ -138,8 +162,12 @@ void TrainOutputServer_Start() {
 
 	int notifier_tid = Create(HIGH, &TrainOutputNotifier_Start);
 	assert(notifier_tid, "TrainOutputServer_Start notifier did not start");
-
-	//TODO 
-	// send charcters from the buffer to the device
+	
+	while (1) {
+		DelaySeconds(1);
+		//TODO 
+		// receive message
+		// send charcters from the buffer to the device
+	}
 	Exit();
 }
