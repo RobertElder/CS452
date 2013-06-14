@@ -127,7 +127,7 @@ void k_InitKernel(){
 	if(TIMER_INTERRUPTS_ENABLED){
 		IRQ_EnableTimer();
 		IRQ_EnableTimerVIC2();
-		IRQ_EnableUARTInterrupts();
+		IRQ_SetupUARTInterrupts();
 	}
 
 	asm_KernelExit();
@@ -350,9 +350,26 @@ int k_AwaitEvent(EventID event_id) {
 	scheduler->has_tasks_event_blocked[event_id] = 1;
 	
 	//robprintfbusy((const unsigned char *)"AwaitEvent called\n");
-		
+	
+	switch(event_id) {
+	case UART1_RX_EVENT:
+		IRQ_SetUART1Receive(1);
+		break;
+	case UART1_TX_EVENT:
+		IRQ_SetUART1Transmit(1);
+		break;
+	case UART2_RX_EVENT:
+		IRQ_SetUART2Receive(1);
+		break;
+	case UART2_TX_EVENT:
+		IRQ_SetUART2Transmit(1);
+		break;
+	default:
+		break;
+	}
+
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
-		
+
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }

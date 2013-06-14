@@ -31,8 +31,7 @@ void IRQ_UART1RecieveHandler() {
 	
 	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, UART1_RX_EVENT);
 	
-	// TODO: do something to acknowledge the interrupt
-	robprintfbusy((const unsigned char *)"IRQ_UART1RecieveHandler\n");
+	IRQ_SetUART1Receive(0);
 }
 
 void IRQ_UART1TransmitHandler() {
@@ -40,8 +39,7 @@ void IRQ_UART1TransmitHandler() {
 	
 	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, UART1_TX_EVENT);
 	
-	// TODO: do something to acknowledge the interrupt
-	robprintfbusy((const unsigned char *)"IRQ_UART1TransmitHandler\n");
+	IRQ_SetUART1Transmit(0);
 }
 
 void IRQ_UART2RecieveHandler() {
@@ -49,8 +47,7 @@ void IRQ_UART2RecieveHandler() {
 	
 	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, UART2_RX_EVENT);
 	
-	// TODO: do something to acknowledge the interrupt
-	robprintfbusy((const unsigned char *)"IRQ_UART2RecieveHandler\n");
+	IRQ_SetUART2Receive(0);
 }
 
 void IRQ_UART2TransmitHandler() {
@@ -58,8 +55,7 @@ void IRQ_UART2TransmitHandler() {
 	
 	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, UART2_TX_EVENT);
 	
-	// TODO: do something to acknowledge the interrupt
-	robprintfbusy((const unsigned char *)"IRQ_UART2TransmitHandler\n");
+	IRQ_SetUART2Transmit(0);
 }
 
 void IRQ_EnableTimer() {
@@ -101,7 +97,7 @@ void IRQ_ClearTimerInterrupt() {
 	*timer_clear = 1;
 }
 
-void IRQ_EnableUARTInterrupts() {
+void IRQ_SetupUARTInterrupts() {
 	*VIC1IntSelect &= 0;
 
 	// Enable the interrupt emitters
@@ -135,12 +131,44 @@ void IRQ_EnableUARTInterrupts() {
 	*VIC1VectAddr4 = (int) &IRQ_UART2TransmitHandler;
 	int * VIC1VectCntl4 = (int*) 0x800B0210;
 	*VIC1VectCntl4 = UART2TXINTR2 | 1 << 5;
-	
-	// Enable the interrupt types at the devices
-	
-	int * UART2Ctrl = (int*) (UART2_BASE | UART_CTLR_OFFSET);
-	*UART2Ctrl |= RIEN_MASK | RTIEN_MASK | TIEN_MASK;
-	
+}
+
+void IRQ_SetUART1Receive(short enable) {
 	int * UART1Ctrl = (int*) (UART1_BASE | UART_CTLR_OFFSET);
-	*UART1Ctrl |= RIEN_MASK | RTIEN_MASK | TIEN_MASK;
+	
+	if (enable) {
+		*UART1Ctrl |= RIEN_MASK | RTIEN_MASK;
+	} else {
+		*UART1Ctrl &= ~(RIEN_MASK | RTIEN_MASK);
+	}
+}
+
+void IRQ_SetUART1Transmit(short enable) {
+	int * UART1Ctrl = (int*) (UART1_BASE | UART_CTLR_OFFSET);
+	
+	if (enable) {
+		*UART1Ctrl |= TIEN_MASK;
+	} else {
+		*UART1Ctrl &= ~TIEN_MASK;
+	}
+}
+
+void IRQ_SetUART2Receive(short enable) {
+	int * UART2Ctrl = (int*) (UART2_BASE | UART_CTLR_OFFSET);
+	
+	if (enable) {
+		*UART2Ctrl |= RIEN_MASK | RTIEN_MASK;
+	} else {
+		*UART2Ctrl &= ~(RIEN_MASK | RTIEN_MASK);
+	}
+}
+
+void IRQ_SetUART2Transmit(short enable) {
+	int * UART2Ctrl = (int*) (UART2_BASE | UART_CTLR_OFFSET);
+	
+	if (enable) {
+		*UART2Ctrl |= TIEN_MASK;
+	} else {
+		*UART2Ctrl &= ~TIEN_MASK;
+	}
 }
