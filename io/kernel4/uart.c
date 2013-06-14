@@ -54,7 +54,7 @@ void Channel_SetFifo( Channel * channel, int state ) {
 		break;
 	default:
 		assert(0,"Unknown Channel in set fifo.");
-		break;
+		return;
 	}
 
 	*line = buf;
@@ -75,7 +75,7 @@ void Channel_SetSpeed( Channel * channel) {
 		break;
 	default:
 		assert(0,"Unknown Channel in robsetspeed.");
-		break;
+		return;
 	}
 	switch( channel->speed ) {
 	case 115200:
@@ -88,7 +88,7 @@ void Channel_SetSpeed( Channel * channel) {
 		break;
 	default:
 		assert(0,"Unknown speed.");
-		break;
+		return;
 	}
 	//  This will write to the high bytes and make the change apply.
 	Channel_SetFifo( channel, OFF);
