@@ -80,7 +80,7 @@ void ScreenOutputNotifier_Start() {
 	char send_buffer[MESSAGE_SIZE];
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
 	NotifyMessage * send_message = (NotifyMessage *) send_buffer;
-	int server_tid = WhoIs((char*) KEYBOARD_OUTPUT_SERVER_NAME);
+	int server_tid = WhoIs((char*) SCREEN_OUTPUT_SERVER_NAME);
 	assert(server_tid, "ScreenOutputNotifier failed WhoIs");
 
 	send_message->message_type = MESSAGE_TYPE_NOTIFIER;

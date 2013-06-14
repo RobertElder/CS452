@@ -2,7 +2,7 @@
 #include "robio.h"
 #include "public_kernel_interface.h"
 #include "queue.h"
-
+#include "notifier.h"
 
 void UARTBootstrapTask_Start() {
 	robprintfbusy((const unsigned char *)"UARTBootstrapTask_Start tid=%d", MyTid());
@@ -95,30 +95,51 @@ void Channel_SetSpeed( Channel * channel) {
 }
 
 void KeyboardInputServer_Start() {
+	int return_code = RegisterAs((char*)KEYBOARD_INPUT_SERVER_NAME);
+	assert(return_code == 0, "KeyboardInputServer_Start failed to register");
+
+	int notifier_tid = Create(HIGH, &KeyboardInputNotifier_Start);
+	assert(notifier_tid, "KeyboardInputServer_Start notifier did not start");
+	
 	//TODO
-	// start notifier
-	// get characters
+	// get characters from device
 	// send to ui server
 	Exit();
 }
 
 void ScreenOutputServer_Start() {
-	//TODO start notifier
-	// then send
+	int return_code = RegisterAs((char*) SCREEN_OUTPUT_SERVER_NAME);
+	assert(return_code == 0, "ScreenOutputServer_Start failed to register");
+
+	int notifier_tid = Create(HIGH, &ScreenOutputNotifier_Start);
+	assert(notifier_tid, "ScreenOutputServer_Start notifier did not start");
+	
+	//TODO
+	// send charcters from the buffer to device
 	Exit();
 }
 
 void TrainInputServer_Start() {
+	int return_code = RegisterAs((char*)TRAIN_INPUT_SERVER_NAME);
+	assert(return_code == 0, "TrainInputServer_Start failed to register");
+
+	int notifier_tid = Create(HIGH, &TrainInputNotifier_Start);
+	assert(notifier_tid, "TrainInputServer_Start notifier did not start");
+
 	//TODO
-	// start notifier
-	// get characters
+	// get characters from device
 	// send to train server which will process the data
 	Exit();
 }
 
 void TrainOutputServer_Start() {
+	int return_code = RegisterAs((char*)TRAIN_OUTPUT_SERVER_NAME);
+	assert(return_code == 0, "TrainOutputServer_Start failed to register");
+
+	int notifier_tid = Create(HIGH, &TrainOutputNotifier_Start);
+	assert(notifier_tid, "TrainOutputServer_Start notifier did not start");
+
 	//TODO 
-	// start notifier
-	// then send
+	// send charcters from the buffer to the device
 	Exit();
 }
