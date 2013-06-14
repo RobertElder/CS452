@@ -15,6 +15,7 @@
 #include "uart.h"
 #include "ui.h"
 #include "ansi.h"
+#include "train.h"
 
 void KernelTask_Start() {
 #ifndef ASSERTS
@@ -49,6 +50,9 @@ void FirstTask_Start() {
 	
 	tid = Create(HIGH, &UARTBootstrapTask_Start);
 	assert(tid > 0, "UARTBootstrapTask tid not positive");
+	
+	tid = Create(HIGH, &TrainServer_Start);
+	assert(tid > 0, "TrainServer tid not positive");
 	
 	tid = Create(NORMAL, &UIServer_Start);
 	assert(tid > 0, "UIServer_Start tid not positive");
