@@ -11,7 +11,7 @@ int asm_MyTidEntry();
 int asm_MyParentTidEntry();
 void asm_PassEntry();
 void asm_ExitEntry();
-int asm_SendEntry();
+// asm_SendEntry(): See slow file
 int asm_ReceiveEntry();
 int asm_ReplyEntry();
 int asm_AwaitEventEntry();
@@ -40,9 +40,7 @@ void Exit(){
 	asm_ExitEntry();
 }
 
-int Send(int tid, char *msg, int msglen, char *reply, int replylen){
-	return asm_SendEntry(tid, msg, msglen, reply, replylen);
-}
+// Send(): see slow file.
 
 int Receive( int *tid, char *msg, int msglen ){
 	return asm_ReceiveEntry(tid, msg, msglen);
