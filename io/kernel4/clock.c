@@ -265,9 +265,9 @@ void ProfileStart() {
 	profile_last_time_value = *TIMER4_VAL_LOW;
 }
 
-void ProfileEnd() {
+void ProfileEnd(const char * str) {
 	int now = *TIMER4_VAL_LOW;
 	int diff = (now - profile_last_time_value) / 983.0 * 1000.0;
 	profile_last_time_value = now;
-	robprintfbusy((const unsigned char *) "\033[1;32mProfile %dus\033[0m\n", diff);
+	robprintfbusy((const unsigned char *) "\033[1;32m%s %dus\033[0m\n", str, diff);
 }

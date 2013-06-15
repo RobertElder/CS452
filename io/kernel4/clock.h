@@ -60,6 +60,6 @@ void print_current_time();
 
 void ProfileStart();
 
-void ProfileEnd();
+void ProfileEnd(const char *);
 
 #endif
