@@ -32,7 +32,7 @@ void m_strcpy(char *dest, const char *src, int len) {
 			i += 1;
 		} else if (remaining < num_octets_big) {
 			// Copy 2 words at a time
-			asm (
+			asm volatile (
 				"STMfd sp!, {r0-r1}\n"
 				"LDMia %[src]!, {r0-r1}\n"
 				"STMia %[dest]!, {r0-r1}\n"
@@ -44,7 +44,7 @@ void m_strcpy(char *dest, const char *src, int len) {
 			i += num_octets_small;
 		} else {
 			// Copy 8 words at a time
-			asm (
+			asm volatile (
 				"STMfd sp!, {r0-r7}\n"
 				"LDMia %[src]!, {r0-r7}\n"
 				"STMia %[dest]!, {r0-r7}\n"

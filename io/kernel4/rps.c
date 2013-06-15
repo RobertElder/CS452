@@ -36,11 +36,6 @@ void RPSServer_Start() {
 
 	assert(result == 0, "RPSServer_Start failed to register name");
 
-	ChannelDescription terminal_channel;
-	terminal_channel.channel = COM2;
-	terminal_channel.speed = 115200;
-	robsetspeed( &terminal_channel);
-
 	RPSServer server;
 	RPSServer_Initialize(&server);
 
@@ -110,14 +105,14 @@ void RPSServer_ProcessMessage(RPSServer * server) {
 		server->running = 0;
 	}
 	assert(server->num_signed_in < 1000000, "num signed in underflow");
-	//robprintfbusy((const unsigned char *)"Server: Num signed in=%d\n", server->num_signed_in);
+	//Print("Server: Num signed in=%d\n", server->num_signed_in);
 	
 //	Pass();
 }
 
 void RPSServer_SelectPlayers(RPSServer * server) {
 	if (Queue_CurrentCount((Queue*)&server->player_tid_queue) <= 1) {
-		//robprintfbusy((const unsigned char *)"Server: There's only %d person in queue.\n", Queue_CurrentCount(&server->player_tid_queue));
+		//Print("Server: There's only %d person in queue.\n", Queue_CurrentCount(&server->player_tid_queue));
 		return;
 	}
 

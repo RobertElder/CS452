@@ -31,7 +31,7 @@ void ClockServer_Start() {
 	
 	while (server.running) {
 		Receive(&source_tid, server.receive_buffer, MESSAGE_SIZE);
-		//robprintfbusy((const unsigned char *)"ClockServer: received %d message type\n", receive_msg->message_type);
+		//Print("ClockServer: received %d message type\n", receive_msg->message_type);
 		
 		switch(receive_msg->message_type) {
 		case MESSAGE_TYPE_NOTIFIER:
@@ -107,7 +107,7 @@ void ClockServer_HandleNotifier(ClockServer * server, int source_tid, NotifyMess
 }
 
 void ClockServer_HandleTimeRequest(ClockServer * server, int source_tid, ClockMessage * receive_msg) {
-	//robprintfbusy((const unsigned char *)"ClockServer TID=%d: Handle Time Request from %d. Current tick=%d\n", server->tid, source_tid, server->ticks);
+	//Print("ClockServer TID=%d: Handle Time Request from %d. Current tick=%d\n", server->tid, source_tid, server->ticks);
 	
 	ClockMessage * reply_message = (ClockMessage *) server->reply_buffer;
 	reply_message->message_type = MESSAGE_TYPE_TIME_REPLY;
@@ -117,7 +117,7 @@ void ClockServer_HandleTimeRequest(ClockServer * server, int source_tid, ClockMe
 }
 
 void ClockServer_HandleDelayRequest(ClockServer * server, int source_tid, ClockMessage * receive_msg, short absolute) {
-	//robprintfbusy((const unsigned char *)"ClockServer TID=%d: Handle Delay Request from %d with value %d\n", server->tid, source_tid, receive_msg->num);
+	//Print("ClockServer TID=%d: Handle Delay Request from %d with value %d\n", server->tid, source_tid, receive_msg->num);
 	
 	if (!absolute) {
 		receive_msg->num += server->ticks;
@@ -174,7 +174,7 @@ void ClockServer_UnblockDelayedTasks(ClockServer * server) {
 		ClockMessage * reply_message = (ClockMessage *) server->reply_buffer;
 		reply_message->message_type = MESSAGE_TYPE_DELAY_REPLY;
 		
-		//robprintfbusy((const unsigned char *)"ClockServer TID=%d: unblocking %d\n", server->tid, tid);
+		//Print("ClockServer TID=%d: unblocking %d\n", server->tid, tid);
 	
 		Reply(tid, server->reply_buffer, MESSAGE_SIZE);
 		
@@ -219,12 +219,12 @@ void ClockClient_Start() {
 	
 	int i;
 	for (i = 0; i < client.num_delays; i++) {
-		//robprintfbusy((const unsigned char *)"ClockClient TID=%d: About to delay %d, i=%d\n", client.tid, client.delay_time, i);
+		//Print("ClockClient TID=%d: About to delay %d, i=%d\n", client.tid, client.delay_time, i);
 		Delay(client.delay_time);
 		robprintfbusy((const unsigned char *)"ClockClient TID=%d: I just delayed delay_time=%d, i=%d\n", client.tid, client.delay_time, i);
 	}
 
-	//robprintfbusy((const unsigned char *)"ClockClient TID=%d: Finished, telling idletask we're shutting down.\n", client.tid);
+	//Print("ClockClient TID=%d: Finished, telling idletask we're shutting down.\n", client.tid);
 
 
 	send_message->message_type = MESSAGE_TYPE_SHUTDOWN;

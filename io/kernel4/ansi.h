@@ -15,11 +15,20 @@ typedef enum ANSIColor {
 typedef enum ANSIStyle {
 	NORMAL_STYLE = 0,
 	BOLD_STYLE = 1,
-	REVERSE_STYLE = 7,
-	FAINT_STYLE = 2,
-	UNDERLINE_STYLE = 4,
-	BLINK_STYLE = 5,
+	REVERSE_STYLE = 2,
+	FAINT_STYLE = 4,
+	UNDERLINE_STYLE = 8,
+	BLINK_STYLE = 16,
 } ANSIStyle;
+
+typedef enum ANSIStyleCode {
+	NORMAL_STYLE_CODE = 0,
+	BOLD_STYLE_CODE = 1,
+	REVERSE_STYLE_CODE = 7,
+	FAINT_STYLE_CODE = 2,
+	UNDERLINE_STYLE_CODE = 4,
+	BLINK_STYLE_CODE = 5,
+} ANSIStyleCode;
 
 typedef enum ClearType {
 	CLEAR_TO_END=0,

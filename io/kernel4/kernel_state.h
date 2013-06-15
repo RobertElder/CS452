@@ -1,4 +1,3 @@
-
 #ifndef KERNEL_STATE_H_
 #define KERNEL_STATE_H_
 

@@ -12,8 +12,19 @@
 #include "ts7200.h"
 #include "notifier.h"
 #include "rps.h"
+#include "uart.h"
+#include "ui.h"
+#include "ansi.h"
+#include "train.h"
 
 void KernelTask_Start() {
+#ifndef ASSERTS
+	ANSI_Color(WHITE, RED);
+	ANSI_Style(BOLD_STYLE);
+	robprintfbusy((const unsigned char *)"Asserts are OFF!\n");
+	ANSI_ResetColor();
+#endif
+
 	int tid = Create(HIGHEST, &FirstTask_Start);
 	
 	assertf(tid == 1, "FirstTask tid not 1, got %d", tid);
@@ -36,6 +47,17 @@ void FirstTask_Start() {
 	
 	tid = Create(HIGHEST + 2, &AdministratorTask_Start);
 	assert(tid > 0, "AdministratorTask tid not positive");
+	
+	tid = Create(HIGH, &UARTBootstrapTask_Start);
+	assert(tid > 0, "UARTBootstrapTask tid not positive");
+	
+	tid = Create(HIGH, &TrainServer_Start);
+	assert(tid > 0, "TrainServer tid not positive");
+	
+	tid = Create(NORMAL, &UIServer_Start);
+	assert(tid > 0, "UIServer_Start tid not positive");
+	
+	// Begin testing tasks
 	
 	tid = Create(HIGHEST + 3, &RPSTestStart);
 	// 1
@@ -107,6 +129,8 @@ void FirstTask_Start() {
 	reply_message->delay_time = 71;
 	reply_message->num_delays = 3;
 	Reply(client_4_tid, reply_buffer, MESSAGE_SIZE);
+	
+	// End testing tasks above
 	
 	tid = Create(LOWEST, &IdleTask_Start);
 	assertf(tid, "IdleTask tid not postive");
@@ -184,7 +208,7 @@ void AdministratorTask_Start() {
 
 	unsigned int idletask_shutdown_sent = 0;
 	unsigned int shutdown_requests = 0;
-	unsigned int required_requests = 4;
+	unsigned int required_requests = 5;
 
 	char send_buffer[MESSAGE_SIZE];
 	char receive_buffer[MESSAGE_SIZE];
@@ -208,7 +232,7 @@ void AdministratorTask_Start() {
 				if(shutdown_requests == required_requests){
 					reply_msg->message_type = MESSAGE_TYPE_SHUTDOWN;
 					idletask_shutdown_sent = 1;
-					// robprintfbusy((const unsigned char *)"Sending shutdown to idle task %d\n" ,source_tid );
+					// Print("Sending shutdown to idle task %d\n" ,source_tid );
 				}else{
 					reply_msg->message_type = MESSAGE_TYPE_ACK;
 				}

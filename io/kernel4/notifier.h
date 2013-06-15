@@ -11,4 +11,13 @@ typedef struct NotifyMessage {
 
 void ClockNotifier_Start();
 
+void KeyboardInputNotifier_Start();
+
+void ScreenOutputNotifier_Start();
+
+void TrainInputNotifier_Start();
+
+void TrainOutputNotifier_Start();
+
+
 #endif

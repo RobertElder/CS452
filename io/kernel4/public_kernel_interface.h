@@ -18,6 +18,10 @@ static const int TICK_SIZE = 10; // milliseconds
 typedef enum EventID {
 	NULL_EVENT = 0,
 	CLOCK_TICK_EVENT,
+	UART1_RX_EVENT,
+	UART1_TX_EVENT,
+	UART2_RX_EVENT,
+	UART2_TX_EVENT,
 } EventID;
 
 
@@ -39,5 +43,8 @@ int DelayUntil( int ticks );
 int DelaySeconds( float seconds );
 float TimeSeconds();
 int DelayUntilSeconds( float seconds );
+int Getc( int channel );
+int Putc( int channel, char ch );
+int PutString(int channel, const char * message, ...);
 
 #endif

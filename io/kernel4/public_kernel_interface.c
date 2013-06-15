@@ -3,6 +3,7 @@
 #include "nameserver.h"
 #include "robio.h"
 #include "clock.h"
+#include "ui.h"
 
 void asm_KernelInitEntry();
 int asm_CreateEntry();
@@ -10,7 +11,7 @@ int asm_MyTidEntry();
 int asm_MyParentTidEntry();
 void asm_PassEntry();
 void asm_ExitEntry();
-int asm_SendEntry();
+// asm_SendEntry(): See slow file
 int asm_ReceiveEntry();
 int asm_ReplyEntry();
 int asm_AwaitEventEntry();
@@ -39,9 +40,7 @@ void Exit(){
 	asm_ExitEntry();
 }
 
-int Send(int tid, char *msg, int msglen, char *reply, int replylen){
-	return asm_SendEntry(tid, msg, msglen, reply, replylen);
-}
+// Send(): see slow file.
 
 int Receive( int *tid, char *msg, int msglen ){
 	return asm_ReceiveEntry(tid, msg, msglen);
@@ -173,3 +172,26 @@ float TimeSeconds() {
 int DelayUntilSeconds( float seconds ) {
 	return DelayUntil( seconds * 1000.0 / TICK_SIZE);
 }
+
+int Getc( int channel ) {
+	// TODO: send a message to the whatever server
+	return 0;
+}
+
+int Putc( int channel, char ch ) {
+	// TODO: send a message to the whatever server
+	return 0;
+}
+
+int PutString( int channel, const char * message, ...) {
+	// TODO: send a message to the whatever server
+	
+	va_list va;
+	va_start(va,message);
+	bwformatbusy( (const unsigned char *) message, va );
+	va_end(va);
+	return 0;
+	
+	return 0;
+}
+

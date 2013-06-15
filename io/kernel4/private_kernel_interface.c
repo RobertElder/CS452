@@ -127,6 +127,7 @@ void k_InitKernel(){
 	if(TIMER_INTERRUPTS_ENABLED){
 		IRQ_EnableTimer();
 		IRQ_EnableTimerVIC2();
+		IRQ_SetupUARTInterrupts();
 	}
 
 	asm_KernelExit();
@@ -202,6 +203,9 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 	assert(scheduler->task_descriptors[tid].state != ZOMBIE,"Sending a message to a zombie task.\n");
 		
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
+	
+	// 5th argument check
+	assert(replylen == MESSAGE_SIZE, "k_Send replylen not match!");
 
 	int return_value = msglen;
 	TD * current_td = scheduler->current_task_descriptor;
@@ -312,7 +316,7 @@ int k_Reply(int tid, char *reply, int replylen){
 		if (target_td->state != REPLY_BLOCKED) {
 			return_value = ERR_K_TASK_NOT_REPLY_BLOCKED;
 		} else if (target_td->reply_len > replylen) {
-			assert(0, "k_Reply: Insufficient space in destination");
+			assertf(0, "k_Reply: Insufficient space in destination. Target len=%d, Len=%d", target_td->reply_len, replylen);
 			return_value = ERR_K_INSUFFICIENT_SPACE;
 		} else {
 			assert((int) target_td->reply_msg, "k_Reply: reply_msg isn't set");
@@ -346,9 +350,26 @@ int k_AwaitEvent(EventID event_id) {
 	scheduler->has_tasks_event_blocked[event_id] = 1;
 	
 	//robprintfbusy((const unsigned char *)"AwaitEvent called\n");
-		
+	
+	switch(event_id) {
+	case UART1_RX_EVENT:
+		IRQ_SetUART1Receive(1);
+		break;
+	case UART1_TX_EVENT:
+		IRQ_SetUART1Transmit(1);
+		break;
+	case UART2_RX_EVENT:
+		IRQ_SetUART2Receive(1);
+		break;
+	case UART2_TX_EVENT:
+		IRQ_SetUART2Transmit(1);
+		break;
+	default:
+		break;
+	}
+
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
-		
+
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
 }
