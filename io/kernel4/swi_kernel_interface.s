@@ -109,14 +109,16 @@ asm_KernelExitInterruptMethod:
 	BIC r0, r0, #31 /* Clear the mode bits */
 	ORR r0, r0, #31 /* Set it to supervisor mode */
 	MSR CPSR, r0 /* Go into system mode */
+	MOV r1, SP /* Save user sp and pop it last */
 	ADD SP, SP, #52 /* Simulate poping user state off which we do later. */
 	MRS r0, CPSR  /* Save current mode again */
 	BIC r0, r0, #31 /* Clear the mode bits */
 	ORR r0, r0, #18 /* Set it to irq mode */
 	MSR CPSR, r0 /* Restore irq mode */
 	ldmfd   sp!, {lr}
-	ldmfd   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* Take all that extra state off of the irq stack */
+	ADD SP, SP, #52 /* Simulate poping the irq stack from the user proc state it stored. */
 	SUB LR, LR, #4
+	ldmfd   r1, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* Get the state from the user stack */
 	MOVS pc, LR
 	
 asm_KernelExitAPIMethod:
