@@ -7,15 +7,18 @@
 #include "private_kernel_interface.h"
 
 void irq_handler() {
-	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
-
-	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, CLOCK_TICK_EVENT);
-
-	IRQ_ClearTimerInterrupt();
+	if (*VIC2VectAddr) {
+		int (*function)(void) = (int (*)(void)) *VIC2VectAddr;
+		function();
+		*VIC2VectAddr = 0;
+	} else if (*VIC1VectAddr) {
+		int (*function)(void) = (int (*)(void)) *VIC1VectAddr;
+		function();
+		*VIC1VectAddr = 0;
+	}
 }
 
 void IRQ_TimerVIC2Handler() {
-	return;
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
 	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, CLOCK_TICK_EVENT);
@@ -24,7 +27,6 @@ void IRQ_TimerVIC2Handler() {
 }
 
 void IRQ_UART1RecieveHandler() {
-	return;
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
 	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, UART1_RX_EVENT);
@@ -33,7 +35,6 @@ void IRQ_UART1RecieveHandler() {
 }
 
 void IRQ_UART1TransmitHandler() {
-	return;
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
 	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, UART1_TX_EVENT);
@@ -42,7 +43,6 @@ void IRQ_UART1TransmitHandler() {
 }
 
 void IRQ_UART2RecieveHandler() {
-	return;
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
 	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, UART2_RX_EVENT);
@@ -51,7 +51,6 @@ void IRQ_UART2RecieveHandler() {
 }
 
 void IRQ_UART2TransmitHandler() {
-	return;
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
 	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, UART2_TX_EVENT);
@@ -79,13 +78,13 @@ void IRQ_EnableTimerVIC2() {
 	*VIC2IntEnable |= 1 << (TC3OI - 32);
 	
 	// Set the address of the handler on VIC2-0
-	//int * VIC2VectAddr0 = (int*) 0x800C0100;
-	//*VIC2VectAddr0 = (int) &IRQ_TimerVIC2Handler;
+	int * VIC2VectAddr0 = (int*) 0x800C0100;
+	*VIC2VectAddr0 = (int) &IRQ_TimerVIC2Handler;
 	
 	// Enable vectored interrupt on VIC2-0 by setting the source number
 	// and the enable bit (5)
-	//int * VIC2VectCntl0 = (int*)0x800C0200;
-	//*VIC2VectCntl0 = (TC3OI - 32) | 1 << 5;
+	int * VIC2VectCntl0 = (int*)0x800C0200;
+	*VIC2VectCntl0 = (TC3OI - 32) | 1 << 5;
 }
 
 void IRQ_DisableTimerVIC2() {
@@ -99,7 +98,6 @@ void IRQ_ClearTimerInterrupt() {
 }
 
 void IRQ_SetupUARTInterrupts() {
-	return;
 	*VIC1IntSelect &= 0;
 
 	// Enable the interrupt emitters
@@ -136,7 +134,6 @@ void IRQ_SetupUARTInterrupts() {
 }
 
 void IRQ_SetUART1Receive(short enable) {
-	return;
 	int * UART1Ctrl = (int*) (UART1_BASE | UART_CTLR_OFFSET);
 	
 	if (enable) {
@@ -147,7 +144,6 @@ void IRQ_SetUART1Receive(short enable) {
 }
 
 void IRQ_SetUART1Transmit(short enable) {
-	return;
 	int * UART1Ctrl = (int*) (UART1_BASE | UART_CTLR_OFFSET);
 	
 	if (enable) {
@@ -158,7 +154,6 @@ void IRQ_SetUART1Transmit(short enable) {
 }
 
 void IRQ_SetUART2Receive(short enable) {
-	return;
 	int * UART2Ctrl = (int*) (UART2_BASE | UART_CTLR_OFFSET);
 	
 	if (enable) {
@@ -169,7 +164,6 @@ void IRQ_SetUART2Receive(short enable) {
 }
 
 void IRQ_SetUART2Transmit(short enable) {
-	return;
 	int * UART2Ctrl = (int*) (UART2_BASE | UART_CTLR_OFFSET);
 	
 	if (enable) {
