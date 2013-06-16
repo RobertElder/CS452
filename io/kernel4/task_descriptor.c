@@ -14,6 +14,7 @@ void TD_Initialize(TD * td, int id, QueuePriority priority, int parent_id, void 
 	td->entry_point = lr; /* Keep track of the entry point for debugging, so we know what this task does.  Look up in map file. */
 	td->spsr_register = 16 + (TIMER_INTERRUPTS_ENABLED ? 0 : 0x80); /*  This will turn on user mode and enable/disable timer interrupts. */
 	td->return_value = 0;
+	td->entry_mode = 0; /*  Always use kernel api exit routine to schedule new processes. */
 	td->origin_tid = 0;
 	td->receive_msg = 0;
 	td->reply_msg = 0;

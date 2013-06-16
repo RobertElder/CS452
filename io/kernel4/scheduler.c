@@ -146,6 +146,7 @@ void Scheduler_SaveCurrentTaskState(Scheduler * scheduler, KernelState * k_state
 	scheduler->current_task_descriptor->stack_pointer = k_state->user_proc_sp_value;
 	scheduler->current_task_descriptor->link_register = k_state->user_proc_lr_value;
 	scheduler->current_task_descriptor->spsr_register = k_state->user_proc_spsr;
+	scheduler->current_task_descriptor->entry_mode = k_state->user_proc_entry_mode;
 }
 
 void Scheduler_SetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
@@ -155,11 +156,13 @@ void Scheduler_SetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
 		k_state->user_proc_lr_value = k_state->redboot_lr_value;
 		k_state->user_proc_return_value = 0;
 		k_state->user_proc_spsr = k_state->redboot_spsr_value;
+		k_state->user_proc_entry_mode = 0; /* We always init via the kernel.  0 = kernel api entry*/
 	}else{
 		k_state->user_proc_sp_value = scheduler->current_task_descriptor->stack_pointer;
 		k_state->user_proc_lr_value = scheduler->current_task_descriptor->link_register;
 		k_state->user_proc_return_value = scheduler->current_task_descriptor->return_value;
 		k_state->user_proc_spsr = scheduler->current_task_descriptor->spsr_register;
+		k_state->user_proc_entry_mode = scheduler->current_task_descriptor->entry_mode;
 	}
 }
 

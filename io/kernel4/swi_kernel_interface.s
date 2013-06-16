@@ -3,6 +3,7 @@
 
 /* Common entry/exit for all kernel functions */
 .global asm_KernelExit
+.global asm_KernelExitAPIMethod
 .global asm_SwiCallEntry
 .global asm_TimerIRQEntry
 
@@ -26,6 +27,7 @@
 .global asm_GetStoredUserLr
 .global asm_GetStoredUserRtn
 .global asm_GetStoredUserSpsr
+.global asm_GetStoredUserEntryMethod
 
 .global _KernelStackBase
 .global _TimerIRQStackBase
@@ -87,8 +89,13 @@ asm_TimerIRQEntry:
 	SUB LR, LR, #4
 	MOVS pc, LR
 
-/*  This function executes when exiting from all kernel functions */
 asm_KernelExit:
+        BL asm_GetStoredUserEntryMethod /* Remember where they came from */
+	CMP r8, #0 /* did they enter the kernel via an api call? */
+	BEQ asm_KernelExitAPIMethod /* If so use the kernel api exit routine. */
+	MOV PC, #0 /* Do something insane for testing to make it fail if code is broken */
+	
+asm_KernelExitAPIMethod:
 	/* Put the spsr, return value, LR and SP back for the user process. */
         BL asm_GetStoredUserSpsr
 	MSR SPSR, R8
@@ -139,27 +146,32 @@ BX LR
 _TimerIRQStackBase:
 .4byte	0x00000000  /*  In kern.c we will set this to the value it needs to be */
 
+asm_GetStoredUserEntryMethod:
+LDR r8, [PC, #172] /* load base stack pointer address */
+LDR r8, [r8, #0] /* load the address of after the kernel state structure */
+LDR r8, [r8, #20]  /* get return value */
+BX LR
 
 asm_GetStoredUserSpsr:
-LDR r8, [PC, #148] /* load base stack pointer address */
+LDR r8, [PC, #156] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
 LDR r8, [r8, #12]  /* get return value */
 BX LR
 
 asm_GetStoredUserRtn:
-LDR r8, [PC, #132] /* load base stack pointer address */
+LDR r8, [PC, #140] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
 LDR r8, [r8, #8]  /* get return value */
 BX LR
 
 asm_GetStoredUserSp:
-LDR r8, [PC, #116] /* load base stack pointer address */
+LDR r8, [PC, #124] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
 LDR r8, [r8, #0]  /* get sp*/
 BX LR
 
 asm_GetStoredUserLr:
-LDR r8, [PC, #100] /* load base stack pointer address */
+LDR r8, [PC, #108] /* load base stack pointer address */
 LDR r8, [r8, #0] /* load the address of after the kernel state structure */
 LDR r8, [r8, #4]  /* get lr */
 BX LR
@@ -167,7 +179,7 @@ BX LR
 asm_SwiCallEntry:
 /* We don't need to do any poping or pushing of kernel state because all kernel state is stored in a struct at the base of the kernel stack, and we always know this location */
 
-LDR r8, [PC, #84]; /*  Load the value of the base of the kernel stack into r8 */
+LDR r8, [PC, #92]; /*  Load the value of the base of the kernel stack into r8 */
 LDR r8, [r8, #0]; /*  The value at the base of the SP is where we want the SP to start, after the kernel state struct */
 	/* --enter system */
 MRS r7, CPSR  /* Save current mode */
@@ -187,6 +199,8 @@ MRS SP, SPSR /*  The stack pointer has been saved already, use sp as a temp regi
 STR SP, [r8, #12] /* Save the user's cpsr, which is now in spsr into the kernel struct */
 MOV SP, r8 /*  Load the new kernel stack pointer */
 STR SP, [r8, #16] /* remember what the kernel stack pointer is so we can check it */
+MOV r7, #0 /* put 0 r7 for entry mode. */
+STR r7, [r8, #20] /* Remember how we entered the kernel so we can exit the same way. */
 LDR r7, [fp, #4] /* Put the 5th argument of the calling function into r7 */
 stmfd sp!, {r7}  /* Push the 5th argument on the stack, so the compiler can find it. */
 

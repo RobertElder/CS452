@@ -20,7 +20,8 @@ struct KernelState {
 	void * user_proc_lr_value;  /* MUST BE 2nd item in struct */
 	int user_proc_return_value;  /* MUST BE 3rd item in struct */
 	int user_proc_spsr;  /* MUST BE 4th item in struct */
-	void * last_kernel_sp_value;  /* MUST BE 5th item in struct */
+	void * last_kernel_sp_value;  /* MUST BE 5th item in struct.  This is used to validate kernel stack pointer */
+	int user_proc_entry_mode;  /* MUST BE 6th item in struct.  Used to indicate how a process entered the kenerl */
 	unsigned char memory_blocks_status[NUM_MEMORY_BLOCKS];
 	unsigned char memory_blocks[NUM_MEMORY_BLOCKS * (MEMORY_BLOCK_SIZE + SANITY_BYTE_SIZE)];
 	Scheduler scheduler;

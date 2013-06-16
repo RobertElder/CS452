@@ -25,6 +25,7 @@ typedef struct TaskDescriptor {
 	int * entry_point;
 	int spsr_register;
 	int return_value;
+	int entry_mode;
 	char * receive_msg;
 	unsigned int reply_len;
 	char * reply_msg;
