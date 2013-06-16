@@ -91,7 +91,7 @@ asm_TimerIRQEntry:
 	MSR CPSR, r0 /* Go into system mode */
 	ldmfd	r1, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* Restore all the user state, but in system mode. */
 	stmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* Now all the user state is on the user's stack */
-	ADD SP, SP, #52 /* Just for testing purposes to make user stack aligned. */
+	ADD SP, SP, #52  
 	MOV r1, SP /*  Remember what their stack pointer was */
 	MRS r0, CPSR  /* Save current mode again */
 	BIC r0, r0, #31 /* Clear the mode bits */
@@ -99,16 +99,26 @@ asm_TimerIRQEntry:
 	MSR CPSR, r0 /* Restore irq mode */
 	stmfd	sp!, {lr}
 	BL irq_handler
-	ldmfd	sp!, {lr}
-	ldmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* Take all that extra state off of the irq stack */
-	SUB LR, LR, #4
-	MOVS pc, LR
+	B asm_KernelExitInterruptMethod
+
 
 asm_KernelExit:
         BL asm_GetStoredUserEntryMethod /* Remember where they came from */
 	CMP r8, #0 /* did they enter the kernel via an api call? */
 	BEQ asm_KernelExitAPIMethod /* If so use the kernel api exit routine. */
-	MOV PC, #0 /* Do something insane for testing to make it fail if code is broken */
+asm_KernelExitInterruptMethod:
+	MRS r0, CPSR  /* Save current mode */
+	BIC r0, r0, #31 /* Clear the mode bits */
+	ORR r0, r0, #31 /* Set it to supervisor mode */
+	MOV r1, SP /* Save the user's stack pointer so we can pop stuff before we switch back */
+	MRS r0, CPSR  /* Save current mode again */
+	BIC r0, r0, #31 /* Clear the mode bits */
+	ORR r0, r0, #18 /* Set it to irq mode */
+	MSR CPSR, r0 /* Restore irq mode */
+	ldmfd   sp!, {lr}
+	ldmfd   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* Take all that extra state off of the irq stack */
+	SUB LR, LR, #4
+	MOVS pc, LR
 	
 asm_KernelExitAPIMethod:
 	/* Put the spsr, return value, LR and SP back for the user process. */
