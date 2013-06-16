@@ -152,7 +152,7 @@ void Scheduler_SetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
 		/* Nothing to do, exit to redboot. */
 		robprintfbusy((const unsigned char *)"Exit values %x, %x, %x\n", k_state->redboot_sp_value, k_state->redboot_lr_value, k_state->redboot_spsr_value);
 		k_state->user_proc_sp_value = k_state->redboot_sp_value;
-		k_state->user_proc_lr_value = (void*)286496;
+		k_state->user_proc_lr_value = k_state->redboot_lr_value;
 		k_state->user_proc_return_value = 0;
 		k_state->user_proc_spsr = k_state->redboot_spsr_value;
 	}else{
