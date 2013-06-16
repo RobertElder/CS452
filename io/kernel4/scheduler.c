@@ -83,6 +83,7 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 	if(TIMER_INTERRUPTS_ENABLED){
 		IRQ_ClearTimerInterrupt();
 		IRQ_DisableTimerVIC2();
+		IRQ_DisableUARTInterrupts();
 	}
 	
 	Scheduler_PrintTDCounts(scheduler);

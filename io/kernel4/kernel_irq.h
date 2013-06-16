@@ -50,6 +50,8 @@ void IRQ_ClearTimerInterrupt();
 
 void IRQ_SetupUARTInterrupts();
 
+void IRQ_DisableUARTInterrupts();
+
 void IRQ_SetUART1Receive(short enable);
 void IRQ_SetUART1Transmit(short enable);
 void IRQ_SetUART2Receive(short enable);

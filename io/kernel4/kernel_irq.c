@@ -91,6 +91,7 @@ void IRQ_DisableTimerVIC2() {
 	//  Doing both of these things at the same time is the only way I can actually disable the timer interrupts.	
 	*VIC2IntEnable &= (0xFFFFFFFF ^(1 << (TC3OI - 32)));
 	*VIC2IntEnClear |= 1 << (TC3OI - 32);
+
 }
 
 void IRQ_ClearTimerInterrupt() {
@@ -131,6 +132,18 @@ void IRQ_SetupUARTInterrupts() {
 	*VIC1VectAddr4 = (int) &IRQ_UART2TransmitHandler;
 	int * VIC1VectCntl4 = (int*) 0x800B0210;
 	*VIC1VectCntl4 = UART2TXINTR2 | 1 << 5;
+}
+
+void IRQ_DisableUARTInterrupts() {
+	*VIC1IntEnable &= (0xFFFFFFFF ^(1 << UART1RXINTR1));
+	*VIC1IntEnable &= (0xFFFFFFFF ^(1 << UART1TXINTR1));
+	*VIC1IntEnable &= (0xFFFFFFFF ^(1 << UART2RXINTR2));
+	*VIC1IntEnable &= (0xFFFFFFFF ^(1 << UART2TXINTR2));
+
+	*VIC1IntEnClear |= 1 << UART1RXINTR1;
+	*VIC1IntEnClear |= 1 << UART1TXINTR1;
+	*VIC1IntEnClear |= 1 << UART2RXINTR2;
+	*VIC1IntEnClear |= 1 << UART2TXINTR2;
 }
 
 void IRQ_SetUART1Receive(short enable) {
