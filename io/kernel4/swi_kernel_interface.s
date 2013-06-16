@@ -91,8 +91,6 @@ asm_TimerIRQEntry:
 	MSR CPSR, r0 /* Go into system mode */
 	ldmfd	r1, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* Restore all the user state, but in system mode. */
 	stmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* Now all the user state is on the user's stack */
-	ADD SP, SP, #52  
-	MOV r1, SP /*  Remember what their stack pointer was */
 	MRS r0, CPSR  /* Save current mode again */
 	BIC r0, r0, #31 /* Clear the mode bits */
 	ORR r0, r0, #18 /* Set it to irq mode */
@@ -110,7 +108,8 @@ asm_KernelExitInterruptMethod:
 	MRS r0, CPSR  /* Save current mode */
 	BIC r0, r0, #31 /* Clear the mode bits */
 	ORR r0, r0, #31 /* Set it to supervisor mode */
-	MOV r1, SP /* Save the user's stack pointer so we can pop stuff before we switch back */
+	MSR CPSR, r0 /* Go into system mode */
+	ADD SP, SP, #52 /* Simulate poping user state off which we do later. */
 	MRS r0, CPSR  /* Save current mode again */
 	BIC r0, r0, #31 /* Clear the mode bits */
 	ORR r0, r0, #18 /* Set it to irq mode */
