@@ -115,7 +115,6 @@ void k_InitKernel(){
 	k_state->redboot_sp_value = k_state->user_proc_sp_value;
 	k_state->redboot_lr_value = k_state->user_proc_lr_value;
 	k_state->redboot_spsr_value = k_state->user_proc_spsr;
-	robprintfbusy((const unsigned char *)"Exit values %x, %x, %x\n", k_state->redboot_sp_value, k_state->redboot_lr_value, k_state->redboot_spsr_value);
 	//  Initialize all memory blocks to unallocated.
 	int i;
 	for(i = 0; i < NUM_MEMORY_BLOCKS; i++){
@@ -193,8 +192,6 @@ void k_Exit(){
 	
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 
-	robprintfbusy((const unsigned char *)"About to exit.... \n");
-	
 	asm_KernelExit();
 }
 

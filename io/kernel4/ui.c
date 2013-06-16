@@ -102,9 +102,7 @@ void UITimer_Start() {
 	send_message->message_type = MESSAGE_TYPE_HELLO;
 	
 	while (1) {
-		robprintfbusy((const unsigned char *)"Before delay..\n");
 		DelaySeconds(1);
-		robprintfbusy((const unsigned char *)"After delay..\n");
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		assert(reply_message->message_type == MESSAGE_TYPE_ACK || reply_message->message_type == MESSAGE_TYPE_SHUTDOWN, 
 			"UITimer_Start: didn't get ACK message");
