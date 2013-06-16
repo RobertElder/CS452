@@ -83,9 +83,24 @@ asm_AwaitEventEntry:
 	SWI 9;
 	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 asm_TimerIRQEntry:
-	stmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, lr}
+	stmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* Remember the state on the irq stack */
+	MRS r0, CPSR  /* Save current mode */
+	BIC r0, r0, #31 /* Clear the mode bits */
+	ORR r0, r0, #31 /* Set it to supervisor mode */
+	MOV r1, SP /* Remember the irq stack value so we can access it in system mode */
+	MSR CPSR, r0 /* Go into system mode */
+	ldmfd	r1, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* Restore all the user state, but in system mode. */
+	stmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* Now all the user state is on the user's stack */
+	ADD SP, SP, #52 /* Just for testing purposes to make user stack aligned. */
+	MOV r1, SP /*  Remember what their stack pointer was */
+	MRS r0, CPSR  /* Save current mode again */
+	BIC r0, r0, #31 /* Clear the mode bits */
+	ORR r0, r0, #18 /* Set it to irq mode */
+	MSR CPSR, r0 /* Restore irq mode */
+	stmfd	sp!, {lr}
 	BL irq_handler
-	ldmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, lr}
+	ldmfd	sp!, {lr}
+	ldmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* Take all that extra state off of the irq stack */
 	SUB LR, LR, #4
 	MOVS pc, LR
 
