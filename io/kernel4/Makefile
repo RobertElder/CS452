@@ -6,7 +6,7 @@ CC = $(XCC)
 AS	= @/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/as
 LD      = @/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ld
 CFLAGS  = -g -c -fPIC -Wall -I. -I./include -mcpu=arm920t -msoft-float -Werror -DASSERTS
-C_OPTIMIZATION_FLAGS = -O3
+C_OPTIMIZATION_FLAGS = -O1
 # -g: include hooks for gdb
 # -c: only compile
 # -mcpu=arm920t: generate code for the 920t architecture
@@ -159,8 +159,8 @@ train.o: train.s
 
 kern.elf: $(OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ $(OBJECTS) -lgcc
-	cp kern.elf /u/cs452/tftp/ARM/`whoami`/kern.elf
-	chmod ugo+r /u/cs452/tftp/ARM/`whoami`/kern.elf
+	@cp kern.elf /u/cs452/tftp/ARM/`whoami`/kern.elf
+	@chmod ugo+r /u/cs452/tftp/ARM/`whoami`/kern.elf
 
 clean:
-	-rm -f kern.elf kern.s public_kernel_interface.s private_kernel_interface.s robio.s buffer.s queue.s task_descriptor.s tasks.s memory.s random.s nameserver.s rps.s message.s clock.s scheduler.s notifier.s kernel_irq.s ansi.s uart.s ui.s public_kernel_interface_slow.s train.s *.o kern.map
+	-@rm -f kern.elf kern.s public_kernel_interface.s private_kernel_interface.s robio.s buffer.s queue.s task_descriptor.s tasks.s memory.s random.s nameserver.s rps.s message.s clock.s scheduler.s notifier.s kernel_irq.s ansi.s uart.s ui.s public_kernel_interface_slow.s train.s *.o kern.map

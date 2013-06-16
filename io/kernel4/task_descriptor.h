@@ -22,6 +22,7 @@ typedef struct TaskDescriptor {
 	int parent_id;
 	int * stack_pointer;
 	int * link_register;
+	int * entry_point;
 	int spsr_register;
 	int return_value;
 	char * receive_msg;

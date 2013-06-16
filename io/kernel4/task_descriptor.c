@@ -11,6 +11,7 @@ void TD_Initialize(TD * td, int id, QueuePriority priority, int parent_id, void 
 	td->parent_id = parent_id;
 	td->stack_pointer = sp;
 	td->link_register = lr;
+	td->entry_point = lr; /* Keep track of the entry point for debugging, so we know what this task does.  Look up in map file. */
 	td->spsr_register = 16 + (TIMER_INTERRUPTS_ENABLED ? 0 : 0x80); /*  This will turn on user mode and enable/disable timer interrupts. */
 	td->return_value = 0;
 	td->origin_tid = 0;

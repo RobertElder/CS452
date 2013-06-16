@@ -83,14 +83,14 @@ void ScreenOutputNotifier_Start() {
 
 	send_message->message_type = MESSAGE_TYPE_NOTIFIER;
 	send_message->event_id = UART2_TX_EVENT;
+	(void)reply_message;
 	
 	robprintfbusy((const unsigned char *)"ScreenOutputNotifier_Start: tid=%d", MyTid());
 	
 	while (1) {
 		AwaitEvent(UART2_TX_EVENT);
-		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
-		assert(reply_message->message_type == MESSAGE_TYPE_ACK,
-			"ScreenOutputNotifier didn't get an ACK");
+		//Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+		//assert(reply_message->message_type == MESSAGE_TYPE_ACK, "ScreenOutputNotifier didn't get an ACK");
 	}
 
 	Exit();

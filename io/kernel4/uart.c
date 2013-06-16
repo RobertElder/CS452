@@ -3,6 +3,8 @@
 #include "public_kernel_interface.h"
 #include "queue.h"
 #include "notifier.h"
+#include "private_kernel_interface.h"
+#include "scheduler.h"
 
 void UARTBootstrapTask_Start() {
 	robprintfbusy((const unsigned char *)"UARTBootstrapTask_Start tid=%d", MyTid());
@@ -98,7 +100,7 @@ void KeyboardInputServer_Start() {
 	char receive_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
 	int source_tid;
-	NotifyMessage * receive_message = (NotifyMessage *) receive_buffer;
+	GenericMessage * receive_message = (GenericMessage *) receive_buffer;
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 
@@ -110,13 +112,18 @@ void KeyboardInputServer_Start() {
 	
 	while (1) {
 		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
-		(void)receive_message;
 		Reply(source_tid, reply_buffer, MESSAGE_SIZE);
+		if(receive_message->message_type == MESSAGE_TYPE_SHUTDOWN){
+			robprintfbusy((const unsigned char *)"KeyboardInputServer_Start shutting down by request.\n");
+			break;
+		}
 		//TODO
 		// get characters from device
 		int * UART2DATA = (int*) (UART2_BASE + UART_DATA_OFFSET);
 		char data = *UART2DATA & DATA_MASK;
 		robprintfbusy((const unsigned char *)"KeyPressed=%d", data);
+
+		Scheduler_PrintTDCounts(&(*((KernelState **) KERNEL_STACK_START))->scheduler);
 		// send to ui server
 	}
 	
@@ -124,6 +131,13 @@ void KeyboardInputServer_Start() {
 }
 
 void ScreenOutputServer_Start() {
+	char receive_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
+	int source_tid;
+	GenericMessage * receive_message = (GenericMessage *) receive_buffer;
+	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
+	reply_message->message_type = MESSAGE_TYPE_ACK;
+
 	int return_code = RegisterAs((char*) SCREEN_OUTPUT_SERVER_NAME);
 	assert(return_code == 0, "ScreenOutputServer_Start failed to register");
 
@@ -131,7 +145,13 @@ void ScreenOutputServer_Start() {
 	assert(notifier_tid, "ScreenOutputServer_Start notifier did not start");
 	
 	while (1) {
-		DelaySeconds(1);
+		//DelaySeconds(1);
+		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
+		Reply(source_tid, reply_buffer, MESSAGE_SIZE);
+		if(receive_message->message_type == MESSAGE_TYPE_SHUTDOWN){
+			robprintfbusy((const unsigned char *)"ScreenOutputServer_Start shutting down by request.\n");
+			break;
+		}
 		//TODO
 		// recieve message
 		// send charcters from the buffer to device
@@ -140,6 +160,13 @@ void ScreenOutputServer_Start() {
 }
 
 void TrainInputServer_Start() {
+	char receive_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
+	int source_tid;
+	GenericMessage * receive_message = (GenericMessage *) receive_buffer;
+	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
+	reply_message->message_type = MESSAGE_TYPE_ACK;
+
 	int return_code = RegisterAs((char*)TRAIN_INPUT_SERVER_NAME);
 	assert(return_code == 0, "TrainInputServer_Start failed to register");
 
@@ -147,7 +174,13 @@ void TrainInputServer_Start() {
 	assert(notifier_tid, "TrainInputServer_Start notifier did not start");
 	
 	while (1) {
-		DelaySeconds(1);
+		//DelaySeconds(1);
+		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
+		Reply(source_tid, reply_buffer, MESSAGE_SIZE);
+		if(receive_message->message_type == MESSAGE_TYPE_SHUTDOWN){
+			robprintfbusy((const unsigned char *)"TrainInputServer_Start shutting down by request.\n");
+			break;
+		}
 		//TODO
 		// receive message
 		// get characters from device
@@ -157,6 +190,13 @@ void TrainInputServer_Start() {
 }
 
 void TrainOutputServer_Start() {
+	char receive_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
+	int source_tid;
+	GenericMessage * receive_message = (GenericMessage *) receive_buffer;
+	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
+	reply_message->message_type = MESSAGE_TYPE_ACK;
+	
 	int return_code = RegisterAs((char*)TRAIN_OUTPUT_SERVER_NAME);
 	assert(return_code == 0, "TrainOutputServer_Start failed to register");
 
@@ -164,7 +204,13 @@ void TrainOutputServer_Start() {
 	assert(notifier_tid, "TrainOutputServer_Start notifier did not start");
 	
 	while (1) {
-		DelaySeconds(1);
+		//DelaySeconds(1);
+		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
+		Reply(source_tid, reply_buffer, MESSAGE_SIZE);
+		if(receive_message->message_type == MESSAGE_TYPE_SHUTDOWN){
+			robprintfbusy((const unsigned char *)"TrainOutputServer_Start shutting down by request.\n");
+			break;
+		}
 		//TODO 
 		// receive message
 		// send charcters from the buffer to the device

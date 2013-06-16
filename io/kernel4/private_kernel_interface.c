@@ -115,6 +115,7 @@ void k_InitKernel(){
 	k_state->redboot_sp_value = k_state->user_proc_sp_value;
 	k_state->redboot_lr_value = k_state->user_proc_lr_value;
 	k_state->redboot_spsr_value = k_state->user_proc_spsr;
+	robprintfbusy((const unsigned char *)"Exit values %x, %x, %x\n", k_state->redboot_sp_value, k_state->redboot_lr_value, k_state->redboot_spsr_value);
 	//  Initialize all memory blocks to unallocated.
 	int i;
 	for(i = 0; i < NUM_MEMORY_BLOCKS; i++){
@@ -191,6 +192,8 @@ void k_Exit(){
 	Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, ZOMBIE);
 	
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
+
+	robprintfbusy((const unsigned char *)"About to exit.... \n");
 	
 	asm_KernelExit();
 }
@@ -200,7 +203,7 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 	Scheduler * scheduler = &k_state->scheduler;
 
 	//Don't send messages to zombie tasks
-	assert(scheduler->task_descriptors[tid].state != ZOMBIE,"Sending a message to a zombie task.\n");
+	assertf(scheduler->task_descriptors[tid].state != ZOMBIE,"Sending a message to zombie task id %d (%x) from task id %d (%x).\n", tid, scheduler->task_descriptors[tid].entry_point,scheduler->current_task_descriptor->id, scheduler->current_task_descriptor->entry_point);
 		
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
 	
@@ -310,8 +313,8 @@ int k_Reply(int tid, char *reply, int replylen){
 		//robprintfbusy((unsigned const char *)"Task %d replies to task %d\n",k_state->current_task_descriptor->id,tid);
 		TD * target_td = &scheduler->task_descriptors[tid];
 		
-		assert(target_td->state == REPLY_BLOCKED,
-			"Impossible state, replying to non reply blocked task.");
+		assertf(target_td->state == REPLY_BLOCKED,
+			"Impossible state, replying to non reply blocked task %d (%x) from task %d (%x).\n", tid, scheduler->task_descriptors[tid].entry_point, scheduler->current_task_descriptor->id, scheduler->current_task_descriptor->entry_point);
 
 		if (target_td->state != REPLY_BLOCKED) {
 			return_value = ERR_K_TASK_NOT_REPLY_BLOCKED;

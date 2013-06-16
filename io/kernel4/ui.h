@@ -4,6 +4,7 @@
 #define UI_H_
 
 static const char const UI_SERVER_NAME[] = "UISvr";
+static const char const UI_TIMER_NAME[] = "UITmr";
 
 typedef struct UIMessage {
 	MessageType message_type;

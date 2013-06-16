@@ -101,17 +101,18 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 	assertf(scheduler->num_receive_blocked == 0,
 		"Number of recive_blocked tasks is not zero. Count=%d",
 		scheduler->num_receive_blocked);
-	
+
+	/*
+	 * After careful consideration, I've concluded that it is acceptable for a task
+	 * to terminate in the event blocked state.  This is necessary for some events such
+	 * as waiting on keyboard input, which may never happen.
 	assertf(scheduler->num_event_blocked == 0,
 		"Number of event_blocked tasks is not zero. Count=%d",
 		scheduler->num_event_blocked);
-	/*
-	assertf(scheduler->num_zombie == scheduler->num_tasks,
-		"Number of zombie tasks is not %d. Count=%d", scheduler->num_zombie,
-		scheduler->num_tasks);
-	*/
+	*/	
 	
 	print_memory_status();
+	robprintfbusy((const unsigned char *)"Finished in scheduler.... \n");
 
 	return 0;
 	
@@ -149,8 +150,9 @@ void Scheduler_SaveCurrentTaskState(Scheduler * scheduler, KernelState * k_state
 void Scheduler_SetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
 	if (scheduler->current_task_descriptor == 0) {
 		/* Nothing to do, exit to redboot. */
+		robprintfbusy((const unsigned char *)"Exit values %x, %x, %x\n", k_state->redboot_sp_value, k_state->redboot_lr_value, k_state->redboot_spsr_value);
 		k_state->user_proc_sp_value = k_state->redboot_sp_value;
-		k_state->user_proc_lr_value = k_state->redboot_lr_value;
+		k_state->user_proc_lr_value = (void*)286496;
 		k_state->user_proc_return_value = 0;
 		k_state->user_proc_spsr = k_state->redboot_spsr_value;
 	}else{
@@ -163,6 +165,8 @@ void Scheduler_SetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
 
 void Scheduler_ScheduleAndSetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
 	scheduler->current_task_descriptor = Scheduler_ScheduleNextTask(scheduler, k_state);
+	if(scheduler->current_task_descriptor == 0)
+		robprintfbusy((const unsigned char *)"outside scheduler.... \n");
 	Scheduler_SetNextTaskState(scheduler, k_state);
 }
 
@@ -306,8 +310,8 @@ void Scheduler_PrintTDCounts(Scheduler * scheduler) {
 	int count = 0;
 	for (i = 0; i < MAX_TASKS + 1; i++) {
 		if (Scheduler_IsInitedTid(scheduler, i)) {
-			robprintfbusy((const unsigned char *)" %d: %s  ", i, 
-				TASK_STATE_NAMES[scheduler->task_descriptors[i].state]);
+			robprintfbusy((const unsigned char *)" %d: %s  (%x)", i, 
+				TASK_STATE_NAMES[scheduler->task_descriptors[i].state], scheduler->task_descriptors[i].entry_point);
 			count++;
 			if (count % 10 == 0) {
 				robprintfbusy((const unsigned char *)"\n");

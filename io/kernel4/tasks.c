@@ -202,13 +202,14 @@ void IdleTask_Start(){
 }
 
 void AdministratorTask_Start() {
+	/* The purpose of the administrator is to keep track of when we should shutdown everything in the system */
 	int return_code = RegisterAs((char*) ADMINISTRATOR_TASK_NAME);
 
 	assert(return_code == 0, "AdministratorTask_Start failed to register name");
 
 	unsigned int idletask_shutdown_sent = 0;
 	unsigned int shutdown_requests = 0;
-	unsigned int required_requests = 5;
+	unsigned int required_requests = 4;
 
 	char send_buffer[MESSAGE_SIZE];
 	char receive_buffer[MESSAGE_SIZE];
@@ -227,12 +228,12 @@ void AdministratorTask_Start() {
 				shutdown_requests++;
 				reply_msg->message_type = MESSAGE_TYPE_ACK;
 				Reply(source_tid, reply_buffer, MESSAGE_SIZE);
+				robprintfbusy((const unsigned char *)"Got shutdown request %d, total.\n" , shutdown_requests);
 				break;
 			}case MESSAGE_TYPE_HELLO:{
 				if(shutdown_requests == required_requests){
 					reply_msg->message_type = MESSAGE_TYPE_SHUTDOWN;
 					idletask_shutdown_sent = 1;
-					// Print("Sending shutdown to idle task %d\n" ,source_tid );
 				}else{
 					reply_msg->message_type = MESSAGE_TYPE_ACK;
 				}
@@ -249,13 +250,27 @@ void AdministratorTask_Start() {
 	
 	robprintfbusy((const unsigned char *)"AdministratorTask_Start: Got %d shutdowns needed %d, shutdown send %d\n" , shutdown_requests, required_requests, idletask_shutdown_sent);
 	
-	ClockMessage * clock_send_message = (ClockMessage *) send_buffer;
-	ClockMessage * clock_reply_message = (ClockMessage *) reply_buffer;
-	clock_send_message->message_type = MESSAGE_TYPE_SHUTDOWN;
+	GenericMessage * shutdown_send_message = (GenericMessage *) send_buffer;
+	GenericMessage * shutdown_reply_message = (GenericMessage *) reply_buffer;
+	shutdown_send_message->message_type = MESSAGE_TYPE_SHUTDOWN;
 	
+
+	Send(WhoIs((char*) KEYBOARD_INPUT_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from keyboard input server");
+	Send(WhoIs((char*) SCREEN_OUTPUT_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from screen output server");
+	Send(WhoIs((char*) TRAIN_INPUT_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from train input server");
+
+	Send(WhoIs((char*) TRAIN_OUTPUT_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from train output server");
+	Send(WhoIs((char*) UI_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from ui server");
+
+	//  Shutdown the clock server last because it is needed to unblock things waiting on events.
 	Send(WhoIs((char*) CLOCK_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
-	assertf(clock_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from clock server");
-	
+	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from clock server");
+
 	NameServerMessage * ns_send_message = (NameServerMessage *) send_buffer;
 	NameServerMessage * ns_reply_message = (NameServerMessage *) reply_buffer;
 	ns_send_message->message_type = MESSAGE_TYPE_NAME_SERVER_SHUTDOWN;

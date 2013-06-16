@@ -8,6 +8,7 @@
 void UIServer_Start() {
 	int return_code = RegisterAs((char*) UI_SERVER_NAME);
 	int source_tid;
+	int shutdown = 0;
 	assert(return_code == 0, "UIServer_Start failed to register name");
 	
 	int tid = Create(HIGH, &UITimer_Start);
@@ -26,17 +27,28 @@ void UIServer_Start() {
 		
 		switch(receive_message->message_type) {
 		// TODO: handle notifier messages from keyboard server and train server
-		case MESSAGE_TYPE_HELLO:
+		case MESSAGE_TYPE_SHUTDOWN:
 			Reply(source_tid, server.reply_buffer, MESSAGE_SIZE);
-			UIServer_Render(&server);
+			robprintfbusy((const unsigned char *)"UIServer_Start Exiting because of shutdown.\n");
+			shutdown = 1;
+			break;
+		case MESSAGE_TYPE_HELLO:
+			if(shutdown){
+				//  Tell it to stop sending requests.
+				robprintfbusy((const unsigned char *)"Going to tell the ui server to shutdown.\n");
+				reply_message->message_type = MESSAGE_TYPE_SHUTDOWN;
+			}
+			Reply(source_tid, server.reply_buffer, MESSAGE_SIZE);
+			if(shutdown){
+				Exit();
+			}
+			//UIServer_Render(&server);
 			break;
 		default:
 			assert(0, "UIServer_Start: unknown message type");
 			break;
 		}
 	}
-
-	Exit();
 }
 
 void UIServer_Initialize(UIServer * server) {
@@ -78,6 +90,8 @@ void UIServer_PrintCommandLine(UIServer * server) {
 }
 
 void UITimer_Start() {
+	int return_code = RegisterAs((char*) UI_TIMER_NAME);
+	assert(return_code == 0, "UITimer_Start failed to register name");
 	char send_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
 	GenericMessage * send_message = (GenericMessage *) send_buffer;
@@ -88,10 +102,17 @@ void UITimer_Start() {
 	send_message->message_type = MESSAGE_TYPE_HELLO;
 	
 	while (1) {
+		robprintfbusy((const unsigned char *)"Before delay..\n");
 		DelaySeconds(1);
+		robprintfbusy((const unsigned char *)"After delay..\n");
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
-		assert(reply_message->message_type == MESSAGE_TYPE_ACK, 
+		assert(reply_message->message_type == MESSAGE_TYPE_ACK || reply_message->message_type == MESSAGE_TYPE_SHUTDOWN, 
 			"UITimer_Start: didn't get ACK message");
+
+		if(reply_message->message_type == MESSAGE_TYPE_SHUTDOWN){
+			robprintfbusy((const unsigned char *)"UITimer_Start shutting down by request.\n");
+			break;
+		}
 	}
 	
 	Exit();

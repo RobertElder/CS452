@@ -58,7 +58,7 @@ void ClockServer_Start() {
 		Pass();
 	}
 	
-	robprintfbusy((const unsigned char *)"ClockServer TID=%d: end\n", server.tid);
+	robprintfbusy((const unsigned char *)"ClockServer TID=%d: shutdown\n", server.tid);
 	
 	Exit();
 }
@@ -150,7 +150,7 @@ int ClockServer_GetNextTask(ClockServer * server, int min_tid) {
 	
 	int tid;
 	for (tid = min_tid; tid < MAX_TASKS + 1; tid++) {
-		if (server->tid_to_delay_until[tid] && server->tid_to_delay_until[tid] <= server->ticks) {
+		if (server->tid_to_delay_until[tid] && (server->tid_to_delay_until[tid] <= server->ticks || server->shutdown)) {
 			return tid;
 		}
 	}
