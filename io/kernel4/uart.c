@@ -123,7 +123,6 @@ void KeyboardInputServer_Start() {
 		char data = *UART2DATA & DATA_MASK;
 		robprintfbusy((const unsigned char *)"KeyPressed=%d", data);
 
-		Scheduler_PrintTDCounts(&(*((KernelState **) KERNEL_STACK_START))->scheduler);
 		// send to ui server
 	}
 	
