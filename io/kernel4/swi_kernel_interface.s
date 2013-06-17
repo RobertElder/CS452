@@ -104,7 +104,7 @@ asm_TimerIRQEntry:
 	MOV r0, #1 /* put 1 to indicate entry by interrupt. */
 	STR r0, [r1, #20] /* Remember how we entered the kernel so we can exit the same way. */
 	BL irq_handler
-	B asm_KernelExitInterruptMethod
+	B asm_KernelExit
 	.4byte 0x1f882f8
 
 
@@ -112,9 +112,9 @@ asm_KernelExit:
         BL asm_GetStoredUserEntryMethod /* Remember where they came from */
 	CMP r8, #0 /* did they enter the kernel via an api call? */
 	BEQ asm_KernelExitAPIMethod /* If so use the kernel api exit routine. */
-asm_KernelExitInterruptMethod:
         BL asm_GetStoredUserSpsr
 	MSR SPSR, R8
+asm_KernelExitInterruptMethod:
 	MRS r0, CPSR  /* Save current mode */
 	ORR r0, r0, #31 /* Set it to supervisor mode */
 	MSR CPSR, r0 /* Go into system mode */

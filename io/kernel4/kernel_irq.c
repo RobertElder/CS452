@@ -7,6 +7,13 @@
 #include "private_kernel_interface.h"
 
 void irq_handler() {
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	Scheduler * scheduler = &k_state->scheduler;
+
+	Scheduler_SaveCurrentTaskState(scheduler, k_state);
+
+	//Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, READY);
+
 	if (*VIC2VectAddr) {
 		int (*function)(void) = (int (*)(void)) *VIC2VectAddr;
 		function();
@@ -16,6 +23,9 @@ void irq_handler() {
 		function();
 		*VIC1VectAddr = 0;
 	}
+
+	Scheduler_SetNextTaskState(scheduler, k_state);
+	//Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 }
 
 void IRQ_TimerVIC2Handler() {
