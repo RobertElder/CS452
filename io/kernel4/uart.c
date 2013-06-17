@@ -5,6 +5,7 @@
 #include "notifier.h"
 #include "private_kernel_interface.h"
 #include "scheduler.h"
+#include "ui.h"
 
 void UARTBootstrapTask_Start() {
 	robprintfbusy((const unsigned char *)"UARTBootstrapTask_Start tid=%d", MyTid());
@@ -100,11 +101,12 @@ void KeyboardInputServer_Start() {
 	int data;
 	char receive_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
+	char send_buffer[MESSAGE_SIZE];
 	int source_tid;
 	UARTServerState state = UARTSS_READY;
 	GenericMessage * receive_message = (GenericMessage *) receive_buffer;
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
-	reply_message->message_type = MESSAGE_TYPE_ACK;
+	CharMessage * char_message = (CharMessage *) send_buffer;
 
 	int return_code = RegisterAs((char*)KEYBOARD_INPUT_SERVER_NAME);
 	assert(return_code == 0, "KeyboardInputServer_Start failed to register");
@@ -112,8 +114,23 @@ void KeyboardInputServer_Start() {
 	int notifier_tid = Create(HIGH, &KeyboardInputNotifier_Start);
 	assert(notifier_tid, "KeyboardInputServer_Start notifier did not start");
 	
+	int ui_server_tid;
+	int i = 0;
+	
+	while (1) {
+		ui_server_tid = WhoIs((char*) UI_SERVER_NAME);
+		
+		if (ui_server_tid) {
+			break;
+		}
+		
+		i++;
+		assert(i < 1000, "KeyboardInputServer: failed to get tid for ui server");
+	}
+	
 	while (state != UARTSS_SHUTDOWN) {
 		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
+		reply_message->message_type = MESSAGE_TYPE_ACK;
 		Reply(source_tid, reply_buffer, MESSAGE_SIZE);
 		
 		switch(receive_message->message_type) {
@@ -123,8 +140,12 @@ void KeyboardInputServer_Start() {
 			break;
 		case MESSAGE_TYPE_NOTIFIER:
 			data = *UART2DATA & DATA_MASK;
-			robprintfbusy((const unsigned char *)"KeyPressed=%d", data);
+			char_message->message_type = MESSAGE_TYPE_DATA;
+			char_message->char1 = data;
+			//robprintfbusy((const unsigned char *)"KeyPressed=%d", data);
 			// TODO send to ui server
+			Send(ui_server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+			assert(reply_message->message_type == MESSAGE_TYPE_ACK, "KeyboardInputServer: failed to send char to ui server");
 			break;
 		default:
 			assert(0, "KeyboardInputServer unknown event type");

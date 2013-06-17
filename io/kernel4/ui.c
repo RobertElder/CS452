@@ -19,6 +19,7 @@ void UIServer_Start() {
 
 	GenericMessage * receive_message = (GenericMessage *) server.receive_buffer;
 	GenericMessage * reply_message = (GenericMessage *) server.reply_buffer;
+	CharMessage * char_message = (CharMessage *) server.receive_buffer;
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 
@@ -44,6 +45,10 @@ void UIServer_Start() {
 			}
 			UIServer_Render(&server);
 			break;
+		case MESSAGE_TYPE_DATA:
+			Reply(source_tid, server.reply_buffer, MESSAGE_SIZE);
+			UIServer_ProcessKeystroke(&server, char_message->char1);
+			break;
 		default:
 			assert(0, "UIServer_Start: unknown message type");
 			break;
@@ -54,11 +59,11 @@ void UIServer_Start() {
 void UIServer_Initialize(UIServer * server) {
 	server->print_message_count = 0;
 	server->dirty = 1;
+	server->command_buffer_index = -1;
 }
 
 void UIServer_Render(UIServer * server) {
 	if (server->dirty) {
-		server->dirty = 0;
 		ANSI_Cursor(1, 1);
 		ANSI_Color(WHITE, BLUE);
 		ANSI_ClearScreen(CLEAR_ALL);
@@ -68,6 +73,8 @@ void UIServer_Render(UIServer * server) {
 
 	UIServer_PrintTime(server);
 	UIServer_PrintCommandLine(server);
+	
+	server->dirty = 0;
 }
 
 void UIServer_PrintTime(UIServer * server) {
@@ -83,11 +90,34 @@ void UIServer_PrintTime(UIServer * server) {
 }
 
 void UIServer_PrintCommandLine(UIServer * server) {
-	ANSI_Cursor(2, 1);
-	ANSI_Style(BOLD_STYLE);
-	PutString(COM2, "C:\\> ");
-	ANSI_Style(NORMAL_STYLE);
-	PutString(COM2, "KERNEL~1.EXE");
+	if (server->dirty) {
+		ANSI_Cursor(2, 1);
+		ANSI_Style(BOLD_STYLE);
+		PutString(COM2, "C:\\> ");
+		ANSI_Style(NORMAL_STYLE);
+	}
+	
+	ANSI_Cursor(2, 6 + server->command_buffer_index);
+}
+
+void UIServer_ProcessKeystroke(UIServer * server, char c) {
+	ANSI_Cursor(2, 6 + server->command_buffer_index);
+	
+	if (c == '\b' && server->command_buffer_index >= 0) {
+		server->command_buffer[server->command_buffer_index] = 0;
+		
+		ANSI_CursorBackward(1);
+		PutString(COM2, " ");
+		
+		server->command_buffer_index--;
+	} else if (server->command_buffer_index < UI_SERVER_COMMAND_BUFFER_SIZE - 1) {
+		server->command_buffer_index++;
+		server->command_buffer[server->command_buffer_index] = c;
+		
+		PutString(COM2, "%c", server->command_buffer[server->command_buffer_index]);
+		
+		server->command_buffer[server->command_buffer_index + 1] = 0;
+	}
 }
 
 void UITimer_Start() {
