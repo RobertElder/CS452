@@ -17,10 +17,11 @@ typedef struct UIMessage {
 typedef struct UIServer {
 	char receive_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
+	char send_buffer[MESSAGE_SIZE];
 	unsigned int print_message_count;
 	short dirty;
 	char command_buffer[UI_SERVER_COMMAND_BUFFER_SIZE];
-	int command_buffer_index;
+	unsigned int command_buffer_index;
 } UIServer;
 
 void UIServer_Start();
@@ -34,6 +35,10 @@ void UIServer_PrintTime(UIServer * server);
 void UIServer_PrintCommandLine(UIServer * server);
 
 void UIServer_ProcessKeystroke(UIServer * server, char c);
+
+void UIServer_RunCommand(UIServer * server);
+
+void UIServer_ResetCommandBuffer(UIServer * server);
 
 void UITimer_Start();
 

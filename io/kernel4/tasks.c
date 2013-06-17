@@ -213,7 +213,11 @@ void AdministratorTask_Start() {
 
 	unsigned int idletask_shutdown_sent = 0;
 	unsigned int shutdown_requests = 0;
+#ifdef TEST
 	unsigned int required_requests = 4;
+#else
+	unsigned int required_requests = 1;
+#endif
 
 	char send_buffer[MESSAGE_SIZE];
 	char receive_buffer[MESSAGE_SIZE];

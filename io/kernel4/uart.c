@@ -176,6 +176,8 @@ void ScreenOutputServer_Start() {
 			robprintfbusy((const unsigned char *)"ScreenOutputServer_Start shutting down by request.\n");
 			server.state = UARTSS_SHUTDOWN;
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
+			server.reply_message->message_type = MESSAGE_TYPE_SHUTDOWN;
+			Reply(server.notifier_tid, server.reply_buffer, MESSAGE_SIZE);
 			break;
 		case MESSAGE_TYPE_NOTIFIER:
 			server.state = UARTSS_READY;

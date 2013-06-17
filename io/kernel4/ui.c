@@ -4,6 +4,7 @@
 #include "queue.h"
 #include "robio.h"
 #include "random.h"
+#include "tasks.h"
 
 void UIServer_Start() {
 	int return_code = RegisterAs((char*) UI_SERVER_NAME);
@@ -59,7 +60,7 @@ void UIServer_Start() {
 void UIServer_Initialize(UIServer * server) {
 	server->print_message_count = 0;
 	server->dirty = 1;
-	server->command_buffer_index = -1;
+	server->command_buffer_index = 0;
 }
 
 void UIServer_Render(UIServer * server) {
@@ -103,21 +104,52 @@ void UIServer_PrintCommandLine(UIServer * server) {
 void UIServer_ProcessKeystroke(UIServer * server, char c) {
 	ANSI_Cursor(2, 6 + server->command_buffer_index);
 	
-	if (c == '\b' && server->command_buffer_index >= 0) {
+	if (c == '\r') {
+		UIServer_RunCommand(server);
+		UIServer_ResetCommandBuffer(server);
+	} else if (c == '\b' && server->command_buffer_index > 0) {
+		server->command_buffer_index--;
+
 		server->command_buffer[server->command_buffer_index] = 0;
 		
 		ANSI_CursorBackward(1);
 		PutString(COM2, " ");
-		
-		server->command_buffer_index--;
 	} else if (server->command_buffer_index < UI_SERVER_COMMAND_BUFFER_SIZE - 1) {
-		server->command_buffer_index++;
 		server->command_buffer[server->command_buffer_index] = c;
 		
 		PutString(COM2, "%c", server->command_buffer[server->command_buffer_index]);
 		
-		server->command_buffer[server->command_buffer_index + 1] = 0;
+		server->command_buffer_index++;
+		server->command_buffer[server->command_buffer_index] = 0;
 	}
+}
+
+void UIServer_RunCommand(UIServer * server) {
+	ANSI_Cursor(3, 1);
+	
+	if (server->command_buffer_index == 0) {
+		PutString(COM2, "Enter command: tr, rv, sw, q");
+	} else if (server->command_buffer[0] == 'q') {
+		PutString(COM2, "Quiting. Goodbye.");
+		DelaySeconds(1);
+		int admin_tid = WhoIs((char*) ADMINISTRATOR_TASK_NAME);
+		GenericMessage * send_message = (GenericMessage *) server->send_buffer;
+		GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+		send_message->message_type = MESSAGE_TYPE_SHUTDOWN;
+		Send(admin_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+		
+		assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_RunCommand failed to get ack message");
+	} else {
+		PutString(COM2, "Unknown command.");
+	}
+	ANSI_ClearLine(CLEAR_TO_END);
+}
+
+void UIServer_ResetCommandBuffer(UIServer * server) {
+	server->command_buffer_index = 0;
+	server->command_buffer[0] = 0;
+	ANSI_Cursor(2, 6);
+	ANSI_ClearLine(CLEAR_TO_END);
 }
 
 void UITimer_Start() {
