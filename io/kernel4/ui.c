@@ -53,21 +53,20 @@ void UIServer_Start() {
 
 void UIServer_Initialize(UIServer * server) {
 	server->print_message_count = 0;
+	server->dirty = 1;
 }
 
 void UIServer_Render(UIServer * server) {
-	ANSI_Cursor(1, 1);
-	ANSI_Color(WHITE, BLUE);
-	ANSI_ClearScreen(CLEAR_ALL);
-	ANSI_Cursor(1, 1);
-	PutString(COM2, 
-		"> THOMAS TANK ENGINE (TM) TRAIN MASTER CONTROL SYSTEM CS-452-2013 <"
-		" .. { SYSTIME = ");
-	Pass();
+	if (server->dirty) {
+		server->dirty = 0;
+		ANSI_Cursor(1, 1);
+		ANSI_Color(WHITE, BLUE);
+		ANSI_ClearScreen(CLEAR_ALL);
+		ANSI_Cursor(1, 1);
+		PutString(COM2, UI_SERVER_HEADER);
+	}
+
 	UIServer_PrintTime(server);
-	PutString(COM2, " } ");
-	Pass();
-	ANSI_CursorNextLine(1);
 	UIServer_PrintCommandLine(server);
 }
 
@@ -78,11 +77,13 @@ void UIServer_PrintTime(UIServer * server) {
 	unsigned int sec = time % 60;
 	time /= 60;
 	unsigned int min = time % 60;
-
-	PutString(COM2, "%d:%d,%d", min, sec, ms);
+	
+	ANSI_Cursor(1, sizeof(UI_SERVER_HEADER) + 1);
+	PutString(COM2, "{ SYSTIME = %d:%d,%d }", min, sec, ms);
 }
 
 void UIServer_PrintCommandLine(UIServer * server) {
+	ANSI_Cursor(2, 1);
 	ANSI_Style(BOLD_STYLE);
 	PutString(COM2, "C:\\> ");
 	ANSI_Style(NORMAL_STYLE);

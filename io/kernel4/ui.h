@@ -5,6 +5,7 @@
 
 static const char const UI_SERVER_NAME[] = "UISvr";
 static const char const UI_TIMER_NAME[] = "UITmr";
+static const char const UI_SERVER_HEADER[] = "> THOMAS TANK ENGINE (TM) TRAIN MASTER CONTROL SYSTEM CS-452-2013 <";
 
 typedef struct UIMessage {
 	MessageType message_type;
@@ -15,6 +16,7 @@ typedef struct UIServer {
 	char receive_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
 	unsigned int print_message_count;
+	short dirty;
 } UIServer;
 
 void UIServer_Start();
