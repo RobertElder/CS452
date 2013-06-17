@@ -85,7 +85,6 @@ asm_AwaitEventEntry:
 asm_TimerIRQEntry:
 	stmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, lr} /* Remember the state on the irq stack */
 	MRS r0, CPSR  /* Save current mode */
-	BIC r0, r0, #31 /* Clear the mode bits */
 	ORR r0, r0, #31 /* Set it to supervisor mode */
 	MOV r1, SP /* Remember the irq stack value so we can access it in system mode */
 	MSR CPSR, r0 /* Go into system mode */
@@ -107,7 +106,6 @@ asm_KernelExit:
 	BEQ asm_KernelExitAPIMethod /* If so use the kernel api exit routine. */
 asm_KernelExitInterruptMethod:
 	MRS r0, CPSR  /* Save current mode */
-	BIC r0, r0, #31 /* Clear the mode bits */
 	ORR r0, r0, #31 /* Set it to supervisor mode */
 	MSR CPSR, r0 /* Go into system mode */
 	MOV r1, SP /* Save user sp and pop it last */
