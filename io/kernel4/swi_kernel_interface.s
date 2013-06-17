@@ -83,19 +83,20 @@ asm_AwaitEventEntry:
 	SWI 9;
 	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 asm_TimerIRQEntry:
-	stmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* Remember the state on the irq stack */
+	stmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, lr} /* Remember the state on the irq stack */
 	MRS r0, CPSR  /* Save current mode */
 	BIC r0, r0, #31 /* Clear the mode bits */
 	ORR r0, r0, #31 /* Set it to supervisor mode */
 	MOV r1, SP /* Remember the irq stack value so we can access it in system mode */
 	MSR CPSR, r0 /* Go into system mode */
-	ldmfd	r1, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* Restore all the user state, but in system mode. */
-	stmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* Now all the user state is on the user's stack */
+	ldmfd	r1!, {r3, r4, r5, r6, r7, r8, r9, r10, r11, r12}  /* pop r0-9 into r3-r12*/
+	stmfd	sp!, {r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* save them on user stack */
+	ldmfd	r1!, {r3, r4, r5, r6}  /* pop r10-12, lr into r3-r6 */
+	stmfd	sp!, {r3, r4, r5, r6}  
 	MRS r0, CPSR  /* Save current mode again */
 	BIC r0, r0, #31 /* Clear the mode bits */
 	ORR r0, r0, #18 /* Set it to irq mode */
 	MSR CPSR, r0 /* Restore irq mode */
-	stmfd	sp!, {lr}
 	BL irq_handler
 	B asm_KernelExitInterruptMethod
 
@@ -110,15 +111,15 @@ asm_KernelExitInterruptMethod:
 	ORR r0, r0, #31 /* Set it to supervisor mode */
 	MSR CPSR, r0 /* Go into system mode */
 	MOV r1, SP /* Save user sp and pop it last */
-	ADD SP, SP, #52 /* Simulate poping user state off which we do later. */
+	ADD SP, SP, #56 /* Simulate poping user state off which we do later. */
 	MRS r0, CPSR  /* Save current mode again */
 	BIC r0, r0, #31 /* Clear the mode bits */
 	ORR r0, r0, #18 /* Set it to irq mode */
 	MSR CPSR, r0 /* Restore irq mode */
-	ldmfd   sp!, {lr}
-	ADD SP, SP, #52 /* Simulate poping the irq stack from the user proc state it stored. */
+	ADD SP, SP, #56 /* Simulate poping the irq stack of the user proc state it stored. */
+	ldmfd   r1!, {r10, r11, r12, lr} /* Get the state from the user stack */
+	ldmfd   r1, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9} /* Get the state from the user stack */
 	SUB LR, LR, #4
-	ldmfd   r1, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* Get the state from the user stack */
 	MOVS pc, LR
 	
 asm_KernelExitAPIMethod:
