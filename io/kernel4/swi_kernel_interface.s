@@ -92,12 +92,20 @@ asm_TimerIRQEntry:
 	stmfd	sp!, {r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* save them on user stack */
 	ldmfd	r1!, {r3, r4, r5, r6}  /* pop r10-12, lr into r3-r6 */
 	stmfd	sp!, {r3, r4, r5, r6}  
+	LDR r1, [PC, #44]; /*  Load the value of the base of the kernel stack into r1 */
+	STR SP, [r1, #0] /*  Save the stack pointer directly into the kernel state struct */
 	MRS r0, CPSR  /* Save current mode again */
 	BIC r0, r0, #31 /* Clear the mode bits */
 	ORR r0, r0, #18 /* Set it to irq mode */
 	MSR CPSR, r0 /* Restore irq mode */
+	MRS r0, SPSR  /* Remember to save the user's cpsr */
+	STR r0, [r1, #12] /* Save the user's cpsr, which is now in spsr into the kernel struct */
+	STR LR, [r1, #4] /*  Save the user link register directly into the kernel state struct  */
+	MOV r0, #1 /* put 1 to indicate entry by interrupt. */
+	STR r0, [r1, #20] /* Remember how we entered the kernel so we can exit the same way. */
 	BL irq_handler
 	B asm_KernelExitInterruptMethod
+	.4byte 0x1f882f8
 
 
 asm_KernelExit:
