@@ -24,7 +24,7 @@ int RingBufferIndex_Get(RingBufferIndex * rbi) {
 		return ERR_BUFFER_EMPTY;
 	}
 
-	int index = rbi->end;
+	int index = rbi->start;
 	rbi->start = (rbi->start + 1) % rbi->size;
 	return index;
 }
@@ -38,7 +38,7 @@ int CharBuffer_PutChar(CharBuffer * buffer, char c) {
 
 	if (index == ERR_BUFFER_FULL) {
 		assert(0, "CharBuffer_PutChar: buffer is full");
-		return index;
+		return ERR_BUFFER_FULL;
 	}
 
 	buffer->array[index] = c;

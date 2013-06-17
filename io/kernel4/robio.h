@@ -77,4 +77,12 @@ char robgetcbusy(int channel);
 
 void set_led(int value);
 
+int bwa2d( char ch );
+
+char bwa2i( char ch, char **src, int base, int *nump );
+
+void bwui2a( unsigned int num, unsigned int base, char *bf );
+
+void bwi2a( int num, char *bf );
+
 #endif

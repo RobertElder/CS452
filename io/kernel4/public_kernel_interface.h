@@ -44,6 +44,7 @@ float TimeSeconds();
 int DelayUntilSeconds( float seconds );
 int Getc( int channel );
 int Putc( int channel, char ch );
+void PutWord(int channel, int n, char fc, char *bf );
 int PutString(int channel, const char * message, ...);
 
 #endif

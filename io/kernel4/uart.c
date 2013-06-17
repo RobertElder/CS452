@@ -97,9 +97,11 @@ void Channel_SetSpeed( Channel * channel) {
 }
 
 void KeyboardInputServer_Start() {
+	int data;
 	char receive_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
 	int source_tid;
+	UARTServerState state = UARTSS_READY;
 	GenericMessage * receive_message = (GenericMessage *) receive_buffer;
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
 	reply_message->message_type = MESSAGE_TYPE_ACK;
@@ -110,52 +112,87 @@ void KeyboardInputServer_Start() {
 	int notifier_tid = Create(HIGH, &KeyboardInputNotifier_Start);
 	assert(notifier_tid, "KeyboardInputServer_Start notifier did not start");
 	
-	while (1) {
+	while (state != UARTSS_SHUTDOWN) {
 		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
 		Reply(source_tid, reply_buffer, MESSAGE_SIZE);
-		if(receive_message->message_type == MESSAGE_TYPE_SHUTDOWN){
+		
+		switch(receive_message->message_type) {
+		case MESSAGE_TYPE_SHUTDOWN:
 			robprintfbusy((const unsigned char *)"KeyboardInputServer_Start shutting down by request.\n");
+			state = UARTSS_SHUTDOWN;
+			break;
+		case MESSAGE_TYPE_NOTIFIER:
+			data = *UART2DATA & DATA_MASK;
+			robprintfbusy((const unsigned char *)"KeyPressed=%d", data);
+			// TODO send to ui server
+			break;
+		default:
+			assert(0, "KeyboardInputServer unknown event type");
 			break;
 		}
-		//TODO
-		// get characters from device
-		int * UART2DATA = (int*) (UART2_BASE + UART_DATA_OFFSET);
-		char data = *UART2DATA & DATA_MASK;
-		robprintfbusy((const unsigned char *)"KeyPressed=%d", data);
-
-		// send to ui server
 	}
 	
 	Exit();
 }
 
 void ScreenOutputServer_Start() {
-	char receive_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
-	int source_tid;
-	GenericMessage * receive_message = (GenericMessage *) receive_buffer;
-	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
-	reply_message->message_type = MESSAGE_TYPE_ACK;
+	ScreenOutputServer server;
+	ScreenOutputServer_Initialize(&server);
 
 	int return_code = RegisterAs((char*) SCREEN_OUTPUT_SERVER_NAME);
 	assert(return_code == 0, "ScreenOutputServer_Start failed to register");
-
-	int notifier_tid = Create(HIGH, &ScreenOutputNotifier_Start);
-	assert(notifier_tid, "ScreenOutputServer_Start notifier did not start");
 	
-	while (1) {
-		//DelaySeconds(1);
-		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
-		Reply(source_tid, reply_buffer, MESSAGE_SIZE);
-		if(receive_message->message_type == MESSAGE_TYPE_SHUTDOWN){
+	server.notifier_tid = Create(HIGH, &ScreenOutputNotifier_Start);
+	assert(server.notifier_tid, "ScreenOutputServer_Start notifier did not start");
+
+	server.reply_message->message_type = MESSAGE_TYPE_ACK;
+
+	while (server.state != UARTSS_SHUTDOWN) {
+		Receive(&server.source_tid, server.receive_buffer, MESSAGE_SIZE);
+		
+		switch(server.receive_message->message_type) {
+		case MESSAGE_TYPE_SHUTDOWN:
 			robprintfbusy((const unsigned char *)"ScreenOutputServer_Start shutting down by request.\n");
+			server.state = UARTSS_SHUTDOWN;
+			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
+			break;
+		case MESSAGE_TYPE_NOTIFIER:
+			server.state = UARTSS_READY;
+			ScreenOutputServer_SendData(&server);
+			break;
+		case MESSAGE_TYPE_DATA:
+			CharBuffer_PutChar(&server.char_buffer, server.char_message->char1);
+			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
+			ScreenOutputServer_SendData(&server);
+			break;
+		default:
+			assert(0, "KeyboardInputServer unknown event type");
 			break;
 		}
-		//TODO
-		// recieve message
-		// send charcters from the buffer to device
 	}
 	Exit();
+}
+
+void ScreenOutputServer_Initialize(ScreenOutputServer * server) {
+	CharBuffer_Initialize(&server->char_buffer);
+	server->state = UARTSS_READY;
+	server->receive_message = (GenericMessage *) server->receive_buffer;
+	server->reply_message = (GenericMessage *) server->reply_buffer;
+	server->char_message = (CharMessage*) server->receive_buffer;
+}
+
+void ScreenOutputServer_SendData(ScreenOutputServer * server) {
+	if (server->state != UARTSS_READY) {
+		return;
+	}
+
+	char data = CharBuffer_GetChar(&server->char_buffer);
+			
+	if (data) {
+		*UART2DATA = data;
+		server->state = UARTSS_WAITING;
+		Reply(server->notifier_tid, server->reply_buffer, MESSAGE_SIZE);
+	}
 }
 
 void TrainInputServer_Start() {

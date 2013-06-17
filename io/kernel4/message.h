@@ -30,6 +30,7 @@ typedef enum MessageType {
 	MESSAGE_TYPE_DELAY_UNTIL_REPLY,
 	MESSAGE_TYPE_HELLO,
 	MESSAGE_TYPE_PRINT,
+	MESSAGE_TYPE_DATA,
 } MessageType;
 
 
@@ -48,6 +49,11 @@ typedef struct KernelMessage {
 typedef struct GenericMessage {
 	MessageType message_type;  // This member should always be first.
 } GenericMessage;
+
+typedef struct CharMessage {
+	MessageType message_type;
+	char char1;
+} CharMessage;
 
 void KernelMessage_Initialize(KernelMessage * km,
 		int origin, int destination, char * msg, char * dest_buffer,

@@ -4,6 +4,7 @@
 #include "robio.h"
 #include "clock.h"
 #include "ui.h"
+#include "uart.h"
 
 void asm_KernelInitEntry();
 int asm_CreateEntry();
@@ -180,17 +181,109 @@ int Getc( int channel ) {
 
 int Putc( int channel, char ch ) {
 	// TODO: send a message to the whatever server
+	char send_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
+	int server_tid;
+	CharMessage * send_message = (CharMessage *) send_buffer;
+	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
+	send_message->message_type = MESSAGE_TYPE_DATA;
+	
+	if (channel == COM1) {
+		assert(0, "Putc not implemented");
+	} else if (channel == COM2) {
+		server_tid = WhoIs((char*) SCREEN_OUTPUT_SERVER_NAME);
+		assert(server_tid, "Putc: whois failed");
+		
+		send_message->char1 = ch;
+		
+		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+		
+		assert(reply_message->message_type == MESSAGE_TYPE_ACK,
+			"Puc: Did not get ACK message from screen output server");
+	} else {
+		assert(0, "Putc: unknown channel");
+	}
+	
 	return 0;
 }
 
-int PutString( int channel, const char * message, ...) {
+
+void PutWord(int channel, int n, char fc, char *bf ) {
+	char ch;
+	char *p = bf;
+
+	while( *p++ && n > 0 ) n--;
+	while( n-- > 0 ) Putc( channel, fc );
+	while( ( ch = *bf++ ) ) Putc( channel, ch );
+}
+
+int PutString( int channel, const char * fmt, ...) {
 	// TODO: send a message to the whatever server
 	
+	char bf[12];
+	char ch, lz;
+	int w;
+	va_list va;
+
+	va_start(va,fmt);
+	
+	while ( ( ch = *(fmt++) ) ) {
+		if ( ch != '%' )
+			Putc(COM2, ch);
+		else {
+			lz = 0; w = 0;
+			ch = *(fmt++);
+			switch ( ch ) {
+			case '0':
+				lz = 1; ch = *(fmt++);
+				break;
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				ch = bwa2i( ch, (char **) &fmt, 10, &w );
+				break;
+			}
+			switch( ch ) {
+			case 0: return 0;
+			case 'c':
+				Putc(COM2, va_arg( va, char ));
+				break;
+			case 's':
+				PutWord( channel, w, 0, va_arg( va, char* ) );
+				break;
+			case 'u':
+				bwui2a( va_arg( va, unsigned int ), 10, bf );
+				PutWord( channel, w, lz, bf );
+				break;
+			case 'd':
+				bwi2a( va_arg( va, int ), bf );
+				PutWord( channel, w, lz, bf );
+				break;
+			case 'x':
+				bwui2a( va_arg( va, unsigned int ), 16, bf );
+				PutWord( channel, w, lz, bf );
+				break;
+			case '%':
+				Putc( channel, ch );
+				break;
+			}
+		}
+	}
+	va_end(va);
+		
+	/*
 	va_list va;
 	va_start(va,message);
 	bwformatbusy( (const unsigned char *) message, va );
 	va_end(va);
 	return 0;
+	*/
 	
 	return 0;
 }

@@ -26,6 +26,11 @@ void IRQ_TimerVIC2Handler() {
 	IRQ_ClearTimerInterrupt();
 }
 
+
+// For the UART handlers:
+// User space task will need to handle the rest
+// Interrupts automatically reenabled in AwaitEvent
+
 void IRQ_UART1RecieveHandler() {
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
@@ -38,7 +43,7 @@ void IRQ_UART1TransmitHandler() {
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
 	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, UART1_TX_EVENT);
-	
+
 	IRQ_SetUART1Transmit(0);
 }
 
@@ -46,7 +51,7 @@ void IRQ_UART2RecieveHandler() {
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
 	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, UART2_RX_EVENT);
-	
+
 	IRQ_SetUART2Receive(0);
 }
 
@@ -54,7 +59,7 @@ void IRQ_UART2TransmitHandler() {
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
 	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, UART2_TX_EVENT);
-	
+
 	IRQ_SetUART2Transmit(0);
 }
 

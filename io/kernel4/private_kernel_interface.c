@@ -351,6 +351,7 @@ int k_AwaitEvent(EventID event_id) {
 	
 	//robprintfbusy((const unsigned char *)"AwaitEvent called\n");
 	
+	// See kernel_irc.c for what is enabled/disabled
 	switch(event_id) {
 	case UART1_RX_EVENT:
 		IRQ_SetUART1Receive(1);
