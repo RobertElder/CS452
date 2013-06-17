@@ -109,12 +109,12 @@ asm_TimerIRQEntry:
 
 
 asm_KernelExit:
+	/* Put the spsr, back for the user process. */
+        BL asm_GetStoredUserSpsr
+	MSR SPSR, R8
         BL asm_GetStoredUserEntryMethod /* Remember where they came from */
 	CMP r8, #0 /* did they enter the kernel via an api call? */
 	BEQ asm_KernelExitAPIMethod /* If so use the kernel api exit routine. */
-        BL asm_GetStoredUserSpsr
-	/* Put the spsr, return value, LR and SP back for the user process. */
-	MSR SPSR, R8
 asm_KernelExitInterruptMethod:
 	MRS r0, CPSR  /* Save current mode */
 	ORR r0, r0, #31 /* Set it to supervisor mode */
@@ -136,8 +136,6 @@ asm_KernelExitInterruptMethod:
 	MOVS pc, LR
 	
 asm_KernelExitAPIMethod:
-        BL asm_GetStoredUserSpsr
-	MSR SPSR, R8
         BL asm_GetStoredUserRtn 
 	MOV R0, R8
 	/* --enter system */
