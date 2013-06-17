@@ -92,7 +92,7 @@ asm_TimerIRQEntry:
 	stmfd	sp!, {r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* save them on user stack */
 	ldmfd	r1!, {r3, r4, r5, r6}  /* pop r10-12, lr into r3-r6 */
 	stmfd	sp!, {r3, r4, r5, r6}  
-	LDR r1, [PC, #44]; /*  Load the value of the base of the kernel stack into r1 */
+	LDR r1, [PC, #48]; /*  Load the value of the base of the kernel stack into r1 */
 	STR SP, [r1, #0] /*  Save the stack pointer directly into the kernel state struct */
 	MRS r0, CPSR  /* Save current mode again */
 	BIC r0, r0, #31 /* Clear the mode bits */
@@ -103,6 +103,7 @@ asm_TimerIRQEntry:
 	STR LR, [r1, #4] /*  Save the user link register directly into the kernel state struct  */
 	MOV r0, #1 /* put 1 to indicate entry by interrupt. */
 	STR r0, [r1, #20] /* Remember how we entered the kernel so we can exit the same way. */
+	ADD SP, SP, #56 /* Simulate poping the irq stack of the user proc state it stored. */
 	BL irq_handler
 	B asm_KernelExit
 	.4byte 0x1f882f8
@@ -129,7 +130,6 @@ asm_KernelExitInterruptMethod:
 	BIC r0, r0, #31 /* Clear the mode bits */
 	ORR r0, r0, #18 /* Set it to irq mode */
 	MSR CPSR, r0 /* Restore irq mode */
-	ADD SP, SP, #56 /* Simulate poping the irq stack of the user proc state it stored. */
 	ldmfd   r1!, {r10, r11, r12, lr} /* Get the state from the user stack */
 	ldmfd   r1, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9} /* Get the state from the user stack */
 	SUB LR, LR, #4
