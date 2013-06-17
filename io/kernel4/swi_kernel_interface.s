@@ -113,6 +113,7 @@ asm_KernelExit:
 	CMP r8, #0 /* did they enter the kernel via an api call? */
 	BEQ asm_KernelExitAPIMethod /* If so use the kernel api exit routine. */
         BL asm_GetStoredUserSpsr
+	/* Put the spsr, return value, LR and SP back for the user process. */
 	MSR SPSR, R8
 asm_KernelExitInterruptMethod:
 	MRS r0, CPSR  /* Save current mode */
@@ -135,10 +136,8 @@ asm_KernelExitInterruptMethod:
 	MOVS pc, LR
 	
 asm_KernelExitAPIMethod:
-	/* Put the spsr, return value, LR and SP back for the user process. */
         BL asm_GetStoredUserSpsr
 	MSR SPSR, R8
-        MOV r0, R8;
         BL asm_GetStoredUserRtn 
 	MOV R0, R8
 	/* --enter system */
