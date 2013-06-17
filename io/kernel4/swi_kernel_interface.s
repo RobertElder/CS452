@@ -113,9 +113,15 @@ asm_KernelExit:
 	CMP r8, #0 /* did they enter the kernel via an api call? */
 	BEQ asm_KernelExitAPIMethod /* If so use the kernel api exit routine. */
 asm_KernelExitInterruptMethod:
+        BL asm_GetStoredUserSpsr
+	MSR SPSR, R8
 	MRS r0, CPSR  /* Save current mode */
 	ORR r0, r0, #31 /* Set it to supervisor mode */
 	MSR CPSR, r0 /* Go into system mode */
+	MOV R2, LR /* The next call will overwrite the lr */
+        BL asm_GetStoredUserSp
+	MOV LR, R2 /* put user lr back since it is a bank register, and not in saved state */ 
+	MOV SP, R8 /* Put back user's stack value */
 	MOV r1, SP /* Save user sp and pop it last */
 	ADD SP, SP, #56 /* Simulate poping user state off which we do later. */
 	MRS r0, CPSR  /* Save current mode again */
