@@ -25,6 +25,11 @@ OBJECTS = ${SOURCES:.c=.o}
 
 all:  kern.s kern.elf
 
+test: clean testing_compile
+
+testing_compile: CFLAGS += -DTEST
+testing_compile:  kern.s kern.elf
+
 kern.s: kern.c kern.h
 	$(XCC) -S $(CFLAGS) kern.c
 

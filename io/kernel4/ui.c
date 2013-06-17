@@ -42,7 +42,7 @@ void UIServer_Start() {
 			if(shutdown){
 				Exit();
 			}
-			//UIServer_Render(&server);
+			UIServer_Render(&server);
 			break;
 		default:
 			assert(0, "UIServer_Start: unknown message type");

@@ -50,13 +50,16 @@ void FirstTask_Start() {
 	
 	tid = Create(HIGH, &UARTBootstrapTask_Start);
 	assert(tid > 0, "UARTBootstrapTask tid not positive");
-	
+
+#ifndef TEST
 	tid = Create(HIGH, &TrainServer_Start);
 	assert(tid > 0, "TrainServer tid not positive");
 	
 	tid = Create(NORMAL, &UIServer_Start);
 	assert(tid > 0, "UIServer_Start tid not positive");
+#endif // TEST
 	
+#ifdef TEST
 	// Begin testing tasks
 	
 	tid = Create(HIGHEST + 3, &RPSTestStart);
@@ -131,7 +134,8 @@ void FirstTask_Start() {
 	Reply(client_4_tid, reply_buffer, MESSAGE_SIZE);
 	
 	// End testing tasks above
-	
+#endif // TEST
+
 	tid = Create(LOWEST, &IdleTask_Start);
 	assertf(tid, "IdleTask tid not postive");
 	
