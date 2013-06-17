@@ -48,10 +48,10 @@ void FirstTask_Start() {
 	tid = Create(HIGHEST + 2, &AdministratorTask_Start);
 	assert(tid > 0, "AdministratorTask tid not positive");
 	
+#ifndef TEST
 	tid = Create(HIGH, &UARTBootstrapTask_Start);
 	assert(tid > 0, "UARTBootstrapTask tid not positive");
 
-#ifndef TEST
 	tid = Create(HIGH, &TrainServer_Start);
 	assert(tid > 0, "TrainServer tid not positive");
 	
@@ -258,7 +258,7 @@ void AdministratorTask_Start() {
 	GenericMessage * shutdown_reply_message = (GenericMessage *) reply_buffer;
 	shutdown_send_message->message_type = MESSAGE_TYPE_SHUTDOWN;
 	
-
+#ifndef TEST
 	Send(WhoIs((char*) KEYBOARD_INPUT_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from keyboard input server");
 	Send(WhoIs((char*) SCREEN_OUTPUT_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
@@ -270,6 +270,7 @@ void AdministratorTask_Start() {
 	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from train output server");
 	Send(WhoIs((char*) UI_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from ui server");
+#endif // TEST
 
 	//  Shutdown the clock server last because it is needed to unblock things waiting on events.
 	Send(WhoIs((char*) CLOCK_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
