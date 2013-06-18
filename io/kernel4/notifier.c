@@ -60,7 +60,7 @@ void KeyboardInputNotifier_Start() {
 	send_message->message_type = MESSAGE_TYPE_NOTIFIER;
 	send_message->event_id = UART2_RX_EVENT;
 	
-	robprintfbusy((const unsigned char *)"KeyboardInputNotifier_Start: tid=%d", MyTid());
+	robprintfbusy((const unsigned char *)"KeyboardInputNotifier_Start: tid=%d\n", MyTid());
 	
 	while (1) {
 		AwaitEvent(UART2_RX_EVENT);
@@ -85,13 +85,20 @@ void ScreenOutputNotifier_Start() {
 	send_message->event_id = UART2_TX_EVENT;
 	(void)reply_message;
 	
-	robprintfbusy((const unsigned char *)"ScreenOutputNotifier_Start: tid=%d", MyTid());
+	robprintfbusy((const unsigned char *)"ScreenOutputNotifier_Start: tid=%d\n", MyTid());
 	
 	while (1) {
 		AwaitEvent(UART2_TX_EVENT);
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+		
+		if (reply_message->message_type == MESSAGE_TYPE_SHUTDOWN) {
+			break;
+		}
+		
 		assert(reply_message->message_type == MESSAGE_TYPE_ACK, "ScreenOutputNotifier didn't get an ACK");
 	}
+	
+	robprintfbusy((const unsigned char *)"ScreenOutputNotifier_Start: exit\n");
 
 	Exit();
 }
@@ -107,10 +114,10 @@ void TrainInputNotifier_Start() {
 	send_message->message_type = MESSAGE_TYPE_NOTIFIER;
 	send_message->event_id = UART1_RX_EVENT;
 	
-	robprintfbusy((const unsigned char *)"TrainInputNotifier_Start: tid=%d", MyTid());
+	robprintfbusy((const unsigned char *)"TrainInputNotifier_Start: tid=%d\n", MyTid());
 	
 	while (1) {
-		AwaitEvent(UART2_RX_EVENT);
+		AwaitEvent(UART1_RX_EVENT);
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		assert(reply_message->message_type == MESSAGE_TYPE_ACK,
 			"TrainInputNotifier didn't get an ACK");
@@ -130,11 +137,16 @@ void TrainOutputNotifier_Start() {
 	send_message->message_type = MESSAGE_TYPE_NOTIFIER;
 	send_message->event_id = UART1_TX_EVENT;
 	
-	robprintfbusy((const unsigned char *)"TrainOutputNotifier_Start: tid=%d", MyTid());
+	robprintfbusy((const unsigned char *)"TrainOutputNotifier_Start: tid=%d\n", MyTid());
 	
 	while (1) {
-		AwaitEvent(UART2_RX_EVENT);
+		AwaitEvent(UART1_TX_EVENT);
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+		
+		if (reply_message->message_type == MESSAGE_TYPE_SHUTDOWN) {
+			break;
+		}
+		
 		assert(reply_message->message_type == MESSAGE_TYPE_ACK,
 			"TrainOutputNotifier didn't get an ACK");
 	}

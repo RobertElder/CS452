@@ -213,7 +213,11 @@ void AdministratorTask_Start() {
 
 	unsigned int idletask_shutdown_sent = 0;
 	unsigned int shutdown_requests = 0;
+#ifdef TEST
 	unsigned int required_requests = 4;
+#else
+	unsigned int required_requests = 1;
+#endif
 
 	char send_buffer[MESSAGE_SIZE];
 	char receive_buffer[MESSAGE_SIZE];
@@ -259,17 +263,30 @@ void AdministratorTask_Start() {
 	shutdown_send_message->message_type = MESSAGE_TYPE_SHUTDOWN;
 	
 #ifndef TEST
+
+// begin ui.c
+	Send(WhoIs((char*) UI_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from ui server");
+// end ui.c
+
+
+// begin train.c
+	Send(WhoIs((char*) TRAIN_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from train server");
+// end train.c
+
+// shutdown io last
+// begin uart.c
 	Send(WhoIs((char*) KEYBOARD_INPUT_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from keyboard input server");
 	Send(WhoIs((char*) SCREEN_OUTPUT_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from screen output server");
 	Send(WhoIs((char*) TRAIN_INPUT_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from train input server");
-
 	Send(WhoIs((char*) TRAIN_OUTPUT_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from train output server");
-	Send(WhoIs((char*) UI_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
-	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from ui server");
+// end uart.c
+
 #endif // TEST
 
 	//  Shutdown the clock server last because it is needed to unblock things waiting on events.

@@ -175,12 +175,33 @@ int DelayUntilSeconds( float seconds ) {
 }
 
 int Getc( int channel ) {
-	// TODO: send a message to the whatever server
-	return 0;
+	char send_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
+	int server_tid;
+	GenericMessage * send_message = (GenericMessage *) send_buffer;
+	CharMessage * reply_message = (CharMessage *) reply_buffer;
+	send_message->message_type = MESSAGE_TYPE_DATA;
+	
+	if (channel == COM1) {
+		server_tid = WhoIs((char*) TRAIN_INPUT_SERVER_NAME);
+	} else if (channel == COM2) {
+		server_tid = WhoIs((char*) KEYBOARD_INPUT_SERVER_NAME);
+	} else {
+		assert(0, "Getc: unknown channel");
+		return 0; // TODO return error code
+	}
+	
+	assert(server_tid, "Getc: whois failed");
+	
+	Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+	
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK,
+		"Puc: Did not get ACK message from output server");
+	
+	return reply_message->char1;
 }
 
 int Putc( int channel, char ch ) {
-	// TODO: send a message to the whatever server
 	char send_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
 	int server_tid;
@@ -189,20 +210,22 @@ int Putc( int channel, char ch ) {
 	send_message->message_type = MESSAGE_TYPE_DATA;
 	
 	if (channel == COM1) {
-		assert(0, "Putc not implemented");
+		server_tid = WhoIs((char*) TRAIN_OUTPUT_SERVER_NAME);
 	} else if (channel == COM2) {
 		server_tid = WhoIs((char*) SCREEN_OUTPUT_SERVER_NAME);
-		assert(server_tid, "Putc: whois failed");
-		
-		send_message->char1 = ch;
-		
-		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
-		
-		assert(reply_message->message_type == MESSAGE_TYPE_ACK,
-			"Puc: Did not get ACK message from screen output server");
 	} else {
 		assert(0, "Putc: unknown channel");
+		return 0; // TODO return error code
 	}
+	
+	assert(server_tid, "Putc: whois failed");
+	
+	send_message->char1 = ch;
+	
+	Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+	
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK,
+		"Puc: Did not get ACK message from output server");
 	
 	return 0;
 }

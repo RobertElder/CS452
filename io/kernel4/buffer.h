@@ -29,7 +29,9 @@ void CharBuffer_Initialize(CharBuffer * buffer);
 // Put a character. Returns 0 if ok.
 int CharBuffer_PutChar(CharBuffer * buffer, char c);
 
-//  Remove one character from the buffer we created.  Return null on empty buffer.
-char CharBuffer_GetChar(CharBuffer * buffer);
+//  Remove one character from the buffer we created. Fails spectacularly if empty.
+unsigned char CharBuffer_GetChar(CharBuffer * buffer);
+
+short CharBuffer_IsEmpty(CharBuffer * buffer);
 
 #endif /* BUFFER_H_ */

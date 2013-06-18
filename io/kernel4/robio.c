@@ -561,3 +561,42 @@ void set_led(int value) {
 	int * led_address = (int *) LED_ADDRESS;
 	*led_address = value;
 }
+
+int robatoi(const char * str) {
+	int value = 0;
+	short in_leading_whitespace = 1;
+	int i = 0;
+	while (1) {
+		int parse_value = bwa2d(str[i]);
+		
+		if (parse_value != -1) {
+			value = value * 10 + parse_value;
+			in_leading_whitespace = 0;
+		} else if (!in_leading_whitespace) {
+			return value;
+		}
+		i++;
+		
+		assert(i < 100, "robatoi running too long");
+	}
+}
+
+int rob_next_whitespace(const char * str) {
+	int i = 0;
+	short found_whitespace = 0;
+	
+	while (1) {
+		if (!str[i]) {
+			return i;
+		}
+		if (str[i] == ' ') {
+			found_whitespace = 1;
+		}
+		if (found_whitespace && str[i] != ' ') {
+			return i;
+		}
+		i++;
+		
+		assert(i < 100, "rob_next_whitespace running too long");
+	}
+}

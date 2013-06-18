@@ -16,8 +16,6 @@ static int * const UART2DATA = (int*) (UART2_BASE + UART_DATA_OFFSET);
 typedef struct Channel {
 	unsigned int channel;
 	unsigned int speed;
-	CharBuffer char_buffer;
-	
 } Channel;
 
 typedef struct UARTBootstrapTask {
@@ -44,6 +42,41 @@ typedef struct ScreenOutputServer {
 	int notifier_tid;
 } ScreenOutputServer;
 
+typedef struct TrainOutputServer {
+	CharBuffer char_buffer;
+	int data;
+	char receive_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
+	int source_tid;
+	UARTServerState state;
+	GenericMessage * receive_message;
+	GenericMessage * reply_message;
+	CharMessage * char_message;
+	int notifier_tid;
+} TrainOutputServer;
+
+typedef struct KeyboardInputServer {
+	char receive_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
+	int source_tid;
+	UARTServerState state;
+	GenericMessage * receive_message;
+	CharMessage * reply_message;
+	CharBuffer char_buffer;
+	TaskQueue task_queue;
+} KeyboardInputServer;
+
+typedef struct TrainInputServer {
+	char receive_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
+	int source_tid;
+	UARTServerState state;
+	GenericMessage * receive_message;
+	CharMessage * reply_message;
+	CharBuffer char_buffer;
+	TaskQueue task_queue;
+} TrainInputServer;
+
 void UARTBootstrapTask_Start();
 
 void UARTBootstrapTask_Initialize(UARTBootstrapTask * uart);
@@ -54,6 +87,12 @@ void Channel_SetSpeed( Channel * channel);
 
 void KeyboardInputServer_Start();
 
+void KeyboardInputServer_Initialize(KeyboardInputServer * server);
+
+void KeyboardInputServer_ReplyQueued(KeyboardInputServer * server);
+
+void KeyboardInputServer_UnblockQueued(KeyboardInputServer * server);
+
 void ScreenOutputServer_Start();
 
 void ScreenOutputServer_Initialize(ScreenOutputServer * server);
@@ -62,6 +101,16 @@ void ScreenOutputServer_SendData(ScreenOutputServer * server);
 
 void TrainInputServer_Start();
 
+void TrainInputServer_Initialize(TrainInputServer * server);
+
+void TrainInputServer_ReplyQueued(TrainInputServer * server);
+
+void TrainInputServer_UnblockQueued(TrainInputServer * server);
+
 void TrainOutputServer_Start();
+
+void TrainOutputServer_Initialize(TrainOutputServer * server);
+
+void TrainOutputServer_SendData(TrainOutputServer * server);
 
 #endif
