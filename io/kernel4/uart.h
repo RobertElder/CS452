@@ -66,6 +66,17 @@ typedef struct KeyboardInputServer {
 	TaskQueue task_queue;
 } KeyboardInputServer;
 
+typedef struct TrainInputServer {
+	char receive_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
+	int source_tid;
+	UARTServerState state;
+	GenericMessage * receive_message;
+	CharMessage * reply_message;
+	CharBuffer char_buffer;
+	TaskQueue task_queue;
+} TrainInputServer;
+
 void UARTBootstrapTask_Start();
 
 void UARTBootstrapTask_Initialize(UARTBootstrapTask * uart);
@@ -89,6 +100,12 @@ void ScreenOutputServer_Initialize(ScreenOutputServer * server);
 void ScreenOutputServer_SendData(ScreenOutputServer * server);
 
 void TrainInputServer_Start();
+
+void TrainInputServer_Initialize(TrainInputServer * server);
+
+void TrainInputServer_ReplyQueued(TrainInputServer * server);
+
+void TrainInputServer_UnblockQueued(TrainInputServer * server);
 
 void TrainOutputServer_Start();
 
