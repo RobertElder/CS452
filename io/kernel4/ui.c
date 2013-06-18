@@ -139,6 +139,12 @@ void UIServer_RunCommand(UIServer * server) {
 		Send(admin_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
 		
 		assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_RunCommand failed to get ack message");
+	} else if (server->command_buffer[0] == 't' && server->command_buffer[1] == 'r') {
+		UIServer_HandleTrainCommand(server);
+	} else if (server->command_buffer[0] == 'r' && server->command_buffer[1] == 'v') {
+		UIServer_HandleReverseCommand(server);
+	} else if (server->command_buffer[0] == 's' && server->command_buffer[1] == 'w') {
+		UIServer_HandleSwitchCommand(server);
 	} else {
 		UIServer_PrintCommandHelp(server);
 	}
@@ -154,6 +160,24 @@ void UIServer_ResetCommandBuffer(UIServer * server) {
 
 void UIServer_PrintCommandHelp(UIServer * server) {
 	PutString(COM2, "Unknown command. Use: tr, rv, sw, q");
+}
+
+void UIServer_HandleTrainCommand(UIServer * server) {
+	int next_whitespace = rob_next_whitespace(server->command_buffer);
+	int train_num = robatoi(&server->command_buffer[next_whitespace]);
+
+	next_whitespace += rob_next_whitespace(&(server->command_buffer[next_whitespace]));
+	
+	int speed = robatoi(&server->command_buffer[next_whitespace]);
+	PutString(COM2, "Train=%d Speed=%d. train on fire.", train_num, speed);
+}
+
+void UIServer_HandleReverseCommand(UIServer * server) {
+	PutString(COM2, "train on reversed fire.");
+}
+
+void UIServer_HandleSwitchCommand(UIServer * server) {
+	PutString(COM2, "switch on fire.");
 }
 
 void UITimer_Start() {

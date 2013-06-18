@@ -42,6 +42,12 @@ void UIServer_ResetCommandBuffer(UIServer * server);
 
 void UIServer_PrintCommandHelp(UIServer * server);
 
+void UIServer_HandleTrainCommand(UIServer * server);
+
+void UIServer_HandleReverseCommand(UIServer * server);
+
+void UIServer_HandleSwitchCommand(UIServer * server);
+
 void UITimer_Start();
 
 #endif

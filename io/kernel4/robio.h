@@ -85,4 +85,8 @@ void bwui2a( unsigned int num, unsigned int base, char *bf );
 
 void bwi2a( int num, char *bf );
 
+int robatoi(const char * str);
+
+int rob_next_whitespace(const char * str);
+
 #endif
