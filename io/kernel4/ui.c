@@ -186,6 +186,7 @@ void UIServer_HandleTrainCommand(UIServer * server) {
 	next_whitespace += rob_next_whitespace(&(server->command_buffer[next_whitespace]));
 	
 	int speed = robatoi(&server->command_buffer[next_whitespace]);
+	
 	PutString(COM2, "Train=%d Speed=%d. train on fire.", train_num, speed);
 	Putc(COM1, speed);
 	Putc(COM1, train_num);
@@ -208,13 +209,32 @@ void UIServer_HandleReverseCommand(UIServer * server) {
 
 void UIServer_HandleSwitchCommand(UIServer * server) {
 	int next_whitespace = rob_next_whitespace(server->command_buffer);
-	int train_num = robatoi(&server->command_buffer[next_whitespace]);
+	int switch_num = robatoi(&server->command_buffer[next_whitespace]);
 
 	next_whitespace += rob_next_whitespace(&(server->command_buffer[next_whitespace]));
 	
 	char direction = server->command_buffer[next_whitespace];
+	int direction_code;
+	
+	if (direction == 'C') {
+		direction_code = 34;
+	} else if (direction == 'S') {
+		direction_code = 35;
+	} else {
+		PutString(COM2, "Unknown direction. Use C or S");
+		return;
+	}
+	
+	PutString(COM2, "Switch=%d Direction=%c. switch on fire.", switch_num, direction);
+	
+	Putc(COM1, direction_code);
+	Putc(COM1, switch_num);
+	DelaySeconds(0.15);
+	Putc(COM1, 32);
 
-	PutString(COM2, "Train=%d Direction=%c. switch on fire.", train_num, direction);
+	// Make sure the solenoid is really off
+	DelaySeconds(0.2);
+	Putc(COM1, 32);
 }
 
 void UITimer_Start() {
