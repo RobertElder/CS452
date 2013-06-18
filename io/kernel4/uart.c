@@ -96,12 +96,6 @@ void Channel_SetSpeed( Channel * channel) {
 }
 
 void KeyboardInputServer_Start() {
-	int return_code = RegisterAs((char*)KEYBOARD_INPUT_SERVER_NAME);
-	assert(return_code == 0, "KeyboardInputServer_Start failed to register");
-
-	int notifier_tid = Create(HIGH, &KeyboardInputNotifier_Start);
-	assert(notifier_tid, "KeyboardInputServer_Start notifier did not start");
-
 	KeyboardInputServer server;
 	KeyboardInputServer_Initialize(&server);
 	int data;
@@ -112,7 +106,10 @@ void KeyboardInputServer_Start() {
 		
 		switch(server.receive_message->message_type) {
 		case MESSAGE_TYPE_SHUTDOWN:
-			robprintfbusy((const unsigned char *)"KeyboardInputServer_Start shutting down by request.\n");
+			// from admin task
+			robprintfbusy((const unsigned char *)
+				"KeyboardInputServer_Start shutting down by request.\n");
+
 			server.state = UARTSS_SHUTDOWN;
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			break;
@@ -123,7 +120,7 @@ void KeyboardInputServer_Start() {
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			break;
 		case MESSAGE_TYPE_DATA:
-			// From public_kernel_interface
+			// From public_kernel_interface Getc()
 			Queue_PushEnd((Queue*) &server.task_queue, (QUEUE_ITEM_TYPE) server.source_tid);
 			break;
 		default:
@@ -138,9 +135,16 @@ void KeyboardInputServer_Start() {
 }
 
 void KeyboardInputServer_Initialize(KeyboardInputServer * server) {
+	int return_code = RegisterAs((char*)KEYBOARD_INPUT_SERVER_NAME);
+	assert(return_code == 0, "KeyboardInputServer_Start failed to register");
+
+	int notifier_tid = Create(HIGH, &KeyboardInputNotifier_Start);
+	assert(notifier_tid, "KeyboardInputServer_Start notifier did not start");
+
 	server->state = UARTSS_WAITING;
 	server->receive_message = (GenericMessage *) server->receive_buffer;
 	server->reply_message = (CharMessage *) server->reply_buffer;
+
 	CharBuffer_Initialize(&server->char_buffer);
 	Queue_Initialize((Queue*) &server->task_queue, TASK_QUEUE_SIZE);
 }
@@ -164,12 +168,6 @@ void ScreenOutputServer_Start() {
 	ScreenOutputServer server;
 	ScreenOutputServer_Initialize(&server);
 
-	int return_code = RegisterAs((char*) SCREEN_OUTPUT_SERVER_NAME);
-	assert(return_code == 0, "ScreenOutputServer_Start failed to register");
-	
-	server.notifier_tid = Create(HIGH, &ScreenOutputNotifier_Start);
-	assert(server.notifier_tid, "ScreenOutputServer_Start notifier did not start");
-
 	server.reply_message->message_type = MESSAGE_TYPE_ACK;
 
 	while (server.state != UARTSS_SHUTDOWN) {
@@ -177,17 +175,25 @@ void ScreenOutputServer_Start() {
 		
 		switch(server.receive_message->message_type) {
 		case MESSAGE_TYPE_SHUTDOWN:
-			robprintfbusy((const unsigned char *)"ScreenOutputServer_Start shutting down by request.\n");
+			// from admin task
+			robprintfbusy((const unsigned char *)
+				"ScreenOutputServer_Start shutting down by request.\n");
+
 			server.state = UARTSS_SHUTDOWN;
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
+
+			// Shutdown the notifier as well
 			server.reply_message->message_type = MESSAGE_TYPE_SHUTDOWN;
 			Reply(server.notifier_tid, server.reply_buffer, MESSAGE_SIZE);
+
 			break;
 		case MESSAGE_TYPE_NOTIFIER:
+			// from the notifier
 			server.state = UARTSS_READY;
 			ScreenOutputServer_SendData(&server);
 			break;
 		case MESSAGE_TYPE_DATA:
+			// from public_kernel_interface Putc()
 			CharBuffer_PutChar(&server.char_buffer, server.char_message->char1);
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			ScreenOutputServer_SendData(&server);
@@ -206,6 +212,12 @@ void ScreenOutputServer_Initialize(ScreenOutputServer * server) {
 	server->receive_message = (GenericMessage *) server->receive_buffer;
 	server->reply_message = (GenericMessage *) server->reply_buffer;
 	server->char_message = (CharMessage*) server->receive_buffer;
+	
+	int return_code = RegisterAs((char*) SCREEN_OUTPUT_SERVER_NAME);
+	assert(return_code == 0, "ScreenOutputServer_Start failed to register");
+	
+	server->notifier_tid = Create(HIGH, &ScreenOutputNotifier_Start);
+	assert(server->notifier_tid, "ScreenOutputServer_Start notifier did not start");
 }
 
 void ScreenOutputServer_SendData(ScreenOutputServer * server) {
@@ -218,11 +230,14 @@ void ScreenOutputServer_SendData(ScreenOutputServer * server) {
 
 		*UART2DATA = data;
 		server->state = UARTSS_WAITING;
+		
+		// Tell notifier to start checking again
 		Reply(server->notifier_tid, server->reply_buffer, MESSAGE_SIZE);
 	}
 }
 
 void TrainInputServer_Start() {
+// TODO refactor and implement this
 	char receive_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
 //	char send_buffer[MESSAGE_SIZE];
@@ -271,12 +286,6 @@ void TrainOutputServer_Start() {
 	TrainOutputServer server;
 	TrainOutputServer_Initialize(&server);
 	
-	int return_code = RegisterAs((char*)TRAIN_OUTPUT_SERVER_NAME);
-	assert(return_code == 0, "TrainOutputServer_Start failed to register");
-
-	server.notifier_tid = Create(HIGH, &TrainOutputNotifier_Start);
-	assert(server.notifier_tid, "TrainOutputServer_Start notifier did not start");
-	
 	server.reply_message->message_type = MESSAGE_TYPE_ACK;
 	
 	while (server.state != UARTSS_SHUTDOWN) {
@@ -284,17 +293,24 @@ void TrainOutputServer_Start() {
 
 		switch(server.receive_message->message_type) {
 		case MESSAGE_TYPE_SHUTDOWN:
-			robprintfbusy((const unsigned char *)"TrainOutputServer_Start shutting down by request.\n");
+			// from admin task
+			robprintfbusy((const unsigned char *)
+				"TrainOutputServer_Start shutting down by request.\n");
+
 			server.state = UARTSS_SHUTDOWN;
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
+			
+			// Shutdown the notifier as well
 			server.reply_message->message_type = MESSAGE_TYPE_SHUTDOWN;
 			Reply(server.notifier_tid, server.reply_buffer, MESSAGE_SIZE);
 			break;
 		case MESSAGE_TYPE_NOTIFIER:
+			// from the notifier
 			server.state = UARTSS_READY;
 			TrainOutputServer_SendData(&server);
 			break;
 		case MESSAGE_TYPE_DATA:
+			// from the public_kernel_interface Putc()
 			CharBuffer_PutChar(&server.char_buffer, server.char_message->char1);
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			TrainOutputServer_SendData(&server);
@@ -313,6 +329,12 @@ void TrainOutputServer_Initialize(TrainOutputServer * server) {
 	server->receive_message = (GenericMessage *) server->receive_buffer;
 	server->reply_message = (GenericMessage *) server->reply_buffer;
 	server->char_message = (CharMessage*) server->receive_buffer;
+	
+	int return_code = RegisterAs((char*)TRAIN_OUTPUT_SERVER_NAME);
+	assert(return_code == 0, "TrainOutputServer_Start failed to register");
+
+	server->notifier_tid = Create(HIGH, &TrainOutputNotifier_Start);
+	assert(server->notifier_tid, "TrainOutputServer_Start notifier did not start");
 }
 
 void TrainOutputServer_SendData(TrainOutputServer * server) {
@@ -325,6 +347,8 @@ void TrainOutputServer_SendData(TrainOutputServer * server) {
 			
 		*UART1DATA = data;
 		server->state = UARTSS_WAITING;
+		
+		// Restart the notifier
 		Reply(server->notifier_tid, server->reply_buffer, MESSAGE_SIZE);
 	}
 }
