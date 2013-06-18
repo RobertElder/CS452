@@ -128,7 +128,7 @@ void UIServer_RunCommand(UIServer * server) {
 	ANSI_Cursor(3, 1);
 	
 	if (server->command_buffer_index == 0) {
-		PutString(COM2, "Enter command: tr, rv, sw, q");
+		UIServer_PrintCommandHelp(server);
 	} else if (server->command_buffer[0] == 'q') {
 		PutString(COM2, "Quiting. Goodbye.");
 		DelaySeconds(1);
@@ -140,7 +140,7 @@ void UIServer_RunCommand(UIServer * server) {
 		
 		assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_RunCommand failed to get ack message");
 	} else {
-		PutString(COM2, "Unknown command.");
+		UIServer_PrintCommandHelp(server);
 	}
 	ANSI_ClearLine(CLEAR_TO_END);
 }
@@ -150,6 +150,10 @@ void UIServer_ResetCommandBuffer(UIServer * server) {
 	server->command_buffer[0] = 0;
 	ANSI_Cursor(2, 6);
 	ANSI_ClearLine(CLEAR_TO_END);
+}
+
+void UIServer_PrintCommandHelp(UIServer * server) {
+	PutString(COM2, "Unknown command. Use: tr, rv, sw, q");
 }
 
 void UITimer_Start() {

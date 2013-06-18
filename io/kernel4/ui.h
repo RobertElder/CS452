@@ -40,6 +40,8 @@ void UIServer_RunCommand(UIServer * server);
 
 void UIServer_ResetCommandBuffer(UIServer * server);
 
+void UIServer_PrintCommandHelp(UIServer * server);
+
 void UITimer_Start();
 
 #endif
