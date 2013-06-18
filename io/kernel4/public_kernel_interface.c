@@ -175,8 +175,30 @@ int DelayUntilSeconds( float seconds ) {
 }
 
 int Getc( int channel ) {
-	// TODO: send a message to the whatever server
-	return 0;
+	char send_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
+	int server_tid;
+	GenericMessage * send_message = (GenericMessage *) send_buffer;
+	CharMessage * reply_message = (CharMessage *) reply_buffer;
+	send_message->message_type = MESSAGE_TYPE_DATA;
+	
+	if (channel == COM1) {
+		server_tid = WhoIs((char*) TRAIN_INPUT_SERVER_NAME);
+	} else if (channel == COM2) {
+		server_tid = WhoIs((char*) KEYBOARD_INPUT_SERVER_NAME);
+	} else {
+		assert(0, "Getc: unknown channel");
+		return 0; // TODO return error code
+	}
+	
+	assert(server_tid, "Getc: whois failed");
+	
+	Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+	
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK,
+		"Puc: Did not get ACK message from output server");
+	
+	return reply_message->char1;
 }
 
 int Putc( int channel, char ch ) {
@@ -219,8 +241,6 @@ void PutWord(int channel, int n, char fc, char *bf ) {
 }
 
 int PutString( int channel, const char * fmt, ...) {
-	// TODO: send a message to the whatever server
-	
 	char bf[12];
 	char ch, lz;
 	int w;

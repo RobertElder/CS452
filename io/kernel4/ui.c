@@ -9,7 +9,8 @@
 void UIServer_Start() {
 	int return_code = RegisterAs((char*) UI_SERVER_NAME);
 	int source_tid;
-	int shutdown = 0;
+	int num_child_task_running = 2;
+	short shutdown = 0;
 	assert(return_code == 0, "UIServer_Start failed to register name");
 	
 	int tid = Create(HIGH, &UITimer_Start);
@@ -17,6 +18,9 @@ void UIServer_Start() {
 	
 	UIServer server;
 	UIServer_Initialize(&server);
+	
+	int keyboard_input_tid = Create(NORMAL, UIKeyboardInput_Start);
+	assert(keyboard_input_tid, "UIServer failed to create UIKeyboardInput");
 
 	GenericMessage * receive_message = (GenericMessage *) server.receive_buffer;
 	GenericMessage * reply_message = (GenericMessage *) server.reply_buffer;
@@ -24,37 +28,50 @@ void UIServer_Start() {
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 
-	while(1) {
+	while(num_child_task_running) {
 		Receive(&source_tid, server.receive_buffer, MESSAGE_SIZE);
 		
 		switch(receive_message->message_type) {
-		// TODO: handle notifier messages from keyboard server and train server
 		case MESSAGE_TYPE_SHUTDOWN:
 			Reply(source_tid, server.reply_buffer, MESSAGE_SIZE);
 			robprintfbusy((const unsigned char *)"UIServer_Start Exiting because of shutdown.\n");
+
 			shutdown = 1;
 			break;
 		case MESSAGE_TYPE_HELLO:
-			if(shutdown){
-				//  Tell it to stop sending requests.
-				robprintfbusy((const unsigned char *)"Going to tell the ui server to shutdown.\n");
+			// from UITimer
+			if (shutdown){
 				reply_message->message_type = MESSAGE_TYPE_SHUTDOWN;
+				num_child_task_running--;
 			}
+
 			Reply(source_tid, server.reply_buffer, MESSAGE_SIZE);
-			if(shutdown){
-				Exit();
+
+			if (!shutdown) {
+				UIServer_Render(&server);
 			}
-			UIServer_Render(&server);
+
 			break;
 		case MESSAGE_TYPE_DATA:
+			// from UIKeyboardInput
+			if (shutdown){
+				reply_message->message_type = MESSAGE_TYPE_SHUTDOWN;
+				num_child_task_running--;
+			}
+
 			Reply(source_tid, server.reply_buffer, MESSAGE_SIZE);
-			UIServer_ProcessKeystroke(&server, char_message->char1);
+
+			if (!shutdown) {
+				UIServer_ProcessKeystroke(&server, char_message->char1);
+			}
 			break;
 		default:
 			assert(0, "UIServer_Start: unknown message type");
 			break;
 		}
 	}
+	
+	Exit();
 }
 
 void UIServer_Initialize(UIServer * server) {
@@ -224,6 +241,49 @@ void UITimer_Start() {
 		}
 	}
 	
+	Exit();
+}
+
+void UIKeyboardInput_Start() {
+	char reply_buffer[MESSAGE_SIZE];
+	char send_buffer[MESSAGE_SIZE];
+	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
+	CharMessage * char_message = (CharMessage *) send_buffer;
+	char data;
+	int ui_server_tid;
+	int i = 0;
+	
+	robprintfbusy((const unsigned char *)"UIKeyboardInput_Start tid=%d\n", MyTid());
+	
+	while (1) {
+		ui_server_tid = WhoIs((char*) UI_SERVER_NAME);
+		
+		if (ui_server_tid) {
+			break;
+		}
+		
+		i++;
+		assert(i < 1000, "UIKeyboardInput: failed to get tid for ui server");
+	}
+	
+	while (1) {
+		data = Getc(COM2);
+
+		assert(data != 0, "UIKeyboardInput: got 0x00 from keyboard?");
+
+		char_message->message_type = MESSAGE_TYPE_DATA;
+		char_message->char1 = data;
+
+		Send(ui_server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+
+		if (reply_message->message_type == MESSAGE_TYPE_SHUTDOWN) {
+			break;
+		}
+
+		assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIKeyboardInput: failed to send char to ui server");
+	}
+	
+	robprintfbusy((const unsigned char *)"UIKeyboardInput_Start exit\n");
 	Exit();
 }
 

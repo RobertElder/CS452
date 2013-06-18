@@ -5,8 +5,6 @@
 #include "notifier.h"
 #include "private_kernel_interface.h"
 #include "scheduler.h"
-#include "ui.h"
-#include "train.h"
 
 void UARTBootstrapTask_Start() {
 	robprintfbusy((const unsigned char *)"UARTBootstrapTask_Start tid=%d", MyTid());
@@ -98,60 +96,68 @@ void Channel_SetSpeed( Channel * channel) {
 }
 
 void KeyboardInputServer_Start() {
-	int data;
-	char receive_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
-	char send_buffer[MESSAGE_SIZE];
-	int source_tid;
-	UARTServerState state = UARTSS_READY;
-	GenericMessage * receive_message = (GenericMessage *) receive_buffer;
-	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
-	CharMessage * char_message = (CharMessage *) send_buffer;
-
 	int return_code = RegisterAs((char*)KEYBOARD_INPUT_SERVER_NAME);
 	assert(return_code == 0, "KeyboardInputServer_Start failed to register");
 
 	int notifier_tid = Create(HIGH, &KeyboardInputNotifier_Start);
 	assert(notifier_tid, "KeyboardInputServer_Start notifier did not start");
+
+	KeyboardInputServer server;
+	KeyboardInputServer_Initialize(&server);
+	int data;
 	
-	int ui_server_tid;
-	int i = 0;
-	
-	while (1) {
-		ui_server_tid = WhoIs((char*) UI_SERVER_NAME);
+	while (server.state != UARTSS_SHUTDOWN) {
+		Receive(&server.source_tid, server.receive_buffer, MESSAGE_SIZE);
+		server.reply_message->message_type = MESSAGE_TYPE_ACK;
 		
-		if (ui_server_tid) {
-			break;
-		}
-		
-		i++;
-		assert(i < 1000, "KeyboardInputServer: failed to get tid for ui server");
-	}
-	
-	while (state != UARTSS_SHUTDOWN) {
-		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
-		reply_message->message_type = MESSAGE_TYPE_ACK;
-		Reply(source_tid, reply_buffer, MESSAGE_SIZE);
-		
-		switch(receive_message->message_type) {
+		switch(server.receive_message->message_type) {
 		case MESSAGE_TYPE_SHUTDOWN:
 			robprintfbusy((const unsigned char *)"KeyboardInputServer_Start shutting down by request.\n");
-			state = UARTSS_SHUTDOWN;
+			server.state = UARTSS_SHUTDOWN;
+			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			break;
 		case MESSAGE_TYPE_NOTIFIER:
+			// From notifier
 			data = *UART2DATA & DATA_MASK;
-			char_message->message_type = MESSAGE_TYPE_DATA;
-			char_message->char1 = data;
-			Send(ui_server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
-			assert(reply_message->message_type == MESSAGE_TYPE_ACK, "KeyboardInputServer: failed to send char to ui server");
+			CharBuffer_PutChar(&server.char_buffer, data);
+			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
+			break;
+		case MESSAGE_TYPE_DATA:
+			// From public_kernel_interface
+			Queue_PushEnd((Queue*) &server.task_queue, (QUEUE_ITEM_TYPE) server.source_tid);
 			break;
 		default:
 			assert(0, "KeyboardInputServer unknown event type");
 			break;
 		}
+
+		KeyboardInputServer_ReplyQueued(&server);
 	}
 	
 	Exit();
+}
+
+void KeyboardInputServer_Initialize(KeyboardInputServer * server) {
+	server->state = UARTSS_WAITING;
+	server->receive_message = (GenericMessage *) server->receive_buffer;
+	server->reply_message = (CharMessage *) server->reply_buffer;
+	CharBuffer_Initialize(&server->char_buffer);
+	Queue_Initialize((Queue*) &server->task_queue, TASK_QUEUE_SIZE);
+}
+
+void KeyboardInputServer_ReplyQueued(KeyboardInputServer * server) {
+	while (1) {
+		if (CharBuffer_IsEmpty(&server->char_buffer) || !Queue_CurrentCount((Queue*) &server->task_queue)) {
+			break;
+		}
+		
+		char c = CharBuffer_GetChar(&server->char_buffer);
+		int tid = (int) Queue_PopStart((Queue*) &server->task_queue);
+		server->reply_message->message_type = MESSAGE_TYPE_ACK;
+		server->reply_message->char1 = c;
+
+		Reply(tid, server->reply_buffer, MESSAGE_SIZE);
+	}
 }
 
 void ScreenOutputServer_Start() {
@@ -219,13 +225,13 @@ void ScreenOutputServer_SendData(ScreenOutputServer * server) {
 void TrainInputServer_Start() {
 	char receive_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
-	char send_buffer[MESSAGE_SIZE];
+//	char send_buffer[MESSAGE_SIZE];
 	int source_tid;
 	char data;
 	UARTServerState state = UARTSS_READY;
 	GenericMessage * receive_message = (GenericMessage *) receive_buffer;
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
-	CharMessage * char_message = (CharMessage *) send_buffer;
+//	CharMessage * char_message = (CharMessage *) send_buffer;
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 
 	int return_code = RegisterAs((char*)TRAIN_INPUT_SERVER_NAME);
@@ -233,20 +239,7 @@ void TrainInputServer_Start() {
 
 	int notifier_tid = Create(HIGH, &TrainInputNotifier_Start);
 	assert(notifier_tid, "TrainInputServer_Start notifier did not start");
-	
-	int train_server_tid;
-	int i = 0;
-	
-	while (1) {
-		train_server_tid = WhoIs((char*) TRAIN_SERVER_NAME);
-		
-		if (train_server_tid) {
-			break;
-		}
-		
-		i++;
-		assert(i < 1000, "TrainInputServer: failed to get tid for ui server");
-	}
+
 	
 	while (state != UARTSS_SHUTDOWN) {
 		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
@@ -259,10 +252,12 @@ void TrainInputServer_Start() {
 			break;
 		case MESSAGE_TYPE_NOTIFIER:
 			data = *UART1DATA & DATA_MASK;
-			char_message->message_type = MESSAGE_TYPE_DATA;
+			/*char_message->message_type = MESSAGE_TYPE_DATA;
 			char_message->char1 = data;
 			Send(train_server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 			assert(reply_message->message_type == MESSAGE_TYPE_ACK, "TrainInputServer: failed to send char to train server");
+			*/
+			// TODO queue the data up
 			break;
 		default:
 			assert(0, "TrainInputServer unknown event type");

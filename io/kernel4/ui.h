@@ -50,4 +50,6 @@ void UIServer_HandleSwitchCommand(UIServer * server);
 
 void UITimer_Start();
 
+void UIKeyboardInput_Start();
+
 #endif

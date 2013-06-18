@@ -55,6 +55,17 @@ typedef struct TrainOutputServer {
 	int notifier_tid;
 } TrainOutputServer;
 
+typedef struct KeyboardInputServer {
+	char receive_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
+	int source_tid;
+	UARTServerState state;
+	GenericMessage * receive_message;
+	CharMessage * reply_message;
+	CharBuffer char_buffer;
+	TaskQueue task_queue;
+} KeyboardInputServer;
+
 void UARTBootstrapTask_Start();
 
 void UARTBootstrapTask_Initialize(UARTBootstrapTask * uart);
@@ -64,6 +75,10 @@ void Channel_SetFifo( Channel * channel, int state );
 void Channel_SetSpeed( Channel * channel);
 
 void KeyboardInputServer_Start();
+
+void KeyboardInputServer_Initialize(KeyboardInputServer * server);
+
+void KeyboardInputServer_ReplyQueued(KeyboardInputServer * server);
 
 void ScreenOutputServer_Start();
 
