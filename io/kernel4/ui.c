@@ -170,6 +170,8 @@ void UIServer_HandleTrainCommand(UIServer * server) {
 	
 	int speed = robatoi(&server->command_buffer[next_whitespace]);
 	PutString(COM2, "Train=%d Speed=%d. train on fire.", train_num, speed);
+	Putc(COM1, speed);
+	Putc(COM1, train_num);
 }
 
 void UIServer_HandleReverseCommand(UIServer * server) {
@@ -177,6 +179,8 @@ void UIServer_HandleReverseCommand(UIServer * server) {
 	int train_num = robatoi(&server->command_buffer[next_whitespace]);
 
 	PutString(COM2, "Train=%d. train on reversed fire.", train_num);
+	Putc(COM1, 15);
+	Putc(COM1, train_num);
 }
 
 void UIServer_HandleSwitchCommand(UIServer * server) {

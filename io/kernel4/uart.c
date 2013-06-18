@@ -35,9 +35,12 @@ void UARTBootstrapTask_Start() {
 void UARTBootstrapTask_Initialize(UARTBootstrapTask * uart) {
 	uart->terminal_channel.channel = COM2;
 	uart->terminal_channel.speed = 115200;
+	uart->train_channel.channel = COM1;
+	uart->train_channel.speed = 2400;
 	CharBuffer_Initialize(&uart->train_channel.char_buffer);
 	CharBuffer_Initialize(&uart->terminal_channel.char_buffer);
 	Channel_SetSpeed( &uart->terminal_channel);
+	Channel_SetSpeed( &uart->train_channel);
 }
 
 
