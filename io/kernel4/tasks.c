@@ -264,6 +264,18 @@ void AdministratorTask_Start() {
 	
 #ifndef TEST
 
+// begin ui.c
+	Send(WhoIs((char*) UI_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from ui server");
+// end ui.c
+
+
+// begin train.c
+	Send(WhoIs((char*) TRAIN_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from train server");
+// end train.c
+
+// shutdown io last
 // begin uart.c
 	Send(WhoIs((char*) KEYBOARD_INPUT_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from keyboard input server");
@@ -274,16 +286,6 @@ void AdministratorTask_Start() {
 	Send(WhoIs((char*) TRAIN_OUTPUT_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from train output server");
 // end uart.c
-
-// begin ui.c
-	Send(WhoIs((char*) UI_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
-	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from ui server");
-// end ui.c
-
-// begin train.c
-	Send(WhoIs((char*) TRAIN_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
-	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from train server");
-// end train.c
 
 #endif // TEST
 

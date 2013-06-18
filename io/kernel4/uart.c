@@ -112,6 +112,10 @@ void KeyboardInputServer_Start() {
 
 			server.state = UARTSS_SHUTDOWN;
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
+			
+			// Pump out fake data to get tasks to unblock
+			KeyboardInputServer_UnblockQueued(&server);
+			
 			break;
 		case MESSAGE_TYPE_NOTIFIER:
 			// From notifier
@@ -156,6 +160,17 @@ void KeyboardInputServer_ReplyQueued(KeyboardInputServer * server) {
 		}
 		
 		char c = CharBuffer_GetChar(&server->char_buffer);
+		int tid = (int) Queue_PopStart((Queue*) &server->task_queue);
+		server->reply_message->message_type = MESSAGE_TYPE_ACK;
+		server->reply_message->char1 = c;
+
+		Reply(tid, server->reply_buffer, MESSAGE_SIZE);
+	}
+}
+
+void KeyboardInputServer_UnblockQueued(KeyboardInputServer * server) {
+	while (Queue_CurrentCount((Queue*) &server->task_queue)) {
+		char c = 0xff;
 		int tid = (int) Queue_PopStart((Queue*) &server->task_queue);
 		server->reply_message->message_type = MESSAGE_TYPE_ACK;
 		server->reply_message->char1 = c;

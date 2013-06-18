@@ -80,6 +80,8 @@ void KeyboardInputServer_Initialize(KeyboardInputServer * server);
 
 void KeyboardInputServer_ReplyQueued(KeyboardInputServer * server);
 
+void KeyboardInputServer_UnblockQueued(KeyboardInputServer * server);
+
 void ScreenOutputServer_Start();
 
 void ScreenOutputServer_Initialize(ScreenOutputServer * server);
