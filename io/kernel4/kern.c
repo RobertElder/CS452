@@ -14,6 +14,7 @@ void asm_SetUpIRQStack();
 void asm_TimerIRQEntry();
 
 extern int _KernelStackBase;
+extern int _KernelStackBase2;
 extern int _TimerIRQStackBase;
 
 /*
@@ -37,6 +38,9 @@ int main(){
 
 	int * kernel_stack_base = (int *)(&_KernelStackBase);
 	*kernel_stack_base = KERNEL_STACK_START;
+	
+	int * kernel_stack_base2 = (int *)(&_KernelStackBase2);
+	*kernel_stack_base2 = KERNEL_STACK_START;
 
 	int * timerirq_stack_base = (int *)(&_TimerIRQStackBase);
 	*timerirq_stack_base = TIMER_IRQ_STACK_START;

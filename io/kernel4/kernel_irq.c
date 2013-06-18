@@ -12,7 +12,7 @@ void irq_handler() {
 
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
 
-	//Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, READY);
+	Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, READY);
 
 	if (*VIC2VectAddr) {
 		int (*function)(void) = (int (*)(void)) *VIC2VectAddr;
@@ -25,7 +25,7 @@ void irq_handler() {
 	}
 
 	Scheduler_SetNextTaskState(scheduler, k_state);
-	//Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
+	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 }
 
 void IRQ_TimerVIC2Handler() {

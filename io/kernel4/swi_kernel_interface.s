@@ -30,6 +30,7 @@
 .global asm_GetStoredUserEntryMethod
 
 .global _KernelStackBase
+.global _KernelStackBase2
 .global _TimerIRQStackBase
 
 asm_KernelInitEntry:
@@ -84,6 +85,10 @@ asm_AwaitEventEntry:
 	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 asm_TimerIRQEntry:
 	stmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, lr} /* Remember the state on the irq stack */
+	LDR r2, [PC, #84]; /*  Load the value of the base of the kernel stack into r2 */
+	LDR r2, [r2, #0]; /*  Load the value of the base of the kernel stack into r2 */
+	MRS r0, SPSR  /* Remember to save the user's cpsr */
+	STR r0, [r2, #12] /* Save the user's cpsr, which is now in spsr into the kernel struct */
 	MRS r0, CPSR  /* Save current mode */
 	ORR r0, r0, #31 /* Set it to supervisor mode */
 	MOV r1, SP /* Remember the irq stack value so we can access it in system mode */
@@ -92,27 +97,22 @@ asm_TimerIRQEntry:
 	stmfd	sp!, {r3, r4, r5, r6, r7, r8, r9, r10, r11, r12} /* save them on user stack */
 	ldmfd	r1!, {r3, r4, r5, r6}  /* pop r10-12, lr into r3-r6 */
 	stmfd	sp!, {r3, r4, r5, r6}  
-	LDR r1, [PC, #48]; /*  Load the value of the base of the kernel stack into r1 */
-	STR SP, [r1, #0] /*  Save the stack pointer directly into the kernel state struct */
+	STR SP, [r2, #0] /*  Save the stack pointer directly into the kernel state struct */
+	STR LR, [r2, #4] /*   */
 	MRS r0, CPSR  /* Save current mode again */
 	BIC r0, r0, #31 /* Clear the mode bits */
 	ORR r0, r0, #18 /* Set it to irq mode */
 	MSR CPSR, r0 /* Restore irq mode */
-	MRS r0, SPSR  /* Remember to save the user's cpsr */
-	STR r0, [r1, #12] /* Save the user's cpsr, which is now in spsr into the kernel struct */
-	STR LR, [r1, #4] /*  Save the user link register directly into the kernel state struct  */
 	MOV r0, #1 /* put 1 to indicate entry by interrupt. */
-	STR r0, [r1, #20] /* Remember how we entered the kernel so we can exit the same way. */
+	STR r0, [r2, #20] /* Remember how we entered the kernel so we can exit the same way. */
 	ADD SP, SP, #56 /* Simulate poping the irq stack of the user proc state it stored. */
 	BL irq_handler
 	B asm_KernelExit
-	.4byte 0x1f882f8
+_KernelStackBase2:
+	.4byte 0x00000000
 
 
 asm_KernelExit:
-	/* Put the spsr, back for the user process. */
-        BL asm_GetStoredUserSpsr
-	MSR SPSR, R8
         BL asm_GetStoredUserEntryMethod /* Remember where they came from */
 	CMP r8, #0 /* did they enter the kernel via an api call? */
 	BEQ asm_KernelExitAPIMethod /* If so use the kernel api exit routine. */
@@ -120,22 +120,28 @@ asm_KernelExitInterruptMethod:
 	MRS r0, CPSR  /* Save current mode */
 	ORR r0, r0, #31 /* Set it to supervisor mode */
 	MSR CPSR, r0 /* Go into system mode */
-	MOV R2, LR /* The next call will overwrite the lr */
-        BL asm_GetStoredUserSp
-	MOV LR, R2 /* put user lr back since it is a bank register, and not in saved state */ 
+	BL asm_GetStoredUserSp
 	MOV SP, R8 /* Put back user's stack value */
+	BL asm_GetStoredUserLr
+	MOV LR, R8
 	MOV r1, SP /* Save user sp and pop it last */
 	ADD SP, SP, #56 /* Simulate poping user state off which we do later. */
 	MRS r0, CPSR  /* Save current mode again */
 	BIC r0, r0, #31 /* Clear the mode bits */
 	ORR r0, r0, #18 /* Set it to irq mode */
 	MSR CPSR, r0 /* Restore irq mode */
+	BL asm_GetStoredUserSpsr
+	MSR SPSR, R8
 	ldmfd   r1!, {r10, r11, r12, lr} /* Get the state from the user stack */
 	ldmfd   r1, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9} /* Get the state from the user stack */
 	SUB LR, LR, #4
 	MOVS pc, LR
 	
 asm_KernelExitAPIMethod:
+	/* Put the spsr, return value, LR and SP back for the user process. */
+        BL asm_GetStoredUserSpsr
+	MSR SPSR, R8
+        MOV r0, R8;
         BL asm_GetStoredUserRtn 
 	MOV R0, R8
 	/* --enter system */
