@@ -6,6 +6,7 @@
 #include "private_kernel_interface.h"
 #include "scheduler.h"
 #include "ui.h"
+#include "train.h"
 
 void UARTBootstrapTask_Start() {
 	robprintfbusy((const unsigned char *)"UARTBootstrapTask_Start tid=%d", MyTid());
@@ -142,8 +143,6 @@ void KeyboardInputServer_Start() {
 			data = *UART2DATA & DATA_MASK;
 			char_message->message_type = MESSAGE_TYPE_DATA;
 			char_message->char1 = data;
-			//robprintfbusy((const unsigned char *)"KeyPressed=%d", data);
-			// TODO send to ui server
 			Send(ui_server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 			assert(reply_message->message_type == MESSAGE_TYPE_ACK, "KeyboardInputServer: failed to send char to ui server");
 			break;
@@ -221,9 +220,13 @@ void ScreenOutputServer_SendData(ScreenOutputServer * server) {
 void TrainInputServer_Start() {
 	char receive_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
+	char send_buffer[MESSAGE_SIZE];
 	int source_tid;
+	char data;
+	UARTServerState state = UARTSS_READY;
 	GenericMessage * receive_message = (GenericMessage *) receive_buffer;
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
+	CharMessage * char_message = (CharMessage *) send_buffer;
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 
 	int return_code = RegisterAs((char*)TRAIN_INPUT_SERVER_NAME);
@@ -232,47 +235,102 @@ void TrainInputServer_Start() {
 	int notifier_tid = Create(HIGH, &TrainInputNotifier_Start);
 	assert(notifier_tid, "TrainInputServer_Start notifier did not start");
 	
+	int train_server_tid;
+	int i = 0;
+	
 	while (1) {
-		//DelaySeconds(1);
-		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
-		Reply(source_tid, reply_buffer, MESSAGE_SIZE);
-		if(receive_message->message_type == MESSAGE_TYPE_SHUTDOWN){
-			robprintfbusy((const unsigned char *)"TrainInputServer_Start shutting down by request.\n");
+		train_server_tid = WhoIs((char*) TRAIN_SERVER_NAME);
+		
+		if (train_server_tid) {
 			break;
 		}
-		//TODO
-		// receive message
-		// get characters from device
-		// send to train server which will process the data
+		
+		i++;
+		assert(i < 1000, "TrainInputServer: failed to get tid for ui server");
+	}
+	
+	while (state != UARTSS_SHUTDOWN) {
+		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
+		Reply(source_tid, reply_buffer, MESSAGE_SIZE);
+
+		switch(receive_message->message_type) {
+		case MESSAGE_TYPE_SHUTDOWN:
+			robprintfbusy((const unsigned char *)"TrainInputServer_Start shutting down by request.\n");
+			state = UARTSS_SHUTDOWN;
+			break;
+		case MESSAGE_TYPE_NOTIFIER:
+			data = *UART1DATA & DATA_MASK;
+			char_message->message_type = MESSAGE_TYPE_DATA;
+			char_message->char1 = data;
+			Send(train_server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+			assert(reply_message->message_type == MESSAGE_TYPE_ACK, "TrainInputServer: failed to send char to train server");
+			break;
+		default:
+			assert(0, "TrainInputServer unknown event type");
+			break;
+		}
 	}
 	Exit();
 }
 
 void TrainOutputServer_Start() {
-	char receive_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
-	int source_tid;
-	GenericMessage * receive_message = (GenericMessage *) receive_buffer;
-	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
-	reply_message->message_type = MESSAGE_TYPE_ACK;
+	TrainOutputServer server;
+	TrainOutputServer_Initialize(&server);
 	
 	int return_code = RegisterAs((char*)TRAIN_OUTPUT_SERVER_NAME);
 	assert(return_code == 0, "TrainOutputServer_Start failed to register");
 
-	int notifier_tid = Create(HIGH, &TrainOutputNotifier_Start);
-	assert(notifier_tid, "TrainOutputServer_Start notifier did not start");
+	server.notifier_tid = Create(HIGH, &TrainOutputNotifier_Start);
+	assert(server.notifier_tid, "TrainOutputServer_Start notifier did not start");
 	
-	while (1) {
-		//DelaySeconds(1);
-		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
-		Reply(source_tid, reply_buffer, MESSAGE_SIZE);
-		if(receive_message->message_type == MESSAGE_TYPE_SHUTDOWN){
+	server.reply_message->message_type = MESSAGE_TYPE_ACK;
+	
+	while (server.state != UARTSS_SHUTDOWN) {
+		Receive(&server.source_tid, server.receive_buffer, MESSAGE_SIZE);
+
+		switch(server.receive_message->message_type) {
+		case MESSAGE_TYPE_SHUTDOWN:
 			robprintfbusy((const unsigned char *)"TrainOutputServer_Start shutting down by request.\n");
+			server.state = UARTSS_SHUTDOWN;
+			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
+			server.reply_message->message_type = MESSAGE_TYPE_SHUTDOWN;
+			Reply(server.notifier_tid, server.reply_buffer, MESSAGE_SIZE);
+			break;
+		case MESSAGE_TYPE_NOTIFIER:
+			server.state = UARTSS_READY;
+			TrainOutputServer_SendData(&server);
+			break;
+		case MESSAGE_TYPE_DATA:
+			CharBuffer_PutChar(&server.char_buffer, server.char_message->char1);
+			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
+			TrainOutputServer_SendData(&server);
+			break;
+		default:
+			assert(0, "TrainOutputServer unknown event type");
 			break;
 		}
-		//TODO 
-		// receive message
-		// send charcters from the buffer to the device
 	}
 	Exit();
+}
+
+void TrainOutputServer_Initialize(TrainOutputServer * server) {
+	CharBuffer_Initialize(&server->char_buffer);
+	server->state = UARTSS_READY;
+	server->receive_message = (GenericMessage *) server->receive_buffer;
+	server->reply_message = (GenericMessage *) server->reply_buffer;
+	server->char_message = (CharMessage*) server->receive_buffer;
+}
+
+void TrainOutputServer_SendData(TrainOutputServer * server) {
+	if (server->state != UARTSS_READY) {
+		return;
+	}
+
+	char data = CharBuffer_GetChar(&server->char_buffer);
+			
+	if (data) {
+		*UART1DATA = data;
+		server->state = UARTSS_WAITING;
+		Reply(server->notifier_tid, server->reply_buffer, MESSAGE_SIZE);
+	}
 }

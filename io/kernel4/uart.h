@@ -44,6 +44,19 @@ typedef struct ScreenOutputServer {
 	int notifier_tid;
 } ScreenOutputServer;
 
+typedef struct TrainOutputServer {
+	CharBuffer char_buffer;
+	int data;
+	char receive_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
+	int source_tid;
+	UARTServerState state;
+	GenericMessage * receive_message;
+	GenericMessage * reply_message;
+	CharMessage * char_message;
+	int notifier_tid;
+} TrainOutputServer;
+
 void UARTBootstrapTask_Start();
 
 void UARTBootstrapTask_Initialize(UARTBootstrapTask * uart);
@@ -63,5 +76,9 @@ void ScreenOutputServer_SendData(ScreenOutputServer * server);
 void TrainInputServer_Start();
 
 void TrainOutputServer_Start();
+
+void TrainOutputServer_Initialize(TrainOutputServer * server);
+
+void TrainOutputServer_SendData(TrainOutputServer * server);
 
 #endif

@@ -26,7 +26,7 @@ void TrainServer_Start() {
 			shutdown = 1;
 			break;
 		default:
-			assert(0, "UIServer_Start: unknown message type");
+			assert(0, "TrainServer: unknown message type");
 			break;
 		}
 		
