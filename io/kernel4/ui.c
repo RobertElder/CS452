@@ -173,11 +173,21 @@ void UIServer_HandleTrainCommand(UIServer * server) {
 }
 
 void UIServer_HandleReverseCommand(UIServer * server) {
-	PutString(COM2, "train on reversed fire.");
+	int next_whitespace = rob_next_whitespace(server->command_buffer);
+	int train_num = robatoi(&server->command_buffer[next_whitespace]);
+
+	PutString(COM2, "Train=%d. train on reversed fire.", train_num);
 }
 
 void UIServer_HandleSwitchCommand(UIServer * server) {
-	PutString(COM2, "switch on fire.");
+	int next_whitespace = rob_next_whitespace(server->command_buffer);
+	int train_num = robatoi(&server->command_buffer[next_whitespace]);
+
+	next_whitespace += rob_next_whitespace(&(server->command_buffer[next_whitespace]));
+	
+	char direction = server->command_buffer[next_whitespace];
+
+	PutString(COM2, "Train=%d Direction=%c. switch on fire.", train_num, direction);
 }
 
 void UITimer_Start() {
