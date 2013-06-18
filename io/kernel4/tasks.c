@@ -274,6 +274,8 @@ void AdministratorTask_Start() {
 	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from train output server");
 	Send(WhoIs((char*) UI_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from ui server");
+	Send(WhoIs((char*) TRAIN_SERVER_NAME), send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+	assertf(shutdown_reply_message->message_type == MESSAGE_TYPE_ACK, "AdministratorTask_Start: did not get a ack from train server");
 #endif // TEST
 
 	//  Shutdown the clock server last because it is needed to unblock things waiting on events.
