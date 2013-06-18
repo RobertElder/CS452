@@ -7,7 +7,7 @@
 #include "memory.h"
 #include "buffer.h"
 
-#define MAX_TASKS 1000
+#define MAX_TASKS 1570
 
 typedef struct KernelState KernelState;
 #include "scheduler.h"
