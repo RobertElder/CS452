@@ -16,8 +16,6 @@ static int * const UART2DATA = (int*) (UART2_BASE + UART_DATA_OFFSET);
 typedef struct Channel {
 	unsigned int channel;
 	unsigned int speed;
-	CharBuffer char_buffer;
-	
 } Channel;
 
 typedef struct UARTBootstrapTask {

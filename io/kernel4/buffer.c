@@ -46,12 +46,17 @@ int CharBuffer_PutChar(CharBuffer * buffer, char c) {
 	return 0;
 }
 
-char CharBuffer_GetChar(CharBuffer * buffer) {
+unsigned char CharBuffer_GetChar(CharBuffer * buffer) {
 	int index = RingBufferIndex_Get(&buffer->buffer_index);
 
 	if (index == ERR_BUFFER_EMPTY) {
-		return 0;
+		assert(0, "CharBuffer_GetChar: empty!");
+		return ERR_BUFFER_EMPTY;
 	}
 
 	return buffer->array[index];
+}
+
+short CharBuffer_IsEmpty(CharBuffer * buffer) {
+	return (buffer->buffer_index.start == buffer->buffer_index.end);
 }

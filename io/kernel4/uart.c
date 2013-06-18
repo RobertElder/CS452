@@ -10,9 +10,7 @@
 
 void UARTBootstrapTask_Start() {
 	robprintfbusy((const unsigned char *)"UARTBootstrapTask_Start tid=%d", MyTid());
-	// TODO It seems like the buffers are supposed to be on user space but where???
 	UARTBootstrapTask uart;
-	
 	UARTBootstrapTask_Initialize(&uart);
 	
 	int tid;
@@ -37,8 +35,6 @@ void UARTBootstrapTask_Initialize(UARTBootstrapTask * uart) {
 	uart->terminal_channel.speed = 115200;
 	uart->train_channel.channel = COM1;
 	uart->train_channel.speed = 2400;
-	CharBuffer_Initialize(&uart->train_channel.char_buffer);
-	CharBuffer_Initialize(&uart->terminal_channel.char_buffer);
 	Channel_SetSpeed( &uart->terminal_channel);
 	Channel_SetSpeed( &uart->train_channel);
 }
@@ -210,10 +206,10 @@ void ScreenOutputServer_SendData(ScreenOutputServer * server) {
 	if (server->state != UARTSS_READY) {
 		return;
 	}
+	
+	if (!CharBuffer_IsEmpty(&server->char_buffer)) {
+		char data = CharBuffer_GetChar(&server->char_buffer);
 
-	char data = CharBuffer_GetChar(&server->char_buffer);
-			
-	if (data) {
 		*UART2DATA = data;
 		server->state = UARTSS_WAITING;
 		Reply(server->notifier_tid, server->reply_buffer, MESSAGE_SIZE);
@@ -328,10 +324,10 @@ void TrainOutputServer_SendData(TrainOutputServer * server) {
 	if (server->state != UARTSS_READY) {
 		return;
 	}
-
-	char data = CharBuffer_GetChar(&server->char_buffer);
+	
+	if (!CharBuffer_IsEmpty(&server->char_buffer)) {
+		char data = CharBuffer_GetChar(&server->char_buffer);
 			
-	if (data) {
 		*UART1DATA = data;
 		server->state = UARTSS_WAITING;
 		Reply(server->notifier_tid, server->reply_buffer, MESSAGE_SIZE);
