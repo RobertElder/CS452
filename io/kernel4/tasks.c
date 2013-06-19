@@ -19,10 +19,11 @@
 
 void KernelTask_Start() {
 #ifndef ASSERTS
-	ANSI_Color(WHITE, RED);
-	ANSI_Style(BOLD_STYLE);
-	robprintfbusy((const unsigned char *)"Asserts are OFF!\n");
-	ANSI_ResetColor();
+	robprintfbusy((const unsigned char *)"\033[1;37;41mAsserts are OFF!\033[0m\n");
+#endif
+
+#ifndef PREEMPT
+	robprintfbusy((const unsigned char *)"\033[1;37;41mPREEMPT is OFF!\033[0m\n");
 #endif
 
 	int tid = Create(HIGHEST, &FirstTask_Start);

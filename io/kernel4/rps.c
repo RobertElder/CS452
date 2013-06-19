@@ -10,7 +10,7 @@
 
 void RPSTestStart() {
 	int tid;
-	const int num_clients = 100;
+	const int num_clients = 540;
 
 	//tid = Create(NORMAL, &NameServer_Start);
 	//assert(tid == 2, "NameServer tid not 2");
@@ -339,7 +339,7 @@ void RPSClient_Initialize(RPSClient * client) {
 	client->tid = MyTid();
 	RNG_Initialize(&client->rng, client->tid);
 	client->server_id = WhoIs((char*) RPS_SERVER_NAME);
-	client->num_rounds_to_play = 4;
+	client->num_rounds_to_play = 7;
 	client->running = 1;
 }
 

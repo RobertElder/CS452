@@ -12,7 +12,7 @@ int asm_MyTidEntry();
 int asm_MyParentTidEntry();
 void asm_PassEntry();
 void asm_ExitEntry();
-// asm_SendEntry(): See slow file
+int asm_SendEntry();
 int asm_ReceiveEntry();
 int asm_ReplyEntry();
 int asm_AwaitEventEntry();
@@ -41,7 +41,9 @@ void Exit(){
 	asm_ExitEntry();
 }
 
-// Send(): see slow file.
+int Send(int tid, char *msg, int msglen, char *reply, int replylen){
+	return asm_SendEntry(tid, msg, msglen, reply, replylen);
+}
 
 int Receive( int *tid, char *msg, int msglen ){
 	return asm_ReceiveEntry(tid, msg, msglen);
@@ -241,12 +243,12 @@ void PutWord(int channel, int n, char fc, char *bf ) {
 }
 
 int PutString( int channel, const char * fmt, ...) {
+	va_list va;
+	va_start(va,fmt);
+
 	char bf[12];
 	char ch, lz;
 	int w;
-	va_list va;
-
-	va_start(va,fmt);
 	
 	while ( ( ch = *(fmt++) ) ) {
 		if ( ch != '%' )
@@ -297,7 +299,7 @@ int PutString( int channel, const char * fmt, ...) {
 		}
 	}
 	va_end(va);
-		
+	
 	/*
 	va_list va;
 	va_start(va,message);

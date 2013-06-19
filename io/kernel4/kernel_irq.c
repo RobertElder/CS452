@@ -7,15 +7,30 @@
 #include "private_kernel_interface.h"
 
 void irq_handler() {
-	if (*VIC2VectAddr) {
-		int (*function)(void) = (int (*)(void)) *VIC2VectAddr;
-		function();
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	Scheduler * scheduler = &k_state->scheduler;
+
+	Scheduler_SaveCurrentTaskState(scheduler, k_state);
+
+#ifdef PREEMPT
+	Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, READY);
+#endif
+
+	int (*vic1fcn)(void) = (int (*)(void)) *VIC1VectAddr;
+	int (*vic2fcn)(void) = (int (*)(void)) *VIC2VectAddr;
+
+	if (*vic2fcn) {
+		vic2fcn();
 		*VIC2VectAddr = 0;
-	} else if (*VIC1VectAddr) {
-		int (*function)(void) = (int (*)(void)) *VIC1VectAddr;
-		function();
+	} else if (*vic1fcn) {
+		vic1fcn();
 		*VIC1VectAddr = 0;
 	}
+
+	Scheduler_SetNextTaskState(scheduler, k_state);
+#ifdef PREEMPT
+	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
+#endif
 }
 
 void IRQ_TimerVIC2Handler() {
@@ -51,7 +66,7 @@ void IRQ_UART2RecieveHandler() {
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
 	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, UART2_RX_EVENT);
-
+	
 	IRQ_SetUART2Receive(0);
 }
 
@@ -83,12 +98,12 @@ void IRQ_EnableTimerVIC2() {
 	*VIC2IntEnable |= 1 << (TC3OI - 32);
 	
 	// Set the address of the handler on VIC2-0
-	int * VIC2VectAddr0 = (int*) 0x800C0100;
+	volatile int * VIC2VectAddr0 = (int*) 0x800C0100;
 	*VIC2VectAddr0 = (int) &IRQ_TimerVIC2Handler;
 	
 	// Enable vectored interrupt on VIC2-0 by setting the source number
 	// and the enable bit (5)
-	int * VIC2VectCntl0 = (int*)0x800C0200;
+	volatile int * VIC2VectCntl0 = (int*)0x800C0200;
 	*VIC2VectCntl0 = (TC3OI - 32) | 1 << 5;
 }
 
