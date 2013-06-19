@@ -13,19 +13,17 @@ void irq_handler() {
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
 
 	Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, READY);
-	/*
-	TODO:  This will cause the program to crash quickly in O0
-	if (*VIC2VectAddr) {
-		int (*function)(void) = (int (*)(void)) *VIC2VectAddr;
-		function();
+
+	int (*vic1fcn)(void) = (int (*)(void)) *VIC1VectAddr;
+	int (*vic2fcn)(void) = (int (*)(void)) *VIC2VectAddr;
+
+	if (*vic2fcn) {
+		vic2fcn();
 		*VIC2VectAddr = 0;
-	} else if (*VIC1VectAddr) {
-		int (*function)(void) = (int (*)(void)) *VIC1VectAddr;
-		function();
+	} else if (*vic1fcn) {
+		vic1fcn();
 		*VIC1VectAddr = 0;
 	}
-	*/
-	IRQ_TimerVIC2Handler();
 
 	Scheduler_SetNextTaskState(scheduler, k_state);
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
@@ -96,12 +94,12 @@ void IRQ_EnableTimerVIC2() {
 	*VIC2IntEnable |= 1 << (TC3OI - 32);
 	
 	// Set the address of the handler on VIC2-0
-	int * VIC2VectAddr0 = (int*) 0x800C0100;
+	volatile int * VIC2VectAddr0 = (int*) 0x800C0100;
 	*VIC2VectAddr0 = (int) &IRQ_TimerVIC2Handler;
 	
 	// Enable vectored interrupt on VIC2-0 by setting the source number
 	// and the enable bit (5)
-	int * VIC2VectCntl0 = (int*)0x800C0200;
+	volatile int * VIC2VectCntl0 = (int*)0x800C0200;
 	*VIC2VectCntl0 = (TC3OI - 32) | 1 << 5;
 }
 
