@@ -90,6 +90,7 @@ void UIServer_Render(UIServer * server) {
 	}
 
 	UIServer_PrintTime(server);
+	UIServer_PrintSensors(server);
 	UIServer_PrintCommandLine(server);
 	
 	server->dirty = 0;
@@ -235,6 +236,12 @@ void UIServer_HandleSwitchCommand(UIServer * server) {
 	// Make sure the solenoid is really off
 	DelaySeconds(0.2);
 	Putc(COM1, 32);
+}
+
+void UIServer_PrintSensors(UIServer * server) {
+	ANSI_Cursor(5, 1);
+	
+	// TODO
 }
 
 void UITimer_Start() {
