@@ -243,14 +243,12 @@ void PutWord(int channel, int n, char fc, char *bf ) {
 }
 
 int PutString( int channel, const char * fmt, ...) {
-	// TODO: send a message to the whatever server
-	
+	va_list va;
+	va_start(va,fmt);
+
 	char bf[12];
 	char ch, lz;
 	int w;
-	va_list va;
-
-	va_start(va,fmt);
 	
 	while ( ( ch = *(fmt++) ) ) {
 		if ( ch != '%' )

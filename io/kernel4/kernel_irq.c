@@ -12,7 +12,9 @@ void irq_handler() {
 
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
 
+#ifdef PREEMPT
 	Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, READY);
+#endif
 
 	int (*vic1fcn)(void) = (int (*)(void)) *VIC1VectAddr;
 	int (*vic2fcn)(void) = (int (*)(void)) *VIC2VectAddr;
@@ -26,7 +28,9 @@ void irq_handler() {
 	}
 
 	Scheduler_SetNextTaskState(scheduler, k_state);
+#ifdef PREEMPT
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
+#endif
 }
 
 void IRQ_TimerVIC2Handler() {
@@ -62,7 +66,7 @@ void IRQ_UART2RecieveHandler() {
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
 	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, UART2_RX_EVENT);
-
+	
 	IRQ_SetUART2Receive(0);
 }
 
