@@ -244,8 +244,7 @@ void PutWord(int channel, int n, char fc, char *bf ) {
 
 int PutString( int channel, const char * fmt, ...) {
 	// TODO: send a message to the whatever server
-	/*
-	 * TODO:  This does not compile on O0
+	
 	char bf[12];
 	char ch, lz;
 	int w;
@@ -302,7 +301,8 @@ int PutString( int channel, const char * fmt, ...) {
 		}
 	}
 	va_end(va);
-		
+	
+	/*
 	va_list va;
 	va_start(va,message);
 	bwformatbusy( (const unsigned char *) message, va );
