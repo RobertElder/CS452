@@ -5,6 +5,7 @@
 #include "robio.h"
 #include "random.h"
 #include "tasks.h"
+#include "train.h"
 
 void UIServer_Start() {
 	int return_code = RegisterAs((char*) UI_SERVER_NAME);
@@ -239,9 +240,59 @@ void UIServer_HandleSwitchCommand(UIServer * server) {
 }
 
 void UIServer_PrintSensors(UIServer * server) {
-	ANSI_Cursor(5, 1);
+	TrainSensorMessage * send_message = (TrainSensorMessage *) server->send_buffer;
+	TrainSensorMessage * receive_message = (TrainSensorMessage *) server->receive_buffer;
+	int module_num;
+	int train_server_tid = WhoIs((char*) TRAIN_SERVER_NAME);
 	
-	// TODO
+	assert(train_server_tid, "UIServer_PrintSensors: failed whois");
+	
+	for (module_num = SENSOR_MODULE_A; module_num <= SENSOR_MODULE_E; module_num++) {
+		send_message->message_type = MESSAGE_TYPE_QUERY;
+		send_message->module_num = module_num;
+		
+		Send(train_server_tid, server->send_buffer, MESSAGE_SIZE, server->receive_buffer, MESSAGE_SIZE);
+		
+		assert(receive_message->message_type == MESSAGE_TYPE_ACK, "UIServer_PrintSensors: failed to get ACK from train server");
+		
+		char upper = receive_message->sensor_value.upper;
+		char lower = receive_message->sensor_value.lower;
+		int sensor_values = upper << 8 | lower;
+		
+		if (server->dirty) {
+			// Print headers
+			ANSI_Cursor(5, 1);
+			ANSI_CursorForward(module_num * 10);
+			PutString(COM2, "M %d", module_num);
+			
+			// Print sensor labels
+			int sensor_num;
+			for (sensor_num = 1; sensor_num <= 16; sensor_num++) {
+				ANSI_CursorNextLine(1);
+				ANSI_CursorForward(module_num * 10);
+				PutString(COM2, "%d.", sensor_num);
+			}
+		}
+		
+		// Print sensor values
+		ANSI_Cursor(5, 1);
+		ANSI_CursorForward(module_num * 10);
+		int sensor_num;
+		for (sensor_num = 1; sensor_num <= 16; sensor_num++) {
+			ANSI_CursorNextLine(1);
+			ANSI_CursorForward(module_num * 10 + 3);
+			
+			if (sensor_values & 0x1) {
+				ANSI_Style(BOLD_STYLE);
+				PutString(COM2, "X");
+				ANSI_Style(NORMAL_STYLE);
+			} else {
+				PutString(COM2, "-");
+			}
+			
+			sensor_values = sensor_values >> 1;
+		}
+	}
 }
 
 void UITimer_Start() {

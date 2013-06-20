@@ -1,6 +1,6 @@
 #ifndef BUFFER_H_
 #define BUFFER_H_
-#define BUFFER_SIZE 1000
+#define BUFFER_SIZE 100
 
 static const int ERR_BUFFER_FULL = -1;
 static const int ERR_BUFFER_EMPTY = -2;

@@ -78,6 +78,7 @@ void TrainServer_HandleSensorQuery(TrainServer * server) {
 
 	reply_sensor_message->sensor_value.upper = upper;
 	reply_sensor_message->sensor_value.lower = lower;
+	reply_sensor_message->message_type = MESSAGE_TYPE_ACK;
 
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 }
@@ -136,6 +137,8 @@ void TrainSensorReader_Start() {
 		if (shutdown) {
 			break;
 		}
+		
+		DelaySeconds(0.2);
 	}
 	
 	robprintfbusy((const unsigned char *)"TrainSensorReader exit. tid=%d\n", MyTid());
