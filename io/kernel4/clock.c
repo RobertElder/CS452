@@ -90,18 +90,22 @@ void ClockServer_HandleNotifier(ClockServer * server, int source_tid, NotifyMess
 	} else {
 		reply_message->message_type = MESSAGE_TYPE_ACK;
 	}
-	
+
+#ifdef SLOWWARN
 	// Debugging code
 	int now = *TIMER4_VAL_LOW;
 	int diff = (now - server->last_timer_value) / 983.0 * 1000.0;
 	server->last_timer_value = now;
+#endif
 
 	Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
-	
+
+#ifdef SLOWWARN
 	// Debugging code
 	if (diff > TICK_SIZE * 1000 + 1000) {
 		robprintfbusy((const unsigned char *) "\033[1;31mSLOW! %dus\033[0m\n", diff);
 	}
+#endif
 	
 	server->ticks += 1;
 }

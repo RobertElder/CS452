@@ -220,7 +220,7 @@ int Putc( int channel, char ch ) {
 		return 0; // TODO return error code
 	}
 	
-	assert(server_tid, "Putc: whois failed");
+	assertf(server_tid, "Putc: whois failed for COM%d", channel);
 	
 	send_message->char1 = ch;
 	

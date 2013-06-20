@@ -48,6 +48,8 @@ void UIServer_HandleReverseCommand(UIServer * server);
 
 void UIServer_HandleSwitchCommand(UIServer * server);
 
+void UIServer_PrintSensors(UIServer * server);
+
 void UITimer_Start();
 
 void UIKeyboardInput_Start();

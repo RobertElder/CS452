@@ -5,8 +5,8 @@ XCC     = @/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/gcc
 CC = $(XCC)
 AS	= @/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/as
 LD      = @/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ld
-CFLAGS  = -g -c -fPIC -Wall -I. -I./include -mcpu=arm920t -msoft-float -Werror -DASSERTS -DPREEMPT
-C_OPTIMIZATION_FLAGS = -O0
+CFLAGS  = -g -c -fPIC -Wall -I. -I./include -mcpu=arm920t -msoft-float -Werror -DASSERTS -DPREEMPT -DSLOWWARN
+C_OPTIMIZATION_FLAGS = -O3
 # -g: include hooks for gdb
 # -c: only compile
 # -mcpu=arm920t: generate code for the 920t architecture
