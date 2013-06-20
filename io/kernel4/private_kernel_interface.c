@@ -118,8 +118,11 @@ void k_InitKernel(){
 	//  Initialize all memory blocks to unallocated.
 	int i;
 	for(i = 0; i < NUM_MEMORY_BLOCKS; i++){
-		k_state->memory_blocks_status[i] = 0;
+		//  memory_blocks_status is a stack of free memory block ids
+		k_state->memory_blocks_status[i] = i;
 	}
+	k_state->memory_stack_top = NUM_MEMORY_BLOCKS -1;
+
 	//  Directly set the kernel state structure values on the stack.
 	Scheduler_Initialize(&k_state->scheduler);
 	Scheduler_InitAndSetKernelTask(&k_state->scheduler, k_state);
@@ -230,7 +233,7 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 			Scheduler_ChangeTDState(scheduler, current_td, REPLY_BLOCKED);
 			*(target_td->origin_tid) = scheduler->current_task_descriptor->id;
 		}else{
-			KernelMessage * km = (KernelMessage *)request_memory(k_state->memory_blocks_status, k_state->memory_blocks);	
+			KernelMessage * km = (KernelMessage *)request_memory(k_state->memory_blocks_status, k_state->memory_blocks, &k_state->memory_stack_top);	
 
 			KernelMessage_Initialize(km, current_td->id, tid, msg, reply, msglen, replylen);
 			Queue_PushEnd((Queue*)&target_td->messages, km);
@@ -287,11 +290,11 @@ int k_Receive(int *tid, char *msg, int msglen){
 		assert(message->origin, "k_Receive: no message origin");
 		
 		scheduler->current_task_descriptor->return_value = message->origin_size;
-		assert(scheduler->task_descriptors[message->origin].state == RECEIVE_BLOCKED, "Impossible state, sender shoudl be receive blocked.");
+		assertf(scheduler->task_descriptors[message->origin].state == RECEIVE_BLOCKED, "Task %d (%x) is attempting to receive a message from task %d (%x), but task %d is not receive blocked it is in state %d (%s).",scheduler->current_task_descriptor->id,scheduler->current_task_descriptor->entry_point,message->origin,scheduler->task_descriptors[message->origin].entry_point,message->origin,scheduler->task_descriptors[message->origin].state,TASK_STATE_NAMES[scheduler->task_descriptors[message->origin].state]);
 		
 		Scheduler_ChangeTDState(scheduler, &scheduler->task_descriptors[message->origin], REPLY_BLOCKED);
 		Scheduler_SetNextTaskState(scheduler, k_state);
-		release_memory(k_state->memory_blocks_status, k_state->memory_blocks, message);	
+		release_memory(k_state->memory_blocks_status, k_state->memory_blocks, message, &k_state->memory_stack_top);	
 	}
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */
