@@ -242,10 +242,7 @@ void PutWord(int channel, int n, char fc, char *bf ) {
 	while( ( ch = *bf++ ) ) Putc( channel, ch );
 }
 
-int PutString( int channel, const char * fmt, ...) {
-	va_list va;
-	va_start(va,fmt);
-
+int PutStringFormat( int channel, const char * fmt, va_list va) {
 	char bf[12];
 	char ch, lz;
 	int w;
@@ -298,16 +295,13 @@ int PutString( int channel, const char * fmt, ...) {
 			}
 		}
 	}
-	va_end(va);
-	
-	/*
-	va_list va;
-	va_start(va,message);
-	bwformatbusy( (const unsigned char *) message, va );
-	va_end(va);
-	return 0;
-	*/
-	
 	return 0;
 }
 
+int PutString( int channel, const char * fmt, ...) {
+	va_list va;
+	va_start(va,fmt);
+	PutStringFormat(channel, fmt, va);
+	va_end(va);
+	return 0;
+}

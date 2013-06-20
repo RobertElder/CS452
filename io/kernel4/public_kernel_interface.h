@@ -1,6 +1,8 @@
 #ifndef PUBLIC_KERNEL_INTERFACE_H_
 #define PUBLIC_KERNEL_INTERFACE_H_
 
+#include "va_list_def.h"
+
 static const int ERR_K_INVALID_PRIORITY = -1;
 static const int ERR_K_OUT_OF_TD = -2;
 static const int ERR_K_DEFAULT = -3;
@@ -45,6 +47,7 @@ int DelayUntilSeconds( float seconds );
 int Getc( int channel );
 int Putc( int channel, char ch );
 void PutWord(int channel, int n, char fc, char *bf );
-int PutString(int channel, const char * message, ...);
+int PutStringFormat(int channel, const char * fmt, va_list va);
+int PutString(int channel, const char * fmt, ...);
 
 #endif

@@ -110,28 +110,27 @@ int m_strcmp(const char *s1, const char *s2) {
 	return 0;
 }
 
-void * request_memory(unsigned char * statuses, unsigned char * blocks){
-	int i;
-	for(i = 0; i < NUM_MEMORY_BLOCKS; i++){
-		if(statuses[i] == 0){
-			statuses[i] = 1;
-			// Safety byte
-			blocks[i * (MEMORY_BLOCK_SIZE + SANITY_BYTE_SIZE) + MEMORY_BLOCK_SIZE] = 42;
-			return &(blocks[i * (MEMORY_BLOCK_SIZE + SANITY_BYTE_SIZE)]);
-		}
-	}
-	assert(0,"Out of memory.");
-	return 0;
+void * request_memory(unsigned int * statuses, unsigned char * blocks, int * memory_stack_top){
+	assert(*memory_stack_top >= 0,"Out of memory.");
+	int free_index = statuses[*memory_stack_top];
+	//  Decrement the stack of free blocks
+	*memory_stack_top = (*memory_stack_top) -1;
+
+	blocks[free_index * (MEMORY_BLOCK_SIZE + SANITY_BYTE_SIZE) + MEMORY_BLOCK_SIZE] = 42;
+
+	void * free_address = &(blocks[free_index * (MEMORY_BLOCK_SIZE + SANITY_BYTE_SIZE)]);
+
+	return free_address;
 }
 
-void release_memory(unsigned char * statuses, unsigned char * blocks, void * old_block){
-	//  TODO add better checks here
+void release_memory(unsigned int * statuses, unsigned char * blocks, void * old_block, int * memory_stack_top){
+	assert(*memory_stack_top < NUM_MEMORY_BLOCKS,"Attempting to release memory, when all memory is already released.");
 	int block_size = MEMORY_BLOCK_SIZE + SANITY_BYTE_SIZE;
 	assert((((int)old_block - (int)blocks)) % block_size == 0,"Trying to deallocate memory block with invalid address.\n");
 	int index = (((int)old_block - (int)blocks)) / block_size;
-	assert(statuses[index] == 1, "Attempting to de-allocate a memory block that is not allocated.\n");
-	statuses[index] = 0;
-	char s = blocks[index * (MEMORY_BLOCK_SIZE + SANITY_BYTE_SIZE) + MEMORY_BLOCK_SIZE]; 
+	*memory_stack_top = *memory_stack_top + 1;
+	statuses[*memory_stack_top] = index;
+	char s = blocks[index * (block_size) + MEMORY_BLOCK_SIZE]; 
 	assertf(s == 42, "Sanity check byte value was %d, but should have been 42.  A task must be writing past the end of the memory block.",s);
 	return;
 }
