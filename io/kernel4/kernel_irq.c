@@ -22,7 +22,8 @@ void irq_handler() {
 	if (*vic2fcn) {
 		vic2fcn();
 		*VIC2VectAddr = 0;
-	} else if (*vic1fcn) {
+	}
+	if (*vic1fcn) {
 		vic1fcn();
 		*VIC1VectAddr = 0;
 	}
