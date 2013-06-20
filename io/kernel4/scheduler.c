@@ -4,6 +4,7 @@
 #include "task_descriptor.h"
 #include "robio.h"
 #include "rps.h"
+#include "clock.h"
 #include "public_kernel_interface.h"
 #include "kernel_state.h"
 #include "kernel_irq.h"
@@ -326,23 +327,13 @@ void Scheduler_PrintTDCounts(Scheduler * scheduler) {
 }
 
 void Scheduler_UnblockTasksOnEvent(Scheduler * scheduler, EventID event_id) {
-	int i;
-	TD * td;
-	
-	if (!scheduler->has_tasks_event_blocked[event_id]) {
+	unsigned int task_id = scheduler->has_tasks_event_blocked[event_id];
+	if (!task_id) {
 		return;
+	}else{
+		Scheduler_ChangeTDState(scheduler, &scheduler->task_descriptors[task_id], READY);
+		scheduler->has_tasks_event_blocked[event_id] = 0;
 	}
-	
-	// TODO poor performance with linear search?
-	for (i = 0; i < MAX_TASKS + 1; i++) {
-		td = &scheduler->task_descriptors[i];
-		
-		if (td->state == EVENT_BLOCKED && td->event_id == event_id) {
-			Scheduler_ChangeTDState(scheduler, td, READY);
-		}
-	}
-	
-	scheduler->has_tasks_event_blocked[event_id] = 0;
 }
 
 void safely_add_task_to_priority_queue(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority priority){

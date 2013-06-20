@@ -350,7 +350,8 @@ int k_AwaitEvent(EventID event_id) {
 	
 	Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, EVENT_BLOCKED);
 	scheduler->current_task_descriptor->event_id = event_id;
-	scheduler->has_tasks_event_blocked[event_id] = 1;
+	assert(!(scheduler->has_tasks_event_blocked[event_id]),"More than one task is attempting to block on an event at once.  We don't support this right now.");
+	scheduler->has_tasks_event_blocked[event_id] = scheduler->current_task_descriptor->id;
 	
 	//robprintfbusy((const unsigned char *)"AwaitEvent called\n");
 	

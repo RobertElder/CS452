@@ -22,7 +22,7 @@ typedef struct Scheduler {
 	unsigned int num_receive_blocked;
 	unsigned int num_event_blocked;
 	unsigned int num_tasks;
-	short has_tasks_event_blocked[NUM_EVENTS];
+	unsigned int has_tasks_event_blocked[NUM_EVENTS];
 } Scheduler;
 
 void Scheduler_Initialize(Scheduler * scheduler);
