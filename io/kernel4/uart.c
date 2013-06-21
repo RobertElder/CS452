@@ -180,6 +180,7 @@ void KeyboardInputServer_UnblockQueued(KeyboardInputServer * server) {
 }
 
 void ScreenOutputServer_Start() {
+	int i;
 	ScreenOutputServer server;
 	ScreenOutputServer_Initialize(&server);
 
@@ -209,7 +210,9 @@ void ScreenOutputServer_Start() {
 			break;
 		case MESSAGE_TYPE_DATA:
 			// from public_kernel_interface Putc()
-			CharBuffer_PutChar(&server.char_buffer, server.char_message->chars[0]);
+			for (i = 0; i < server.char_message->count; i++) {
+				CharBuffer_PutChar(&server.char_buffer, server.char_message->chars[i]);
+			}
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			ScreenOutputServer_SendData(&server);
 			break;
@@ -336,6 +339,7 @@ void TrainInputServer_UnblockQueued(TrainInputServer * server) {
 }
 
 void TrainOutputServer_Start() {
+	int i;
 	TrainOutputServer server;
 	TrainOutputServer_Initialize(&server);
 	
@@ -364,7 +368,9 @@ void TrainOutputServer_Start() {
 			break;
 		case MESSAGE_TYPE_DATA:
 			// from the public_kernel_interface Putc()
-			CharBuffer_PutChar(&server.char_buffer, server.char_message->chars[0]);
+			for (i = 0; i < server.char_message->count; i++) {
+				CharBuffer_PutChar(&server.char_buffer, server.char_message->chars[i]);
+			}
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			TrainOutputServer_SendData(&server);
 			break;
