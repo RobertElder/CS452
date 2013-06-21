@@ -79,6 +79,12 @@ void UIServer_Initialize(UIServer * server) {
 	server->print_message_count = 0;
 	server->dirty = 1;
 	server->command_buffer_index = 0;
+	
+	int i;
+	
+	for (i = SENSOR_MODULE_A; i <= SENSOR_MODULE_E; i++) {
+		server->sensor_bit_flags_cache[i] = 0;
+	}
 }
 
 void UIServer_Render(UIServer * server) {
@@ -107,6 +113,7 @@ void UIServer_PrintTime(UIServer * server) {
 	
 	ANSI_Cursor(1, sizeof(UI_SERVER_HEADER) + 1);
 	PutString(COM2, "{ SYSTIME = %d:%d,%d }", min, sec, ms);
+	ANSI_ClearLine(CLEAR_TO_END);
 }
 
 void UIServer_PrintCommandLine(UIServer * server) {
@@ -256,6 +263,7 @@ void UIServer_PrintSensors(UIServer * server) {
 		assert(receive_message->message_type == MESSAGE_TYPE_ACK, "UIServer_PrintSensors: failed to get ACK from train server");
 		
 		int sensor_bit_flag = receive_message->sensor_bit_flag;
+		int sensor_bit_flag_cache = server->sensor_bit_flags_cache[module_num];
 		
 		if (server->dirty) {
 			// Print headers
@@ -273,21 +281,25 @@ void UIServer_PrintSensors(UIServer * server) {
 		}
 		
 		// Print sensor values
-		ANSI_Cursor(5, 1);
-		ANSI_CursorForward(module_num * 10);
 		int sensor_num;
 		for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
-			ANSI_CursorNextLine(1);
-			ANSI_CursorForward(module_num * 10 + 3);
+			short differs = (sensor_bit_flag & 1 << sensor_num)
+				^ (sensor_bit_flag_cache & 1 << sensor_num);
 			
-			if (sensor_bit_flag & 1 << sensor_num) {
-				ANSI_Style(BOLD_STYLE);
-				PutString(COM2, "X");
-				ANSI_Style(NORMAL_STYLE);
-			} else {
-				PutString(COM2, "-");
+			if (server->dirty || differs) {
+				ANSI_Cursor(6 + sensor_num, module_num * 10 + 3);
+			
+				if (sensor_bit_flag & 1 << sensor_num) {
+					ANSI_Style(BOLD_STYLE);
+					PutString(COM2, "X");
+					ANSI_Style(NORMAL_STYLE);
+				} else {
+					PutString(COM2, "-");
+				}
 			}
 		}
+		
+		server->sensor_bit_flags_cache[module_num] = sensor_bit_flag;
 	}
 }
 
@@ -304,7 +316,7 @@ void UITimer_Start() {
 	send_message->message_type = MESSAGE_TYPE_HELLO;
 	
 	while (1) {
-		DelaySeconds(1);
+		DelaySeconds(0.5);
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		assert(reply_message->message_type == MESSAGE_TYPE_ACK || reply_message->message_type == MESSAGE_TYPE_SHUTDOWN, 
 			"UITimer_Start: didn't get ACK message");

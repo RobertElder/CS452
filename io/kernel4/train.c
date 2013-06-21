@@ -158,7 +158,8 @@ void TrainSensorReader_Start() {
 		if (shutdown) {
 			break;
 		}
-		
+
+		// TODO: what's a good value?
 		DelaySeconds(0.2);
 	}
 	
