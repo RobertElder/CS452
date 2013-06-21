@@ -291,6 +291,8 @@ int PutcAtomic(int channel, unsigned int count, ...) {
 int PutcAtomicVa(int channel, unsigned int count, va_list va) {
 	assert(count <= CHAR_MESSAGE_CONTENT_SIZE, "PutcAtomicVa: count too big");
 	
+	assert(sizeof(CharMessage) <= MESSAGE_SIZE, "CharMessage: too big");
+	
 	char send_buffer[MESSAGE_SIZE];
 	char reply_buffer[MESSAGE_SIZE];
 	int server_tid;
