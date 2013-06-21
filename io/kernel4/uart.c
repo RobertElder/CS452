@@ -279,6 +279,9 @@ void TrainInputServer_Start() {
 		case MESSAGE_TYPE_NOTIFIER:
 			// From notifier
 			data = *UART1DATA & DATA_MASK;
+			
+			assert(*UART1RXSts == 0, "Receive Status Register/Error Clear Register");
+			
 			CharBuffer_PutChar(&server.char_buffer, data);
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			break;
