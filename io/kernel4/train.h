@@ -6,18 +6,22 @@
 #define SENSORS_PER_MODULE 16
 
 static const char const TRAIN_SERVER_NAME[] = "TrnSvr";
+static const char const TRAIN_COMMAND_SERVER_NAME[] = "TCmSvr";
 
-typedef enum TRAIN_COMMAND {
+typedef enum TrainCommand {
 	TRAIN_STOP,
 	TRAIN_GO,
 	TRAIN_SPEED,
 	TRAIN_REVERSE,
 	TRAIN_SWITCH,
 	TRAIN_READ_SENSOR,
-} TRAIN_COMMAND;
+} TrainCommand;
 
 typedef struct TrainCommandMessage {
 	MessageType message_type;
+	TrainCommand command;
+	char c1;
+	char c2;
 } TrainCommandMessage;
 
 typedef struct TrainSensorMessage {
@@ -49,6 +53,7 @@ typedef struct TrainServer {
 	int sensor_time_log[SENSOR_MODULE_A + SENSOR_MODULE_E][SENSORS_PER_MODULE];
 	int source_tid;
 	int num_child_task_running;
+	int train_command_server_tid;
 } TrainServer;
 
 
@@ -59,6 +64,8 @@ void TrainServer_Initialize(TrainServer * server);
 void TrainServer_HandleSensorReaderData(TrainServer * server);
 
 void TrainServer_HandleSensorQuery(TrainServer * server);
+
+void TrainCommandServer_Start();
 
 void TrainSensorReader_Start();
 

@@ -323,3 +323,33 @@ int PutcAtomicVa(int channel, unsigned int count, va_list va) {
 	
 	return 0;
 }
+
+int SendTrainCommand(TrainCommand command, char c1, char c2, char * c1_reply, char * c2_reply) {
+	char send_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
+	int server_tid = WhoIs((char*) TRAIN_COMMAND_SERVER_NAME);
+	
+	assert(server_tid, "SendTrainCommand: whois failed");
+	
+	TrainCommandMessage * send_message = (TrainCommandMessage*) send_buffer;
+	TrainCommandMessage * reply_message = (TrainCommandMessage*) reply_buffer;
+	
+	send_message->message_type = MESSAGE_TYPE_TRAIN_COMMAND;
+	send_message->command = command;
+	send_message->c1 = c1;
+	send_message->c2 = c2;
+	
+	Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+	
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK,
+		"SendTrainCommand: Did not get ACK message from train server");
+	
+	if (c1_reply) {
+		*c1_reply = reply_message->c1;
+	}
+	if (c2_reply) {
+		*c2_reply = reply_message->c2;
+	}
+	
+	return 0;
+}

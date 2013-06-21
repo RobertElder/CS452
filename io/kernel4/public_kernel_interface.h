@@ -1,3 +1,4 @@
+#include "train.h"
 #ifndef PUBLIC_KERNEL_INTERFACE_H_
 #define PUBLIC_KERNEL_INTERFACE_H_
 
@@ -51,6 +52,6 @@ int PutStringFormat(int channel, const char * fmt, va_list va);
 int PutString(int channel, const char * fmt, ...);
 int PutcAtomic(int channel, unsigned int count, ...);
 int PutcAtomicVa(int channel, unsigned int count, va_list va);
-
+int SendTrainCommand(TrainCommand command, char c1, char c2, char * c1_reply, char * c2_reply);
 
 #endif
