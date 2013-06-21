@@ -4,6 +4,7 @@
 #include "queue.h"
 
 #define MESSAGE_SIZE 16
+#define CHAR_MESSAGE_CONTENT_SIZE 8
 
 typedef enum MessageType {
 	MESSAGE_TYPE_REGISTER_AS = 0,
@@ -54,7 +55,8 @@ typedef struct GenericMessage {
 
 typedef struct CharMessage {
 	MessageType message_type;
-	char char1;
+	char chars[CHAR_MESSAGE_CONTENT_SIZE];
+	unsigned int count;
 } CharMessage;
 
 void KernelMessage_Initialize(KernelMessage * km,

@@ -162,7 +162,7 @@ void KeyboardInputServer_ReplyQueued(KeyboardInputServer * server) {
 		char c = CharBuffer_GetChar(&server->char_buffer);
 		int tid = (int) Queue_PopStart((Queue*) &server->task_queue);
 		server->reply_message->message_type = MESSAGE_TYPE_ACK;
-		server->reply_message->char1 = c;
+		server->reply_message->chars[0] = c;
 
 		Reply(tid, server->reply_buffer, MESSAGE_SIZE);
 	}
@@ -173,7 +173,7 @@ void KeyboardInputServer_UnblockQueued(KeyboardInputServer * server) {
 		char c = 0xff;
 		int tid = (int) Queue_PopStart((Queue*) &server->task_queue);
 		server->reply_message->message_type = MESSAGE_TYPE_ACK;
-		server->reply_message->char1 = c;
+		server->reply_message->chars[0] = c;
 
 		Reply(tid, server->reply_buffer, MESSAGE_SIZE);
 	}
@@ -209,7 +209,7 @@ void ScreenOutputServer_Start() {
 			break;
 		case MESSAGE_TYPE_DATA:
 			// from public_kernel_interface Putc()
-			CharBuffer_PutChar(&server.char_buffer, server.char_message->char1);
+			CharBuffer_PutChar(&server.char_buffer, server.char_message->chars[0]);
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			ScreenOutputServer_SendData(&server);
 			break;
@@ -318,7 +318,7 @@ void TrainInputServer_ReplyQueued(TrainInputServer * server) {
 		char c = CharBuffer_GetChar(&server->char_buffer);
 		int tid = (int) Queue_PopStart((Queue*) &server->task_queue);
 		server->reply_message->message_type = MESSAGE_TYPE_ACK;
-		server->reply_message->char1 = c;
+		server->reply_message->chars[0] = c;
 
 		Reply(tid, server->reply_buffer, MESSAGE_SIZE);
 	}
@@ -329,7 +329,7 @@ void TrainInputServer_UnblockQueued(TrainInputServer * server) {
 		char c = 0xff;
 		int tid = (int) Queue_PopStart((Queue*) &server->task_queue);
 		server->reply_message->message_type = MESSAGE_TYPE_ACK;
-		server->reply_message->char1 = c;
+		server->reply_message->chars[0] = c;
 
 		Reply(tid, server->reply_buffer, MESSAGE_SIZE);
 	}
@@ -364,7 +364,7 @@ void TrainOutputServer_Start() {
 			break;
 		case MESSAGE_TYPE_DATA:
 			// from the public_kernel_interface Putc()
-			CharBuffer_PutChar(&server.char_buffer, server.char_message->char1);
+			CharBuffer_PutChar(&server.char_buffer, server.char_message->chars[0]);
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			TrainOutputServer_SendData(&server);
 			break;

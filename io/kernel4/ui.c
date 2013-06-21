@@ -63,7 +63,7 @@ void UIServer_Start() {
 			Reply(source_tid, server.reply_buffer, MESSAGE_SIZE);
 
 			if (!shutdown) {
-				UIServer_ProcessKeystroke(&server, char_message->char1);
+				UIServer_ProcessKeystroke(&server, char_message->chars[0]);
 			}
 			break;
 		default:
@@ -358,7 +358,7 @@ void UIKeyboardInput_Start() {
 		assert(data != 0, "UIKeyboardInput: got 0x00 from keyboard?");
 
 		char_message->message_type = MESSAGE_TYPE_DATA;
-		char_message->char1 = data;
+		char_message->chars[0] = data;
 
 		Send(ui_server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 

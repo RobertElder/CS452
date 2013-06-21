@@ -49,5 +49,8 @@ int Putc( int channel, char ch );
 void PutWord(int channel, int n, char fc, char *bf );
 int PutStringFormat(int channel, const char * fmt, va_list va);
 int PutString(int channel, const char * fmt, ...);
+int PutcAtomic(int channel, unsigned int count, ...);
+int PutcAtomicVa(int channel, unsigned int count, va_list va);
+
 
 #endif

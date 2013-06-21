@@ -200,38 +200,12 @@ int Getc( int channel ) {
 	assert(reply_message->message_type == MESSAGE_TYPE_ACK,
 		"Puc: Did not get ACK message from output server");
 	
-	return reply_message->char1;
+	return reply_message->chars[0];
 }
 
 int Putc( int channel, char ch ) {
-	char send_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
-	int server_tid;
-	CharMessage * send_message = (CharMessage *) send_buffer;
-	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
-	send_message->message_type = MESSAGE_TYPE_DATA;
-	
-	if (channel == COM1) {
-		server_tid = WhoIs((char*) TRAIN_OUTPUT_SERVER_NAME);
-	} else if (channel == COM2) {
-		server_tid = WhoIs((char*) SCREEN_OUTPUT_SERVER_NAME);
-	} else {
-		assert(0, "Putc: unknown channel");
-		return 0; // TODO return error code
-	}
-	
-	assertf(server_tid, "Putc: whois failed for COM%d", channel);
-	
-	send_message->char1 = ch;
-	
-	Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
-	
-	assert(reply_message->message_type == MESSAGE_TYPE_ACK,
-		"Puc: Did not get ACK message from output server");
-	
-	return 0;
+	return PutcAtomic(channel, 1, ch);
 }
-
 
 void PutWord(int channel, int n, char fc, char *bf ) {
 	char ch;
@@ -303,5 +277,49 @@ int PutString( int channel, const char * fmt, ...) {
 	va_start(va,fmt);
 	PutStringFormat(channel, fmt, va);
 	va_end(va);
+	return 0;
+}
+
+int PutcAtomic(int channel, unsigned int count, ...) {
+	va_list va;
+	va_start(va,count);
+	PutcAtomicVa(channel, count, va);
+	va_end(va);
+	return 0;
+}
+
+int PutcAtomicVa(int channel, unsigned int count, va_list va) {
+	assert(count <= CHAR_MESSAGE_CONTENT_SIZE, "PutcAtomicVa: count too big");
+	
+	char send_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE];
+	int server_tid;
+	CharMessage * send_message = (CharMessage *) send_buffer;
+	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
+	send_message->message_type = MESSAGE_TYPE_DATA;
+	
+	if (channel == COM1) {
+		server_tid = WhoIs((char*) TRAIN_OUTPUT_SERVER_NAME);
+	} else if (channel == COM2) {
+		server_tid = WhoIs((char*) SCREEN_OUTPUT_SERVER_NAME);
+	} else {
+		assert(0, "Putc: unknown channel");
+		return 0; // TODO return error code
+	}
+	
+	assertf(server_tid, "Putc: whois failed for COM%d", channel);
+	
+	int i;
+	for (i = 0; i < count; i++) {
+		send_message->chars[i] = va_arg( va, char );
+	}
+	
+	send_message->count = count;
+	
+	Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+	
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK,
+		"Puc: Did not get ACK message from output server");
+	
 	return 0;
 }
