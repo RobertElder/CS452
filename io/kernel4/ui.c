@@ -255,9 +255,7 @@ void UIServer_PrintSensors(UIServer * server) {
 		
 		assert(receive_message->message_type == MESSAGE_TYPE_ACK, "UIServer_PrintSensors: failed to get ACK from train server");
 		
-		char upper = receive_message->sensor_value.upper;
-		char lower = receive_message->sensor_value.lower;
-		int sensor_values = upper << 8 | lower;
+		int sensor_bit_flag = receive_message->sensor_bit_flag;
 		
 		if (server->dirty) {
 			// Print headers
@@ -278,19 +276,17 @@ void UIServer_PrintSensors(UIServer * server) {
 		ANSI_Cursor(5, 1);
 		ANSI_CursorForward(module_num * 10);
 		int sensor_num;
-		for (sensor_num = 1; sensor_num <= 16; sensor_num++) {
+		for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
 			ANSI_CursorNextLine(1);
 			ANSI_CursorForward(module_num * 10 + 3);
 			
-			if (sensor_values & 0x1) {
+			if (sensor_bit_flag & 1 << sensor_num) {
 				ANSI_Style(BOLD_STYLE);
 				PutString(COM2, "X");
 				ANSI_Style(NORMAL_STYLE);
 			} else {
 				PutString(COM2, "-");
 			}
-			
-			sensor_values = sensor_values >> 1;
 		}
 	}
 }

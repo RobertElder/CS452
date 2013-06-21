@@ -3,6 +3,8 @@
 #ifndef TRAIN_H_
 #define TRAIN_H_
 
+#define SENSORS_PER_MODULE 16
+
 static const char const TRAIN_SERVER_NAME[] = "TrnSvr";
 
 typedef enum TRAIN_COMMAND {
@@ -18,15 +20,10 @@ typedef struct TrainCommandMessage {
 	MessageType message_type;
 } TrainCommandMessage;
 
-typedef struct SensorValue {
-	char upper;
-	char lower;
-} SensorValue;
-
 typedef struct TrainSensorMessage {
 	MessageType message_type;
 	int module_num;
-	SensorValue sensor_value;
+	int sensor_bit_flag;
 } TrainSensorMessage;
 
 typedef enum SENSOR_MODULE {
@@ -43,7 +40,13 @@ typedef struct TrainServer {
 	short shutdown;
 	GenericMessage * receive_message;
 	GenericMessage * reply_message;
-	SensorValue sensor_values[SENSOR_MODULE_A + SENSOR_MODULE_E];
+	
+	// Bit flags for each sensor is stored from right to left where
+	// flag & 1<<0 is the first sensor
+	// flag & 1<<1 is the second sensor
+	// flag & 1<<15 is the 16th sensor
+	int sensor_bit_flags[SENSOR_MODULE_A + SENSOR_MODULE_E];
+	int sensor_time_log[SENSOR_MODULE_A + SENSOR_MODULE_E][SENSORS_PER_MODULE];
 	int source_tid;
 	int num_child_task_running;
 } TrainServer;

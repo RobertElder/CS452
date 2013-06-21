@@ -48,6 +48,17 @@ void TrainServer_Initialize(TrainServer * server) {
 	assert(tid, "TrainServer failed to create TrainSensorReader");
 	
 	server->num_child_task_running = 1;
+	
+	int module_num;
+	
+	for (module_num = SENSOR_MODULE_A; module_num <= SENSOR_MODULE_E; module_num++) {
+		server->sensor_bit_flags[module_num] = 0;
+		
+		int sensor_num;
+		for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
+			server->sensor_time_log[module_num][sensor_num] = 0;
+		}
+	}
 }
 
 void TrainServer_HandleSensorReaderData(TrainServer * server) {
@@ -61,11 +72,17 @@ void TrainServer_HandleSensorReaderData(TrainServer * server) {
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 
 	int module_num = recv_sensor_message->module_num;
-	int upper = recv_sensor_message->sensor_value.upper;
-	int lower = recv_sensor_message->sensor_value.lower;
+	int sensor_bit_flag = recv_sensor_message->sensor_bit_flag;
 
-	server->sensor_values[module_num].upper = upper;
-	server->sensor_values[module_num].lower = lower;
+	server->sensor_bit_flags[module_num] = sensor_bit_flag;
+	
+	int sensor_num;
+	int current_time = Time();
+	for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
+		if (sensor_bit_flag & 1 << sensor_num) {
+			server->sensor_time_log[module_num][sensor_num] = current_time;
+		}
+	}
 }
 
 void TrainServer_HandleSensorQuery(TrainServer * server) {
@@ -73,11 +90,8 @@ void TrainServer_HandleSensorQuery(TrainServer * server) {
 	TrainSensorMessage * reply_sensor_message = (TrainSensorMessage *) server->reply_buffer;
 	
 	int module_num = recv_sensor_message->module_num;
-	int upper = server->sensor_values[module_num].upper;
-	int lower = server->sensor_values[module_num].lower;
 
-	reply_sensor_message->sensor_value.upper = upper;
-	reply_sensor_message->sensor_value.lower = lower;
+	reply_sensor_message->sensor_bit_flag = server->sensor_bit_flags[module_num];
 	reply_sensor_message->message_type = MESSAGE_TYPE_ACK;
 
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
@@ -115,13 +129,20 @@ void TrainSensorReader_Start() {
 	while (1) {
 		for (module_num = SENSOR_MODULE_A; module_num <= SENSOR_MODULE_E; module_num++) {
 			Putc(COM1, 0xc0 | module_num);
-
-			upper = Getc(COM1);
+			
+			// The course website train manual is wrong, the website is right
 			lower = Getc(COM1);
+			upper = Getc(COM1);
+			
+			// Reverse it so it is easier to mask. see train.h
+			// http://graphics.stanford.edu/~seander/bithacks.html#ReverseByteWith32Bits
+			upper = ((upper * 0x0802LU & 0x22110LU) | (upper * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16;
+			upper = (unsigned char) upper;
+			lower = ((lower * 0x0802LU & 0x22110LU) | (lower * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16;
+			lower = (unsigned char) lower;
 
 			send_message->message_type = MESSAGE_TYPE_DATA;
-			send_message->sensor_value.upper = upper;
-			send_message->sensor_value.lower = lower;
+			send_message->sensor_bit_flag = upper << 8 | lower;
 			send_message->module_num = module_num;
 
 			Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
