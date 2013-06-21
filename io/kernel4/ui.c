@@ -190,11 +190,11 @@ void UIServer_PrintCommandHelp(UIServer * server) {
 
 void UIServer_HandleTrainCommand(UIServer * server) {
 	int next_whitespace = rob_next_whitespace(server->command_buffer);
-	int train_num = robatoi(&server->command_buffer[next_whitespace]);
+	char train_num = robatoi(&server->command_buffer[next_whitespace]);
 
 	next_whitespace += rob_next_whitespace(&(server->command_buffer[next_whitespace]));
 	
-	int speed = robatoi(&server->command_buffer[next_whitespace]);
+	char speed = robatoi(&server->command_buffer[next_whitespace]);
 	
 	PutString(COM2, "Train=%d Speed=%d. train on fire.", train_num, speed);
 	PutcAtomic(COM1, 2, speed, train_num);
@@ -202,7 +202,7 @@ void UIServer_HandleTrainCommand(UIServer * server) {
 
 void UIServer_HandleReverseCommand(UIServer * server) {
 	int next_whitespace = rob_next_whitespace(server->command_buffer);
-	int train_num = robatoi(&server->command_buffer[next_whitespace]);
+	char train_num = robatoi(&server->command_buffer[next_whitespace]);
 
 	PutString(COM2, "Train=%d. train on reversed fire.", train_num);
 	PutcAtomic(COM1, 2, 0, train_num);
@@ -214,12 +214,12 @@ void UIServer_HandleReverseCommand(UIServer * server) {
 
 void UIServer_HandleSwitchCommand(UIServer * server) {
 	int next_whitespace = rob_next_whitespace(server->command_buffer);
-	int switch_num = robatoi(&server->command_buffer[next_whitespace]);
+	char switch_num = robatoi(&server->command_buffer[next_whitespace]);
 
 	next_whitespace += rob_next_whitespace(&(server->command_buffer[next_whitespace]));
 	
 	char direction = server->command_buffer[next_whitespace];
-	int direction_code;
+	char direction_code;
 	
 	if (direction == 'C') {
 		direction_code = 34;

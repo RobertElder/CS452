@@ -104,9 +104,9 @@ void TrainSensorReader_Start() {
 	char reply_buffer[MESSAGE_SIZE];
 	TrainSensorMessage * send_message = (TrainSensorMessage *) send_buffer;
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
-	int module_num;
-	int lower;
-	int upper;
+	char module_num;
+	char lower;
+	char upper;
 	int server_tid;
 	short shutdown = 0;
 	
