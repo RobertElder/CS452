@@ -156,6 +156,9 @@ void TrainCommandServer_Start() {
 			Putc(COM1, 32);
 			break;
 		case TRAIN_READ_SENSOR:
+			// TODO figure out why we need this delay
+			DelaySeconds(0.5);
+
 			module_num = command_receive_message->c1;
 			Putc(COM1, 0xc0 | module_num);
 			
