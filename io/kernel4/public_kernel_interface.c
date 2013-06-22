@@ -57,8 +57,8 @@ int RegisterAs( char *name ) {
 	NameServerMessage * send_message;
 	NameServerMessage * receive_message;
 
-	char send_buffer[MESSAGE_SIZE];
-	char receive_buffer[MESSAGE_SIZE];
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 
 	send_message = (NameServerMessage *) send_buffer;
 	send_message->message_type = MESSAGE_TYPE_REGISTER_AS;
@@ -81,8 +81,8 @@ int WhoIs( char *name ) {
 	NameServerMessage * send_message;
 	NameServerMessage * receive_message;
 
-	char send_buffer[MESSAGE_SIZE];
-	char receive_buffer[MESSAGE_SIZE];
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 
 	send_message = (NameServerMessage *) send_buffer;
 	send_message->message_type = MESSAGE_TYPE_WHOIS;
@@ -109,8 +109,8 @@ int Delay( int ticks ) {
 	ClockMessage * send_message;
 	ClockMessage * receive_message;
 
-	char send_buffer[MESSAGE_SIZE];
-	char receive_buffer[MESSAGE_SIZE];
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 
 	send_message = (ClockMessage *) send_buffer;
 	send_message->message_type = MESSAGE_TYPE_DELAY_REQUEST;
@@ -129,8 +129,8 @@ int DelayUntil( int ticks ) {
 	ClockMessage * send_message;
 	ClockMessage * receive_message;
 
-	char send_buffer[MESSAGE_SIZE];
-	char receive_buffer[MESSAGE_SIZE];
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 
 	send_message = (ClockMessage *) send_buffer;
 	send_message->message_type = MESSAGE_TYPE_DELAY_UNTIL_REQUEST;
@@ -149,8 +149,8 @@ int Time( ) {
 	ClockMessage * send_message;
 	ClockMessage * receive_message;
 
-	char send_buffer[MESSAGE_SIZE];
-	char receive_buffer[MESSAGE_SIZE];
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 
 	send_message = (ClockMessage *) send_buffer;
 	send_message->message_type = MESSAGE_TYPE_TIME_REQUEST;
@@ -177,8 +177,8 @@ int DelayUntilSeconds( float seconds ) {
 }
 
 int Getc( int channel ) {
-	char send_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	int server_tid;
 	GenericMessage * send_message = (GenericMessage *) send_buffer;
 	CharMessage * reply_message = (CharMessage *) reply_buffer;
@@ -327,8 +327,8 @@ int PutcAtomicVa(int channel, unsigned int count, va_list va) {
 }
 
 int SendTrainCommand(TrainCommand command, char c1, char c2, char * c1_reply, char * c2_reply) {
-	char send_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	int server_tid = WhoIs((char*) TRAIN_COMMAND_SERVER_NAME);
 	
 	assert(server_tid, "SendTrainCommand: whois failed");

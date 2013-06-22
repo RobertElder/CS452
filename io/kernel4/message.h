@@ -40,7 +40,7 @@ typedef enum MessageType {
 typedef struct KernelMessage {
 	int origin;
 	int destination;
-	char msg[MESSAGE_SIZE];
+	char msg[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	char * dest_buffer;
 	unsigned int origin_size;
 	unsigned int destination_size;

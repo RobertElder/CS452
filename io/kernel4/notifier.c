@@ -6,8 +6,8 @@
 
 void ClockNotifier_Start() {
 	int clock_server_id;
-	char reply_buffer[MESSAGE_SIZE];
-	char send_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	ClockMessage * reply_message = (ClockMessage *) reply_buffer;
 	NotifyMessage * send_message = (NotifyMessage *) send_buffer;
 	
@@ -50,8 +50,8 @@ void ClockNotifier_Start() {
 }
 
 void KeyboardInputNotifier_Start() {
-	char reply_buffer[MESSAGE_SIZE];
-	char send_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
 	NotifyMessage * send_message = (NotifyMessage *) send_buffer;
 	int server_tid = WhoIs((char*) KEYBOARD_INPUT_SERVER_NAME);
@@ -74,8 +74,8 @@ void KeyboardInputNotifier_Start() {
 }
 
 void ScreenOutputNotifier_Start() {
-	char reply_buffer[MESSAGE_SIZE];
-	char send_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
 	NotifyMessage * send_message = (NotifyMessage *) send_buffer;
 	int server_tid = WhoIs((char*) SCREEN_OUTPUT_SERVER_NAME);
@@ -104,8 +104,8 @@ void ScreenOutputNotifier_Start() {
 }
 
 void TrainInputNotifier_Start() {
-	char reply_buffer[MESSAGE_SIZE];
-	char send_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
 	NotifyMessage * send_message = (NotifyMessage *) send_buffer;
 	int server_tid = WhoIs((char*) TRAIN_INPUT_SERVER_NAME);
@@ -127,8 +127,8 @@ void TrainInputNotifier_Start() {
 }
 
 void TrainOutputNotifier_Start() {
-	char reply_buffer[MESSAGE_SIZE];
-	char send_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
 	NotifyMessage * send_message = (NotifyMessage *) send_buffer;
 	int server_tid = WhoIs((char*) TRAIN_OUTPUT_SERVER_NAME);

@@ -86,8 +86,8 @@ void FirstTask_Start() {
 	
 	robprintfbusy((const unsigned char *)"FirstTask begin receive\n");
 	
-	char receive_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
+	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	int source_tid;
 	K3Message * receive_message = (K3Message *) receive_buffer;
 	K3Message * reply_message = (K3Message *) reply_buffer;
@@ -168,8 +168,8 @@ void IdleTask_Start(){
 	RegisterAs((char*) IDLE_TASK_NAME);
 
 	/* While we are waiting for events, this task and the administrator just send messages back and forth */
-	char send_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	GenericMessage * send_message = (GenericMessage *) send_buffer;
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
 	send_message->message_type = MESSAGE_TYPE_HELLO;
@@ -224,9 +224,9 @@ void AdministratorTask_Start() {
 	unsigned int required_requests = 1;
 #endif
 
-	char send_buffer[MESSAGE_SIZE];
-	char receive_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 
 	GenericMessage * receive_msg = (GenericMessage *) receive_buffer;
 	GenericMessage * reply_msg = (GenericMessage *) reply_buffer;
