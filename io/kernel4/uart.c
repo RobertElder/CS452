@@ -6,6 +6,13 @@
 #include "private_kernel_interface.h"
 #include "scheduler.h"
 
+void UARTErrorCheck(int sts, const char * context){
+	assertf(!(sts && FE_MASK), "Framing error detected communicating with %s", context);
+	assertf(!(sts && PE_MASK), "Parity error detected communicating with %s", context);
+	assertf(!(sts && BE_MASK), "Break error detected communicating with %s", context);
+	assertf(!(sts && OE_MASK), "Overrun error detected communicating with %s", context);
+}
+
 void UARTBootstrapTask_Start() {
 	robprintfbusy((const unsigned char *)"UARTBootstrapTask_Start tid=%d", MyTid());
 	UARTBootstrapTask uart;
@@ -120,6 +127,9 @@ void KeyboardInputServer_Start() {
 		case MESSAGE_TYPE_NOTIFIER:
 			// From notifier
 			data = *UART2DATA & DATA_MASK;
+
+			UARTErrorCheck(*UART2RXSts, "terminal");
+
 			CharBuffer_PutChar(&server.char_buffer, data);
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			break;
@@ -280,7 +290,7 @@ void TrainInputServer_Start() {
 			// From notifier
 			data = *UART1DATA & DATA_MASK;
 			
-			assert(*UART1RXSts == 0, "Receive Status Register/Error Clear Register");
+			UARTErrorCheck(*UART1RXSts, "trains");
 			
 			CharBuffer_PutChar(&server.char_buffer, data);
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
