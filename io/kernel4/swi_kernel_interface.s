@@ -21,6 +21,7 @@
 .global asm_ReceiveEntry
 .global asm_ReplyEntry
 .global asm_AwaitEventEntry
+.global asm_AssertKernelEntry
 
 /* Functions to get/set user process state */
 .global asm_GetStoredUserSp
@@ -82,6 +83,11 @@ asm_AwaitEventEntry:
 	mov	ip, sp
 	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 9;
+	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
+asm_AssertKernelEntry:
+	mov	ip, sp
+	stmfd	sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	SWI 10;
 	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 asm_TimerIRQEntry:
 	stmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, lr} /* Remember the state on the irq stack */
@@ -264,4 +270,16 @@ B k_Send
 B k_Receive
 B k_Reply
 B k_AwaitEvent
+B k_AssertKernelEntry
 
+k_AssertKernelEntry:
+MRS r7, CPSR  /* Save current mode */
+MRS r6, SPSR /* determine what was last mode */
+AND r5, r6, #31  /* only want the mode bits */
+MOV r6, r7 /* Assume we want supervisor  */
+CMP r5, #19  /* did they come from supervisor mode? */
+BEQ DONOTSWITCHTOSYSTEM3
+ORR r6, r7, #31 /* Go into sytem mode to get user sp */
+DONOTSWITCHTOSYSTEM3:
+MSR CPSR, r6
+B asm_KernelExitAPIMethod

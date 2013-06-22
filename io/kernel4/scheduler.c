@@ -169,8 +169,6 @@ void Scheduler_SetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
 
 void Scheduler_ScheduleAndSetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
 	scheduler->current_task_descriptor = Scheduler_ScheduleNextTask(scheduler, k_state);
-	if(scheduler->current_task_descriptor == 0)
-		robprintfbusy((const unsigned char *)"outside scheduler.... \n");
 	Scheduler_SetNextTaskState(scheduler, k_state);
 }
 

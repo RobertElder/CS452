@@ -2,6 +2,8 @@
 #include <ts7200.h>
 #include "robio.h"
 
+void asm_AssertKernelEntry();
+
 void bwui2a( unsigned int num, unsigned int base, char *bf );
 
 void assertf( int expr, const char * message, ...){
@@ -9,6 +11,7 @@ void assertf( int expr, const char * message, ...){
 	va_list va;
 	va_start(va,message);
 	if(!expr){
+		asm_AssertKernelEntry();
 		const char * title = (const char *)"\033[36m\
                                 ``,:::::``                                          \n\
                               .@@@@@@@@@@@#`                                        \n\
