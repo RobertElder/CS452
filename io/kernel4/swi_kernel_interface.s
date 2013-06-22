@@ -90,7 +90,7 @@ asm_AssertKernelEntry:
 	MRS r1, CPSR  /* Save current mode */
 	AND r1, r1, #31  /* only want the mode bits */
 	CMP r5, #18  /* did they come from supervisor mode? */
-	B irq_assert /* No mode switching nonsense in irq mode*/
+	BEQ irq_assert /* No mode switching nonsense in irq mode*/
 	SWI 10;
 irq_assert:
 	ldmfd	sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
