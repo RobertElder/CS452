@@ -77,7 +77,9 @@ void TrainServer_HandleSensorReaderData(TrainServer * server) {
 		server->num_child_task_running--;
 	}
 	
+	robprintfbusy((const unsigned char *)"TrainServer_Start before reply.\n");
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
+	robprintfbusy((const unsigned char *)"TrainServer_Start after reply.\n");
 
 	int module_num = recv_sensor_message->module_num;
 	int sensor_bit_flag = recv_sensor_message->sensor_bit_flag;
@@ -182,9 +184,13 @@ void TrainCommandServer_Start() {
 void TrainSensorReader_Start() {
 	robprintfbusy((const unsigned char *)"TrainSensorReader_Start. tid=%d\n", MyTid());
 
-	char send_buffer[MESSAGE_SIZE];
+	union {
+		char send_buffer[MESSAGE_SIZE];
+		int i;
+	}poo;
+	poo.i = 0;
 	char reply_buffer[MESSAGE_SIZE];
-	TrainSensorMessage * send_message = (TrainSensorMessage *) send_buffer;
+	TrainSensorMessage * send_message = (TrainSensorMessage *) poo.send_buffer;
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
 	char module_num;
 	char lower;
@@ -231,7 +237,7 @@ void TrainSensorReader_Start() {
 			send_message->sensor_bit_flag = upper << 8 | lower;
 			send_message->module_num = module_num;
 
-			Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+			Send(server_tid, poo.send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 
 			if (reply_message->message_type == MESSAGE_TYPE_SHUTDOWN) {
 				shutdown = 1;
