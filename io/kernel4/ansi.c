@@ -2,6 +2,7 @@
 #include "robio.h"
 #include "public_kernel_interface.h"
 
+#ifdef ANSI
 void ANSI_ResetColor() {
 	PutString(COM2, "\x1b[0m");
 }
@@ -99,4 +100,22 @@ void ANSI_RestoreCursor() {
 void ANSI_GetCursor() {
 	PutString(COM2, "\x1b[6n");
 }
+#else
+void ANSI_ResetColor(){}
+void ANSI_Color(ANSIColor text, ANSIColor background){}
+void ANSI_Style(ANSIStyle style){}
+void ANSI_ClearScreen(ClearType how){}
+void ANSI_ClearLine(ClearType how){}
+void ANSI_Cursor(int row, int col){}
+void ANSI_CursorUp(int cells){}
+void ANSI_CursorDown(int cells){}
+void ANSI_CursorForward(int cells){}
+void ANSI_CursorBackward(int cells){}
+void ANSI_CursorNextLine(int lines){}
+void ANSI_CursorPreviousLine(int lines){}
+void ANSI_CursorCol(int col){}
+void ANSI_SaveCursor(){}
+void ANSI_RestoreCursor(){}
+void ANSI_GetCursor(){}
+#endif
 

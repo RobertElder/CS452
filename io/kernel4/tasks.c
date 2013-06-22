@@ -30,6 +30,14 @@ void KernelTask_Start() {
 	robprintfbusy((const unsigned char *)"\033[1;37;41mSLOWWARN is OFF!\033[0m\n");
 #endif
 
+#ifndef ANSI
+	robprintfbusy((const unsigned char *)"\033[1;37;41mANSI is OFF!\033[0m\n");
+#endif
+
+#ifndef UI
+	robprintfbusy((const unsigned char *)"\033[1;37;41mUI is OFF!\033[0m\n");
+#endif
+
 	int tid = Create(HIGHEST, &FirstTask_Start);
 	
 	assertf(tid == 1, "FirstTask tid not 1, got %d", tid);

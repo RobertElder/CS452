@@ -49,7 +49,9 @@ void UIServer_Start() {
 			Reply(source_tid, server.reply_buffer, MESSAGE_SIZE);
 
 			if (!shutdown) {
+#ifdef UI
 				UIServer_Render(&server);
+#endif
 			}
 
 			break;
