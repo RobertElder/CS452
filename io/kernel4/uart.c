@@ -267,7 +267,7 @@ void ScreenOutputServer_SendData(ScreenOutputServer * server) {
 void TrainInputServer_Start() {
 	TrainInputServer server;
 	TrainInputServer_Initialize(&server);
-	int data;
+	char data;
 	
 	while (server.state != UARTSS_SHUTDOWN) {
 		Receive(&server.source_tid, server.receive_buffer, MESSAGE_SIZE);
@@ -335,7 +335,7 @@ void TrainInputServer_ReplyQueued(TrainInputServer * server) {
 		int tid = (int) Queue_PopStart((Queue*) &server->task_queue);
 		server->reply_message->message_type = MESSAGE_TYPE_ACK;
 		server->reply_message->chars[0] = c;
-
+	
 		Reply(tid, server->reply_buffer, MESSAGE_SIZE);
 	}
 }
@@ -397,7 +397,7 @@ void TrainOutputServer_Start() {
 
 void TrainOutputServer_Initialize(TrainOutputServer * server) {
 	CharBuffer_Initialize(&server->char_buffer);
-	server->state = UARTSS_READY;
+	server->state = UARTSS_WAITING;
 	server->receive_message = (GenericMessage *) server->receive_buffer;
 	server->reply_message = (GenericMessage *) server->reply_buffer;
 	server->char_message = (CharMessage*) server->receive_buffer;
@@ -414,9 +414,19 @@ void TrainOutputServer_SendData(TrainOutputServer * server) {
 		return;
 	}
 	
+	if ((*UART1Flag & TXBUSY_MASK)) {
+		// Restart the notifier
+		server->state = UARTSS_WAITING;
+		Reply(server->notifier_tid, server->reply_buffer, MESSAGE_SIZE);
+		return;
+	}
+	
 	if (!CharBuffer_IsEmpty(&server->char_buffer)) {
 		char data = CharBuffer_GetChar(&server->char_buffer);
-			
+		
+		//assert(*UART1Flag & CTS_MASK, "TrainOutputServer: CTS not set");
+		assert((*UART1Flag & TXBUSY_MASK) == 0, "TrainOutputServer: TXBusy!");
+		
 		*UART1DATA = data;
 		server->state = UARTSS_WAITING;
 		
