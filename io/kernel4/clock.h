@@ -16,8 +16,8 @@ typedef struct ClockMessage {
 
 typedef struct ClockServer {
 	int tid;
-	char receive_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
+	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	unsigned int ticks;
 	int tid_to_delay_until[MAX_TASKS + 1];
 	short shutdown;
@@ -48,8 +48,8 @@ typedef struct ClockClient {
 	int parent_tid;
 	int delay_time;
 	int num_delays;
-	char send_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 } ClockClient;
 
 void ClockClient_Start();

@@ -33,8 +33,8 @@ typedef enum UARTServerState {
 typedef struct ScreenOutputServer {
 	CharBuffer char_buffer;
 	int data;
-	char receive_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
+	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	int source_tid;
 	UARTServerState state;
 	GenericMessage * receive_message;
@@ -46,8 +46,8 @@ typedef struct ScreenOutputServer {
 typedef struct TrainOutputServer {
 	CharBuffer char_buffer;
 	int data;
-	char receive_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
+	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	int source_tid;
 	UARTServerState state;
 	GenericMessage * receive_message;
@@ -57,8 +57,8 @@ typedef struct TrainOutputServer {
 } TrainOutputServer;
 
 typedef struct KeyboardInputServer {
-	char receive_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
+	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	int source_tid;
 	UARTServerState state;
 	GenericMessage * receive_message;
@@ -68,8 +68,8 @@ typedef struct KeyboardInputServer {
 } KeyboardInputServer;
 
 typedef struct TrainInputServer {
-	char receive_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
+	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	int source_tid;
 	UARTServerState state;
 	GenericMessage * receive_message;

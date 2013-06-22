@@ -111,8 +111,8 @@ void TrainCommandServer_Start() {
 	int return_code = RegisterAs((char*) TRAIN_COMMAND_SERVER_NAME);
 	assertf(return_code == 0, "TrainCommandServer failed to register");
 	
-	char receive_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
+	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	TrainCommandMessage * command_receive_message = (TrainCommandMessage*) receive_buffer;
 	TrainCommandMessage * command_reply_message = (TrainCommandMessage*) reply_buffer;
 	int source_tid;
@@ -182,8 +182,8 @@ void TrainCommandServer_Start() {
 void TrainSensorReader_Start() {
 	robprintfbusy((const unsigned char *)"TrainSensorReader_Start. tid=%d\n", MyTid());
 
-	char send_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	TrainSensorMessage * send_message = (TrainSensorMessage *) send_buffer;
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
 	char module_num;

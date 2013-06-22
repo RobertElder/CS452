@@ -39,9 +39,9 @@ typedef enum RPSServerState {
 
 typedef struct RPSServer {
 	int tid;
-	char receive_buffer[MESSAGE_SIZE];
-	char send_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
+	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	TaskQueue player_tid_queue;
 	int player_1_tid;
 	int player_2_tid;
@@ -57,9 +57,9 @@ typedef struct RPSServer {
 
 typedef struct RPSClient {
 	int tid;
-	char reply_buffer[MESSAGE_SIZE];
-	char send_buffer[MESSAGE_SIZE];
-	char receive_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	RNG rng;
 	int server_id;
 	unsigned int num_rounds_to_play;

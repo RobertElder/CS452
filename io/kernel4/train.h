@@ -39,8 +39,8 @@ typedef enum SENSOR_MODULE {
 } SENSOR_MODULE;
 
 typedef struct TrainServer {
-	char receive_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
+	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	short shutdown;
 	GenericMessage * receive_message;
 	GenericMessage * reply_message;

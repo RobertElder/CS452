@@ -16,9 +16,9 @@ typedef struct UIMessage {
 } UIMessage;
 
 typedef struct UIServer {
-	char receive_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
-	char send_buffer[MESSAGE_SIZE];
+	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	unsigned int print_message_count;
 	short dirty;
 	char command_buffer[UI_SERVER_COMMAND_BUFFER_SIZE];

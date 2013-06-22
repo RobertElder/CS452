@@ -306,8 +306,8 @@ void UIServer_PrintSensors(UIServer * server) {
 void UITimer_Start() {
 	int return_code = RegisterAs((char*) UI_TIMER_NAME);
 	assert(return_code == 0, "UITimer_Start failed to register name");
-	char send_buffer[MESSAGE_SIZE];
-	char reply_buffer[MESSAGE_SIZE];
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	GenericMessage * send_message = (GenericMessage *) send_buffer;
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
 	int server_tid = WhoIs((char*) UI_SERVER_NAME);
@@ -331,8 +331,8 @@ void UITimer_Start() {
 }
 
 void UIKeyboardInput_Start() {
-	char reply_buffer[MESSAGE_SIZE];
-	char send_buffer[MESSAGE_SIZE];
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
 	CharMessage * char_message = (CharMessage *) send_buffer;
 	char data;
