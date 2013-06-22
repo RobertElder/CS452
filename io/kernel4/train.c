@@ -173,7 +173,6 @@ void TrainCommandServer_Start() {
 		
 		command_reply_message->message_type = MESSAGE_TYPE_ACK;
 		Reply(source_tid, reply_buffer, MESSAGE_SIZE);
-		robprintfbusy((const unsigned char *)"OK!f\n");
 	}
 	
 	Exit();
