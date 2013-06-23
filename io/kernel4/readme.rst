@@ -487,13 +487,31 @@ Train Command Server
 The Train Command Server is responsible for receiving Train Command messages such as ``SPEED`` and ``READ_SENSOR``. It calls ``Putc`` and ``Getc`` as required. Passing all train commands through this server is a form of mutual exclusion. It ensures that commands are fully sent to the trains and commands are not mangled by different tasks.
 
 
-
-
 UI Servers
 ++++++++++
 
 File: ``ui.c``, ``ansi.c``
 
+UI Server
+---------
+
+The UI Server is responsible for drawing the textual user interface. It draws a header, the time since start up, the command prompt, and a table of sensors readings.
+
+The command prompt supports up to 80 characters. Once this limit is reached, no input will be accepted and displayed. It supports backspace. Pressing the Enter key will execute the command and a response will be displayed under the command prompt.
+
+When a sensor is triggered, the UI Server will display an X on the table. Since the UI Server does not update quickly, a quickly activated and deactivated sensor may not display.
+
+
+UI Timer
+--------
+
+The UI Timer is responsible for sending a message to the UI Server. The timer tells the UI to update the clock on the screen.
+
+
+UI Keyboard Input Task
+----------------------
+
+The UI Keyboard Input task is responsible for calling ``Getc`` and sending the character to the UI Server.
 
 
 Performance
