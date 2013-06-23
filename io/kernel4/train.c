@@ -13,13 +13,14 @@ void TrainServer_Start() {
 		switch(server.receive_message->message_type) {
 		case MESSAGE_TYPE_SHUTDOWN:
 			// from admin tid
-			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			robprintfbusy((const unsigned char *)"TrainServer_Start Exiting because of shutdown.\n");
 			server.shutdown = 1;
 			
 			Send(server.train_command_server_tid, server.receive_buffer, MESSAGE_SIZE, server.reply_buffer, MESSAGE_SIZE);
 			
 			assert(server.reply_message->message_type == MESSAGE_TYPE_ACK, "TrainServer did not get ACK reply from train command server shutdown");
+
+			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			server.num_child_task_running--;
 			break;
 		case MESSAGE_TYPE_DATA:
