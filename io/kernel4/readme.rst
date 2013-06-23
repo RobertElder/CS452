@@ -14,7 +14,7 @@ Running
 
 The executable is located at ``/u/cs452/tftp/ARM/relder-chfoo/k4-submit/kern.elf``.
 
-The entry point is located at **``0x00045000``** or ``%{FREEMEMLO}`` It must be executed with caching enabled::
+The entry point is located at ``0x00045000`` or ``%{FREEMEMLO}`` It *must* be executed with caching enabled::
 
     load -b %{FREEMEMLO} -h 10.15.167.4 ARM/relder-chfoo/k4-submit/kern.elf
     go -c
@@ -83,7 +83,7 @@ System Calls
     Prepares a ``WHO_IS`` message type and sends it to the Name Server. As noted in ``RegisterAs``, we either return a Task ID or 0 if the task has not been created. However, the task ID returned may be in a zombie state.
 
 ``AwaitEvent``
-    Marks the task as ``EVENT_BLOCKED``. The task will be unblocked by the Scheduler via the timer interrupt. 
+    Marks the task as ``EVENT_BLOCKED``. The task will be unblocked by the Scheduler via the timer interrupt. This call always returns 0 and the user task will be responsible for obtaining the data themselves.
 
 ``Time``
     Wraps a ``Send`` to the Clock Server. It first queries the Name Server for the Clock Server and then sends a ``TIME_REQUEST`` message. It expects back a ``TIME_REPLY`` message and returns the time.
@@ -347,6 +347,25 @@ When the Scheduler is asked to unblock events on a particular ``EventID``, it fi
 The Scheduler will use linear search to find tasks that are ``EVENT_BLOCKED`` and change its state to ``READY``. See Performance.
 
 
+Event IDs
+----------
+
+``CLOCK_TICK_EVENT``
+    A Timer3 clock tick interrupt has fired
+
+``UART1_RX_EVENT``
+    A UART1 receive holding register empty interrupt has fired
+
+``UART1_TX_EVENT``
+    A UART1 transmit holding register empty interrupt has fired
+
+``UART2_RX_EVENT``
+    A UART2 receive holding register empty interrupt has fired
+
+``UART2_TX_EVENT``
+    A UART2 transmit holding register empty interrupt has fired
+
+
 Memory
 ++++++
 
@@ -396,6 +415,35 @@ Assert
 
 The assert statement has been enhanced to show Thomas The Tank Engine. Please do not be alarmed when you see it.
 
+
+Serial IO
++++++++++
+
+File: ``uart.c``
+
+
+The following notifiers call ``AwaitEvent``
+
+========================== ============== ==============================
+Task                       Event ID       Reports to
+========================== ============== ==============================
+Keyboard Input Notifier    UART2_RX_EVENT Keyboard Input Server
+Screen Output Notifier     UART2_TX_EVENT Screen Output Server
+Train Input Notifier       UART1_RX_EVENT Train Input Server
+Train Output Notifier      UART1_TX_EVENT Train Output Server
+========================== ============== ==============================
+
+
+Train Servers
++++++++++++++
+
+File: ``train.c``
+
+
+UI Servers
+++++++++++
+
+File: ``ui.c``, ``ansi.c``
 
 
 
