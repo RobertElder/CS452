@@ -83,7 +83,7 @@ System Calls
     Prepares a ``WHO_IS`` message type and sends it to the Name Server. As noted in ``RegisterAs``, we either return a Task ID or 0 if the task has not been created. However, the task ID returned may be in a zombie state.
 
 ``AwaitEvent``
-    Marks the task as ``EVENT_BLOCKED``. The task will be unblocked by the Scheduler via the timer interrupt. This call always returns 0 and the user task will be responsible for obtaining the data themselves.
+    Marks the task as ``EVENT_BLOCKED``. The task will be unblocked by the Scheduler. This call always returns 0 and the user task will be responsible for obtaining the data themselves. ``AwaitEvent`` supports only 1 task per event type.
 
 ``Time``
     Wraps a ``Send`` to the Clock Server. It first queries the Name Server for the Clock Server and then sends a ``TIME_REQUEST`` message. It expects back a ``TIME_REPLY`` message and returns the time.
@@ -317,11 +317,13 @@ Interrupt Handler
 
 File: ``kernel_irq.c``
 
+Vectored interrupts are used.
+
 Timer3 is enabled and counts down from 5080 to give 10ms interrupt intervals. The kernel also sets the CPSR to allow interrupts.
 
 The interrupt handler will call the scheduler to unblock tasks and it also acknowledge Timer3.
 
-The interrupt handler currently assumes that it is the Timer3 interrupt since no other interrupts are enabled. The next deliverable will check for the correct interrupt source.
+UART1RXINTR1, UART1TXINTR1, UART2RXINTR2, UART2TXINTR2, are enabled when there is a Task waiting for it. The IRQ handlers will disable the respective interrupt after it has fired. UART Clocking problems are avoided as our context switch is greater than 50 NOPs. 
 
 
 Scheduler
@@ -329,22 +331,39 @@ Scheduler
 
 File: ``scheduler.c``
 
-Changes:
-
-* Scheduler code is now in its own file.
-* Number of tasks in each event states are now tracked for debugging purposes.
-* 32 levels of priority has been implemented.
+* Has 32 levels of priority.
+* Number of tasks in each event states are tracked for debugging purposes.
 * Blocked tasks are not requeued in the ready queue until it is actually ready.
+* Preemptive scheduling is supported
 
-The Scheduler has an array mapping of ``EventID`` to boolean. This array tracks whether at least one task is waiting on an event.
+The following describes the Scheduler's task switching routine:
+
+1. The tasks state is pushed onto the Supervisor or IRQ stack as appropriate.
+2. The user task's SP, LR, and SPSR values are saved into the current task descriptor.
+3. Any related values are also saved into the TD.
+4. The next task is selected (``schedule_next_task()``).
+
+   1. A task is removed from the Priority Queue.
+
+      * Any tasks in the ``ZOMBIE`` or blocked state indicates a logic error.
+
+   2. Use the pointer to the task as the next task to be run.
+   3. Set the selected task as ``ACTIVE``.
+   4. Reschedule the selected task by adding it back to the Priority Queue.
+
+5. If there no more tasks in the Priority Queue, the kernel exits back to RedBoot using the values we saved on the Kernel State.
+6. Otherwise, the SP, LR, and return values are saved into the Kernel State.
+7. Assembly routine ``asm_KernelExit`` pushes these values to the registers.
 
 
-Event Unblocking
-----------------
+Events
+------
 
-When the Scheduler is asked to unblock events on a particular ``EventID``, it firsts checks the ``EventID`` array mapping. If it is true, then it continues.
+When a task calls ``AwaitEvent``, the Task ID is placed into an array mapping of Event ID to Task TD.
 
-The Scheduler will use linear search to find tasks that are ``EVENT_BLOCKED`` and change its state to ``READY``. See Performance.
+If the Event is related to Serial IO, the appropriate interrupt is enabled for it.
+
+When the Scheduler is asked to unblock events on a particular ``EventID``, it will check the array mapping and unblock this task by adding it to the Ready Queue.
 
 
 Event IDs
@@ -450,7 +469,7 @@ The Input Servers receive keyboard and train inputs. They have a Char Buffer and
 Screen Output Server, Train Output Server
 -----------------------------------------
 
-The Output Servers send screen and train outputs. They have a Char Buffer and send bytes as notified. ``Putc`` callers will send the character to the server and the character is queued onto the Char Buffer. Once it is OK to transmit, the character is popped from the Char Buffer and transmitted.
+The Output Servers send screen and train outputs. They have a Char Buffer and send bytes as notified. ``Putc`` callers will send the character to the server and the character is queued onto the Char Buffer. Once it is OK to transmit by checking the CTS flag, the character is popped from the Char Buffer and transmitted.
 
 
 Train Servers
