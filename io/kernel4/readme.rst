@@ -215,7 +215,7 @@ The queue, a ``struct``, is implemented as a ring buffer. A start and end index 
 Priority Queue
 --------------
 
-The Priority Queue uses 32 levels of priority.
+The Priority Queue uses 32 levels of priority by using 32 Queues.
 
 Named priority levels are available. Note the highest priority is 0 and the lowest priority is 31.
 
@@ -528,9 +528,9 @@ Time slicing now occurs each time a timer interrupt fires.  This allows a slow r
 
 Constant time memory allocation is now used instead of the linear time memory allocation that was used before.  The implementation details of this are described in the data structures section.
 
-Constant time unblocking of tasks has been added by adhereing to the convention that only one task can be blocked on a particular event at a time.  This removes the necessity to iterate through all tasks checking for their state, and unblocking them if they are blocked on the event being triggered.  This update saved as much as 540us on interrupts that involved unblocking tasks.
+Constant time unblocking of tasks has been added by adhering to the convention that only one task can be blocked on a particular event at a time.  This removes the necessity to iterate through all tasks checking for their state, and unblocking them if they are blocked on the event being triggered.  This update saved as much as 540us on interrupts that involved unblocking tasks.
 
-Finally, our kernel has been updated to work in all compillation levels.  Our O3 version runs about twice as fast as the O0 version.
+Finally, our kernel has been updated to work in all compilation levels.  Our O3 version runs about twice as fast as the O0 version.
 
 Source Code
 ===========
