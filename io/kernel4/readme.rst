@@ -176,9 +176,12 @@ Stack values and sizes are configurable, and will generally give appropriate ass
 Message Passing
 ---------------
 
+Messages are ``structs`` that are casted into ``char*``. This casting allows us to manipulate messages more easily with type safety rather than dealing with raw ``char``. Note we use GCC attribute syntax to word align the character array as the GCC compiler does not realize we are type punning.
+
 Kernel Messages, messages that are copied into the kernel, are now stored into an array, using Dynamic Memory Allocation (see below), instead of using a combination of ring buffers and queues. Refactoring to a simpler solution allows us to reduce the load on our brain while debugging the kernel. See Dynamic Memory Allocation for more information.
 
-The maximum message size is now 16 bytes. This was done to reduce the time spent on message copying.
+The message size is fixed to 16 bytes. Using a fixed value allows for consistency. As well, this low value is meant to reduce the time spent on message copying.
+
 
 Task Descriptor (TD)
 ++++++++++++++++++++
@@ -335,7 +338,9 @@ Memory
 
 File: ``memory.c``
 
-``m_strcpy`` has optimization improvements. It now can copy strings at 1, 8, or 32 octets at a time using block load and store instructions.
+
+* ``m_strcpy`` copies strings at 1, 8, or 32 octets at a time using block load and store instructions.
+* ``m_strcmp`` compares two strings, 1 character at a time.
 
 
 Dynamic Memory Allocation
