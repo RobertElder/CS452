@@ -49,6 +49,9 @@ Kernel
 System Calls
 ------------
 
+* System calls support up to 5 arguments.
+
+
 ``Create``
     Returns the new task id, ``ERR_K_INVALID_PRIORITY -1``, or ``ERR_K_OUT_OF_TD -2``
 
@@ -99,7 +102,7 @@ System Calls
 Memory model
 ------------
 
-The memory model is now changed to look like this::
+The memory model looks like this::
 
     +----------------+ 0x0200_0000
     | RedBoot Stack  |
@@ -117,6 +120,28 @@ The memory model is now changed to look like this::
     +----------------+ 0x0004_5000 (%{FREEMEMLO} RedBoot alias)
     | RedBoot        |
     +----------------+ 0x0000_0000
+
+
+Entry
+-----
+
+The entry point is located in ``kern.c``.
+
+The kernel follows the following:
+
+1. Sets the location of our SWI and interrupt routines.
+2. Sets the location of our stacks.
+3. Initialize the kernel (File ``private_kernel_interface.c``:``k_InitKernel()``).
+
+   1. Save the SP and LR values so the kernel can exit back to RedBoot.
+   2. Initialize the pseudo Task Descriptor.
+   3. Initialize the queues.
+   4. Set the SP and LR value of the pseudo Task Descriptor to the Kernel State
+   5. Call the ``asm_KernelExit`` routine to push the values to the register.
+
+4. Jump to KernelTask_Start (File ``tasks.c``)
+5. Start our first user task that starts the 4 other generic tasks.
+
 
 Redboot Buffer
 --------------
@@ -155,6 +180,14 @@ Kernel Messages, messages that are copied into the kernel, are now stored into a
 
 The maximum message size is now 16 bytes. This was done to reduce the time spent on message copying.
 
+Task Descriptor (TD)
+++++++++++++++++++++
+
+File: ``task_descriptor.c``
+
+The TD, a ``struct``, holds important information such as the task id, state, and return values.
+
+
 Queues
 ++++++
 
@@ -187,6 +220,35 @@ Char Buffer
 -----------
 
 The Char Buffer is a queue of characters. Like Queue, it is implemented as a ring buffer. However, the Char Buffer requires checking whether the Char Buffer is empty before getting an item. It is necessary because a return value of 0 indicates a byte value of 0.
+
+
+IdleTask and AdministratorTask
+++++++++++++++++++++++++++++++
+
+The Administrator Task is responsible for helping us exiting to RedBoot.
+
+The Idle Task runs when all tasks are blocked. The Administrator Task keeps track the number of tasks running. The Clock Clients will tell the Administrator Task when it has shutdown. After all tasks have exited, the Administrator Task will tell the Idle Task to exit.
+
+
+Name Server
++++++++++++
+
+File: ``nameserver.c``
+
+The name server uses a 2D ``char`` array. The maximum name is limited arbitrary to 8 letters including the null terminator. The small value reduces message copying and string comparison time. The array index corresponds to the Task ID for simplicity and constant time operations.
+
+It does the following:
+
+1. ``Receive`` a message casted to ``NameServerMessage``
+2. Determine the request type.
+3. Look up or set the value in the array.
+4. If it receives a ``NAME_SERVER_SHUTDOWN`` message type, it will ``Exit()``
+
+* Requests to set the name multiple times overwrites the previous value.
+* 0 is returned when an invalid Task ID is provided.
+* The Task ID is hard-coded to ``2``.
+* Look ups are linear time but bounded to the maximum name size of 8.
+* Setting names are constant time.
 
 
 Clock Server
