@@ -421,8 +421,9 @@ Serial IO
 
 File: ``uart.c``
 
+* FIFOs were not used for this deliverable.
 
-The following notifiers call ``AwaitEvent``
+The following Serial IO notifiers call ``AwaitEvent``
 
 ========================== ============== ==============================
 Task                       Event ID       Reports to
@@ -434,10 +435,58 @@ Train Output Notifier      UART1_TX_EVENT Train Output Server
 ========================== ============== ==============================
 
 
+UART Bootstrap Task
+-------------------
+
+The UART Bootstrap Task is responsible for setting up the UART clock speeds and settings. It also starts up the servers.
+
+
+Keyboard Input Server, Train Input Server
+-----------------------------------------
+
+The Input Servers receive keyboard and train inputs. They have a Char Buffer and receive byte data as notified. ``Getc`` callers will have their task IDs queued. Once Char Buffer contains data, the ``Getc`` callers will be replied with the character.
+
+
+Screen Output Server, Train Output Server
+-----------------------------------------
+
+The Output Servers send screen and train outputs. They have a Char Buffer and send bytes as notified. ``Putc`` callers will send the character to the server and the character is queued onto the Char Buffer. Once it is OK to transmit, the character is popped from the Char Buffer and transmitted.
+
+
 Train Servers
 +++++++++++++
 
 File: ``train.c``
+
+
+Train Server
+------------
+
+The Train Server is responsible for handling sensor data from the Train Sensor Reader and queries from the UI Server. It also starts the Train Sensor Reader and Train Command Server
+
+Data Structures
+'''''''''''''''
+
+The Train Server stores its sensor data into bit flags. The least significant bit represents the first sensor. This scheme allows easier masking:
+
+* ``flag & 1<<0`` is the first sensor
+* ``flag & 1<<1`` is the second sensor
+* ``flag & 1<<15`` is the 16th sensor
+
+As well, the Train Server stores the last Time the sensor was triggered.
+
+
+Train Sensor Reader
+-------------------
+
+The Train Sensor Reader task is responsible for sending track sensor commands and reading them from the train controller. It calls the Train Command Server for the data and manipulates the bytes into a easier to handle form. It then sends the values to the Train Server.
+
+Train Command Server
+--------------------
+
+The Train Command Server is responsible for receiving Train Command messages such as ``SPEED`` and ``READ_SENSOR``. It calls ``Putc`` and ``Getc`` as required. Passing all train commands through this server is a form of mutual exclusion. It ensures that commands are fully sent to the trains and commands are not mangled by different tasks.
+
+
 
 
 UI Servers
