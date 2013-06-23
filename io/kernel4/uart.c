@@ -7,6 +7,8 @@
 #include "scheduler.h"
 
 void UARTErrorCheck(int sts, const char * context){
+return;
+/// TODO dont ignore this
 	assertf(!(sts && FE_MASK), "Framing error detected communicating with %s", context);
 	assertf(!(sts && PE_MASK), "Parity error detected communicating with %s", context);
 	assertf(!(sts && BE_MASK), "Break error detected communicating with %s", context);

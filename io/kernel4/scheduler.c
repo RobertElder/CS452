@@ -89,11 +89,12 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 	
 	Scheduler_PrintTDCounts(scheduler);
 
+// TODO: don't ignore this
 	assertf(scheduler->num_ready == 0,
 		"Number of ready tasks is not zero. Count=%d", scheduler->num_ready);
 	assertf(scheduler->num_active == 0,
 		"Number of active tasks is not zero. Count=%d", scheduler->num_active);
-	assertf(scheduler->num_send_blocked == 0,
+/*	assertf(scheduler->num_send_blocked == 0,
 		"Number of send_blocked tasks is not zero. Count=%d",
 		scheduler->num_send_blocked);
 	assertf(scheduler->num_reply_blocked == 0,
@@ -103,7 +104,7 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 	assertf(scheduler->num_receive_blocked == 0,
 		"Number of recive_blocked tasks is not zero. Count=%d",
 		scheduler->num_receive_blocked);
-
+*/
 	/*
 	 * After careful consideration, I've concluded that it is acceptable for a task
 	 * to terminate in the event blocked state.  This is necessary for some events such

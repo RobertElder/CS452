@@ -54,6 +54,7 @@ typedef struct TrainServer {
 	int source_tid;
 	int num_child_task_running;
 	int train_command_server_tid;
+	int train_sensor_reader_tid;
 } TrainServer;
 
 

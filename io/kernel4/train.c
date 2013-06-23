@@ -5,6 +5,7 @@
 void TrainServer_Start() {
 	TrainServer server;
 	TrainServer_Initialize(&server);
+	int admin_tid = 0;
 
 	while(server.num_child_task_running) {
 		Receive(&server.source_tid, server.receive_buffer, MESSAGE_SIZE);
@@ -13,6 +14,7 @@ void TrainServer_Start() {
 		switch(server.receive_message->message_type) {
 		case MESSAGE_TYPE_SHUTDOWN:
 			// from admin tid
+			admin_tid = server.source_tid;
 			robprintfbusy((const unsigned char *)"TrainServer_Start Exiting because of shutdown.\n");
 			server.shutdown = 1;
 			
@@ -20,7 +22,6 @@ void TrainServer_Start() {
 			
 			assert(server.reply_message->message_type == MESSAGE_TYPE_ACK, "TrainServer did not get ACK reply from train command server shutdown");
 
-			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			server.num_child_task_running--;
 			break;
 		case MESSAGE_TYPE_DATA:
@@ -37,6 +38,9 @@ void TrainServer_Start() {
 		}
 	}
 	
+	assert(admin_tid, "TrainServer: did not get admin tid");
+	Reply(admin_tid, server.reply_buffer, MESSAGE_SIZE);
+	
 	robprintfbusy((const unsigned char *)"TrainServer_Start exit.\n");
 
 	Exit();
@@ -50,8 +54,8 @@ void TrainServer_Initialize(TrainServer * server) {
 	server->receive_message = (GenericMessage *) server->receive_buffer;
 	server->reply_message = (GenericMessage *) server->reply_buffer;
 
-	int tid = Create(HIGH, TrainSensorReader_Start);
-	assert(tid, "TrainServer failed to create TrainSensorReader");
+	server->train_sensor_reader_tid = Create(HIGH, TrainSensorReader_Start);
+	assert(server->train_sensor_reader_tid, "TrainServer failed to create TrainSensorReader");
 	
 	server->train_command_server_tid = Create(HIGH, TrainCommandServer_Start);
 	assert(server->train_command_server_tid, "TrainServer failed to create TrainCommandServer");
@@ -75,10 +79,13 @@ void TrainServer_HandleSensorReaderData(TrainServer * server) {
 
 	if (server->shutdown) {
 		server->reply_message->message_type = MESSAGE_TYPE_SHUTDOWN;
-		server->num_child_task_running--;
 	}
 	
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
+	
+	if (server->shutdown) {
+		server->num_child_task_running--;
+	}
 
 	int module_num = recv_sensor_message->module_num;
 	int sensor_bit_flag = recv_sensor_message->sensor_bit_flag;
