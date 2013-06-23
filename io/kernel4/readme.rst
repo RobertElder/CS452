@@ -336,9 +336,11 @@ File: ``scheduler.c``
 * Blocked tasks are not requeued in the ready queue until it is actually ready.
 * Preemptive scheduling is supported
 
-The following describes the Scheduler's task switching routine:
+The following describes the process of context switching:
 
-1. The tasks state is pushed onto the Supervisor or IRQ stack as appropriate.
+1a. If the context switch occurs because of an interrupt, the task's state is pushed onto the IRQ stack then poped back onto the user's stack.
+1b. If the context switch occurs because of a kernel call, the user's state is saved before entering the SWI call.  We are aware that this design is discouraged, but because everthing is working right now, we have put refactoring this on the back burner.
+In Both cases we remember what method was used to enter the kernel so we can envoke a symmetric exit routine when the task is re-scheduled.  The design decision to have two methods of entering and exiting the kernel was done to allow future optimizations related to the fact that some context switch operations only need to be done for one method and not the other.  This was also done to preclude the possibility of errors resulting from re-scheduling a process via the wrong method.  For example, attempting to set r0 to set a non-existent return value for a task that was preempted.
 2. The user task's SP, LR, and SPSR values are saved into the current task descriptor.
 3. Any related values are also saved into the TD.
 4. The next task is selected (``schedule_next_task()``).
@@ -400,11 +402,7 @@ Dynamic Memory Allocation
 
 A simple, Dynamic Memory Allocation or heap was implemented. For this deliverable it has been refactored to use constant time allocation and deallocation.  It is currently used for storing Kernel Messages.
 
-It uses an array of booleans to track which blocks of memory have been allocated. The blocks of memory are implemented as a ``char`` array.
-
-To allocate memory, it searches the array of booleans for a free spot and returns a pointer. Freeing memory simply requires calculating the index of array of boolean and setting it to 0.
-
-See Performance.
+See Data Structures for implementation details.
 
 
 RPS
@@ -433,6 +431,8 @@ Assert
 ++++++
 
 The assert statement has been enhanced to show Thomas The Tank Engine. Please do not be alarmed when you see it.
+
+The assert function has also been modified to make sure that interrupts are disabled when an assertion is fired so that a user task that assert fails does not simply get ignored when its time quantum expires.  This was necessary because of preemption.
 
 
 Serial IO
