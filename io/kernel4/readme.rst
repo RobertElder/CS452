@@ -361,17 +361,26 @@ RPS
 The ``RPSServer`` has been refactored to fix synchronization problems. It is used for stress testing the OS. At least 480 tasks should run without problems.
 
 
-Nameserver
-++++++++++
-
-Maximum name length has been arbitrary reduced to 8 bytes (including the null terminator) to fit within the reduced size Kernel Message.
-
 IdleTask and AdministratorTask
 ++++++++++++++++++++++++++++++
 
 The Administrator Task is responsible for helping us exiting to RedBoot.
 
 The Idle Task runs when all tasks are blocked. The Administrator Task keeps track the number of tasks running. The Clock Clients will tell the Administrator Task when it has shutdown. After all tasks have exited, the Administrator Task will tell the Idle Task to exit.
+
+
+Random Number Generator
++++++++++++++++++++++++
+
+File: ``random.h``
+
+A LCG is used as the random number generator. It uses the GCC values as noted on Wikipedia. The seed is multiplied by an arbitrary number to get the generator going.
+
+
+Assert
+++++++
+
+The assert statement has been enhanced to show Thomas The Tank Engine. Please do not be alarmed when you see it.
 
 
 Performance
