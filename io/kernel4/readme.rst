@@ -1,23 +1,40 @@
 =========
-CS 452 K3
+CS 452 K4
 =========
 
 
 :Names: Robert Elder, Christopher Foo
 :ID #: 20335246, 20309244
 :Userids: relder, chfoo
-:Date due: June 12, 2013
+:Date due: June 24, 2013
 
 
 Running
 =======
 
-The executable is located at ``/u/cs452/tftp/ARM/relder-chfoo/k3-submit/kern.elf``.
+The executable is located at ``/u/cs452/tftp/ARM/relder-chfoo/k4-submit/kern.elf``.
 
 The entry point is located at **``0x00045000``** or ``%{FREEMEMLO}`` It must be executed with caching enabled::
 
-    load -b %{FREEMEMLO} -h 10.15.167.4 ARM/relder-chfoo/k3-submit/kern.elf
+    load -b %{FREEMEMLO} -h 10.15.167.4 ARM/relder-chfoo/k4-submit/kern.elf
     go -c
+
+
+Commands
+++++++++
+
+tr TRAIN SPEED
+    Set the train speed.
+
+rv TRAIN
+    Slows, stops, and reverses train. The final speed is hard coded to 5.
+
+sw SWITCH DIRECTION
+    Changes the turnout direction. DIRECTION is either S or C.
+
+q
+    Quits the program.
+
 
 
 Description
@@ -31,6 +48,36 @@ Kernel
 
 System Calls
 ------------
+
+``Create``
+    Returns the new task id, ``ERR_K_INVALID_PRIORITY -1``, or ``ERR_K_OUT_OF_TD -2``
+
+``MyTid``
+    Returns the current task id
+
+``MyParentTid``
+    Returns the parent task id. The parent task id is always returned regardless of the parent's state.
+
+``Pass``
+    (Rescheduling happens as normal in the background.)
+
+``Exit``
+    Task is marked as ``ZOMBIE`` (and rescheduling happens as normal in the background).
+
+``Send``
+    Sends a message to the given task ID. ``-3`` code is not implemented.
+
+``Receive``
+    Blocks until a message is received. Returns the size of the message which will be typically ``MESSAGE_SIZE 16``
+
+``Reply``
+    Replies a message to the task. On errors ``-3`` ``-4``, an assert will fire before returning to aid in debugging.
+
+``RegisterAs``
+   Prepares a ``NameServerMessage`` structure with a message type of ``REGISTER_AS`` and sends the message to the Name Server. ``0`` is always returned because the Task ID is hard-coded and the call should never send to the wrong task.
+
+``WhoIs``
+    Prepares a ``WHO_IS`` message type and sends it to the Name Server. As noted in ``RegisterAs``, we either return a Task ID or 0 if the task has not been created. However, the task ID returned may be in a zombie state.
 
 ``AwaitEvent``
     Marks the task as ``EVENT_BLOCKED``. The task will be unblocked by the Scheduler via the timer interrupt. 
