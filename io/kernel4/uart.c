@@ -414,7 +414,7 @@ void TrainOutputServer_SendData(TrainOutputServer * server) {
 		return;
 	}
 	
-	if ((*UART1Flag & TXBUSY_MASK)) {
+	if ((*UART1Flag & TXBUSY_MASK) || !(*UART1Flag & CTS_MASK)) {
 		// Restart the notifier
 		server->state = UARTSS_WAITING;
 		Reply(server->notifier_tid, server->reply_buffer, MESSAGE_SIZE);
