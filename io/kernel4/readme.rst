@@ -14,7 +14,7 @@ Running
 
 The executable is located at ``/u/cs452/tftp/ARM/relder-chfoo/k3-submit/kern.elf``.
 
-The entry point is located at **``0x00045000``** or ``%{FREEMEMLO}`` It can be executed with caching enabled::
+The entry point is located at **``0x00045000``** or ``%{FREEMEMLO}`` It must be executed with caching enabled::
 
     load -b %{FREEMEMLO} -h 10.15.167.4 ARM/relder-chfoo/k3-submit/kern.elf
     go -c
@@ -26,16 +26,14 @@ Description
 Kernel
 ++++++
 
-* The SWI vector entry code has been fixed by setting it to the correct location.
-* Caching improves the performance of the program and Clock Slow Warnings should only  appear on task creation and shutdown. We recognize that without caching more warnings may be printed. See Performance.
-* When a user task is interrupted by the timer IRQ handler, the user state is pushed onto the IRQ handler stack.  We recognize that this is not what we're supposed to do and we plan to fix this in the next deliverable.  For now we have focused on meeting the timing requirements, and making sure that the amount of time before we unblock event blocked tasks is less than 10ms.  The next step will be to push state onto the user stack, so that we can context switch directly to the Clock Notifier task, instead of just unblocking it.
+* Caching improves the performance of the program and will be mandatory for this deliverable.  Due to some issues with timing that we will be addressing soon, some of the important user tasks will deadlock if you do not run the program with caches.  The root cause of this problem is related to improperly attempting to send bytes to the train when the FIFO buffer is empty instead of waiting for CTS to be driven low, then high.
 
 
 System Calls
 ------------
 
 ``AwaitEvent``
-    Marks the task as ``EVENT_BLOCKED``. The task will be unblocked by the Scheduler via the timer interrupt. This call currently does not return anything useful. The next deliverable will decide on how data is communicated back to the task.
+    Marks the task as ``EVENT_BLOCKED``. The task will be unblocked by the Scheduler via the timer interrupt. 
 
 ``Time``
     Wraps a ``Send`` to the Clock Server. It first queries the Name Server for the Clock Server and then sends a ``TIME_REQUEST`` message. It expects back a ``TIME_REPLY`` message and returns the time.
@@ -56,7 +54,7 @@ Memory model
 
 The memory model is now changed to look like this::
 
-    +----------------+ 0x0020_0000
+    +----------------+ 0x0200_0000
     | RedBoot Stack  |
     +----------------+ 0x01fd_cfdc Starting value of redboot stack 
     | Redboot Buffer*|             after box reset
@@ -136,8 +134,7 @@ Data Structures
 
 The Clock Server maintains a array mapping of TIDs to clock ticks in absolute time. Accesses to this mapping are constant time.
 
-In order to address a bug in managing message queue data, we implemented a heap—the memory management kind—that is used only by kernel when queueing messages.  The algorithm that performs the memory allocation is linear time, however this is ok because in practice this is bounded by the number of tasks, which is known to be less than 50.  We have stress tested our kernel with several hundred tasks, and the empirical measurements of timings still keeps us under our goal of 10ms for being able to respond to events.  We plan to further improve the run time of this function in the future.
-
+After reviewing feedback from the previous deliverable, we have refactored the memory heap to work in constant time for both requesting and releasing memory.  The use of the heap is further justfied since it is only used when queuing messages inside the kernel.  Constant time allocation and de-allocation is accomplished by use of a stack.  The stack is initialized to contain pointers to all memory blocks that are free.  A request for memory pops a pointer from the top of the stack, and de-allocation pushes the released pointer onto the stack.  This allows constant time random-access de-allocation, while maintaining constant time allocation.
 
 Delay Requests
 --------------
@@ -148,8 +145,7 @@ Whenever the Clock Server receives a delay request message, it checks whether th
 Unblocking
 ----------
 
-After handling each received message, the Clock Server will check the array mapping of TID to delay time for ticks that are in the past. If so, it will reply back. This search is linear. See Performance.
-
+Unblocking tasks on events has been improved to work in constant time.  See performance.
 
 Clock Slow Warning
 ------------------
@@ -228,7 +224,7 @@ File: ``memory.c``
 Dynamic Memory Allocation
 -------------------------
 
-A simple, but linear time, Dynamic Memory Allocation or heap was implemented. It is currently used for storing Kernel Messages.
+A simple, Dynamic Memory Allocation or heap was implemented. For this deliverable it has been refactored to use constant time allocation and deallocation.  It is currently used for storing Kernel Messages.
 
 It uses an array of booleans to track which blocks of memory have been allocated. The blocks of memory are implemented as a ``char`` array.
 
@@ -259,8 +255,20 @@ The Idle Task runs when all tasks are blocked. The Administrator Task keeps trac
 Performance
 +++++++++++
 
-For this deliverable, we have found the performance of the kernel to be acceptable after all tasks have been created. Acceptable is defined when the Clock Server does not lose more than 1ms from the Clock Notifier. We have kept linear solutions for now, because we believe that lost ticks during start up and shutdown is not important as the system is not doing anything useful during that time. However, we are still working on improving the overall context switching of the kernel.
+In this deliverable we have made several changes that significantly improve the performance of our kernel:
 
+1)  Time slicing
+2)  Constant time memory allocation
+3)  Constant time unblocking of tasks on events.
+4)  Works with all gcc optimization levels.
+
+Time slicing now occurs each time a timer interrupt fires.  This allows a slow running user task to be preempted on a timer interrupt, and we can then schedule the notifier immediately so that any high priority user tasks can be unblocked quicker.  This is especially important since it means we no longer have to worry about worst case execution time of low priority processes that may mistakenly avoid calling the Pass function.
+
+Constant time memory allocation is now used instead of the linear time memory allocation that was used before.  The implementation details of this are described in the data structures section.
+
+Constant time unblocking of tasks has been added by adhereing to the convention that only one task can be blocked on a particular event at a time.  This removes the necessity to iterate through all tasks checking for their state, and unblocking them if they are blocked on the event being triggered.  This update saved as much as 540us on interrupts that involved unblocking tasks.
+
+Finally, our kernel has been updated to work in all compillation levels.  Our O3 version runs about twice as fast as the O0 version.
 
 Source Code
 ===========
