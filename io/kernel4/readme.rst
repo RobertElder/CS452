@@ -97,6 +97,20 @@ System Calls
 ``TimeSeconds``, ``DelaySeconds``, ``DelayUntilSeconds``
     Same as above but in seconds. It simply converts the ticks into seconds before calling the system calls. These calls are simply for convenience.
 
+``Getc``
+    Sends a message to either Keyboard Input Server or Train Input Server. It will block until the servers have a character to return.
+
+``Putc``
+    Sends a message to either Screen Output Server or Train Output Server. The servers will place the character into the server's Char Buffer.
+
+``PutString``
+    Formats the string and calls ``Putc`` for every character.
+
+``PutcAtomic``
+    Like ``Putc``, but accepts multiple characters and guarantees the characters are placed into the queue sequentially. This call is useful to ensure that two byte commands are not separated by a single byte command.
+
+``SendTrainCommand``
+    Sends a message type ``TRAIN_COMMAND`` to the Train Command Server. The call is for convenience.
 
 
 Memory model
@@ -381,6 +395,8 @@ Assert
 ++++++
 
 The assert statement has been enhanced to show Thomas The Tank Engine. Please do not be alarmed when you see it.
+
+
 
 
 Performance
