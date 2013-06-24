@@ -558,17 +558,68 @@ The source code is located at ``/u4/chfoo/cs452/group/k4-submit/io/kernel4``. It
 
 Source code MD5 hashes::
 
-    TODO
-    TODO
-    TODO
+    linux032:~/cs452/group/k4-submit/io/kernel4> md5sum */*.* *.*
+    50ef0e1e3c71ab1e795fc3d39f75ef9d  include/bwio.h
+    9af226f127c1fd759530cd45236c37b8  include/ts7200.h
+    79cb95e061329765d7dd25c84bf70456  ansi.c
+    f1288936a928a94bd2170d746e1326a4  ansi.h
+    b8c8b5fafcd1fd43beaeee7da1e5550f  buffer.c
+    04c39523dd006155ba353fb3ba1dddfb  buffer.h
+    b5fcae4a1fde32dcd00b1895c3605961  clock.c
+    e458870bb98bf9740555b34b15550715  clock.h
+    fb923f79a79d5e46207578e84e5e695e  kern.c
+    34599bdbc904f30c66674b59d3f4e2b4  kern.elf
+    4e3dfc92cbd22b1989e190a26517d536  kernel_irq.c
+    71f92a7be8c22d1cb5d9cc15be002aa3  kernel_irq.h
+    5313c05e6242631f379b5141ebca4f5f  kernel_state.h
+    d41d8cd98f00b204e9800998ecf8427e  kern.h
+    5439df921ac46fd07959e43125fefa91  memory.c
+    b16265e8b0bfe3a510b3a25e05b8674a  memory.h
+    adcff2244ac92050360eacd7ab4f5dd9  message.c
+    85549de410590cc5033d8bf7399cf504  message.h
+    a90ee4bc4ce7f46d54b6363d8c8e4ba6  nameserver.c
+    f9335969b8c71be878a915c26e7a606c  nameserver.h
+    ca6745d94663494b718c48da853f30a9  notifier.c
+    f5af74c5dd1325eccdd70e4903640da2  notifier.h
+    78a32a3a80cad8a4cc40de1ce18fbe29  orex.ld
+    269c595b95aef41bc8c5931ce1e3c1cf  private_kernel_interface.c
+    2771aa5221a2b30980916a3ef55b9446  private_kernel_interface.h
+    080185c0fc743fa77108f3c5ee8e3baa  public_kernel_interface.c
+    681b789f0146b2589daae803f968ed2c  public_kernel_interface.h
+    cbdfb94443bcf8e298edc0cf3101b5d1  queue.c
+    c1157ac2859cc277d1df431dc85502d3  queue.h
+    cd7239008bf3fc8474819d9183b0cc0f  random.c
+    7b31c57ff692317d816c839156382596  random.h
+    9a43cb84e02f05d5b8ffca6e500d98b0  readme.rst
+    eb5a60f060d101d2536e96298aab4112  readme.tex
+    9806864a4bf5766bb12b1bd9c1467121  robio.c
+    0db55f361cec927bba27cdec6b5c2e55  robio.h
+    545aa195d4f3e0e844edac05715e094d  rps.c
+    222f8edffbfde11ee553b7561f4c10a8  rps.h
+    42432905121b8fe5715dcf1ec5367196  scheduler.c
+    606f31e642dd29602786c86d563b4470  scheduler.h
+    ecb99ee78c86924b6d54321792e68006  swi_kernel_interface.s
+    bd8b74d610f4d36af2ac42141d19e9a1  task_descriptor.c
+    7a03d71b4ace688192d79fcd44fd7420  task_descriptor.h
+    d09cc801a5f44195d473495a9dd0d78b  tasks.c
+    0d3699b1a8224eb6995bb042834f66b5  tasks.h
+    4bf41d22949ce27f1f2d7e5f32a0570f  train.c
+    6b8ab8c41f1c384a8dc0556e87b8651b  train.h
+    19f2f37c12c3cec419176823b30c1304  uart.c
+    205a1d49a746f5d83f3a6e0d5c981492  uart.h
+    214a8b02f9d8b6c9212685d493867b38  ui.c
+    b298d8ac96488af2ef904fbeac9d2abf  ui.h
+    5b609bdd0235c3858e16c053b8e53bfd  va_list_def.h
+
 
 
 Elf MD5 hash::
 
-    TODO
+    linux032:~> md5sum /u/cs452/tftp/ARM/relder-chfoo/k4-submit/kern.elf 
+    34599bdbc904f30c66674b59d3f4e2b4  /u/cs452/tftp/ARM/relder-chfoo/k4-submit/kern.elf
 
 
-Git sha1 hash: ``TODO``
+Git sha1 hash: ``6cd3138e4c4808f1fbfe1790264f038a8cc67110``
 
 
 
