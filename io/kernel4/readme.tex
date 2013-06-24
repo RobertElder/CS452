@@ -38,13 +38,13 @@
   \urlstyle{same} % normal text font (alternatives: tt, rm, sf)
 }{}
 \hypersetup{
-  pdftitle={CS 452 K2},
+  pdftitle={CS 452 K4},
 }
 
 %%% Title Data
 \title{\phantomsection%
-  CS 452 K2%
-  \label{cs-452-k2}}
+  CS 452 K4%
+  \label{cs-452-k4}}
 \author{}
 \date{}
 
@@ -65,10 +65,7 @@ Robert Elder, Christopher Foo
 relder, chfoo
 \\
 \textbf{Date due}: &
-May 31, 2013
-\\
-\textbf{Extension date}: &
-Jun 3, 2013
+June 24, 2013
 \\
 \end{tabularx}
 \end{center}
@@ -78,15 +75,35 @@ Jun 3, 2013
   \label{running}%
 }
 
-The executable is located at \texttt{/u/cs452/tftp/ARM/relder-chfoo/k2a-submit/kern.elf}.
+The executable is located at \texttt{/u/cs452/tftp/ARM/relder-chfoo/k4-submit/kern.elf}.
 
-It is executed using the regular commands:
+The entry point is located at \texttt{0x00045000} or \texttt{\%\{FREEMEMLO\}} It \emph{must} be executed with caching enabled:
 %
 \begin{quote}{\ttfamily \raggedright \noindent
-load~-b~0x00218000~-h~10.15.167.4~ARM/relder-chfoo/k2a-submit/kern.elf\\
-go
+load~-b~\%\{FREEMEMLO\}~-h~10.15.167.4~ARM/relder-chfoo/k4-submit/kern.elf\\
+go~-c
 }
 \end{quote}
+
+
+\subsection{Commands%
+  \label{commands}%
+}
+%
+\begin{description}
+\item[{tr TRAIN SPEED}] \leavevmode 
+Set the train speed.
+
+\item[{rv TRAIN}] \leavevmode 
+Slows, stops, and reverses train. The final speed is hard coded to 5.
+
+\item[{sw SWITCH DIRECTION}] \leavevmode 
+Changes the turnout direction. DIRECTION is either S or C.
+
+\item[{q}] \leavevmode 
+Quits the program.
+
+\end{description}
 
 
 \section{Description%
@@ -97,27 +114,10 @@ go
 \subsection{Kernel%
   \label{kernel}%
 }
-
-
-\subsubsection{Scheduling%
-  \label{scheduling}%
-}
 %
 \begin{itemize}
 
-\item The blocked states are now used. They corresponds to those explained in the lecture:
-%
-\begin{itemize}
-
-\item \texttt{RECEIVE\_BLOCKED}
-
-\item \texttt{SEND\_BLOCKED}
-
-\item \texttt{REPLY\_BLOCKED}
-
-\end{itemize}
-
-\item Tasks that are blocked are simply rescheduled by re-queueing it. Efficiency could be improved by having a separate blocked queue.
+\item Caching improves the performance of the program and will be mandatory for this deliverable.  Due to some issues with timing that we will be addressing soon, some of the important user tasks will deadlock if you do not run the program with caches.  The root cause of this problem is related to improperly attempting to send bytes to the train when the FIFO buffer is empty instead of waiting for CTS to be driven low, then high.
 
 \end{itemize}
 
@@ -128,29 +128,287 @@ go
 %
 \begin{itemize}
 
-\item Added support for 5th argument.
+\item System calls support up to 5 arguments.
 
 \end{itemize}
-
-The system calls are not entirely complete according specifications and are noted below.
 %
 \begin{description}
+\item[{\texttt{Create}}] \leavevmode 
+Returns the new task id, \texttt{ERR\_K\_INVALID\_PRIORITY -1}, or \texttt{ERR\_K\_OUT\_OF\_TD -2}
+
+\item[{\texttt{MyTid}}] \leavevmode 
+Returns the current task id
+
+\item[{\texttt{MyParentTid}}] \leavevmode 
+Returns the parent task id. The parent task id is always returned regardless of the parent's state.
+
+\item[{\texttt{Pass}}] \leavevmode 
+(Rescheduling happens as normal in the background.)
+
+\item[{\texttt{Exit}}] \leavevmode 
+Task is marked as \texttt{ZOMBIE} (and rescheduling happens as normal in the background).
+
 \item[{\texttt{Send}}] \leavevmode 
-The function behaves as expected except the error \texttt{-3} code is not implemented.
+Sends a message to the given task ID. \texttt{-3} code is not implemented.
 
 \item[{\texttt{Receive}}] \leavevmode 
-The function behaves as expected. The size of the message sent would be typically 100 bytes since it is the convention used in the kernel.
+Blocks until a message is received. Returns the size of the message which will be typically \texttt{MESSAGE\_SIZE 16}
 
 \item[{\texttt{Reply}}] \leavevmode 
-The function behaves as expected, however, errors \texttt{-3} \texttt{-4} include an assert that will aid in debugging.
+Replies a message to the task. On errors \texttt{-3} \texttt{-4}, an assert will fire before returning to aid in debugging.
 
 \item[{\texttt{RegisterAs}}] \leavevmode 
-The function behaves as expected. It uses the \texttt{NameServerMessage} structure and sends the message. \texttt{0} is always returned because the Task ID is hard-coded and the call should never send to the wrong task.
+Prepares a \texttt{NameServerMessage} structure with a message type of \texttt{REGISTER\_AS} and sends the message to the Name Server. \texttt{0} is always returned because the Task ID is hard-coded and the call should never send to the wrong task.
 
 \item[{\texttt{WhoIs}}] \leavevmode 
-The function behaves as expected. As noted in \texttt{RegisterAs}, we either return a Task ID or 0.
+Prepares a \texttt{WHO\_IS} message type and sends it to the Name Server. As noted in \texttt{RegisterAs}, we either return a Task ID or 0 if the task has not been created. However, the task ID returned may be in a zombie state.
+
+\item[{\texttt{AwaitEvent}}] \leavevmode 
+Marks the task as \texttt{EVENT\_BLOCKED}. The task will be unblocked by the Scheduler. This call always returns 0 and the user task will be responsible for obtaining the data themselves. \texttt{AwaitEvent} supports only 1 task per event type.
+
+\item[{\texttt{Time}}] \leavevmode 
+Wraps a \texttt{Send} to the Clock Server. It first queries the Name Server for the Clock Server and then sends a \texttt{TIME\_REQUEST} message. It expects back a \texttt{TIME\_REPLY} message and returns the time.
+
+\item[{\texttt{Delay}}] \leavevmode 
+Similar to \texttt{Time}, it sends a \texttt{DELAY\_REQUEST} message and expects back a \texttt{DELAY\_REPLY} message.
+
+\item[{\texttt{DelayUntil}}] \leavevmode 
+Similar to \texttt{Time}, it sends a \texttt{DELAY\_UNTIL\_REQUEST} message and expects back a \texttt{DELAY\_REPLY} message.
+
+\item[{\texttt{TimeSeconds}, \texttt{DelaySeconds}, \texttt{DelayUntilSeconds}}] \leavevmode 
+Same as above but in seconds. It simply converts the ticks into seconds before calling the system calls. These calls are simply for convenience.
+
+\item[{\texttt{Getc}}] \leavevmode 
+Sends a message to either Keyboard Input Server or Train Input Server. It will block until the servers have a character to return.
+
+\item[{\texttt{Putc}}] \leavevmode 
+Sends a message to either Screen Output Server or Train Output Server. The servers will place the character into the server's Char Buffer.
+
+\item[{\texttt{PutString}}] \leavevmode 
+Formats the string and calls \texttt{Putc} for every character.
+
+\item[{\texttt{PutcAtomic}}] \leavevmode 
+Like \texttt{Putc}, but accepts multiple characters and guarantees the characters are placed into the queue sequentially. This call is useful to ensure that two byte commands are not separated by a single byte command.
+
+\item[{\texttt{SendTrainCommand}}] \leavevmode 
+Sends a message type \texttt{TRAIN\_COMMAND} to the Train Command Server. The call is for convenience.
 
 \end{description}
+
+
+\subsubsection{Memory model%
+  \label{memory-model}%
+}
+
+The memory model looks like this:
+%
+\begin{quote}{\ttfamily \raggedright \noindent
++-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-+~0x0200\_0000\\
+|~RedBoot~Stack~~|\\
++-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-+~0x01fd\_cfdc~Starting~value~of~redboot~stack\\
+|~Redboot~Buffer*|~~~~~~~~~~~~~after~box~reset\\
++-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-+~0x01FD\_B09C\\
+|~Kernel~Stack~~~|\\
++-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-+~0x01FD\_B09C~-~sizeof(KernelState)~-~400kb\\
+|~IRQ~Stack~~~~~~|~~~~~~~~~~~~~=~KernelEnd\\
++-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-+~KernelEnd~-~500kb\\
+|~User~Stacks~~~~|\\
+|~~~~~~~~~~~~~~~~|\\
++-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-+~0x0005\_2804~(\_EndOfProgram~specified~in~orex.ld)\\
+|~Kernel~~~~~~~~~|\\
++-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-+~0x0004\_5000~(\%\{FREEMEMLO\}~RedBoot~alias)\\
+|~RedBoot~~~~~~~~|\\
++-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-+~0x0000\_0000
+}
+\end{quote}
+
+
+\subsubsection{Entry%
+  \label{entry}%
+}
+
+The entry point is located in \texttt{kern.c}.
+
+The kernel follows the following:
+\newcounter{listcnt0}
+\begin{list}{\arabic{listcnt0}.}
+{
+\usecounter{listcnt0}
+\setlength{\rightmargin}{\leftmargin}
+}
+
+\item Sets the location of our SWI and interrupt routines.
+
+\item Sets the location of our stacks.
+
+\item Initialize the kernel (File \texttt{private\_kernel\_interface.c}:\texttt{k\_InitKernel()}).
+\newcounter{listcnt1}
+\begin{list}{\arabic{listcnt1}.}
+{
+\usecounter{listcnt1}
+\setlength{\rightmargin}{\leftmargin}
+}
+
+\item Save the SP and LR values so the kernel can exit back to RedBoot.
+
+\item Initialize the pseudo Task Descriptor.
+
+\item Initialize the queues.
+
+\item Set the SP and LR value of the pseudo Task Descriptor to the Kernel State
+
+\item Call the \texttt{asm\_KernelExit} routine to push the values to the register.
+\end{list}
+
+\item Jump to KernelTask\_Start (File \texttt{tasks.c})
+
+\item Start our first user task that starts the 4 other generic tasks.
+\end{list}
+
+
+\subsubsection{Redboot Buffer%
+  \label{redboot-buffer}%
+}
+
+After investigating some problems related to observing program crashes on the second and third execution of the 'go' command, it was discovered that redboot does not properly clean up its stack each time you run a program.  Each time someone runs a program on a board, redboot pushes 80 bytes onto its stack and never removes it, unless you reset the board.  This means that if no one ever reset the board, eventually the redboot stack will crawl through all of memory, and overwrite the user's kernel.  It looks like no one else ever encountered this because they don't any data near the redboot stack like we do.
+
+To prove that this is the case, you can create a simple program as follows:
+%
+\begin{quote}{\ttfamily \raggedright \noindent
+int~main()\{\\
+~~~~asm~(\\
+~~~~~~~~"LDR~r1,~{[}PC,~\#0{]}\textbackslash{}n"~//~Load~r1~with~a~memory~address~we~can~save~the~sp~into\\
+~~~~~~~~"ADD~PC,~PC,~\#0\textbackslash{}n"~//~Jump~over~the~address\\
+~~~~~~~~".4byte~0x01000000\textbackslash{}n"~//~SP~gets~saved~here~every~time~the~program~executes\\
+~~~~~~~~"STR~SP,~{[}r1,~\#0{]}\textbackslash{}n"~//~Save~the~stack~pointer,~then~do~dump~-b~0x01000000~-l~4,~values~increases~by~0x50~each~time~until~reset.\\
+~~~~);\\
+~\\
+~~~~return~0;\\
+\}
+}
+\end{quote}
+
+Each time you run this program, you will observe that the saved stack value decreases by 0x50.  I attempted to account for this on the exit of my main method, by creating a modified exit routine in assembly that pops the extra information off the stack, but this does not seem to matter.
+
+
+\subsubsection{\texttt{\$\{FREEMEMLO\}}%
+  \label{freememlo}%
+}
+
+After consulting the RedBoot documentation, the entry point was moved to \texttt{0x00045000} to free up more memory for user stacks. We believe that this new memory location marks the start of safe memory that is not used as a guarantee from redboot and we have not found any reason we cannot move the entry point to this location.  This values comes from the a redboot alias \%\{FREEMEMLO\} that can be used when loading the program instead of the literal address.
+
+As well, we are able to have assert checks on stack boundaries. Using the \texttt{\_EndOfProgram} linker symbol, we can check if a user stack pointer overwrites the kernel. There are checks for each user stack as well.
+
+Stack values and sizes are configurable, and will generally give appropriate assertions if the memory model has conflicts that can cause corruption.
+
+
+\subsubsection{Message Passing%
+  \label{message-passing}%
+}
+
+Messages are \texttt{structs} that are casted into \texttt{char*}. This casting allows us to manipulate messages more easily with type safety rather than dealing with raw \texttt{char}. Note we use GCC attribute syntax to word align the character array as the GCC compiler does not realize we are type punning.
+
+Kernel Messages, messages that are copied into the kernel, are now stored into an array, using Dynamic Memory Allocation (see below), instead of using a combination of ring buffers and queues. Refactoring to a simpler solution allows us to reduce the load on our brain while debugging the kernel. See Dynamic Memory Allocation for more information.
+
+The message size is fixed to 16 bytes. Using a fixed value allows for consistency. As well, this low value is meant to reduce the time spent on message copying.
+
+
+\subsection{Task Descriptor (TD)%
+  \label{task-descriptor-td}%
+}
+
+File: \texttt{task\_descriptor.c}
+
+The TD, a \texttt{struct}, holds important information such as the task id, state, and return values.
+
+
+\subsection{Queues%
+  \label{queues}%
+}
+
+File: \texttt{queue.c}
+
+The queue, a \texttt{struct}, is implemented as a ring buffer. A start and end index is used to point to the start and end of the array. Each item is a \texttt{void*}. The ring buffer allows adding and removing an item from the queue in constant time. A null pointer is returned if the queue is empty.
+
+
+\subsubsection{Priority Queue%
+  \label{priority-queue}%
+}
+
+The Priority Queue uses 32 levels of priority by using 32 Queues.
+
+Named priority levels are available. Note the highest priority is 0 and the lowest priority is 31.
+
+\setlength{\DUtablewidth}{\linewidth}
+\begin{longtable*}[c]{|p{0.110\DUtablewidth}|p{0.051\DUtablewidth}|}
+\hline
+\textbf{%
+Priority
+} & \textbf{%
+Int
+} \\
+\hline
+\endfirsthead
+\hline
+\textbf{%
+Priority
+} & \textbf{%
+Int
+} \\
+\hline
+\endhead
+\multicolumn{2}{c}{\hfill ... continued on next page} \\
+\endfoot
+\endlastfoot
+
+HIGHEST
+ & 
+0
+ \\
+\hline
+
+HIGH
+ & 
+8
+ \\
+\hline
+
+NORMAL
+ & 
+16
+ \\
+\hline
+
+LOW
+ & 
+24
+ \\
+\hline
+
+LOWEST
+ & 
+31
+ \\
+\hline
+\end{longtable*}
+
+When retrieving an item, the Priority Queue uses an integer to track which priority level has items. When a bit is 1, it means there is at least one item in the queue. For example, \texttt{00110000...} means there is at least one item in priority 2 and 3 queues. The count leading zero instruction is used so that we avoid checking all 32 queues when getting an item. \texttt{0} is returned when there is no item.
+
+
+\subsubsection{Char Buffer%
+  \label{char-buffer}%
+}
+
+The Char Buffer is a queue of characters. Like Queue, it is implemented as a ring buffer. However, the Char Buffer requires checking whether the Char Buffer is empty before getting an item. It is necessary because a return value of 0 indicates a byte value of 0.
+
+
+\subsection{IdleTask and AdministratorTask%
+  \label{idletask-and-administratortask}%
+}
+
+The Administrator Task is responsible for helping us exiting to RedBoot.
+
+The Idle Task runs when all tasks are blocked. The Administrator Task keeps track the number of tasks running. The Clock Clients will tell the Administrator Task when it has shutdown. After all tasks have exited, the Administrator Task will tell the Idle Task to exit.
 
 
 \subsection{Name Server%
@@ -159,10 +417,10 @@ The function behaves as expected. As noted in \texttt{RegisterAs}, we either ret
 
 File: \texttt{nameserver.c}
 
-The name server uses a 2D \texttt{char} array. The maximum name is limited arbitrary to 100 letters including the null terminator. The array index corresponds to the Task ID for simplicity and constant time operations.
+The name server uses a 2D \texttt{char} array. The maximum name is limited arbitrary to 8 letters including the null terminator. The small value reduces message copying and string comparison time. The array index corresponds to the Task ID for simplicity and constant time operations.
 
 It does the following:
-\newcounter{listcnt0}
+\setcounter{listcnt0}{0}
 \begin{list}{\arabic{listcnt0}.}
 {
 \usecounter{listcnt0}
@@ -186,23 +444,29 @@ It does the following:
 
 \item The Task ID is hard-coded to \texttt{2}.
 
+\item Look ups are linear time but bounded to the maximum name size of 8.
+
+\item Setting names are constant time.
+
 \end{itemize}
 
 
-\subsection{Rock Paper Scissors%
-  \label{rock-paper-scissors}%
+\subsection{Clock Server%
+  \label{clock-server}%
 }
 
-File: \texttt{rps.h}
+File: \texttt{clock.c}
 
-There are two server-client structures: \texttt{RPSServer} and \texttt{RPSClient}. \texttt{RPSMessage} is the message structure.
-
-The kernel starts the \texttt{RPSServer} and 3 \texttt{RPSClient}. All of them are executed at \texttt{NORMAL} priority as to allow us to catch synchronization bugs.
+The Clock Server runs in a loop receiving messages from the Clock Notifier or user tasks via the Public Kernel Interface wrappers. Whenever it receives a Event Notification from the Clock Notifier, it increments its tick counter. The tick size is defined to be 10ms.
 
 
-\subsubsection{RPSServer%
-  \label{rpsserver}%
+\subsubsection{Clock Notifier%
+  \label{clock-notifier}%
 }
+
+File: \texttt{notifier.c}
+
+The Clock Notifier runs in a loop:
 \setcounter{listcnt0}{0}
 \begin{list}{\arabic{listcnt0}.}
 {
@@ -210,88 +474,78 @@ The kernel starts the \texttt{RPSServer} and 3 \texttt{RPSClient}. All of them a
 \setlength{\rightmargin}{\leftmargin}
 }
 
-\item Registers with the name server
+\item Call \texttt{AwaitEvent}
 
-\item \texttt{Receive} and processes message with sign up, quit, and play types.
+\item Send a \texttt{NOTIFIER} message with \texttt{CLOCK\_TICK\_EVENT} id to the Clock Server.
 
-\item Outputs if there is only 1 or less items in the sign up queue.
+\item Go to 1.
 \end{list}
 
 
-\paragraph{Sign Up%
-  \label{sign-up}%
-}
-\setcounter{listcnt0}{0}
-\begin{list}{\arabic{listcnt0}.}
-{
-\usecounter{listcnt0}
-\setlength{\rightmargin}{\leftmargin}
+\subsubsection{Data Structures%
+  \label{data-structures}%
 }
 
-\item Add the task ID to the sign up queue.
+The Clock Server maintains a array mapping of TIDs to clock ticks in absolute time. Accesses to this mapping are constant time.
 
-\item Mark it as signed up on the sign up array.
-
-\item \texttt{Reply} with a \texttt{SIGN\_UP\_OK} type message.
-\end{list}
+After reviewing feedback from the previous deliverable, we have refactored the memory heap to work in constant time for both requesting and releasing memory.  The use of the heap is further justfied since it is only used when queuing messages inside the kernel.  Constant time allocation and de-allocation is accomplished by use of a stack.  The stack is initialized to contain pointers to all memory blocks that are free.  A request for memory pops a pointer from the top of the stack, and de-allocation pushes the released pointer onto the stack.  This allows constant time random-access de-allocation, while maintaining constant time allocation.
 
 
-\paragraph{Quit:%
-  \label{quit}%
-}
-\setcounter{listcnt0}{0}
-\begin{list}{\arabic{listcnt0}.}
-{
-\usecounter{listcnt0}
-\setlength{\rightmargin}{\leftmargin}
+\subsubsection{Delay Requests%
+  \label{delay-requests}%
 }
 
-\item Mark it as quit (0) on the sign up array.
-
-\item \texttt{Reply} with a \texttt{GOODBYE} type message.
-
-\item The server is marked for shutdown.
-\end{list}
+Whenever the Clock Server receives a delay request message, it checks whether the time is past in time. If so, it immediately replies back. Otherwise, it stores the requested time into the array mapping of TIDs to ticks.
 
 
-\paragraph{Player Selection%
-  \label{player-selection}%
+\subsubsection{Unblocking%
+  \label{unblocking}%
 }
 
-Players are selected by going through the sign up queue. Players are not requeued if they have quit.
+Unblocking tasks on events has been improved to work in constant time.  See performance.
 
 
-\paragraph{Play%
-  \label{play}%
-}
-\setcounter{listcnt0}{0}
-\begin{list}{\arabic{listcnt0}.}
-{
-\usecounter{listcnt0}
-\setlength{\rightmargin}{\leftmargin}
+\subsubsection{Clock Slow Warning%
+  \label{clock-slow-warning}%
 }
 
-\item Get the player's choice by matching the Task IDs
+Timer4 was enabled to use for debugging the performance of the kernel. The Clock Server uses this debug timer to time how long it takes for it to receive a notification from the Clock Notifier. It will print out a red warning message if the time is longer than the tick time (10ms) by 1ms.
 
-\item Once we have two choices, we can \texttt{Reply} with the outcome.
 
-\item \texttt{Reply} a \texttt{WAIT} message type if the client cannot play yet.
+\subsection{Interrupt Handler%
+  \label{interrupt-handler}%
+}
 
-\item \texttt{Reply} a \texttt{SHUTDOWN} message if any one signed up has quit.
+File: \texttt{kernel\_irq.c}
+
+Vectored interrupts are used.
+
+Timer3 is enabled and counts down from 5080 to give 10ms interrupt intervals. The kernel also sets the CPSR to allow interrupts.
+
+The interrupt handler will call the scheduler to unblock tasks and it also acknowledge Timer3.
+
+UART1RXINTR1, UART1TXINTR1, UART2RXINTR2, UART2TXINTR2, are enabled when there is a Task waiting for it. The IRQ handlers will disable the respective interrupt after it has fired. UART Clocking problems are avoided as our context switch is greater than 50 NOPs.
+
+
+\subsection{Scheduler%
+  \label{scheduler}%
+}
+
+File: \texttt{scheduler.c}
 %
 \begin{itemize}
 
-\item This design decision was made so that the shutdown case is well defined.
+\item Has 32 levels of priority.
+
+\item Number of tasks in each event states are tracked for debugging purposes.
+
+\item Blocked tasks are not requeued in the ready queue until it is actually ready.
+
+\item Preemptive scheduling is supported
 
 \end{itemize}
-\end{list}
 
-
-\subsubsection{RPSClient%
-  \label{rpsclient}%
-}
-
-Each client wants to play 5 times.
+The following describes the process of context switching:
 \setcounter{listcnt0}{0}
 \begin{list}{\arabic{listcnt0}.}
 {
@@ -299,86 +553,138 @@ Each client wants to play 5 times.
 \setlength{\rightmargin}{\leftmargin}
 }
 
-\item Look up the task ID of the \texttt{RPSServer}.
+\item \setcounter{listcnt1}{0}
+\begin{list}{\alph{listcnt1})}
+{
+\usecounter{listcnt1}
+\setlength{\rightmargin}{\leftmargin}
+}
 
-\item Sign up
+\item If the context switch occurs because of an interrupt, the task's state is pushed onto the IRQ stack then popped back onto the user's stack.
 
-\item Decide their choice and \texttt{Send} it.
+\item If the context switch occurs because of a kernel call, the user's state is saved before entering the SWI call.  We are aware that this design is discouraged, but because everything is working right now, we have put refactoring this on the back burner.
+\end{list}
+\end{list}
 
-\item If a \texttt{NEGATIVE\_WAIT} is received, try again. This is a simple polling method that is robust.
+In both cases we remember what method was used to enter the kernel so we can invoke a symmetric exit routine when the task is re-scheduled.  The design decision to have two methods of entering and exiting the kernel was done to allow future optimizations related to the fact that some context switch operations only need to be done for one method and not the other.  This was also done to preclude the possibility of errors resulting from re-scheduling a process via the wrong method.  For example, attempting to set r0 to set a non-existent return value for a task that was preempted.
+\setcounter{listcnt0}{0}
+\begin{list}{\arabic{listcnt0}.}
+{
+\usecounter{listcnt0}
+\addtocounter{listcnt0}{1}
+\setlength{\rightmargin}{\leftmargin}
+}
+
+\item The user task's SP, LR, and SPSR values are saved into the current task descriptor.
+
+\item Any related values are also saved into the TD.
+
+\item The next task is selected (\texttt{schedule\_next\_task()}).
+\setcounter{listcnt1}{0}
+\begin{list}{\arabic{listcnt1}.}
+{
+\usecounter{listcnt1}
+\setlength{\rightmargin}{\leftmargin}
+}
+
+\item A task is removed from the Priority Queue.
 %
 \begin{itemize}
 
-\item This could be improved/avoided by having the \texttt{RPSServer} notify or \texttt{Send} to the client to let it know it is ready.
+\item Any tasks in the \texttt{ZOMBIE} or blocked state indicates a logic error.
 
 \end{itemize}
 
-\item Read the message and print out results.
+\item Use the pointer to the task as the next task to be run.
 
-\item Waits for keyboard input
+\item Set the selected task as \texttt{ACTIVE}.
+
+\item Reschedule the selected task by adding it back to the Priority Queue.
+\end{list}
+
+\item If there no more tasks in the Priority Queue, the kernel exits back to RedBoot using the values we saved on the Kernel State.
+
+\item Otherwise, the SP, LR, and return values are saved into the Kernel State.
+
+\item Assembly routine \texttt{asm\_KernelExit} pushes these values to the registers.
 \end{list}
 
 
-\subsection{Algorithms and Data structures%
-  \label{algorithms-and-data-structures}%
+\subsubsection{Events%
+  \label{events}%
 }
 
+When a task calls \texttt{AwaitEvent}, the Task ID is placed into an array mapping of Event ID to Task TD.
 
-\subsubsection{Queue%
-  \label{queue}%
+If the Event is related to Serial IO, the appropriate interrupt is enabled for it.
+
+When the Scheduler is asked to unblock events on a particular \texttt{EventID}, it will check the array mapping and unblock this task by adding it to the Ready Queue.
+
+
+\subsubsection{Event IDs%
+  \label{event-ids}%
 }
+%
+\begin{description}
+\item[{\texttt{CLOCK\_TICK\_EVENT}}] \leavevmode 
+A Timer3 clock tick interrupt has fired
 
-File: \texttt{queue.c}
+\item[{\texttt{UART1\_RX\_EVENT}}] \leavevmode 
+A UART1 receive holding register empty interrupt has fired
 
-A change was made so that it returns the current item count.
+\item[{\texttt{UART1\_TX\_EVENT}}] \leavevmode 
+A UART1 transmit holding register empty interrupt has fired
 
+\item[{\texttt{UART2\_RX\_EVENT}}] \leavevmode 
+A UART2 receive holding register empty interrupt has fired
 
-\subsubsection{Task Descriptor (TD)%
-  \label{task-descriptor-td}%
-}
+\item[{\texttt{UART2\_TX\_EVENT}}] \leavevmode 
+A UART2 transmit holding register empty interrupt has fired
 
-File: \texttt{task\_descriptor.c}
-
-The TD was modified so it contains message pointer such as the address of TID for \texttt{Receive}
-
-
-\subsubsection{Kernel State%
-  \label{kernel-state}%
-}
-
-File: \texttt{kernel\_state.h}
-
-An array of \texttt{KernelMessage} and its related variables was added to the \texttt{KernelState}
+\end{description}
 
 
-\subsubsection{Memory Operations%
-  \label{memory-operations}%
+\subsection{Memory%
+  \label{memory}%
 }
 
 File: \texttt{memory.c}
+%
+\begin{itemize}
 
-Functions were added so that strings (potentially binary data) could be copied. They are simple and copy one \texttt{char} at a time.
+\item \texttt{m\_strcpy} copies strings at 1, 8, or 32 octets at a time using block load and store instructions.
 
-Possible improvements: Instructions could be written in assembly that make use of the block copying mode.
+\item \texttt{m\_strcmp} compares two strings, 1 character at a time.
+
+\end{itemize}
 
 
-\subsubsection{Kernel Message%
-  \label{kernel-message}%
+\subsubsection{Dynamic Memory Allocation%
+  \label{dynamic-memory-allocation}%
 }
 
-File: \texttt{message.h}
+A simple, Dynamic Memory Allocation or heap was implemented. For this deliverable it has been refactored to use constant time allocation and deallocation.  It is currently used for storing Kernel Messages.
 
-\texttt{KernelMessage} is a \texttt{struct} that contains the message string. It contains origin and destination IDs and pointers.
+See Data Structures for implementation details.
 
 
-\subsubsection{Messages%
-  \label{messages}%
+\subsection{RPS%
+  \label{rps}%
 }
 
-Messages are \texttt{structs} that are casted into \texttt{char*}. This casting allows us to manipulate messages more easily with type safety rather than dealing with raw \texttt{char}. The message size is fixed arbitrary 100 for consistency.
+The \texttt{RPSServer} has been refactored to fix synchronization problems. It is used for stress testing the OS. At least 480 tasks should run without problems.
 
 
-\subsubsection{Random Number Generator%
+\subsection{IdleTask and AdministratorTask%
+  \label{id1}%
+}
+
+The Administrator Task is responsible for helping us exiting to RedBoot.
+
+The Idle Task runs when all tasks are blocked. The Administrator Task keeps track the number of tasks running. The Clock Clients will tell the Administrator Task when it has shutdown. After all tasks have exited, the Administrator Task will tell the Idle Task to exit.
+
+
+\subsection{Random Number Generator%
   \label{random-number-generator}%
 }
 
@@ -387,390 +693,291 @@ File: \texttt{random.h}
 A LCG is used as the random number generator. It uses the GCC values as noted on Wikipedia. The seed is multiplied by an arbitrary number to get the generator going.
 
 
-\subsubsection{Assert%
+\subsection{Assert%
   \label{assert}%
 }
 
 The assert statement has been enhanced to show Thomas The Tank Engine. Please do not be alarmed when you see it.
+
+The assert function has also been modified to make sure that interrupts are disabled when an assertion is fired so that a user task that assert fails does not simply get ignored when its time quantum expires.  This was necessary because of preemption.
+
+
+\subsection{Serial IO%
+  \label{serial-io}%
+}
+
+File: \texttt{uart.c}
+%
+\begin{itemize}
+
+\item FIFOs were not used for this deliverable.
+
+\end{itemize}
+
+The following Serial IO notifiers call \texttt{AwaitEvent}
+
+\setlength{\DUtablewidth}{\linewidth}
+\begin{longtable*}[c]{|p{0.319\DUtablewidth}|p{0.179\DUtablewidth}|p{0.365\DUtablewidth}|}
+\hline
+\textbf{%
+Task
+} & \textbf{%
+Event ID
+} & \textbf{%
+Reports to
+} \\
+\hline
+\endfirsthead
+\hline
+\textbf{%
+Task
+} & \textbf{%
+Event ID
+} & \textbf{%
+Reports to
+} \\
+\hline
+\endhead
+\multicolumn{3}{c}{\hfill ... continued on next page} \\
+\endfoot
+\endlastfoot
+
+Keyboard Input Notifier
+ & 
+UART2\_RX\_EVENT
+ & 
+Keyboard Input Server
+ \\
+\hline
+
+Screen Output Notifier
+ & 
+UART2\_TX\_EVENT
+ & 
+Screen Output Server
+ \\
+\hline
+
+Train Input Notifier
+ & 
+UART1\_RX\_EVENT
+ & 
+Train Input Server
+ \\
+\hline
+
+Train Output Notifier
+ & 
+UART1\_TX\_EVENT
+ & 
+Train Output Server
+ \\
+\hline
+\end{longtable*}
+
+
+\subsubsection{UART Bootstrap Task%
+  \label{uart-bootstrap-task}%
+}
+
+The UART Bootstrap Task is responsible for setting up the UART clock speeds and settings. It also starts up the servers.
+
+
+\subsubsection{Keyboard Input Server, Train Input Server%
+  \label{keyboard-input-server-train-input-server}%
+}
+
+The Input Servers receive keyboard and train inputs. They have a Char Buffer and receive byte data as notified. \texttt{Getc} callers will have their task IDs queued. Once Char Buffer contains data, the \texttt{Getc} callers will be replied with the character.
+
+
+\subsubsection{Screen Output Server, Train Output Server%
+  \label{screen-output-server-train-output-server}%
+}
+
+The Output Servers send screen and train outputs. They have a Char Buffer and send bytes as notified. \texttt{Putc} callers will send the character to the server and the character is queued onto the Char Buffer. Once it is OK to transmit by checking the CTS flag, the character is popped from the Char Buffer and transmitted.
+
+
+\subsection{Train Servers%
+  \label{train-servers}%
+}
+
+File: \texttt{train.c}
+
+
+\subsubsection{Train Server%
+  \label{train-server}%
+}
+
+The Train Server is responsible for handling sensor data from the Train Sensor Reader and queries from the UI Server. It also starts the Train Sensor Reader and Train Command Server
+
+
+\paragraph{Data Structures%
+  \label{id2}%
+}
+
+The Train Server stores its sensor data into bit flags. The least significant bit represents the first sensor. This scheme allows easier masking:
+%
+\begin{itemize}
+
+\item \texttt{flag \& 1<{}<0} is the first sensor
+
+\item \texttt{flag \& 1<{}<1} is the second sensor
+
+\item \texttt{flag \& 1<{}<15} is the 16th sensor
+
+\end{itemize}
+
+As well, the Train Server stores the last Time the sensor was triggered.
+
+
+\subsubsection{Train Sensor Reader%
+  \label{train-sensor-reader}%
+}
+
+The Train Sensor Reader task is responsible for sending track sensor commands and reading them from the train controller. It calls the Train Command Server for the data and manipulates the bytes into a easier to handle form. It then sends the values to the Train Server.
+
+
+\subsubsection{Train Command Server%
+  \label{train-command-server}%
+}
+
+The Train Command Server is responsible for receiving Train Command messages such as \texttt{SPEED} and \texttt{READ\_SENSOR}. It calls \texttt{Putc} and \texttt{Getc} as required. Passing all train commands through this server is a form of mutual exclusion. It ensures that commands are fully sent to the trains and commands are not mangled by different tasks.
+
+
+\subsection{UI Servers%
+  \label{ui-servers}%
+}
+
+File: \texttt{ui.c}, \texttt{ansi.c}
+
+
+\subsubsection{UI Server%
+  \label{ui-server}%
+}
+
+The UI Server is responsible for drawing the textual user interface. It draws a header, the time since start up, the command prompt, and a table of sensors readings.
+
+The command prompt supports up to 80 characters. Once this limit is reached, no input will be accepted and displayed. It supports backspace. Pressing the Enter key will execute the command and a response will be displayed under the command prompt.
+
+When a sensor is triggered, the UI Server will display an X on the table. Since the UI Server does not update quickly, a quickly activated and deactivated sensor may not display.
+
+
+\subsubsection{UI Timer%
+  \label{ui-timer}%
+}
+
+The UI Timer is responsible for sending a message to the UI Server. The timer tells the UI to update the clock on the screen.
+
+
+\subsubsection{UI Keyboard Input Task%
+  \label{ui-keyboard-input-task}%
+}
+
+The UI Keyboard Input task is responsible for calling \texttt{Getc} and sending the character to the UI Server.
+
+
+\subsection{Performance%
+  \label{performance}%
+}
+
+In this deliverable we have made several changes that significantly improve the performance of our kernel:
+\setcounter{listcnt0}{0}
+\begin{list}{\arabic{listcnt0})}
+{
+\usecounter{listcnt0}
+\setlength{\rightmargin}{\leftmargin}
+}
+
+\item Time slicing
+
+\item Constant time memory allocation
+
+\item Constant time unblocking of tasks on events.
+
+\item Works with all gcc optimization levels.
+\end{list}
+
+Time slicing now occurs each time a timer interrupt fires.  This allows a slow running user task to be preempted on a timer interrupt, and we can then schedule the notifier immediately so that any high priority user tasks can be unblocked quicker.  This is especially important since it means we no longer have to worry about worst case execution time of low priority processes that may mistakenly avoid calling the Pass function.
+
+Constant time memory allocation is now used instead of the linear time memory allocation that was used before.  The implementation details of this are described in the data structures section.
+
+Constant time unblocking of tasks has been added by adhering to the convention that only one task can be blocked on a particular event at a time.  This removes the necessity to iterate through all tasks checking for their state, and unblocking them if they are blocked on the event being triggered.  This update saved as much as 540us on interrupts that involved unblocking tasks.
+
+Finally, our kernel has been updated to work in all compilation levels.  Our O3 version runs about twice as fast as the O0 version.
 
 
 \section{Source Code%
   \label{source-code}%
 }
 
-The source code is located at \texttt{/u4/chfoo/cs452/group/k2a-submit/io/kernel2}. It can be compiled by running \texttt{make}.
+The source code is located at \texttt{/u4/chfoo/cs452/group/k4-submit/io/kernel4}. It can be compiled by running \texttt{make}.
 
 Source code MD5 hashes:
 %
 \begin{quote}{\ttfamily \raggedright \noindent
-chfoo@nettop38:\textasciitilde{}/cs452/group/k2a-submit/io/kernel2\$~md5sum~*/*.*~*.*\\
-~~~~50ef0e1e3c71ab1e795fc3d39f75ef9d~~include/bwio.h\\
-~~~~9af226f127c1fd759530cd45236c37b8~~include/ts7200.h\\
-~~~~da5c58f5a70790d853646f4a76f4c540~~buffer.c\\
-~~~~1f9a730c5017ddd24e18523d27dc471e~~buffer.h\\
-~~~~e270fd64ae08a0317d37fadedd24cabb~~kern.c\\
-~~~~147be2be54ef2d9f4cad65a5794e7db7~~kern.elf\\
-~~~~d41d8cd98f00b204e9800998ecf8427e~~kern.h\\
-~~~~b00a171e052d7c818750f58a3bdcf27c~~kernel\_control\_flow.pdf\\
-~~~~52dd3c8bac8b93e7bc9024ca3e56b00a~~kernel\_stack.pdf\\
-~~~~84a5537b040cccb5d8ef47b4915018e8~~kernel\_state.h\\
-~~~~7a7803ae8e9733a3bb9e27f07a2e0855~~memory.c\\
-~~~~c782fb4d47461c3c448d646ff43271c3~~memory.h\\
-~~~~adcff2244ac92050360eacd7ab4f5dd9~~message.c\\
-~~~~04eded8ccd08bc5f73ff2eaf0274f076~~message.h\\
-~~~~e80ae585145cca0cc59cc19c9dcf9b7b~~nameserver.c\\
-~~~~53f58016672e3a2a02c3a5aee480ec50~~nameserver.h\\
-~~~~4aa618b9753c5292e5d9e5c95d297f10~~orex.ld\\
-~~~~e208b867b9bac6cf5c81c6d73f9b3f8d~~private\_kernel\_interface.c\\
-~~~~bef673553ff2738e5355c9c0d8c9fb77~~private\_kernel\_interface.h\\
-~~~~0656c0cea9a29f56d2db883a50ef0884~~public\_kernel\_interface.c\\
-~~~~774ba0cc7254fa6203bc796b85d716cb~~public\_kernel\_interface.h\\
-~~~~8bb4ea6e2e00ae9c9bad30f682dbe9af~~queue.c\\
-~~~~8c282e71bf30800f9d749685dba46de5~~queue.h\\
-~~~~91fbdbffeb090806d35dc54cb2e0627a~~random.c\\
-~~~~7b31c57ff692317d816c839156382596~~random.h\\
-~~~~5346b105cb8defb34e3aa6c4a853ff5c~~readme.pdf\\
-~~~~e18b4677ae9866d43b7711a219042fff~~readme.rst\\
-~~~~a03dcb23183838a3968c9e4cf1fa1183~~readme.tex\\
-~~~~3bf0193cced01283304b36167df3594a~~robio.c\\
-~~~~6fe98c156b7860cd10e5c8e7c7ef39ef~~robio.h\\
-~~~~f207d682e54e737639f45f3a17078b6b~~rps.c\\
-~~~~89e7636353a31fd35b73a82ee49a20e0~~rps.h\\
-~~~~d55a63fb8522de9736cc3833ff0a9025~~swi\_kernel\_interface.s\\
-~~~~d22a28c9457c285a63ea0ff7091b5f6b~~task\_descriptor.c\\
-~~~~db54248f4493240552b83a78d7656822~~task\_descriptor.h\\
-~~~~1d21eae6d91007bfd0d6dd6e35266aa9~~tasks.c\\
-~~~~e1bc57af359db93c3982f8c0af896fcc~~tasks.h\\
-~~~~952d806f62f1ef2d28b508485a7545c2~~timing.ods
+linux032:\textasciitilde{}/cs452/group/k4-submit/io/kernel4>~md5sum~*/*.*~*.*\\
+50ef0e1e3c71ab1e795fc3d39f75ef9d~~include/bwio.h\\
+9af226f127c1fd759530cd45236c37b8~~include/ts7200.h\\
+79cb95e061329765d7dd25c84bf70456~~ansi.c\\
+f1288936a928a94bd2170d746e1326a4~~ansi.h\\
+b8c8b5fafcd1fd43beaeee7da1e5550f~~buffer.c\\
+04c39523dd006155ba353fb3ba1dddfb~~buffer.h\\
+b5fcae4a1fde32dcd00b1895c3605961~~clock.c\\
+e458870bb98bf9740555b34b15550715~~clock.h\\
+fb923f79a79d5e46207578e84e5e695e~~kern.c\\
+34599bdbc904f30c66674b59d3f4e2b4~~kern.elf\\
+4e3dfc92cbd22b1989e190a26517d536~~kernel\_irq.c\\
+71f92a7be8c22d1cb5d9cc15be002aa3~~kernel\_irq.h\\
+5313c05e6242631f379b5141ebca4f5f~~kernel\_state.h\\
+d41d8cd98f00b204e9800998ecf8427e~~kern.h\\
+5439df921ac46fd07959e43125fefa91~~memory.c\\
+b16265e8b0bfe3a510b3a25e05b8674a~~memory.h\\
+adcff2244ac92050360eacd7ab4f5dd9~~message.c\\
+85549de410590cc5033d8bf7399cf504~~message.h\\
+a90ee4bc4ce7f46d54b6363d8c8e4ba6~~nameserver.c\\
+f9335969b8c71be878a915c26e7a606c~~nameserver.h\\
+ca6745d94663494b718c48da853f30a9~~notifier.c\\
+f5af74c5dd1325eccdd70e4903640da2~~notifier.h\\
+78a32a3a80cad8a4cc40de1ce18fbe29~~orex.ld\\
+269c595b95aef41bc8c5931ce1e3c1cf~~private\_kernel\_interface.c\\
+2771aa5221a2b30980916a3ef55b9446~~private\_kernel\_interface.h\\
+080185c0fc743fa77108f3c5ee8e3baa~~public\_kernel\_interface.c\\
+681b789f0146b2589daae803f968ed2c~~public\_kernel\_interface.h\\
+cbdfb94443bcf8e298edc0cf3101b5d1~~queue.c\\
+c1157ac2859cc277d1df431dc85502d3~~queue.h\\
+cd7239008bf3fc8474819d9183b0cc0f~~random.c\\
+7b31c57ff692317d816c839156382596~~random.h\\
+9a43cb84e02f05d5b8ffca6e500d98b0~~readme.rst\\
+eb5a60f060d101d2536e96298aab4112~~readme.tex\\
+9806864a4bf5766bb12b1bd9c1467121~~robio.c\\
+0db55f361cec927bba27cdec6b5c2e55~~robio.h\\
+545aa195d4f3e0e844edac05715e094d~~rps.c\\
+222f8edffbfde11ee553b7561f4c10a8~~rps.h\\
+42432905121b8fe5715dcf1ec5367196~~scheduler.c\\
+606f31e642dd29602786c86d563b4470~~scheduler.h\\
+ecb99ee78c86924b6d54321792e68006~~swi\_kernel\_interface.s\\
+bd8b74d610f4d36af2ac42141d19e9a1~~task\_descriptor.c\\
+7a03d71b4ace688192d79fcd44fd7420~~task\_descriptor.h\\
+d09cc801a5f44195d473495a9dd0d78b~~tasks.c\\
+0d3699b1a8224eb6995bb042834f66b5~~tasks.h\\
+4bf41d22949ce27f1f2d7e5f32a0570f~~train.c\\
+6b8ab8c41f1c384a8dc0556e87b8651b~~train.h\\
+19f2f37c12c3cec419176823b30c1304~~uart.c\\
+205a1d49a746f5d83f3a6e0d5c981492~~uart.h\\
+214a8b02f9d8b6c9212685d493867b38~~ui.c\\
+b298d8ac96488af2ef904fbeac9d2abf~~ui.h\\
+5b609bdd0235c3858e16c053b8e53bfd~~va\_list\_def.h
 }
 \end{quote}
 
 Elf MD5 hash:
 %
 \begin{quote}{\ttfamily \raggedright \noindent
-chfoo@nettop38:/u/cs452/tftp/ARM/relder-chfoo/k2a-submit\$~md5sum~kern.elf\\
-147be2be54ef2d9f4cad65a5794e7db7~~kern.elf
+linux032:\textasciitilde{}>~md5sum~/u/cs452/tftp/ARM/relder-chfoo/k4-submit/kern.elf\\
+34599bdbc904f30c66674b59d3f4e2b4~~/u/cs452/tftp/ARM/relder-chfoo/k4-submit/kern.elf
 }
 \end{quote}
 
-Git sha1 hash: \texttt{7f890df902b0c688f32fb0488ffe15032964f1c1}
-
-
-\section{Output%
-  \label{output}%
-}
-
-The executable prints:
-%
-\begin{itemize}
-
-\item Task creation
-
-\item Who wants to play
-
-\item Who wants to sign up
-
-\item What clients choose
-
-\item The pair the server has decided to play
-
-\item The result of the game
-
-\item The client's reasoning for winning/losing
-
-\item When a client quits
-
-\end{itemize}
-
-In Summary:
-\setcounter{listcnt0}{0}
-\begin{list}{\arabic{listcnt0}.}
-{
-\usecounter{listcnt0}
-\setlength{\rightmargin}{\leftmargin}
-}
-
-\item Server and Clients start up
-
-\item Clients request to play
-
-\item Games are played
-
-\item One client quits and the system tries to shutdown
-
-\item Clean exit
-\end{list}
-
-Note that a keyboard response is needed when the \emph{client} gets the result. This allows us to see what the \emph{server} decided before continuing execution. So two presses of the keyboard are needed for each round.
-
-
-\section{Performance Measurement%
-  \label{performance-measurement}%
-}
-
-\setlength{\DUtablewidth}{\linewidth}
-\begin{longtable*}[c]{|p{0.179\DUtablewidth}|p{0.086\DUtablewidth}|p{0.214\DUtablewidth}|p{0.156\DUtablewidth}|p{0.075\DUtablewidth}|p{0.121\DUtablewidth}|}
-\hline
-\textbf{%
-Message length
-} & \textbf{%
-Caches
-} & \textbf{%
-Send before Reply
-} & \textbf{%
-Optimization
-} & \textbf{%
-Group
-} & \textbf{%
-Time (us)
-} \\
-\hline
-\endfirsthead
-\hline
-\textbf{%
-Message length
-} & \textbf{%
-Caches
-} & \textbf{%
-Send before Reply
-} & \textbf{%
-Optimization
-} & \textbf{%
-Group
-} & \textbf{%
-Time (us)
-} \\
-\hline
-\endhead
-\multicolumn{6}{c}{\hfill ... continued on next page} \\
-\endfoot
-\endlastfoot
-
-4
- & 
-off
- & 
-yes
- & 
-off
- & 
-2
- & 
-549
- \\
-\hline
-
-64
- & 
-off
- & 
-yes
- & 
-off
- & 
-2
- & 
-2088
- \\
-\hline
-
-4
- & 
-on
- & 
-yes
- & 
-off
- & 
-2
- & 
-broken
- \\
-\hline
-
-64
- & 
-on
- & 
-yes
- & 
-off
- & 
-2
- & 
-broken
- \\
-\hline
-
-4
- & 
-off
- & 
-no
- & 
-off
- & 
-2
- & 
-547
- \\
-\hline
-
-64
- & 
-off
- & 
-no
- & 
-off
- & 
-2
- & 
-2090
- \\
-\hline
-
-4
- & 
-on
- & 
-no
- & 
-off
- & 
-2
- & 
-broken
- \\
-\hline
-
-64
- & 
-on
- & 
-no
- & 
-off
- & 
-2
- & 
-broken
- \\
-\hline
-
-4
- & 
-off
- & 
-yes
- & 
-on
- & 
-2
- & 
-broken
- \\
-\hline
-
-64
- & 
-off
- & 
-yes
- & 
-on
- & 
-2
- & 
-broken
- \\
-\hline
-
-4
- & 
-on
- & 
-yes
- & 
-on
- & 
-2
- & 
-broken
- \\
-\hline
-
-64
- & 
-on
- & 
-yes
- & 
-on
- & 
-2
- & 
-broken
- \\
-\hline
-
-4
- & 
-off
- & 
-no
- & 
-on
- & 
-2
- & 
-broken
- \\
-\hline
-
-64
- & 
-off
- & 
-no
- & 
-on
- & 
-2
- & 
-broken
- \\
-\hline
-
-4
- & 
-on
- & 
-no
- & 
-on
- & 
-2
- & 
-broken
- \\
-\hline
-
-64
- & 
-on
- & 
-no
- & 
-on
- & 
-2
- & 
-broken
- \\
-\hline
-\end{longtable*}
-
-The time spent in the code is likely in the string copy functions. Since they are unoptimized and only copy one \texttt{char} at a time, it is very expensive and operates in linear time.
+Git sha1 hash: \texttt{6cd3138e4c4808f1fbfe1790264f038a8cc67110}
 
 \end{document}
