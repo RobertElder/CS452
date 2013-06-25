@@ -217,12 +217,6 @@ void TrainSensorReader_Start() {
 	
 	while (1) {
 		for (module_num = SENSOR_MODULE_A; module_num <= SENSOR_MODULE_E; module_num++) {
-			/*Putc(COM1, 0xc0 | module_num);
-			
-			// The course website train manual is wrong, the website is right
-			lower = Getc(COM1);
-			upper = Getc(COM1);
-			*/
 			SendTrainCommand(TRAIN_READ_SENSOR, module_num, 0, &lower, &upper);
 			
 			// Reverse it so it is easier to mask. see train.h
