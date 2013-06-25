@@ -202,7 +202,6 @@ void UIServer_HandleTrainCommand(UIServer * server) {
 	char speed = robatoi(&server->command_buffer[next_whitespace]);
 	
 	PutString(COM2, "Train=%d Speed=%d. train on fire.", train_num, speed);
-//	PutcAtomic(COM1, 2, speed, train_num);
 	SendTrainCommand(TRAIN_SPEED, speed, train_num, 0, 0);
 }
 
@@ -211,12 +210,6 @@ void UIServer_HandleReverseCommand(UIServer * server) {
 	char train_num = robatoi(&server->command_buffer[next_whitespace]);
 
 	PutString(COM2, "Train=%d. train on reversed fire.", train_num);
-/*	PutcAtomic(COM1, 2, 0, train_num);
-	DelaySeconds(0.5);
-	PutcAtomic(COM1, 2, 15, train_num);
-	DelaySeconds(0.5);
-	PutcAtomic(COM1, 2, 5, train_num);
-*/
 	SendTrainCommand(TRAIN_REVERSE, train_num, 0, 0, 0);
 }
 
@@ -239,15 +232,6 @@ void UIServer_HandleSwitchCommand(UIServer * server) {
 	}
 	
 	PutString(COM2, "Switch=%d Direction=%c. switch on fire.", switch_num, direction);
-	
-/*	PutcAtomic(COM1, 2, direction_code, switch_num);
-	DelaySeconds(0.15);
-	Putc(COM1, 32);
-
-	// Make sure the solenoid is really off
-	DelaySeconds(0.2);
-	Putc(COM1, 32);
-*/
 	SendTrainCommand(TRAIN_SWITCH, direction_code, switch_num, 0, 0);
 }
 
