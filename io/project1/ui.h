@@ -1,5 +1,7 @@
 #include "message.h"
 #include "train.h"
+#include "maps/map.h"
+#include "maps/map_a.h"
 
 #ifndef UI_H_
 #define UI_H_
@@ -9,6 +11,7 @@
 static const char const UI_SERVER_NAME[] = "UISvr";
 static const char const UI_TIMER_NAME[] = "UITmr";
 static const char const UI_SERVER_HEADER[] = "> THOMAS TANK ENGINE (TM) TRAIN MASTER CONTROL SYSTEM CS-452-2013 <";
+static const int const MAP_ROW_OFFSET = 5;
 
 typedef struct UIMessage {
 	MessageType message_type;
@@ -24,6 +27,7 @@ typedef struct UIServer {
 	char command_buffer[UI_SERVER_COMMAND_BUFFER_SIZE];
 	unsigned int command_buffer_index;
 	int sensor_bit_flags_cache[SENSOR_MODULE_A + SENSOR_MODULE_E];
+	TrainMap train_map_a;
 } UIServer;
 
 void UIServer_Start();
@@ -51,6 +55,8 @@ void UIServer_HandleReverseCommand(UIServer * server);
 void UIServer_HandleSwitchCommand(UIServer * server);
 
 void UIServer_PrintSensors(UIServer * server);
+
+void UIServer_PrintMap(UIServer * server);
 
 void UITimer_Start();
 

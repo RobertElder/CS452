@@ -19,7 +19,7 @@ ASFLAGS	= -mcpu=arm920t -mapcs-32
 LDFLAGS = -init main -Map kern.map -N  -T orex.ld -L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L../lib
 
 #  TODO: make things generic using the following method:
-SOURCES = kern.c public_kernel_interface.c private_kernel_interface.c swi_kernel_interface.c robio.c buffer.c queue.c task_descriptor.c tasks.c memory.c random.c nameserver.c rps.c message.c clock.c scheduler.c notifier.c kernel_irq.c ansi.c uart.c ui.c train.c
+SOURCES = kern.c public_kernel_interface.c private_kernel_interface.c swi_kernel_interface.c robio.c buffer.c queue.c task_descriptor.c tasks.c memory.c random.c nameserver.c rps.c message.c clock.c scheduler.c notifier.c kernel_irq.c ansi.c uart.c ui.c train.c maps/map_a.c
 HEADERS = ${SOURCES:.c=.h}
 OBJECTS = ${SOURCES:.c=.o}
 
@@ -156,10 +156,16 @@ train.s: train.c train.h
 train.o: train.s
 	$(AS) $(ASFLAGS) -o train.o train.s
 
+maps/map_a.s: maps/map_a.c maps/map_a.h
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) maps/map_a.c -o maps/map_a.s
+
+maps/map_a.o: maps/map_a.s
+	$(AS) $(ASFLAGS) -o maps/map_a.o maps/map_a.s
+
 kern.elf: $(OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ $(OBJECTS) -lgcc
 	@cp kern.elf /u/cs452/tftp/ARM/`whoami`/kern.elf
 	@chmod ugo+r /u/cs452/tftp/ARM/`whoami`/kern.elf
 
 clean:
-	-@rm -f kern.elf kern.s public_kernel_interface.s private_kernel_interface.s robio.s buffer.s queue.s task_descriptor.s tasks.s memory.s random.s nameserver.s rps.s message.s clock.s scheduler.s notifier.s kernel_irq.s ansi.s uart.s ui.s train.s *.o kern.map
+	-@rm -f kern.elf kern.s public_kernel_interface.s private_kernel_interface.s robio.s buffer.s queue.s task_descriptor.s tasks.s memory.s random.s nameserver.s rps.s message.s clock.s scheduler.s notifier.s kernel_irq.s ansi.s uart.s ui.s train.s maps/*.s *.o maps/*.o kern.map

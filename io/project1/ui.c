@@ -87,6 +87,8 @@ void UIServer_Initialize(UIServer * server) {
 	for (i = SENSOR_MODULE_A; i <= SENSOR_MODULE_E; i++) {
 		server->sensor_bit_flags_cache[i] = 0;
 	}
+	
+	TrainMap_Initialize_A(&server->train_map_a);
 }
 
 void UIServer_Render(UIServer * server) {
@@ -99,6 +101,7 @@ void UIServer_Render(UIServer * server) {
 	}
 
 	UIServer_PrintTime(server);
+	UIServer_PrintMap(server);
 	UIServer_PrintSensors(server);
 	UIServer_PrintCommandLine(server);
 	
@@ -266,10 +269,11 @@ void UIServer_PrintSensors(UIServer * server) {
 		
 		int sensor_bit_flag = receive_message->sensor_bit_flag;
 		int sensor_bit_flag_cache = server->sensor_bit_flags_cache[module_num];
-		
+
+/*
 		if (server->dirty) {
 			// Print headers
-			ANSI_Cursor(5, 1);
+			ANSI_Cursor(MAP_ROW_OFFSET, 1);
 			ANSI_CursorForward(module_num * 10);
 			PutString(COM2, "M %d", module_num);
 			
@@ -289,7 +293,7 @@ void UIServer_PrintSensors(UIServer * server) {
 				^ (sensor_bit_flag_cache & 1 << sensor_num);
 			
 			if (server->dirty || differs) {
-				ANSI_Cursor(6 + sensor_num, module_num * 10 + 3);
+				ANSI_Cursor(MAP_ROW_OFFSET + sensor_num, module_num * 10 + 3);
 			
 				if (sensor_bit_flag & 1 << sensor_num) {
 					ANSI_Style(BOLD_STYLE);
@@ -300,8 +304,42 @@ void UIServer_PrintSensors(UIServer * server) {
 				}
 			}
 		}
+*/
+
+		// Print sensor values on the map
+		int sensor_num;
+		for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
+			short differs = (sensor_bit_flag & 1 << sensor_num)
+				^ (sensor_bit_flag_cache & 1 << sensor_num);
+			
+			if (server->dirty || differs) {
+				int sensor_i = module_num * SENSORS_PER_MODULE + sensor_num;
+				TrainMapLabelPosition * pos = &server->train_map_a.sensors[sensor_i];
+				
+				if (pos->ascii_offset == 0) {
+					continue;
+				}
+				
+				ANSI_Cursor(MAP_ROW_OFFSET + pos->row, pos->col + 1);
+			
+				if (sensor_bit_flag & 1 << sensor_num) {
+					ANSI_Style(BOLD_STYLE);
+					PutString(COM2, "X");
+					ANSI_Style(NORMAL_STYLE);
+				} else {
+					PutString(COM2, "%c", server->train_map_a.ascii[pos->ascii_offset]);
+				}
+			}
+		}
 		
 		server->sensor_bit_flags_cache[module_num] = sensor_bit_flag;
+	}
+}
+
+void UIServer_PrintMap(UIServer * server) {
+	if (server->dirty) {
+		ANSI_Cursor(MAP_ROW_OFFSET, 1);
+		PutString(COM2, "%s", server->train_map_a.ascii);
 	}
 }
 
