@@ -81,6 +81,8 @@ def waypoints(out_f, lines):
     sensor_numbers = []
 
     for line in lines:
+        line = line.split('#', 1)[0]
+        
         if line.startswith('O'):
             waypoint_type, switch_number = line.split()
             switch_numbers.append(int(switch_number))
@@ -122,11 +124,15 @@ def fill_waypoint_positions(out_f, map_text, switch_numbers, sensor_numbers):
                 sensor_module, sensor_left_number, sensor_right_number = sensor_numbers.pop(0)
                 
                 for i in [sensor_module * SENSORS_PER_MODULE + sensor_left_number, sensor_module * SENSORS_PER_MODULE + sensor_right_number]:
+                    out_f.write('/* Module=%d SensorI=%d/%d SensorLabel=%d/%d */\n' % (sensor_module, sensor_left_number, sensor_right_number, sensor_left_number + 1, sensor_right_number + 1))
                     out_f.write('map->sensors[%d].row = %d;\n' % (i, row))
                     out_f.write('map->sensors[%d].col = %d;\n' % (i, col))
                     out_f.write('map->sensors[%d].ascii_offset = %d;\n' % (i, offset))
             
             offset += 1
+    
+    assert len(switch_numbers) == 0
+    assert len(sensor_numbers) == 0
 
 if __name__ == '__main__':
     main()

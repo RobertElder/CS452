@@ -1075,9 +1075,11 @@ map->switches[254].ascii_offset = 0;
 map->switches[255].row = 0;
 map->switches[255].col = 0;
 map->switches[255].ascii_offset = 0;
+/* Module=1 SensorI=1/0 SensorLabel=2/1 */
 map->sensors[17].row = 0;
 map->sensors[17].col = 7;
 map->sensors[17].ascii_offset = 7;
+/* Module=1 SensorI=1/0 SensorLabel=2/1 */
 map->sensors[16].row = 0;
 map->sensors[16].col = 7;
 map->sensors[16].ascii_offset = 7;
@@ -1087,27 +1089,35 @@ map->switches[12].ascii_offset = 12;
 map->switches[11].row = 0;
 map->switches[11].col = 22;
 map->switches[11].ascii_offset = 22;
+/* Module=3 SensorI=13/12 SensorLabel=14/13 */
 map->sensors[61].row = 0;
 map->sensors[61].col = 30;
 map->sensors[61].ascii_offset = 30;
+/* Module=3 SensorI=13/12 SensorLabel=14/13 */
 map->sensors[60].row = 0;
 map->sensors[60].col = 30;
 map->sensors[60].ascii_offset = 30;
+/* Module=5 SensorI=7/6 SensorLabel=8/7 */
 map->sensors[87].row = 0;
 map->sensors[87].col = 42;
 map->sensors[87].ascii_offset = 42;
+/* Module=5 SensorI=7/6 SensorLabel=8/7 */
 map->sensors[86].row = 0;
 map->sensors[86].col = 42;
 map->sensors[86].ascii_offset = 42;
+/* Module=4 SensorI=7/6 SensorLabel=8/7 */
 map->sensors[71].row = 1;
 map->sensors[71].col = 51;
 map->sensors[71].ascii_offset = 103;
+/* Module=4 SensorI=7/6 SensorLabel=8/7 */
 map->sensors[70].row = 1;
 map->sensors[70].col = 51;
 map->sensors[70].ascii_offset = 103;
+/* Module=1 SensorI=13/12 SensorLabel=14/13 */
 map->sensors[29].row = 2;
 map->sensors[29].col = 5;
 map->sensors[29].ascii_offset = 110;
+/* Module=1 SensorI=13/12 SensorLabel=14/13 */
 map->sensors[28].row = 2;
 map->sensors[28].col = 5;
 map->sensors[28].ascii_offset = 110;
@@ -1117,81 +1127,103 @@ map->switches[14].ascii_offset = 115;
 map->switches[13].row = 2;
 map->switches[13].col = 20;
 map->switches[13].ascii_offset = 125;
+/* Module=3 SensorI=11/10 SensorLabel=12/11 */
 map->sensors[59].row = 2;
 map->sensors[59].col = 25;
 map->sensors[59].ascii_offset = 130;
+/* Module=3 SensorI=11/10 SensorLabel=12/11 */
 map->sensors[58].row = 2;
 map->sensors[58].col = 25;
 map->sensors[58].ascii_offset = 130;
 map->switches[10].row = 2;
 map->switches[10].col = 32;
 map->switches[10].ascii_offset = 137;
+/* Module=2 SensorI=5/4 SensorLabel=6/5 */
 map->sensors[37].row = 2;
 map->sensors[37].col = 35;
 map->sensors[37].ascii_offset = 140;
+/* Module=2 SensorI=5/4 SensorLabel=6/5 */
 map->sensors[36].row = 2;
 map->sensors[36].col = 35;
 map->sensors[36].ascii_offset = 140;
+/* Module=4 SensorI=3/2 SensorLabel=4/3 */
 map->sensors[67].row = 2;
 map->sensors[67].col = 37;
 map->sensors[67].ascii_offset = 142;
+/* Module=4 SensorI=3/2 SensorLabel=4/3 */
 map->sensors[66].row = 2;
 map->sensors[66].col = 37;
 map->sensors[66].ascii_offset = 142;
 map->switches[9].row = 2;
 map->switches[9].col = 40;
 map->switches[9].ascii_offset = 145;
+/* Module=5 SensorI=5/4 SensorLabel=6/5 */
 map->sensors[85].row = 2;
 map->sensors[85].col = 44;
 map->sensors[85].ascii_offset = 149;
+/* Module=5 SensorI=5/4 SensorLabel=6/5 */
 map->sensors[84].row = 2;
 map->sensors[84].col = 44;
 map->sensors[84].ascii_offset = 149;
+/* Module=4 SensorI=4/5 SensorLabel=5/6 */
 map->sensors[68].row = 2;
 map->sensors[68].col = 48;
 map->sensors[68].ascii_offset = 153;
+/* Module=4 SensorI=4/5 SensorLabel=5/6 */
 map->sensors[69].row = 2;
 map->sensors[69].col = 48;
 map->sensors[69].ascii_offset = 153;
 map->switches[156].row = 2;
 map->switches[156].col = 52;
 map->switches[156].ascii_offset = 157;
+/* Module=5 SensorI=14/15 SensorLabel=15/16 */
 map->sensors[94].row = 3;
 map->sensors[94].col = 33;
 map->sensors[94].ascii_offset = 192;
+/* Module=5 SensorI=14/15 SensorLabel=15/16 */
 map->sensors[95].row = 3;
 map->sensors[95].col = 33;
 map->sensors[95].ascii_offset = 192;
+/* Module=5 SensorI=2/3 SensorLabel=3/4 */
 map->sensors[82].row = 3;
 map->sensors[82].col = 39;
 map->sensors[82].ascii_offset = 198;
+/* Module=5 SensorI=2/3 SensorLabel=3/4 */
 map->sensors[83].row = 3;
 map->sensors[83].col = 39;
 map->sensors[83].ascii_offset = 198;
+/* Module=1 SensorI=14/15 SensorLabel=15/16 */
 map->sensors[30].row = 4;
 map->sensors[30].col = 3;
 map->sensors[30].ascii_offset = 217;
+/* Module=1 SensorI=14/15 SensorLabel=15/16 */
 map->sensors[31].row = 4;
 map->sensors[31].col = 3;
 map->sensors[31].ascii_offset = 217;
 map->switches[155].row = 4;
 map->switches[155].col = 8;
 map->switches[155].ascii_offset = 222;
+/* Module=1 SensorI=3/2 SensorLabel=4/3 */
 map->sensors[19].row = 4;
 map->sensors[19].col = 18;
 map->sensors[19].ascii_offset = 232;
+/* Module=1 SensorI=3/2 SensorLabel=4/3 */
 map->sensors[18].row = 4;
 map->sensors[18].col = 18;
 map->sensors[18].ascii_offset = 232;
+/* Module=5 SensorI=1/0 SensorLabel=2/1 */
 map->sensors[81].row = 4;
 map->sensors[81].col = 34;
 map->sensors[81].ascii_offset = 248;
+/* Module=5 SensorI=1/0 SensorLabel=2/1 */
 map->sensors[80].row = 4;
 map->sensors[80].col = 34;
 map->sensors[80].ascii_offset = 248;
+/* Module=5 SensorI=2/3 SensorLabel=3/4 */
 map->sensors[82].row = 4;
 map->sensors[82].col = 38;
 map->sensors[82].ascii_offset = 252;
+/* Module=5 SensorI=2/3 SensorLabel=3/4 */
 map->sensors[83].row = 4;
 map->sensors[83].col = 38;
 map->sensors[83].ascii_offset = 252;
@@ -1207,63 +1239,81 @@ map->switches[1].ascii_offset = 419;
 map->switches[15].row = 7;
 map->switches[15].col = 37;
 map->switches[15].ascii_offset = 421;
+/* Module=1 SensorI=11/10 SensorLabel=12/11 */
 map->sensors[27].row = 8;
 map->sensors[27].col = 1;
 map->sensors[27].ascii_offset = 442;
+/* Module=1 SensorI=11/10 SensorLabel=12/11 */
 map->sensors[26].row = 8;
 map->sensors[26].col = 1;
 map->sensors[26].ascii_offset = 442;
+/* Module=2 SensorI=14/15 SensorLabel=15/16 */
 map->sensors[46].row = 8;
 map->sensors[46].col = 18;
 map->sensors[46].ascii_offset = 459;
+/* Module=2 SensorI=14/15 SensorLabel=15/16 */
 map->sensors[47].row = 8;
 map->sensors[47].col = 18;
 map->sensors[47].ascii_offset = 459;
+/* Module=3 SensorI=0/1 SensorLabel=1/2 */
+map->sensors[48].row = 8;
+map->sensors[48].col = 34;
+map->sensors[48].ascii_offset = 475;
+/* Module=3 SensorI=0/1 SensorLabel=1/2 */
+map->sensors[49].row = 8;
+map->sensors[49].col = 34;
+map->sensors[49].ascii_offset = 475;
+/* Module=2 SensorI=12/13 SensorLabel=13/14 */
 map->sensors[44].row = 8;
-map->sensors[44].col = 34;
-map->sensors[44].ascii_offset = 475;
+map->sensors[44].col = 38;
+map->sensors[44].ascii_offset = 479;
+/* Module=2 SensorI=12/13 SensorLabel=13/14 */
 map->sensors[45].row = 8;
-map->sensors[45].col = 34;
-map->sensors[45].ascii_offset = 475;
-map->sensors[33].row = 8;
-map->sensors[33].col = 38;
-map->sensors[33].ascii_offset = 479;
-map->sensors[32].row = 8;
-map->sensors[32].col = 38;
-map->sensors[32].ascii_offset = 479;
+map->sensors[45].col = 38;
+map->sensors[45].ascii_offset = 479;
+/* Module=2 SensorI=1/0 SensorLabel=2/1 */
+map->sensors[33].row = 9;
+map->sensors[33].col = 33;
+map->sensors[33].ascii_offset = 530;
+/* Module=2 SensorI=1/0 SensorLabel=2/1 */
+map->sensors[32].row = 9;
+map->sensors[32].col = 33;
+map->sensors[32].ascii_offset = 530;
+/* Module=4 SensorI=14/15 SensorLabel=15/16 */
 map->sensors[78].row = 9;
-map->sensors[78].col = 33;
-map->sensors[78].ascii_offset = 530;
+map->sensors[78].col = 39;
+map->sensors[78].ascii_offset = 536;
+/* Module=4 SensorI=14/15 SensorLabel=15/16 */
 map->sensors[79].row = 9;
-map->sensors[79].col = 33;
-map->sensors[79].ascii_offset = 530;
-map->sensors[39].row = 9;
-map->sensors[39].col = 39;
-map->sensors[39].ascii_offset = 536;
-map->sensors[38].row = 9;
-map->sensors[38].col = 39;
-map->sensors[38].ascii_offset = 536;
+map->sensors[79].col = 39;
+map->sensors[79].ascii_offset = 536;
+/* Module=2 SensorI=7/6 SensorLabel=8/7 */
+map->sensors[39].row = 10;
+map->sensors[39].col = 1;
+map->sensors[39].ascii_offset = 553;
+/* Module=2 SensorI=7/6 SensorLabel=8/7 */
+map->sensors[38].row = 10;
+map->sensors[38].col = 1;
+map->sensors[38].ascii_offset = 553;
+/* Module=1 SensorI=8/9 SensorLabel=9/10 */
 map->sensors[24].row = 10;
-map->sensors[24].col = 1;
-map->sensors[24].ascii_offset = 553;
+map->sensors[24].col = 6;
+map->sensors[24].ascii_offset = 558;
+/* Module=1 SensorI=8/9 SensorLabel=9/10 */
 map->sensors[25].row = 10;
-map->sensors[25].col = 1;
-map->sensors[25].ascii_offset = 553;
-map->sensors[53].row = 10;
-map->sensors[53].col = 6;
-map->sensors[53].ascii_offset = 558;
-map->sensors[52].row = 10;
-map->sensors[52].col = 6;
-map->sensors[52].ascii_offset = 558;
+map->sensors[25].col = 6;
+map->sensors[25].ascii_offset = 558;
 map->switches[16].row = 10;
 map->switches[16].col = 10;
 map->switches[16].ascii_offset = 562;
 map->switches[17].row = 10;
 map->switches[17].col = 20;
 map->switches[17].ascii_offset = 572;
+/* Module=3 SensorI=15/14 SensorLabel=16/15 */
 map->sensors[63].row = 10;
 map->sensors[63].col = 24;
 map->sensors[63].ascii_offset = 576;
+/* Module=3 SensorI=15/14 SensorLabel=16/15 */
 map->sensors[62].row = 10;
 map->sensors[62].col = 24;
 map->sensors[62].ascii_offset = 576;
@@ -1273,90 +1323,114 @@ map->switches[8].ascii_offset = 584;
 map->switches[2].row = 10;
 map->switches[2].col = 40;
 map->switches[2].ascii_offset = 592;
+/* Module=4 SensorI=10/11 SensorLabel=11/12 */
 map->sensors[74].row = 10;
 map->sensors[74].col = 44;
 map->sensors[74].ascii_offset = 596;
+/* Module=4 SensorI=10/11 SensorLabel=11/12 */
 map->sensors[75].row = 10;
 map->sensors[75].col = 44;
 map->sensors[75].ascii_offset = 596;
+/* Module=5 SensorI=11/10 SensorLabel=12/11 */
 map->sensors[91].row = 10;
 map->sensors[91].col = 48;
 map->sensors[91].ascii_offset = 600;
+/* Module=5 SensorI=11/10 SensorLabel=12/11 */
 map->sensors[90].row = 10;
 map->sensors[90].col = 48;
 map->sensors[90].ascii_offset = 600;
 map->switches[6].row = 10;
 map->switches[6].col = 52;
 map->switches[6].ascii_offset = 604;
+/* Module=2 SensorI=11/10 SensorLabel=12/11 */
 map->sensors[43].row = 12;
 map->sensors[43].col = 1;
 map->sensors[43].ascii_offset = 660;
+/* Module=2 SensorI=11/10 SensorLabel=12/11 */
 map->sensors[42].row = 12;
 map->sensors[42].col = 1;
 map->sensors[42].ascii_offset = 660;
+/* Module=1 SensorI=6/8 SensorLabel=7/9 */
 map->sensors[22].row = 12;
 map->sensors[22].col = 8;
 map->sensors[22].ascii_offset = 667;
+/* Module=1 SensorI=6/8 SensorLabel=7/9 */
 map->sensors[24].row = 12;
 map->sensors[24].col = 8;
 map->sensors[24].ascii_offset = 667;
 map->switches[7].row = 12;
 map->switches[7].col = 12;
 map->switches[7].ascii_offset = 671;
+/* Module=3 SensorI=5/4 SensorLabel=6/5 */
 map->sensors[53].row = 12;
 map->sensors[53].col = 24;
 map->sensors[53].ascii_offset = 683;
+/* Module=3 SensorI=5/4 SensorLabel=6/5 */
 map->sensors[52].row = 12;
 map->sensors[52].col = 24;
 map->sensors[52].ascii_offset = 683;
 map->switches[3].row = 12;
 map->switches[3].col = 28;
 map->switches[3].ascii_offset = 687;
+/* Module=3 SensorI=15/14 SensorLabel=16/15 */
 map->sensors[63].row = 12;
 map->sensors[63].col = 34;
 map->sensors[63].ascii_offset = 693;
+/* Module=3 SensorI=15/14 SensorLabel=16/15 */
 map->sensors[62].row = 12;
 map->sensors[62].col = 34;
 map->sensors[62].ascii_offset = 693;
+/* Module=4 SensorI=10/11 SensorLabel=11/12 */
 map->sensors[74].row = 12;
 map->sensors[74].col = 38;
 map->sensors[74].ascii_offset = 697;
+/* Module=4 SensorI=10/11 SensorLabel=11/12 */
 map->sensors[75].row = 12;
 map->sensors[75].col = 38;
 map->sensors[75].ascii_offset = 697;
 map->switches[18].row = 12;
 map->switches[18].col = 44;
 map->switches[18].ascii_offset = 703;
+/* Module=5 SensorI=11/10 SensorLabel=12/11 */
 map->sensors[91].row = 12;
 map->sensors[91].col = 47;
 map->sensors[91].ascii_offset = 706;
+/* Module=5 SensorI=11/10 SensorLabel=12/11 */
 map->sensors[90].row = 12;
 map->sensors[90].col = 47;
 map->sensors[90].ascii_offset = 706;
+/* Module=2 SensorI=9/8 SensorLabel=10/9 */
 map->sensors[41].row = 14;
 map->sensors[41].col = 1;
 map->sensors[41].ascii_offset = 757;
+/* Module=2 SensorI=9/8 SensorLabel=10/9 */
 map->sensors[40].row = 14;
 map->sensors[40].col = 1;
 map->sensors[40].ascii_offset = 757;
+/* Module=1 SensorI=5/4 SensorLabel=6/5 */
 map->sensors[21].row = 14;
 map->sensors[21].col = 10;
 map->sensors[21].ascii_offset = 766;
+/* Module=1 SensorI=5/4 SensorLabel=6/5 */
 map->sensors[20].row = 14;
 map->sensors[20].col = 10;
 map->sensors[20].ascii_offset = 766;
 map->switches[5].row = 14;
 map->switches[5].col = 14;
 map->switches[5].ascii_offset = 770;
+/* Module=3 SensorI=7/6 SensorLabel=8/7 */
 map->sensors[55].row = 14;
 map->sensors[55].col = 24;
 map->sensors[55].ascii_offset = 780;
+/* Module=3 SensorI=7/6 SensorLabel=8/7 */
 map->sensors[54].row = 14;
 map->sensors[54].col = 24;
 map->sensors[54].ascii_offset = 780;
+/* Module=3 SensorI=3/12 SensorLabel=4/13 */
 map->sensors[51].row = 14;
 map->sensors[51].col = 47;
 map->sensors[51].ascii_offset = 803;
+/* Module=3 SensorI=3/12 SensorLabel=4/13 */
 map->sensors[60].row = 14;
 map->sensors[60].col = 47;
 map->sensors[60].ascii_offset = 803;
