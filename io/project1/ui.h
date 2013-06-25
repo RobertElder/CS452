@@ -2,6 +2,7 @@
 #include "train.h"
 #include "maps/map.h"
 #include "maps/map_a.h"
+#include "maps/map_b.h"
 
 #ifndef UI_H_
 #define UI_H_
@@ -31,6 +32,8 @@ typedef struct UIServer {
 	unsigned int command_buffer_index;
 	int sensor_bit_flags_cache[SENSOR_MODULE_A + SENSOR_MODULE_E];
 	TrainMap train_map_a;
+	TrainMap train_map_b;
+	TrainMap * current_train_map;
 } UIServer;
 
 void UIServer_Start();
@@ -56,6 +59,8 @@ void UIServer_HandleTrainCommand(UIServer * server);
 void UIServer_HandleReverseCommand(UIServer * server);
 
 void UIServer_HandleSwitchCommand(UIServer * server);
+
+void UIServer_HandleMapCommand(UIServer * server);
 
 void UIServer_PrintSensors(UIServer * server);
 

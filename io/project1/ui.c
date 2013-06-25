@@ -89,6 +89,8 @@ void UIServer_Initialize(UIServer * server) {
 	}
 	
 	TrainMap_Initialize_A(&server->train_map_a);
+	TrainMap_Initialize_B(&server->train_map_b);
+	server->current_train_map = &server->train_map_a;
 }
 
 void UIServer_Render(UIServer * server) {
@@ -176,6 +178,8 @@ void UIServer_RunCommand(UIServer * server) {
 		UIServer_HandleReverseCommand(server);
 	} else if (server->command_buffer[0] == 's' && server->command_buffer[1] == 'w') {
 		UIServer_HandleSwitchCommand(server);
+	} else if (server->command_buffer[0] == 'm' && server->command_buffer[1] == 'a') {
+		UIServer_HandleMapCommand(server);
 	} else {
 		UIServer_PrintCommandHelp(server);
 	}
@@ -190,7 +194,7 @@ void UIServer_ResetCommandBuffer(UIServer * server) {
 }
 
 void UIServer_PrintCommandHelp(UIServer * server) {
-	PutString(COM2, "Unknown command. Use: tr, rv, sw, q");
+	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map");
 }
 
 void UIServer_HandleTrainCommand(UIServer * server) {
@@ -233,6 +237,23 @@ void UIServer_HandleSwitchCommand(UIServer * server) {
 	
 	PutString(COM2, "Switch=%d Direction=%c. switch on fire.", switch_num, direction);
 	SendTrainCommand(TRAIN_SWITCH, direction_code, switch_num, 0, 0);
+}
+
+void UIServer_HandleMapCommand(UIServer * server) {
+	int next_whitespace = rob_next_whitespace(server->command_buffer);
+	
+	char map = server->command_buffer[next_whitespace];
+	
+	if (map == 'A') {
+		server->current_train_map = &server->train_map_a;
+		server->dirty = 1;
+	} else if (map == 'B') {
+		server->current_train_map = &server->train_map_b;
+		server->dirty = 1;
+	} else {
+		PutString(COM2, "Unknown map. Use A or B");
+		return;
+	}
 }
 
 void UIServer_PrintSensors(UIServer * server) {
@@ -281,7 +302,7 @@ void UIServer_PrintSensors(UIServer * server) {
 				
 				// Print onto map
 				int sensor_i = module_num * SENSORS_PER_MODULE + sensor_num;
-				TrainMapLabelPosition * pos = &server->train_map_a.sensors[sensor_i];
+				TrainMapLabelPosition * pos = &server->current_train_map->sensors[sensor_i];
 				
 				if (pos->ascii_offset == 0) {
 					continue;
@@ -291,11 +312,11 @@ void UIServer_PrintSensors(UIServer * server) {
 			
 				if (sensor_bit_flag & 1 << sensor_num) {
 					ANSI_Style(BOLD_STYLE);
-					PutString(COM2, "%c", server->train_map_a.ascii[pos->ascii_offset]);
+					PutString(COM2, "%c", server->current_train_map->ascii[pos->ascii_offset]);
 					ANSI_Style(NORMAL_STYLE);
 				} else {
 					ANSI_Style(NORMAL_STYLE);
-					PutString(COM2, "%c", server->train_map_a.ascii[pos->ascii_offset]);
+					PutString(COM2, "%c", server->current_train_map->ascii[pos->ascii_offset]);
 				}
 			}
 		}
@@ -309,13 +330,13 @@ void UIServer_PrintMap(UIServer * server) {
 		ANSI_Cursor(MAP_ROW_OFFSET, MAP_COL_OFFSET + 1);
 		int i = 0;
 		while (1) {
-			if (server->train_map_a.ascii[i] == 0) {
+			if (server->current_train_map->ascii[i] == 0) {
 				break;
-			} else if (server->train_map_a.ascii[i] == '\n') {
+			} else if (server->current_train_map->ascii[i] == '\n') {
 				ANSI_CursorNextLine(1);
 				ANSI_CursorForward(MAP_COL_OFFSET);
 			} else {
-				Putc(COM2, server->train_map_a.ascii[i]);
+				Putc(COM2, server->current_train_map->ascii[i]);
 			}
 			i++;
 		}

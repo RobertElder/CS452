@@ -19,7 +19,7 @@ ASFLAGS	= -mcpu=arm920t -mapcs-32
 LDFLAGS = -init main -Map kern.map -N  -T orex.ld -L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L../lib
 
 #  TODO: make things generic using the following method:
-SOURCES = kern.c public_kernel_interface.c private_kernel_interface.c swi_kernel_interface.c robio.c buffer.c queue.c task_descriptor.c tasks.c memory.c random.c nameserver.c rps.c message.c clock.c scheduler.c notifier.c kernel_irq.c ansi.c uart.c ui.c train.c maps/map_a.c
+SOURCES = kern.c public_kernel_interface.c private_kernel_interface.c swi_kernel_interface.c robio.c buffer.c queue.c task_descriptor.c tasks.c memory.c random.c nameserver.c rps.c message.c clock.c scheduler.c notifier.c kernel_irq.c ansi.c uart.c ui.c train.c maps/map_a.c maps/map_b.c
 HEADERS = ${SOURCES:.c=.h}
 OBJECTS = ${SOURCES:.c=.o}
 
@@ -161,6 +161,12 @@ maps/map_a.s: maps/map_a.c maps/map_a.h
 
 maps/map_a.o: maps/map_a.s
 	$(AS) $(ASFLAGS) -o maps/map_a.o maps/map_a.s
+
+maps/map_b.s: maps/map_b.c maps/map_b.h
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) maps/map_b.c -o maps/map_b.s
+
+maps/map_b.o: maps/map_b.s
+	$(AS) $(ASFLAGS) -o maps/map_b.o maps/map_b.s
 
 kern.elf: $(OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ $(OBJECTS) -lgcc
