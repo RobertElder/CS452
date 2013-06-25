@@ -11,7 +11,10 @@
 static const char const UI_SERVER_NAME[] = "UISvr";
 static const char const UI_TIMER_NAME[] = "UITmr";
 static const char const UI_SERVER_HEADER[] = "> THOMAS TANK ENGINE (TM) TRAIN MASTER CONTROL SYSTEM CS-452-2013 <";
+static const int const SENSOR_TABLE_ROW_OFFSET = 5;
+static const int const SENSOR_TABLE_COL_OFFSET = 1;
 static const int const MAP_ROW_OFFSET = 5;
+static const int const MAP_COL_OFFSET = 20;
 
 typedef struct UIMessage {
 	MessageType message_type;

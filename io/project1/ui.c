@@ -270,20 +270,10 @@ void UIServer_PrintSensors(UIServer * server) {
 		int sensor_bit_flag = receive_message->sensor_bit_flag;
 		int sensor_bit_flag_cache = server->sensor_bit_flags_cache[module_num];
 
-/*
 		if (server->dirty) {
 			// Print headers
-			ANSI_Cursor(MAP_ROW_OFFSET, 1);
-			ANSI_CursorForward(module_num * 10);
-			PutString(COM2, "M %d", module_num);
-			
-			// Print sensor labels
-			int sensor_num;
-			for (sensor_num = 1; sensor_num <= 16; sensor_num++) {
-				ANSI_CursorNextLine(1);
-				ANSI_CursorForward(module_num * 10);
-				PutString(COM2, "%d.", sensor_num);
-			}
+			ANSI_Cursor(SENSOR_TABLE_ROW_OFFSET, SENSOR_TABLE_COL_OFFSET + module_num * 3);
+			PutString(COM2, "M%d", module_num);
 		}
 		
 		// Print sensor values
@@ -293,26 +283,19 @@ void UIServer_PrintSensors(UIServer * server) {
 				^ (sensor_bit_flag_cache & 1 << sensor_num);
 			
 			if (server->dirty || differs) {
-				ANSI_Cursor(MAP_ROW_OFFSET + sensor_num, module_num * 10 + 3);
-			
+				// Print onto table
+				ANSI_Cursor(SENSOR_TABLE_ROW_OFFSET + 1 + sensor_num, SENSOR_TABLE_COL_OFFSET + module_num * 3);
+
 				if (sensor_bit_flag & 1 << sensor_num) {
 					ANSI_Style(BOLD_STYLE);
-					PutString(COM2, "X");
+					PutString(COM2, "%d", sensor_num + 1);
 					ANSI_Style(NORMAL_STYLE);
 				} else {
-					PutString(COM2, "-");
+					ANSI_Style(NORMAL_STYLE);
+					PutString(COM2, "%d", sensor_num + 1);
 				}
-			}
-		}
-*/
-
-		// Print sensor values on the map
-		int sensor_num;
-		for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
-			short differs = (sensor_bit_flag & 1 << sensor_num)
-				^ (sensor_bit_flag_cache & 1 << sensor_num);
-			
-			if (server->dirty || differs) {
+				
+				// Print onto map
 				int sensor_i = module_num * SENSORS_PER_MODULE + sensor_num;
 				TrainMapLabelPosition * pos = &server->train_map_a.sensors[sensor_i];
 				
@@ -320,13 +303,14 @@ void UIServer_PrintSensors(UIServer * server) {
 					continue;
 				}
 				
-				ANSI_Cursor(MAP_ROW_OFFSET + pos->row, pos->col + 1);
+				ANSI_Cursor(MAP_ROW_OFFSET + pos->row, MAP_COL_OFFSET + pos->col + 1);
 			
 				if (sensor_bit_flag & 1 << sensor_num) {
 					ANSI_Style(BOLD_STYLE);
-					PutString(COM2, "X");
+					PutString(COM2, "%c", server->train_map_a.ascii[pos->ascii_offset]);
 					ANSI_Style(NORMAL_STYLE);
 				} else {
+					ANSI_Style(NORMAL_STYLE);
 					PutString(COM2, "%c", server->train_map_a.ascii[pos->ascii_offset]);
 				}
 			}
@@ -338,8 +322,19 @@ void UIServer_PrintSensors(UIServer * server) {
 
 void UIServer_PrintMap(UIServer * server) {
 	if (server->dirty) {
-		ANSI_Cursor(MAP_ROW_OFFSET, 1);
-		PutString(COM2, "%s", server->train_map_a.ascii);
+		ANSI_Cursor(MAP_ROW_OFFSET, MAP_COL_OFFSET + 1);
+		int i = 0;
+		while (1) {
+			if (server->train_map_a.ascii[i] == 0) {
+				break;
+			} else if (server->train_map_a.ascii[i] == '\n') {
+				ANSI_CursorNextLine(1);
+				ANSI_CursorForward(MAP_COL_OFFSET);
+			} else {
+				Putc(COM2, server->train_map_a.ascii[i]);
+			}
+			i++;
+		}
 	}
 }
 
