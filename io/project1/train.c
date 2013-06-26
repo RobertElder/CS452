@@ -44,6 +44,8 @@ void TrainServer_Start() {
 	}
 	
 	assert(admin_tid, "TrainServer: did not get admin tid");
+	server.reply_message->message_type = MESSAGE_TYPE_ACK;
+	assert(server.reply_message->message_type == MESSAGE_TYPE_ACK, "TrainServer: failed to set ack message");
 	Reply(admin_tid, server.reply_buffer, MESSAGE_SIZE);
 	
 	robprintfbusy((const unsigned char *)"TrainServer_Start exit.\n");
@@ -257,9 +259,6 @@ void TrainSensorReader_Start() {
 		if (shutdown) {
 			break;
 		}
-
-		// TODO: what's a good value?
-		DelaySeconds(0.1);
 	}
 	
 	robprintfbusy((const unsigned char *)"TrainSensorReader exit. tid=%d\n", MyTid());
