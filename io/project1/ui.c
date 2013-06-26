@@ -278,7 +278,7 @@ void UIServer_PrintSensors(UIServer * server) {
 		if (server->dirty) {
 			// Print headers
 			ANSI_Cursor(SENSOR_TABLE_ROW_OFFSET, SENSOR_TABLE_COL_OFFSET + module_num * 3);
-			PutString(COM2, "M%d", module_num + 1);
+			PutString(COM2, "M%c", 'A' + module_num);
 		}
 		
 		// Print sensor values
