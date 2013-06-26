@@ -268,6 +268,15 @@ void UIServer_HandleMapCommand(UIServer * server) {
 		PutString(COM2, "Unknown map. Use A or B");
 		return;
 	}
+	
+	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
+	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	send_message->message_type = MESSAGE_TYPE_SELECT_TRACK;
+	send_message->int1 = map;
+	
+	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+	
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_HandleMapCommand failed to get ack message");
 }
 
 void UIServer_HandleTimeStopCommand(UIServer * server) {

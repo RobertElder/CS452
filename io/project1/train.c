@@ -45,6 +45,10 @@ void TrainServer_Start() {
 			server.blocked_tid = server.source_tid;
 			// See inside TrainServer_HandleSensorReaderData for unblocking logic
 			break;
+		case MESSAGE_TYPE_SELECT_TRACK:
+			// from ui server
+			TrainServer_HandleSelectTrack(&server);
+			break;
 		default:
 			assert(0, "TrainServer: unknown message type");
 			break;
@@ -90,6 +94,7 @@ void TrainServer_Initialize(TrainServer * server) {
 	
 	init_tracka(server->track_a_nodes);
 	init_trackb(server->track_b_nodes);
+	server->current_track_nodes = server->track_a_nodes;
 	
 	int switch_num;
 	for (switch_num = 0; switch_num < NUM_SWITCHES; switch_num++) {
@@ -161,6 +166,20 @@ void TrainServer_HandleSwitchQuery(TrainServer * server) {
 	GenericTrainMessage * reply_message = (GenericTrainMessage *) server->reply_buffer;
 	
 	reply_message->int1 = server->switch_states[receive_message->int1];
+	
+	reply_message->message_type = MESSAGE_TYPE_ACK;
+	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
+}
+
+void TrainServer_HandleSelectTrack(TrainServer * server) {
+	GenericTrainMessage  * receive_message = (GenericTrainMessage *) server->receive_buffer;
+	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	
+	if (receive_message->int1 == 'A') {
+		server->current_track_nodes = server->track_a_nodes;
+	} else {
+		server->current_track_nodes = server->track_b_nodes;
+	}
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);

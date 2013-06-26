@@ -86,8 +86,10 @@ typedef struct TrainServer {
 	
 	track_node track_a_nodes[TRACK_MAX];
 	track_node track_b_nodes[TRACK_MAX];
+	track_node * current_track_nodes;
 	
 	SwitchState switch_states[NUM_SWITCHES];
+	
 } TrainServer;
 
 
@@ -102,6 +104,8 @@ void TrainServer_HandleSensorQuery(TrainServer * server);
 void TrainServer_HandleSwitchData(TrainServer * server);
 
 void TrainServer_HandleSwitchQuery(TrainServer * server);
+
+void TrainServer_HandleSelectTrack(TrainServer * server);
 
 void TrainCommandServer_Start();
 
