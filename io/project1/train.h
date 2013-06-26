@@ -39,12 +39,18 @@ typedef enum SENSOR_MODULE {
 	NUM_SENSOR_MODULES = 5,
 } SENSOR_MODULE;
 
+typedef enum TrainServerState {
+	TRAIN_SERVER_IDLE,
+	TRAIN_SERVER_SHUTDOWN,
+	TRAIN_SERVER_BLOCK_UNTIL_SENSOR,
+} TrainServerState;
+
 typedef struct TrainServer {
 	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
-	short shutdown;
 	GenericMessage * receive_message;
 	GenericMessage * reply_message;
+	TrainServerState state;
 	
 	// Bit flags for each sensor is stored from right to left where
 	// flag & 1<<0 is the first sensor
@@ -57,6 +63,7 @@ typedef struct TrainServer {
 	int num_child_task_running;
 	int train_command_server_tid;
 	int train_sensor_reader_tid;
+	int blocked_tid;
 } TrainServer;
 
 

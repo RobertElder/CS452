@@ -16,7 +16,7 @@ void TrainServer_Start() {
 			// from admin tid
 			admin_tid = server.source_tid;
 			robprintfbusy((const unsigned char *)"TrainServer_Start Exiting because of shutdown.\n");
-			server.shutdown = 1;
+			server.state = TRAIN_SERVER_SHUTDOWN;
 			
 			Send(server.train_command_server_tid, server.receive_buffer, MESSAGE_SIZE, server.reply_buffer, MESSAGE_SIZE);
 			
@@ -31,6 +31,11 @@ void TrainServer_Start() {
 		case MESSAGE_TYPE_QUERY:
 			// from the ui server
 			TrainServer_HandleSensorQuery(&server);
+			break;
+		case MESSAGE_TYPE_BLOCK_UNTIL_SENSOR:
+			server.state = TRAIN_SERVER_BLOCK_UNTIL_SENSOR;
+			server.blocked_tid = server.source_tid;
+			// See inside TrainServer_HandleSensorReaderData for unblocking logic
 			break;
 		default:
 			assert(0, "TrainServer: unknown message type");
@@ -50,7 +55,7 @@ void TrainServer_Initialize(TrainServer * server) {
 	int return_code = RegisterAs((char*) TRAIN_SERVER_NAME);
 	assert(return_code == 0, "TrainServer_Start failed to register name");
 	
-	server->shutdown = 0;
+	server->state = TRAIN_SERVER_IDLE;
 	server->receive_message = (GenericMessage *) server->receive_buffer;
 	server->reply_message = (GenericMessage *) server->reply_buffer;
 
@@ -77,13 +82,13 @@ void TrainServer_Initialize(TrainServer * server) {
 void TrainServer_HandleSensorReaderData(TrainServer * server) {
 	TrainSensorMessage * recv_sensor_message = (TrainSensorMessage *) server->receive_buffer;
 
-	if (server->shutdown) {
+	if (server->state == TRAIN_SERVER_SHUTDOWN) {
 		server->reply_message->message_type = MESSAGE_TYPE_SHUTDOWN;
 	}
 	
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 	
-	if (server->shutdown) {
+	if (server->state == TRAIN_SERVER_SHUTDOWN) {
 		server->num_child_task_running--;
 	}
 
@@ -97,6 +102,12 @@ void TrainServer_HandleSensorReaderData(TrainServer * server) {
 	for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
 		if (sensor_bit_flag & 1 << sensor_num) {
 			server->sensor_time_log[module_num][sensor_num] = current_time;
+			
+			if (server->state == TRAIN_SERVER_BLOCK_UNTIL_SENSOR && sensor_bit_flag) {
+				server->state = TRAIN_SERVER_IDLE;
+				PutString(COM2, "%c%d.", 'A' + module_num, sensor_num + 1);
+				Reply(server->blocked_tid, server->reply_buffer, MESSAGE_SIZE);
+			}
 		}
 	}
 }
@@ -248,7 +259,7 @@ void TrainSensorReader_Start() {
 		}
 
 		// TODO: what's a good value?
-		DelaySeconds(0.2);
+		DelaySeconds(0.1);
 	}
 	
 	robprintfbusy((const unsigned char *)"TrainSensorReader exit. tid=%d\n", MyTid());

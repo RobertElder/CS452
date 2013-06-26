@@ -180,6 +180,8 @@ void UIServer_RunCommand(UIServer * server) {
 		UIServer_HandleSwitchCommand(server);
 	} else if (server->command_buffer[0] == 'm' && server->command_buffer[1] == 'a') {
 		UIServer_HandleMapCommand(server);
+	} else if (server->command_buffer[0] == 't' && server->command_buffer[1] == 's') {
+		UIServer_HandleTimeStopCommand(server);
 	} else {
 		UIServer_PrintCommandHelp(server);
 	}
@@ -194,7 +196,7 @@ void UIServer_ResetCommandBuffer(UIServer * server) {
 }
 
 void UIServer_PrintCommandHelp(UIServer * server) {
-	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map");
+	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, ts");
 }
 
 void UIServer_HandleTrainCommand(UIServer * server) {
@@ -254,6 +256,43 @@ void UIServer_HandleMapCommand(UIServer * server) {
 		PutString(COM2, "Unknown map. Use A or B");
 		return;
 	}
+}
+
+void UIServer_HandleTimeStopCommand(UIServer * server) {
+	int train_server_tid = WhoIs((char*) TRAIN_SERVER_NAME);
+	GenericMessage * send_message = (GenericMessage *) server->send_buffer;
+	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	int next_whitespace = rob_next_whitespace(server->command_buffer);
+	char train_num = robatoi(&server->command_buffer[next_whitespace]);
+
+	next_whitespace += rob_next_whitespace(&(server->command_buffer[next_whitespace]));
+	
+	char speed = robatoi(&server->command_buffer[next_whitespace]);
+	
+	ANSI_ClearLine(CLEAR_TO_END);
+	PutString(COM2, "Train=%d, Speed=%d. Ramping up train", train_num, speed);
+
+	SendTrainCommand(TRAIN_SPEED, speed, train_num, 0, 0);
+	
+	int i;
+	for (i = 0; i < 5; i++) {
+		PutString(COM2, ".");
+		DelaySeconds(1);
+	}
+	
+	PutString(COM2, "Waiting for sensor=");
+
+	send_message->message_type = MESSAGE_TYPE_BLOCK_UNTIL_SENSOR;
+	Send(train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_HandleTimeStopCommand: did not get ACK");
+	
+	double time_before_command = TimeSeconds();
+	SendTrainCommand(TRAIN_SPEED, 0, train_num, 0, 0);
+	double time_after_command = TimeSeconds();
+	
+	int time_diff_ms = (time_after_command - time_before_command) * 1000;
+	
+	PutString(COM2, "Stop command latency=%d ms.", time_diff_ms);
 }
 
 void UIServer_PrintSensors(UIServer * server) {
