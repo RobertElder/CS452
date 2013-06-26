@@ -32,6 +32,12 @@ typedef struct TrainSensorMessage {
 	int sensor_bit_flag;
 } TrainSensorMessage;
 
+typedef struct GenericTrainMessage {
+	MessageType message_type;
+	int int1;
+	int int2;
+} GenericTrainMessage;
+
 typedef enum SENSOR_MODULE {
 	SENSOR_MODULE_A = 0,
 	SENSOR_MODULE_B = 1,
@@ -52,6 +58,11 @@ typedef enum SwitchState {
 	SWITCH_STRAIGHT = 'S',
 	SWITCH_CURVED = 'C',
 } SwitchState;
+
+typedef enum SwitchDirectionCode {
+	SWITCH_STRAIGHT_CODE = 33,
+	SWITCH_CURVED_CODE = 34,
+} SwitchDirectionCode;
 
 typedef struct TrainServer {
 	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
@@ -87,6 +98,10 @@ void TrainServer_Initialize(TrainServer * server);
 void TrainServer_HandleSensorReaderData(TrainServer * server);
 
 void TrainServer_HandleSensorQuery(TrainServer * server);
+
+void TrainServer_HandleSwitchData(TrainServer * server);
+
+void TrainServer_HandleSwitchQuery(TrainServer * server);
 
 void TrainCommandServer_Start();
 

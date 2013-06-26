@@ -3,6 +3,7 @@
 #include "maps/map.h"
 #include "maps/map_a.h"
 #include "maps/map_b.h"
+#include "ansi.h"
 
 #ifndef UI_H_
 #define UI_H_
@@ -34,6 +35,10 @@ typedef struct UIServer {
 	TrainMap train_map_a;
 	TrainMap train_map_b;
 	TrainMap * current_train_map;
+	int train_server_tid;
+	SwitchState switch_states_cache[NUM_SWITCHES];
+	ANSIColor foreground_color;
+	ANSIColor background_color;
 } UIServer;
 
 void UIServer_Start();
@@ -67,6 +72,8 @@ void UIServer_HandleTimeStopCommand(UIServer * server);
 void UIServer_PrintSensors(UIServer * server);
 
 void UIServer_PrintMap(UIServer * server);
+
+void UIServer_PrintSwitches(UIServer * server);
 
 void UITimer_Start();
 

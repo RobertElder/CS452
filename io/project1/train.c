@@ -28,9 +28,17 @@ void TrainServer_Start() {
 			// from TrainSensorReader
 			TrainServer_HandleSensorReaderData(&server);
 			break;
+		case MESSAGE_TYPE_SWITCH_DATA:
+			// from TrainCommandServer
+			TrainServer_HandleSwitchData(&server);
+			break;
 		case MESSAGE_TYPE_QUERY_SENSOR:
 			// from the ui server
 			TrainServer_HandleSensorQuery(&server);
+			break;
+		case MESSAGE_TYPE_QUERY_SWITCH:
+			// from ui server
+			TrainServer_HandleSwitchQuery(&server);
 			break;
 		case MESSAGE_TYPE_BLOCK_UNTIL_SENSOR:
 			server.state = TRAIN_SERVER_BLOCK_UNTIL_SENSOR;
@@ -134,6 +142,30 @@ void TrainServer_HandleSensorQuery(TrainServer * server) {
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 }
 
+void TrainServer_HandleSwitchData(TrainServer * server) {
+	TrainCommandMessage * receive_message = (TrainCommandMessage *) server->receive_buffer;
+	TrainCommandMessage * reply_message = (TrainCommandMessage *) server->reply_buffer;
+	
+	if (receive_message->c1 == SWITCH_CURVED_CODE) {
+		server->switch_states[(SwitchState) receive_message->c2] = SWITCH_CURVED;
+	} else {
+		server->switch_states[(SwitchState) receive_message->c2] = SWITCH_STRAIGHT;
+	}
+	
+	reply_message->message_type = MESSAGE_TYPE_ACK;
+	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
+}
+
+void TrainServer_HandleSwitchQuery(TrainServer * server) {
+	GenericTrainMessage  * receive_message = (GenericTrainMessage *) server->receive_buffer;
+	GenericTrainMessage * reply_message = (GenericTrainMessage *) server->reply_buffer;
+	
+	reply_message->int1 = server->switch_states[receive_message->int1];
+	
+	reply_message->message_type = MESSAGE_TYPE_ACK;
+	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
+}
+
 void TrainCommandServer_Start() {
 	robprintfbusy((const unsigned char *)"TrainCommandServer_Start. tid=%d\n", MyTid());
 	
@@ -146,6 +178,9 @@ void TrainCommandServer_Start() {
 	TrainCommandMessage * command_reply_message = (TrainCommandMessage*) reply_buffer;
 	int source_tid;
 	char speed, train_num, direction_code, switch_num, module_num, lower, upper;
+	int train_server_tid = WhoIs((char*) TRAIN_SERVER_NAME);
+	
+	assert(train_server_tid, "TrainCommandServer_Start: failed to get train server tid");
 	
 	while (1) {
 		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
@@ -183,6 +218,11 @@ void TrainCommandServer_Start() {
 			// Make sure the solenoid is really off
 			DelaySeconds(0.2);
 			Putc(COM1, 32);
+			
+			// Need to tell the train server the new switch state
+			command_receive_message->message_type = MESSAGE_TYPE_SWITCH_DATA;
+			Send(train_server_tid, receive_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+			assert(command_reply_message->message_type == MESSAGE_TYPE_ACK, "TrainCommandServer: failed to get ack from train server");
 			break;
 		case TRAIN_READ_SENSOR:
 			module_num = command_receive_message->c1;

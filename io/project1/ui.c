@@ -91,12 +91,23 @@ void UIServer_Initialize(UIServer * server) {
 	TrainMap_Initialize_A(&server->train_map_a);
 	TrainMap_Initialize_B(&server->train_map_b);
 	server->current_train_map = &server->train_map_a;
+	
+	server->train_server_tid = WhoIs((char*) TRAIN_SERVER_NAME);
+	
+	assert(server->train_server_tid, "UIServer: failed whois");
+	
+	for (i = 0; i < NUM_SWITCHES; i++) {
+		server->switch_states_cache[i] = SWITCH_UNKNOWN;
+	}
+	
+	server->background_color = BLUE;
+	server->foreground_color = WHITE;
 }
 
 void UIServer_Render(UIServer * server) {
 	if (server->dirty) {
 		ANSI_Cursor(1, 1);
-		ANSI_Color(WHITE, BLUE);
+		ANSI_Color(server->foreground_color, server->background_color);
 		ANSI_ClearScreen(CLEAR_ALL);
 		ANSI_Cursor(1, 1);
 		PutString(COM2, UI_SERVER_HEADER);
@@ -105,6 +116,7 @@ void UIServer_Render(UIServer * server) {
 	UIServer_PrintTime(server);
 	UIServer_PrintMap(server);
 	UIServer_PrintSensors(server);
+	UIServer_PrintSwitches(server);
 	UIServer_PrintCommandLine(server);
 	
 	server->dirty = 0;
@@ -229,9 +241,9 @@ void UIServer_HandleSwitchCommand(UIServer * server) {
 	char direction_code;
 	
 	if (direction == 'C') {
-		direction_code = 34;
+		direction_code = SWITCH_CURVED_CODE;
 	} else if (direction == 'S') {
-		direction_code = 35;
+		direction_code = SWITCH_STRAIGHT_CODE;
 	} else {
 		PutString(COM2, "Unknown direction. Use C or S");
 		return;
@@ -259,7 +271,6 @@ void UIServer_HandleMapCommand(UIServer * server) {
 }
 
 void UIServer_HandleTimeStopCommand(UIServer * server) {
-	int train_server_tid = WhoIs((char*) TRAIN_SERVER_NAME);
 	GenericMessage * send_message = (GenericMessage *) server->send_buffer;
 	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
 	int next_whitespace = rob_next_whitespace(server->command_buffer);
@@ -283,7 +294,7 @@ void UIServer_HandleTimeStopCommand(UIServer * server) {
 	PutString(COM2, "Waiting for sensor=");
 
 	send_message->message_type = MESSAGE_TYPE_BLOCK_UNTIL_SENSOR;
-	Send(train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
 	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_HandleTimeStopCommand: did not get ACK");
 	
 	double time_before_command = TimeSeconds();
@@ -299,15 +310,12 @@ void UIServer_PrintSensors(UIServer * server) {
 	TrainSensorMessage * send_message = (TrainSensorMessage *) server->send_buffer;
 	TrainSensorMessage * receive_message = (TrainSensorMessage *) server->receive_buffer;
 	int module_num;
-	int train_server_tid = WhoIs((char*) TRAIN_SERVER_NAME);
-	
-	assert(train_server_tid, "UIServer_PrintSensors: failed whois");
 	
 	for (module_num = SENSOR_MODULE_A; module_num <= SENSOR_MODULE_E; module_num++) {
 		send_message->message_type = MESSAGE_TYPE_QUERY_SENSOR;
 		send_message->module_num = module_num;
 		
-		Send(train_server_tid, server->send_buffer, MESSAGE_SIZE, server->receive_buffer, MESSAGE_SIZE);
+		Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->receive_buffer, MESSAGE_SIZE);
 		
 		assert(receive_message->message_type == MESSAGE_TYPE_ACK, "UIServer_PrintSensors: failed to get ACK from train server");
 		
@@ -378,6 +386,41 @@ void UIServer_PrintMap(UIServer * server) {
 				Putc(COM2, server->current_train_map->ascii[i]);
 			}
 			i++;
+		}
+	}
+}
+
+void UIServer_PrintSwitches(UIServer * server) {
+	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
+	GenericTrainMessage * reply_message = (GenericTrainMessage *) server->reply_buffer;
+	
+	int switch_num;
+	
+	send_message->message_type = MESSAGE_TYPE_QUERY_SWITCH;
+	
+	for (switch_num = 0; switch_num < NUM_SWITCHES; switch_num++) {
+		TrainMapLabelPosition * label_pos = &server->current_train_map->switches[switch_num];
+	
+		if (label_pos->ascii_offset) {
+			send_message->int1 = switch_num;
+			Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+			
+			int switch_state = reply_message->int1;
+			int differs = server->switch_states_cache[switch_num] != switch_state;
+			
+			if (switch_state && differs) {
+				ANSI_Cursor(MAP_ROW_OFFSET + label_pos->row, MAP_COL_OFFSET + 1 + label_pos->col);
+				if (switch_state == SWITCH_CURVED) {
+					ANSI_Color(RED, server->background_color);
+					PutString(COM2, "C");
+				} else {
+					ANSI_Color(GREEN, server->background_color);
+					PutString(COM2, "S");
+				}
+				ANSI_Color(server->foreground_color, server->background_color);
+			}
+			
+			server->switch_states_cache[switch_num] = switch_state;
 		}
 	}
 }
