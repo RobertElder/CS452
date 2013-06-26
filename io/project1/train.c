@@ -24,11 +24,11 @@ void TrainServer_Start() {
 
 			server.num_child_task_running--;
 			break;
-		case MESSAGE_TYPE_DATA:
+		case MESSAGE_TYPE_SENSOR_DATA:
 			// from TrainSensorReader
 			TrainServer_HandleSensorReaderData(&server);
 			break;
-		case MESSAGE_TYPE_QUERY:
+		case MESSAGE_TYPE_QUERY_SENSOR:
 			// from the ui server
 			TrainServer_HandleSensorQuery(&server);
 			break;
@@ -250,7 +250,7 @@ void TrainSensorReader_Start() {
 			lower_word = ((lower_word * 0x0802LU & 0x22110LU) | (lower_word * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16;
 			lower = (unsigned char) lower_word;
 
-			send_message->message_type = MESSAGE_TYPE_DATA;
+			send_message->message_type = MESSAGE_TYPE_SENSOR_DATA;
 			send_message->sensor_bit_flag = upper << 8 | lower;
 			send_message->module_num = module_num;
 

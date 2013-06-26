@@ -304,7 +304,7 @@ void UIServer_PrintSensors(UIServer * server) {
 	assert(train_server_tid, "UIServer_PrintSensors: failed whois");
 	
 	for (module_num = SENSOR_MODULE_A; module_num <= SENSOR_MODULE_E; module_num++) {
-		send_message->message_type = MESSAGE_TYPE_QUERY;
+		send_message->message_type = MESSAGE_TYPE_QUERY_SENSOR;
 		send_message->module_num = module_num;
 		
 		Send(train_server_tid, server->send_buffer, MESSAGE_SIZE, server->receive_buffer, MESSAGE_SIZE);
