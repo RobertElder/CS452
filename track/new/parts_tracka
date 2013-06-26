@@ -1,0 +1,273 @@
+part 065:
+  desc straight 1
+  length 65
+part 077:
+  desc straight 2
+  length 77.5
+part 094:
+  desc straight 3
+  length 94.2
+part 172:
+  desc straight 4
+  length 171.7
+part 188:
+  desc straight 5
+  length 188.3
+part 977:
+  desc dead end
+  length 0
+part 997:
+  desc decoupler
+  length 94.2
+part 994A:
+  desc straight sensor A
+  length 50.7
+  # length (7.0/13.0)*94.2
+part 994B:
+  desc straight sensor B
+  length 43.5
+  # length (6.0/13.0)*94.2
+part 115:
+  desc R1 small curve
+  radius 360
+  curvature 15
+part 130:
+  desc R1 large curve
+  radius 360
+  curvature 30
+part 194A:
+  desc R1 curved sensor A
+  radius 360
+  curvature 8.1
+  #curvature (7/13.0)*15
+part 194B:
+  desc R1 curved sensor B
+  radius 360
+  curvature 6.9
+  #curvature (6/13.0)*15
+part 206:
+  desc R2 turnout completion
+  radius 437.5
+  curvature 5.7
+part 215:
+  desc R2 small curve
+  radius 437.5
+  curvature 15
+part 224:
+  desc R2 turnout annulment
+  radius 437.5
+  curvature 24.3
+part 295A:
+  desc R2 curved sensor A
+  radius 437.5
+  curvature 7
+  #curvature (7/15.0)*15
+part 295B:
+  desc R2 curved sensor B
+  radius 437.5
+  curvature 8
+  #curvature (8/15.0)*15
+part 611S:
+  desc left turnout - straight branch
+  length 188.3
+part 611C:
+  desc left turnout - curved branch
+  radius 437.5
+  curvature 24.3
+part 612S:
+  desc right turnout - straight branch
+  length 188.3
+part 612C:
+  desc right turnout - curved branch
+  radius 437.5
+  curvature 24.3
+part 630L:
+  desc three-way turnout - left branch
+  radius 437.5
+  curvature 24.3
+part 630M:
+  desc three-way turnout - middle branch
+  length 188.3
+part 630R:
+  desc three-way turnout - right branch
+  radius 437.5
+  curvature 24.3
+part 671P:
+  desc left curved turnout - parallel section
+  length 77.5
+part 671S:
+  desc left curved turnout - straight branch
+  radius 360
+  curvature 30
+part 671C:
+  desc left curved turnout - curved branch
+  radius 360
+  curvature 30
+part 672P:
+  desc right curved turnout - parallel section
+  length 77.5
+part 672S:
+  desc right curved turnout - straight branch
+  radius 360
+  curvature 30
+part 672C:
+  desc right curved turnout - curved branch
+  radius 360
+  curvature 30
+
+edge A1 MR12:
+  994B 611S
+edge A2 EX5:
+  994A 997 188 172 977
+edge A3 BR14:
+  194B
+edge A4 B16:
+  194A 115 077 077 115 194B
+edge A5 MR3:
+  994B 611S
+edge A6 B10:
+  994A 997 188 172 094 994B
+edge A7 B12:
+  994A 997 188 094 994B
+edge A8 MR2:
+  994B 611C
+edge A9 B8:
+  994A 997 094 994A
+edge A10 MR1:
+  994B 611C
+edge A11 MR1:
+  994A 997 224 611S
+edge A12 EX8:
+  994B 977
+edge A13 MR4:
+  994A 612C
+edge A14 EX4:
+  994B 997 188 977
+edge A15 EX6:
+  994A 997 977
+edge A16 MR4:
+  994B 224 612S
+edge B1 D14:
+  994A 077 077 077 077 994B
+edge B2 MR16:
+  994B 611S
+edge B3 C2:
+  295B 206 206 295A
+edge B4 MR16:
+  295A 611C
+edge B5 D3:
+  994A 077 077 077 077 994B
+edge B6 MR13:
+  994B 612S
+edge B8 EX7:
+  994B 977
+edge B10 EX9:
+  994A 977
+edge B12 EX10:
+  994A 977
+edge B13 MR154:
+  295A 630L
+edge B14 D16:
+  295B 206 206 295A
+edge B16 BR15:
+  194A
+edge C2 MR153:
+  295B 630R
+edge C3 EX3:
+  994B 997 188 188 977
+edge C4 MR5:
+  994A 612S
+edge C5 BR6:
+  295B
+edge C6 MR15:
+  295A 215 671S 671P
+edge C7 MR18:
+  994B 611S
+edge C8 BR3:
+  994A 077
+edge C9 MR15:
+  194B 115 671C
+edge C10 BR16:
+  194A 077
+edge C11 BR13:
+  194B 077
+edge C12 MR14:
+  194A 115 672C
+edge C13 E7:
+  994A 077 188 094 172 172 077 994B
+edge C14 BR11:
+  994B
+edge C15 D12:
+  994B 077 077 077 077 994A
+edge C16 MR6:
+  994A 612S
+edge D1 MR155:
+  295B 630R
+edge D2 E4:
+  295A 206 206 295B
+edge D3 MR10:
+  994A 611S
+edge D5 E6:
+  194A 130 115 994B
+edge D6 MR9:
+  994A 611S
+edge D7 MR9:
+  194B 671S 671P
+edge D8 E8:
+  194A 130 115 994A
+edge D9 E12:
+  194B 130 115 994B
+edge D10 MR8:
+  194A 672S 672P
+edge D12 MR7:
+  994B 611S
+edge D14 MR17:
+  994A 612S
+edge D16 MR17:
+  295B 612C
+edge E1 MR156:
+  295A 630L
+edge E2 E15:
+  295B 206 206 295A
+edge E4 MR10:
+  295A 611C
+edge E6 BR10:
+  994A
+edge E9 MR8:
+  194A 672C
+edge E10 E13:
+  194B 130 115 994A
+edge E12 BR7:
+  994A
+edge E13 BR17:
+  994B
+edge E15 MR13:
+  295B 612C
+edge MR1 MR2:
+  611S
+edge MR2 MR3:
+  611C
+edge MR4 MR12:
+  611C
+edge BR5 MR7:
+  611C 611C
+edge MR5 BR18:
+  077 077
+edge BR6 MR18:
+  612C 612C
+edge MR8 BR9:
+  077 077
+edge BR11 BR12:
+  611S
+edge BR11 MR14:
+  611C 206 672S 672P
+edge BR153 EX1:
+  630M 065 977
+edge MR153 MR154:
+  
+edge MR154 BR156:
+  
+edge BR155 EX2:
+  630M 094 977
+edge MR155 MR156:
+  

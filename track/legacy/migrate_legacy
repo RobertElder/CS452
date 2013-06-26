@@ -1,0 +1,96 @@
+#!/usr/bin/env python
+import sys
+
+# A quick and dirty scipt to migrate the legacy track data.
+# Example usage: ./migrate-legacy <legacy/tracka >tracka init_tracka
+
+# First pass: get list of node names.
+lines = [line.split() for line in sys.stdin.readlines()]
+print 'function %s' % sys.argv[1]; print
+idx2name = []
+for line in lines:
+  if len(line) >= 7:
+    idx, name = int(line[0]), line[1]
+    while len(idx2name) <= idx: idx2name.append(None)
+    assert idx2name[idx] == None
+    if name.startswith('DE'):
+      idx2name[idx] = ('EN'+name[2:], 'EX'+name[2:])
+    elif name.startswith('SW') and name[-2] == '9':
+      decimal = str(int(name[2:], 16))
+      idx2name[idx] = ('BR'+decimal, 'MR'+decimal)
+    elif name.startswith('SW'):
+      idx2name[idx] = ('BR'+name[2:], 'MR'+name[2:])
+    else:
+      idx2name[idx] = (name, name[0] + str(1+int(name[1:])))
+
+# Second pass: read the edge information.
+edges = [{} for i in xrange(len(idx2name))]
+idx = None
+for line in lines:
+  if len(line) >= 7:
+    idx = int(line[0])
+  elif len(line) == 3:
+    edges[idx][line[1]] = int(line[0])
+
+# Third pass: output the node and topology information.
+for line in lines:
+  if len(line) >= 7:
+    idx = int(line[0])
+    names = idx2name[idx]
+    for direction in xrange(2):
+      print 'node %s:' % names[direction]
+      num = int(line[3]) if line[3][:2] != '0x' else int(line[3], 16)
+      if line[2] == 'stop':
+        print '  %s' % ['enter', 'exit'][direction]
+      elif line[2] == 'sensor':
+        print '  %s %s' % (line[2], num*2+direction)
+      else:
+        print '  %s %s' % (['branch', 'merge'][direction], num)
+      print '  reverse %s' % names[1-direction]
+      dirs = ['ahead', 'straight', 'curved']
+      if direction == 1:
+        dirs = ['behind']
+      for edge_dir in dirs:
+        if edges[idx].has_key(edge_dir):
+          idx2 = edges[idx][edge_dir]
+          if edge_dir == 'behind':
+            edge_dir = 'ahead'
+          if edges[idx2].has_key('behind') and \
+             edges[idx2]['behind'] == idx:
+            print '  %s %s' % (edge_dir, idx2name[idx2][0])
+          else:
+            print '  %s %s' % (edge_dir, idx2name[idx2][1])
+print
+
+# Fourth pass: output the edge measurements.
+# Note that we only output each edge once here, as the measurement for
+# A -> B is the same as the measurement for (B.reverse) -> (A.reverse).
+# Or rather, we would hope that this is the case, but one of the edges
+# in the legacy data is inconsistent.
+idx, name = None, None
+edges_seen = {}
+for line in lines:
+  if len(line) >= 7:
+    idx, name = int(line[0]), idx2name[int(line[0])][0]
+  elif len(line) == 3:
+    idx2 = int(line[0])
+    if line[1] == 'behind':
+      name = idx2name[idx][1]
+    else:
+      name = idx2name[idx][0]
+    edgedir = 1
+    if edges[idx2].has_key('behind') and \
+       edges[idx2]['behind'] == idx:
+      edgedir = 0
+    name2, dist = idx2name[idx2][edgedir], line[2]
+    if edges_seen.has_key(((name, name2))):
+      if edges_seen[(name, name2)] != dist:
+        sys.stderr.write("warning: disagreement %s %s %s %s\n" % \
+          (name, name2, edges_seen[(name, name2)], dist))
+    else:
+      for i in xrange(2):
+        for j in xrange(2):
+          edges_seen[(idx2name[idx][i], idx2name[idx2][j])] = dist
+          edges_seen[(idx2name[idx2][j], idx2name[idx][i])] = dist
+      print 'edge %s %s:' % (name, name2)
+      print '  distance %s mm' % (dist)

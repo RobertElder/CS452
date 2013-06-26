@@ -1,0 +1,62 @@
+This directory contains layouts for both tracks.
+
+The example here uses data files to store the tracks.
+It is likely you won't want to do this unless you have implemented
+a fake (or real) "filesystem" that lets you open modules using
+standard C IO (by implementing the appropriate newlib stubs).
+
+Instead, you should convert the track data to a C struct. If
+you've done this, please e-mail me, and I'll add it here.
+
+The track format is as follows:
+
+The file begins with the word "track", followed by the number of nodes
+in the track.
+
+Each node is then specified. First the node number appears,
+then a name for the node. Now the type of node appears.
+
+If the type is "sensor", the node is followed by the following
+information:
+ - a unique number identifying the sensor
+ - an x and y coordinate that can be used for a graphical track
+   display
+
+For switches, the information is:
+ - the switch number in the Maerklin track
+ - x and y coordinates for a display
+ - a reasonable default for this switch
+
+For stops (these represent "dead ends", i.e. places the train
+should stop), the information is:
+ - a unique number for the stop
+ - x and y coordinates for a display
+
+After the node-specific data, an edge list is given. First,
+the number of edges from this node is given. Then each edge is
+given as
+ - the node number it connects to
+ - a direction:
+    - ahead or behind for sensors
+    - straight, curved or behind for switches
+    - ahead for dead ends (maybe behind would have made more sense)
+ - a distance. this is a distance in millimetres giving the track
+   length (i.e. the distance a train would travel between the two
+   edges)
+
+This should give you all you need (and more) for the train tracking
+assignment. If you feel ambitious you could add information about
+the curved track sections, e.g. for a nicer display.
+
+This information was built based on Winter 2003 information gathered
+by Damian Gryski and his partner, and Fall 2003 information gathered
+by our group and several other groups.
+
+It should be reasonably correct. If you find any mistakes, notify
+the newsgroup.
+
+Enjoy,
+
+Stefanus Du Toit
+sjdutoit at uwaterloo dot ca
+Fall 2004
