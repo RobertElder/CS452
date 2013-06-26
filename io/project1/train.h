@@ -31,11 +31,12 @@ typedef struct TrainSensorMessage {
 } TrainSensorMessage;
 
 typedef enum SENSOR_MODULE {
-	SENSOR_MODULE_A = 1,
-	SENSOR_MODULE_B = 2,
-	SENSOR_MODULE_C = 3,
-	SENSOR_MODULE_D = 4,
-	SENSOR_MODULE_E = 5,
+	SENSOR_MODULE_A = 0,
+	SENSOR_MODULE_B = 1,
+	SENSOR_MODULE_C = 2,
+	SENSOR_MODULE_D = 3,
+	SENSOR_MODULE_E = 4,
+	NUM_SENSOR_MODULES = 5,
 } SENSOR_MODULE;
 
 typedef struct TrainServer {
@@ -49,8 +50,9 @@ typedef struct TrainServer {
 	// flag & 1<<0 is the first sensor
 	// flag & 1<<1 is the second sensor
 	// flag & 1<<15 is the 16th sensor
-	int sensor_bit_flags[SENSOR_MODULE_A + SENSOR_MODULE_E];
-	int sensor_time_log[SENSOR_MODULE_A + SENSOR_MODULE_E][SENSORS_PER_MODULE];
+	// Modules and sensors are 0-index internally, but rememeber they should be presented 1-index to the train and to the screen.
+	int sensor_bit_flags[NUM_SENSOR_MODULES];
+	int sensor_time_log[NUM_SENSOR_MODULES][SENSORS_PER_MODULE];
 	int source_tid;
 	int num_child_task_running;
 	int train_command_server_tid;

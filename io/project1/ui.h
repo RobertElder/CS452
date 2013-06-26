@@ -30,7 +30,7 @@ typedef struct UIServer {
 	short dirty;
 	char command_buffer[UI_SERVER_COMMAND_BUFFER_SIZE];
 	unsigned int command_buffer_index;
-	int sensor_bit_flags_cache[SENSOR_MODULE_A + SENSOR_MODULE_E];
+	int sensor_bit_flags_cache[NUM_SENSOR_MODULES];
 	TrainMap train_map_a;
 	TrainMap train_map_b;
 	TrainMap * current_train_map;

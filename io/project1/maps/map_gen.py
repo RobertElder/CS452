@@ -1,6 +1,10 @@
 '''Generate map code
 
 For Python 2.7.
+
+Usage: python map_gen.py map_a.txt a
+
+Entries are 1-index on the data file, but are processed into 0-index internally
 '''
 
 from __future__ import print_function
@@ -8,8 +12,8 @@ import argparse
 import fileinput
 import textwrap
 
-SENSOR_MODULE_A = 1
-SENSOR_MODULE_E = 5
+SENSOR_MODULE_A = 0
+SENSOR_MODULE_E = 4
 SENSORS_PER_MODULE = 16
 SENSOR_COUNT = (SENSOR_MODULE_A + SENSOR_MODULE_E) * SENSORS_PER_MODULE
 
@@ -88,8 +92,8 @@ def waypoints(out_f, lines):
             switch_numbers.append(int(switch_number))
         elif line.startswith('X'):
             waypoint_type, sensor_module, sensor_left_number, sensor_right_number = line.split()
-            sensor_module = int(sensor_module)
-            sensor_left_number = int(sensor_left_number) - 1  # Norm to 0-index
+            sensor_module = int(sensor_module) - 1  # Norm to 0-index
+            sensor_left_number = int(sensor_left_number) - 1
             sensor_right_number = int(sensor_right_number) - 1
             sensor_numbers.append((sensor_module, sensor_left_number, sensor_right_number))
 

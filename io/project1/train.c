@@ -165,7 +165,8 @@ void TrainCommandServer_Start() {
 			break;
 		case TRAIN_READ_SENSOR:
 			module_num = command_receive_message->c1;
-			Putc(COM1, 0xc0 | module_num);
+			assert(module_num <= SENSOR_MODULE_E, "module_num out of range (not using 0-indexed?)");
+			Putc(COM1, 0xc0 | (module_num + 1));
 			
 			// The course website train manual is wrong, the website is right
 			lower = Getc(COM1);
