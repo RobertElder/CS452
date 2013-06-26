@@ -2,7 +2,7 @@
            /         /                             X
 -----X----O         O----X------O--X-X--O---X---X---O
          /         /             X     X             \
----X----O         X               X | X               \
+---X-----         X               X | X               \
                  |                 O|O                 |
                  |                  |                  |
                  |                 O|O                 |
@@ -70,31 +70,32 @@ X	3	4	3
 
 # O = Switches
 # Num
-O 12
+O 12	# row 1
 O 11
 
+O 4	# row 3
 O 14
 O 13
 O 10
 O 9
 
-O 156
+O 156	# row 6
 O 155
 
-O 153
+O 153	# row 8
 O 154
 
-O 1
+O 1	# row 11
 O 15
 O 16
 O 17
 O 8
 
-O 2
+O 2	# row 13
 O 6
 O 7
 
-O 3
+O 3	# row 15
 O 18
 O 5
 
