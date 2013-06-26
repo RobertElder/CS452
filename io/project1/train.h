@@ -1,4 +1,5 @@
 #include "message.h"
+#include "tracks/track_data.h"
 
 #ifndef TRAIN_H_
 #define TRAIN_H_
@@ -64,6 +65,9 @@ typedef struct TrainServer {
 	int train_command_server_tid;
 	int train_sensor_reader_tid;
 	int blocked_tid;
+	
+	track_node track_a_nodes[TRACK_MAX];
+	track_node track_b_nodes[TRACK_MAX];
 } TrainServer;
 
 

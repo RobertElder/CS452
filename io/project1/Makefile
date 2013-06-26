@@ -19,7 +19,7 @@ ASFLAGS	= -mcpu=arm920t -mapcs-32
 LDFLAGS = -init main -Map kern.map -N  -T orex.ld -L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L../lib
 
 #  TODO: make things generic using the following method:
-SOURCES = kern.c public_kernel_interface.c private_kernel_interface.c swi_kernel_interface.c robio.c buffer.c queue.c task_descriptor.c tasks.c memory.c random.c nameserver.c rps.c message.c clock.c scheduler.c notifier.c kernel_irq.c ansi.c uart.c ui.c train.c maps/map_a.c maps/map_b.c
+SOURCES = kern.c public_kernel_interface.c private_kernel_interface.c swi_kernel_interface.c robio.c buffer.c queue.c task_descriptor.c tasks.c memory.c random.c nameserver.c rps.c message.c clock.c scheduler.c notifier.c kernel_irq.c ansi.c uart.c ui.c train.c maps/map_a.c maps/map_b.c tracks/track_data.c
 HEADERS = ${SOURCES:.c=.h}
 OBJECTS = ${SOURCES:.c=.o}
 
@@ -168,10 +168,16 @@ maps/map_b.s: maps/map_b.c maps/map_b.h
 maps/map_b.o: maps/map_b.s
 	$(AS) $(ASFLAGS) -o maps/map_b.o maps/map_b.s
 
+tracks/track_data.s: tracks/track_data.c tracks/track_data.h tracks/track_node.h
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) tracks/track_data.c -o tracks/track_data.s
+
+tracks/track_data.o: tracks/track_data.s
+	$(AS) $(ASFLAGS) -o tracks/track_data.o tracks/track_data.s
+
 kern.elf: $(OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ $(OBJECTS) -lgcc
 	@cp kern.elf /u/cs452/tftp/ARM/`whoami`/kern.elf
 	@chmod ugo+r /u/cs452/tftp/ARM/`whoami`/kern.elf
 
 clean:
-	-@rm -f kern.elf kern.s public_kernel_interface.s private_kernel_interface.s robio.s buffer.s queue.s task_descriptor.s tasks.s memory.s random.s nameserver.s rps.s message.s clock.s scheduler.s notifier.s kernel_irq.s ansi.s uart.s ui.s train.s maps/*.s *.o maps/*.o kern.map
+	-@rm -f kern.elf kern.s public_kernel_interface.s private_kernel_interface.s robio.s buffer.s queue.s task_descriptor.s tasks.s memory.s random.s nameserver.s rps.s message.s clock.s scheduler.s notifier.s kernel_irq.s ansi.s uart.s ui.s train.s maps/*.s tracks/*.s *.o maps/*.o  tracks/*.o kern.map

@@ -79,6 +79,9 @@ void TrainServer_Initialize(TrainServer * server) {
 			server->sensor_time_log[module_num][sensor_num] = 0;
 		}
 	}
+	
+	init_tracka(server->track_a_nodes);
+	init_trackb(server->track_b_nodes);
 }
 
 void TrainServer_HandleSensorReaderData(TrainServer * server) {
