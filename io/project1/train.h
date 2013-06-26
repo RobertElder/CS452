@@ -5,6 +5,7 @@
 #define TRAIN_H_
 
 #define SENSORS_PER_MODULE 16
+#define NUM_SWITCHES 256
 
 static const char const TRAIN_SERVER_NAME[] = "TrnSvr";
 static const char const TRAIN_COMMAND_SERVER_NAME[] = "TCmSvr";
@@ -46,6 +47,12 @@ typedef enum TrainServerState {
 	TRAIN_SERVER_BLOCK_UNTIL_SENSOR,
 } TrainServerState;
 
+typedef enum SwitchState {
+	SWITCH_UNKNOWN = 0,
+	SWITCH_STRAIGHT = 'S',
+	SWITCH_CURVED = 'C',
+} SwitchState;
+
 typedef struct TrainServer {
 	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
@@ -68,6 +75,8 @@ typedef struct TrainServer {
 	
 	track_node track_a_nodes[TRACK_MAX];
 	track_node track_b_nodes[TRACK_MAX];
+	
+	SwitchState switch_states[NUM_SWITCHES];
 } TrainServer;
 
 

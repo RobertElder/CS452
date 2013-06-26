@@ -82,6 +82,11 @@ void TrainServer_Initialize(TrainServer * server) {
 	
 	init_tracka(server->track_a_nodes);
 	init_trackb(server->track_b_nodes);
+	
+	int switch_num;
+	for (switch_num = 0; switch_num < NUM_SWITCHES; switch_num++) {
+		server->switch_states[switch_num] = SWITCH_UNKNOWN;
+	}
 }
 
 void TrainServer_HandleSensorReaderData(TrainServer * server) {
