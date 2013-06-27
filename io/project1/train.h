@@ -149,6 +149,10 @@ void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine);
 
 void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine * engine);
 
+void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine);
+
+track_node * TrainServer_GetEnginePosition(TrainServer * server);
+
 void TrainServerTimer_Start();
 
 void TrainCommandServer_Start();
