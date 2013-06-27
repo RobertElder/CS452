@@ -39,6 +39,12 @@ typedef struct GenericTrainMessage {
 	int int2;
 } GenericTrainMessage;
 
+typedef struct TrainEngineStatusMessage {
+	MessageType message_type;
+	char train_num;
+	char speed_setting;
+} TrainEngineStatusMessage;
+
 typedef enum SENSOR_MODULE {
 	SENSOR_MODULE_A = 0,
 	SENSOR_MODULE_B = 1,
@@ -130,6 +136,8 @@ void TrainServer_HandleSelectTrack(TrainServer * server);
 void TrainServer_HandleSetTrain(TrainServer * server);
 
 void TrainServer_HandleSetDestination(TrainServer * server);
+
+void TrainServer_HandleQueryTrainEngine(TrainServer * server);
 
 void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine);
 

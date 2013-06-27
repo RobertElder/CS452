@@ -490,11 +490,11 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET, ENGINE_STATUS_COL_OFFSET);
 		PutString(COM2, "                       TRAIN:");
 		ANSI_CursorNextLine(1);
+		PutString(COM2, "                       Speed:");
+		ANSI_CursorNextLine(1);
 		PutString(COM2, "            Current Waypoint:");
 		ANSI_CursorNextLine(1);
 		PutString(COM2, "               Next Waypoint:");
-		ANSI_CursorNextLine(1);
-		PutString(COM2, "                       Speed:");
 		ANSI_CursorNextLine(1);
 		PutString(COM2, "     Expected Time to Sensor:");
 		ANSI_CursorNextLine(1);
@@ -502,6 +502,29 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		ANSI_CursorNextLine(1);
 		PutString(COM2, "  Last Actual Time to Sensor:");
 	}
+	
+	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
+	TrainEngineStatusMessage * reply_message = (TrainEngineStatusMessage *) server->reply_buffer;
+	
+	send_message->message_type = MESSAGE_TYPE_QUERY_TRAIN_ENGINE;
+	
+	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_PrintTrainEngineStatus: did not get ack message");
+	
+	const int const col_offset = 32;
+	int train_num = reply_message->train_num;
+	int speed_setting = reply_message->speed_setting;
+	ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET, ENGINE_STATUS_COL_OFFSET);
+	
+	ANSI_CursorForward(col_offset);
+	ANSI_ClearLine(CLEAR_TO_END);
+	PutString(COM2, "%d", train_num);
+	ANSI_CursorNextLine(1);
+	
+	ANSI_CursorForward(col_offset);
+	ANSI_ClearLine(CLEAR_TO_END);
+	PutString(COM2, "%d", speed_setting);
+	ANSI_CursorNextLine(1);
 }
 
 void UITimer_Start() {

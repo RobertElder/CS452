@@ -69,6 +69,10 @@ void TrainServer_Start() {
 			// from ui server
 			TrainServer_HandleSetDestination(&server);
 			break;
+		case MESSAGE_TYPE_QUERY_TRAIN_ENGINE:
+			// from ui server
+			TrainServer_HandleQueryTrainEngine(&server);
+			break;
 		default:
 			assert(0, "TrainServer: unknown message type");
 			break;
@@ -230,6 +234,18 @@ void TrainServer_HandleSetDestination(TrainServer * server) {
 	(void) receive_message;
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
+	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
+}
+
+void TrainServer_HandleQueryTrainEngine(TrainServer * server) {
+	TrainEngineStatusMessage * reply_message = (TrainEngineStatusMessage *) server->reply_buffer;
+	
+	assert(sizeof(TrainEngineStatusMessage) <= MESSAGE_SIZE, "TrainEngineStatusMessage too big");
+	
+	reply_message->message_type = MESSAGE_TYPE_ACK;
+	reply_message->train_num = server->train_engine.train_num;
+	reply_message->speed_setting = server->train_engine.speed_setting;
+
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 }
 
