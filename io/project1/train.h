@@ -37,6 +37,7 @@ typedef struct GenericTrainMessage {
 	MessageType message_type;
 	int int1;
 	int int2;
+	char * char1;
 } GenericTrainMessage;
 
 typedef struct TrainEngineStatusMessage {
@@ -77,6 +78,7 @@ typedef enum TrainEngineState {
 	TRAIN_ENGINE_IDLE,
 	TRAIN_ENGINE_FINDING_POSITION,
 	TRAIN_ENGINE_FOUND_STARTING_POSITION,
+	TRAIN_ENGINE_RUNNING,
 } TrainEngineState;
 
 typedef struct TrainEngine {
@@ -151,6 +153,8 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine);
 
+void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine);
+
 track_node * TrainServer_GetEnginePosition(TrainServer * server);
 
 void TrainServerTimer_Start();
@@ -162,5 +166,7 @@ void TrainSensorReader_Start();
 void TrainEngine_Initialize(TrainEngine * engine, int train_num);
 
 track_node * SensorToTrackNode(track_node * track_nodes, int module_num, int sensor_num);
+
+track_node * NodeNameToTrackNode(track_node * track_nodes, char * name);
 
 #endif

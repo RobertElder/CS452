@@ -354,10 +354,11 @@ void UIServer_HandleSetTrainCommand(UIServer * server) {
 
 void UIServer_HandleSetDestinationCommand(UIServer * server) {
 	int next_whitespace = rob_next_whitespace(server->command_buffer);
-	GenericMessage  * send_message = (GenericMessage *) server->send_buffer;
+	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
 	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
 	
 	send_message->message_type = MESSAGE_TYPE_SET_DESTINATION;
+	send_message->char1 = &server->command_buffer[next_whitespace];
 	
 	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
 	

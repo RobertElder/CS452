@@ -1,6 +1,7 @@
 #include "train.h"
 #include "public_kernel_interface.h"
 #include "robio.h"
+#include "memory.h"
 
 void TrainServer_Start() {
 	TrainServer server;
@@ -227,11 +228,10 @@ void TrainServer_HandleSetTrain(TrainServer * server) {
 }
 
 void TrainServer_HandleSetDestination(TrainServer * server) {
-	GenericMessage * receive_message = (GenericMessage *) server->receive_buffer;
+	GenericTrainMessage * receive_message = (GenericTrainMessage *) server->receive_buffer;
 	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
 	
-	// TODO set the destination on the train engine
-	(void) receive_message;
+	server->train_engine.destination_node = NodeNameToTrackNode(server->current_track_nodes, receive_message->char1);
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
@@ -270,6 +270,9 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 	case TRAIN_ENGINE_FOUND_STARTING_POSITION:
 		TrainServer_ProcessEngineFoundStartingPosition(server, engine);
 		break;
+	case TRAIN_ENGINE_RUNNING:
+		TrainServer_ProcessEngineRunning(server, engine);
+		break;
 	default:
 		assert(0, "Unknown Train Engine State");
 		break;
@@ -293,8 +296,15 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 
 
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine) {
-	// TODO make it go somewhere
-	
+	// Wait for destination to be input
+	if (engine->destination_node) {
+		engine->state = TRAIN_ENGINE_RUNNING;
+		SendTrainCommand(TRAIN_SPEED, 10 | 16, engine->train_num, 0, 0);
+	}
+}
+
+void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine) {
+	// TODO: make the train go to its destination
 	track_node * node = TrainServer_GetEnginePosition(server);
 	
 	if (node) {
@@ -510,6 +520,19 @@ track_node * SensorToTrackNode(track_node * track_nodes, int module_num, int sen
 	}
 	
 	assertf(0, "SensorToTrackNode: Unknown node for Module=%d, Sensor=%d", module_num, sensor_num);
+	return 0;
+}
+
+track_node * NodeNameToTrackNode(track_node * track_nodes, char * name) {
+	int i;
+	for (i = 0; i < TRACK_MAX; i++) {
+		track_node * node = &track_nodes[i];
+		
+		if (m_strcmp(name, node->name) == 0) {
+			return node;
+		}
+	}
+	
 	return 0;
 }
 
