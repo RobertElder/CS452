@@ -16,16 +16,14 @@ void irq_handler() {
 	Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, READY);
 #endif
 
-	int (*vic1fcn)(void) = (int (*)(void)) *VIC1VectAddr;
 	int (*vic2fcn)(void) = (int (*)(void)) *VIC2VectAddr;
 
 	if (*vic2fcn) {
 		vic2fcn();
 		*VIC2VectAddr = 0;
-	}
-	if (*vic1fcn) {
-		vic1fcn();
-		*VIC1VectAddr = 0;
+	}else{
+		robprintfbusy((unsigned const char *)"Unexpected situation where interrupt handler is called but no vic2 interrupt available\n");
+		while(1){};
 	}
 
 	Scheduler_SetNextTaskState(scheduler, k_state);
