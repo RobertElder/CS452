@@ -1,5 +1,7 @@
 #include "ui.h"
 #include "public_kernel_interface.h"
+#include "private_kernel_interface.h"
+#include "kernel_state.h"
 #include "ansi.h"
 #include "queue.h"
 #include "robio.h"
@@ -209,6 +211,9 @@ void UIServer_ResetCommandBuffer(UIServer * server) {
 
 void UIServer_PrintCommandHelp(UIServer * server) {
 	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, ts");
+
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	Scheduler_PrintTDCounts(&k_state->scheduler);
 }
 
 void UIServer_HandleTrainCommand(UIServer * server) {

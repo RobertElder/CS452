@@ -21,6 +21,7 @@ void TD_Initialize(TD * td, int id, QueuePriority priority, int parent_id, void 
 	Queue_Initialize((Queue*)&td->messages, MESSAGE_QUEUE_SIZE);
 	td->event_id = NULL_EVENT;
 	td->reply_len = 0;
+	td->send_to_id = 0;
 }
 
 int is_tid_in_range(int tid) {

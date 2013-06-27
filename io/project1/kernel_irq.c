@@ -44,13 +44,30 @@ void IRQ_TimerVIC2Handler() {
 // For the UART handlers:
 // User space task will need to handle the rest
 // Interrupts automatically reenabled in AwaitEvent
-
+//  Assume cts is asserted to begin with
+int cts_state = 1;
 void IRQ_UART1Handler() {
-	if(*UART1IntIDIntClr & INTERRUPT_TIS){
-		IRQ_UART1TransmitHandler();
+	if(*UART1IntIDIntClr & INTERRUPT_MIS){
+		// Only transmit if the cts was asserted
+		if(*UART1Flag & CTS_MASK){
+			if(cts_state == 0){
+				cts_state = 1;
+				IRQ_UART1TransmitHandler();
+			}else{
+				assert(0,"CTS was asserted but it was already asserted.\n");
+			}
+		}else{
+			if(cts_state == 0){
+				assert(0,"Unexpected case where cts is deasserted twice.\n");
+			}else{
+				cts_state = 0;
+			}
+		}
 	}else if((*UART1IntIDIntClr & INTERRUPT_RIS) || (*UART1IntIDIntClr & INTERRUPT_RTIS)){
+		assert(((*UART1Flag & RXFE_MASK) == 0 ), "Receive interrupt fired but uart 1 is empty!");
 		IRQ_UART1RecieveHandler();
 	}
+	*UART1IntIDIntClr = 0;
 }
 
 void IRQ_UART2Handler() {
@@ -59,6 +76,7 @@ void IRQ_UART2Handler() {
 	}else if((*UART2IntIDIntClr & INTERRUPT_RIS) || (*UART2IntIDIntClr & INTERRUPT_RTIS)){
 		IRQ_UART2RecieveHandler();
 	}
+	*UART2IntIDIntClr = 0;
 }
 
 void IRQ_UART1RecieveHandler() {
@@ -73,8 +91,6 @@ void IRQ_UART1TransmitHandler() {
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
 	Scheduler_UnblockTasksOnEvent(&k_state->scheduler, UART1_TX_EVENT);
-
-	IRQ_SetUART1Transmit(0);
 }
 
 void IRQ_UART2RecieveHandler() {
@@ -150,7 +166,12 @@ void IRQ_SetupUARTInterrupts() {
 	*VIC2VectAddr2 = (int) &IRQ_UART2Handler;
 	int * VIC2VectCntl2 = (int*) 0x800C0208;
 	*VIC2VectCntl2 = (INT_UART2 - 32) | 1 << 5;
-	
+
+	int data;
+	data = *UART1DATA & DATA_MASK;
+	data = *UART2DATA & DATA_MASK;
+	*UART1IntIDIntClr = 0;
+	*UART2IntIDIntClr = 0;
 }
 
 void IRQ_DisableUARTInterrupts() {
@@ -181,9 +202,9 @@ void IRQ_SetUART1Transmit(short enable) {
 	int * UART1Ctrl = (int*) (UART1_BASE | UART_CTLR_OFFSET);
 	
 	if (enable) {
-		*UART1Ctrl |= TIEN_MASK | UARTEN_MASK;
+		*UART1Ctrl |= MSIEN_MASK | UARTEN_MASK;
 	} else {
-		*UART1Ctrl &= ~TIEN_MASK;
+		*UART1Ctrl &= ~MSIEN_MASK;
 	}
 }
 

@@ -117,8 +117,11 @@ void TrainInputNotifier_Start() {
 	robprintfbusy((const unsigned char *)"TrainInputNotifier_Start: tid=%d\n", MyTid());
 	
 	while (1) {
+		robprintfbusy((const unsigned char *)"\nTrain Input Before Await\n");
 		AwaitEvent(UART1_RX_EVENT);
+		robprintfbusy((const unsigned char *)"\nTrain Input after Await\n");
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+		robprintfbusy((const unsigned char *)"\nTrain Input after send\n");
 		assert(reply_message->message_type == MESSAGE_TYPE_ACK,
 			"TrainInputNotifier didn't get an ACK");
 	}
@@ -138,10 +141,13 @@ void TrainOutputNotifier_Start() {
 	send_message->event_id = UART1_TX_EVENT;
 	
 	robprintfbusy((const unsigned char *)"TrainOutputNotifier_Start: tid=%d\n", MyTid());
-	
+
 	while (1) {
+		robprintfbusy((const unsigned char *)"\nnotifier before await\n");
 		AwaitEvent(UART1_TX_EVENT);
+		robprintfbusy((const unsigned char *)"\nnotifier after await\n");
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+		robprintfbusy((const unsigned char *)"\nnotifier after send\n");
 		
 		if (reply_message->message_type == MESSAGE_TYPE_SHUTDOWN) {
 			break;

@@ -12,6 +12,7 @@
 extern int _EndOfProgram;
 
 void Scheduler_Initialize(Scheduler * scheduler) {
+	scheduler->uart1_tx_ready = 0;
 	scheduler->max_tasks = MAX_TASKS;
 	scheduler->num_tasks = 0; 
 	PriorityQueue_Initialize(&scheduler->task_queue);
@@ -313,8 +314,8 @@ void Scheduler_PrintTDCounts(Scheduler * scheduler) {
 	int count = 0;
 	for (i = 0; i < MAX_TASKS + 1; i++) {
 		if (Scheduler_IsInitedTid(scheduler, i)) {
-			robprintfbusy((const unsigned char *)" %d: %s  (%x)", i, 
-				TASK_STATE_NAMES[scheduler->task_descriptors[i].state], scheduler->task_descriptors[i].entry_point);
+			robprintfbusy((const unsigned char *)" %d: %s  (%x->%d)", i, 
+				TASK_STATE_NAMES[scheduler->task_descriptors[i].state], scheduler->task_descriptors[i].entry_point,scheduler->task_descriptors[i].send_to_id);
 			count++;
 			if (count % 10 == 0) {
 				robprintfbusy((const unsigned char *)"\n");
@@ -328,8 +329,13 @@ void Scheduler_PrintTDCounts(Scheduler * scheduler) {
 void Scheduler_UnblockTasksOnEvent(Scheduler * scheduler, EventID event_id) {
 	unsigned int task_id = scheduler->has_tasks_event_blocked[event_id];
 	if (!task_id) {
-		return;
+		if(event_id == UART1_TX_EVENT){
+			robprintfbusy((const unsigned char *)"\n!!!!no task blocked so saving unblock\n");
+			scheduler->uart1_tx_ready = 1;
+		}
 	}else{
+		if(event_id == UART1_TX_EVENT)
+			robprintfbusy((const unsigned char *)"\n!!!!unblocking uart1 tx with task %d %x\n", task_id ,scheduler->task_descriptors[task_id].entry_point);
 		Scheduler_ChangeTDState(scheduler, &scheduler->task_descriptors[task_id], READY);
 		scheduler->has_tasks_event_blocked[event_id] = 0;
 	}

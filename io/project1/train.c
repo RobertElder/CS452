@@ -279,6 +279,7 @@ void TrainSensorReader_Start() {
 	
 	while (1) {
 		for (module_num = SENSOR_MODULE_A; module_num <= SENSOR_MODULE_E; module_num++) {
+			robprintfbusy((const unsigned char *)"SEN sending train command\n");
 			SendTrainCommand(TRAIN_READ_SENSOR, module_num, 0, &lower, &upper);
 			
 			// Reverse it so it is easier to mask. see train.h
@@ -294,6 +295,7 @@ void TrainSensorReader_Start() {
 			send_message->sensor_bit_flag = upper << 8 | lower;
 			send_message->module_num = module_num;
 
+			robprintfbusy((const unsigned char *)"SEN sending to train server\n");
 			Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 
 			if (reply_message->message_type == MESSAGE_TYPE_SHUTDOWN) {

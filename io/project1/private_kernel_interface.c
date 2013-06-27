@@ -213,6 +213,9 @@ int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 	int return_value = msglen;
 	TD * current_td = scheduler->current_task_descriptor;
 
+	// Remember who we are sending to.
+	current_td->send_to_id = tid;
+
 	if (Scheduler_IsInitedTid(scheduler, tid)) {
 		scheduler->current_task_descriptor->reply_msg = reply;
 		scheduler->current_task_descriptor->reply_len = replylen;
@@ -326,11 +329,14 @@ int k_Reply(int tid, char *reply, int replylen){
 			assert(replylen == MESSAGE_SIZE, "msglen not 100");	
 			m_strcpy(target_td->reply_msg, reply, replylen);
 			Scheduler_ChangeTDState(scheduler, target_td, READY);
+			scheduler->task_descriptors[tid].send_to_id = 0;
 		}
 	} else {
 		if (!is_tid_in_range(tid)) {
+			assert(0, "Sending to invalid tid.");
 			return_value = ERR_K_TID_OUT_OF_RANGE;
 		} else {
+			assert(0, "Sending to tid that does not exist.");	
 			return_value = ERR_K_TID_DOES_NOT_EXIST;
 		}
 	}
@@ -347,11 +353,21 @@ int k_AwaitEvent(EventID event_id) {
 	Scheduler * scheduler = &k_state->scheduler;
 		
 	Scheduler_SaveCurrentTaskState(scheduler, k_state);
-	
-	Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, EVENT_BLOCKED);
-	scheduler->current_task_descriptor->event_id = event_id;
-	assert(!(scheduler->has_tasks_event_blocked[event_id]),"More than one task is attempting to block on an event at once.  We don't support this right now.");
-	scheduler->has_tasks_event_blocked[event_id] = scheduler->current_task_descriptor->id;
+
+	if(!(event_id == UART1_TX_EVENT && scheduler->uart1_tx_ready)){
+		if(event_id == UART1_TX_EVENT)
+			robprintfbusy((const unsigned char *)"\n!!!blocking %d on uart1 tx with ready %d\n", scheduler->current_task_descriptor->id, scheduler->uart1_tx_ready);
+
+		Scheduler_ChangeTDState(scheduler, scheduler->current_task_descriptor, EVENT_BLOCKED);
+		scheduler->current_task_descriptor->event_id = event_id;
+		assert(!(scheduler->has_tasks_event_blocked[event_id]),"More than one task is attempting to block on an event at once.  We don't support this right now.");
+		scheduler->has_tasks_event_blocked[event_id] = scheduler->current_task_descriptor->id;
+		Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
+	}else{
+		robprintfbusy((const unsigned char *)"\n!!!%d did not need to block because ready is %d\n", scheduler->current_task_descriptor->id, scheduler->uart1_tx_ready);
+		scheduler->uart1_tx_ready = 0;
+		Scheduler_SetNextTaskState(scheduler, k_state);
+	}
 	
 	//robprintfbusy((const unsigned char *)"AwaitEvent called\n");
 	
@@ -361,6 +377,7 @@ int k_AwaitEvent(EventID event_id) {
 		IRQ_SetUART1Receive(1);
 		break;
 	case UART1_TX_EVENT:
+		//  Always on
 		IRQ_SetUART1Transmit(1);
 		break;
 	case UART2_RX_EVENT:
@@ -373,7 +390,6 @@ int k_AwaitEvent(EventID event_id) {
 		break;
 	}
 
-	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
 
 	asm_KernelExit();
 	return 0; /* Needed to get rid of compiler warnings only.  Execution does not reach here */

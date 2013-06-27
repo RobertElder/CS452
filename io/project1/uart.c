@@ -7,6 +7,7 @@
 #include "scheduler.h"
 
 void UARTErrorCheck(int sts, const char * context){
+	return;
 	assertf(!(sts && FE_MASK), "Framing error detected communicating with %s", context);
 	assertf(!(sts && PE_MASK), "Parity error detected communicating with %s", context);
 	assertf(!(sts && BE_MASK), "Break error detected communicating with %s", context);
@@ -133,6 +134,7 @@ void KeyboardInputServer_Start() {
 
 			UARTErrorCheck(*UART2RXSts, "terminal");
 
+			robprintfbusy((const unsigned char *) "Put char for screen.\n");
 			CharBuffer_PutChar(&server.char_buffer, data);
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			break;
@@ -299,10 +301,14 @@ void TrainInputServer_Start() {
 			break;
 		case MESSAGE_TYPE_NOTIFIER:
 			// From notifier
+			assert(((*UART1Flag & RXFE_MASK) == 0), "TrainInputServer: empty!");
+			assert((*UART1Flag & TXBUSY_MASK) == 0, "TrainInputServer: TXBusy!");
+			robprintfbusy((const unsigned char *)"!!!About to get some Train data.\n");
 			data = *UART1DATA & DATA_MASK;
 			
 			UARTErrorCheck(*UART1RXSts, "trains");
 			
+			robprintfbusy((const unsigned char *) "Put char for trains.\n");
 			CharBuffer_PutChar(&server.char_buffer, data);
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			break;
@@ -364,11 +370,15 @@ void TrainInputServer_UnblockQueued(TrainInputServer * server) {
 
 void TrainOutputServer_Start() {
 	int i;
+	int notifier_reply_blocked = 0;
 	TrainOutputServer server;
 	TrainOutputServer_Initialize(&server);
 	
 	server.reply_message->message_type = MESSAGE_TYPE_ACK;
-	
+	//  Assume that we begin ready to send a byte.
+	server.state = UARTSS_READY;
+
+
 	while (server.state != UARTSS_SHUTDOWN) {
 		Receive(&server.source_tid, server.receive_buffer, MESSAGE_SIZE);
 
@@ -386,17 +396,20 @@ void TrainOutputServer_Start() {
 			Reply(server.notifier_tid, server.reply_buffer, MESSAGE_SIZE);
 			break;
 		case MESSAGE_TYPE_NOTIFIER:
+			robprintfbusy((const unsigned char *)"\nmessage from NOTIFIER\n");
 			// from the notifier
+			notifier_reply_blocked = 1;
 			server.state = UARTSS_READY;
-			TrainOutputServer_SendData(&server);
+			TrainOutputServer_SendData(&server, &notifier_reply_blocked);
 			break;
 		case MESSAGE_TYPE_DATA:
+			robprintfbusy((const unsigned char *)"\ngot request to send data\n");
 			// from the public_kernel_interface Putc()
 			for (i = 0; i < server.char_message->count; i++) {
 				CharBuffer_PutChar(&server.char_buffer, server.char_message->chars[i]);
 			}
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
-			TrainOutputServer_SendData(&server);
+			TrainOutputServer_SendData(&server, &notifier_reply_blocked);
 			break;
 		default:
 			assert(0, "TrainOutputServer unknown event type");
@@ -420,28 +433,34 @@ void TrainOutputServer_Initialize(TrainOutputServer * server) {
 	assert(server->notifier_tid, "TrainOutputServer_Start notifier did not start");
 }
 
-void TrainOutputServer_SendData(TrainOutputServer * server) {
-	if (server->state != UARTSS_READY) {
-		return;
-	}
-	
-	if ((*UART1Flag & TXBUSY_MASK) || !(*UART1Flag & CTS_MASK)) {
-		// Restart the notifier
-		server->state = UARTSS_WAITING;
-		Reply(server->notifier_tid, server->reply_buffer, MESSAGE_SIZE);
-		return;
-	}
-	
+void TrainOutputServer_SendData(TrainOutputServer * server, int *notifier_reply_blocked) {
+	robprintfbusy((const unsigned char *)"\nin send data\n");
 	if (!CharBuffer_IsEmpty(&server->char_buffer)) {
 		char data = CharBuffer_GetChar(&server->char_buffer);
+
+		if(!(*UART1Flag & CTS_MASK))
+			server->state = UARTSS_WAITING;
 		
 		//assert(*UART1Flag & CTS_MASK, "TrainOutputServer: CTS not set");
 		assert((*UART1Flag & TXBUSY_MASK) == 0, "TrainOutputServer: TXBusy!");
-		
-		*UART1DATA = data;
-		server->state = UARTSS_WAITING;
+	
+		if(server->state == UARTSS_READY){
+			robprintfbusy((const unsigned char *)"\nsent data\n");
+			*UART1DATA = data;
+			server->state = UARTSS_WAITING;
+		}else{
+			robprintfbusy((const unsigned char *)"\ndid not send data\n");
+		}
 		
 		// Restart the notifier
-		Reply(server->notifier_tid, server->reply_buffer, MESSAGE_SIZE);
+		if(*notifier_reply_blocked){
+			robprintfbusy((const unsigned char *)"\nublocked NOTIFIER\n");
+			Reply(server->notifier_tid, server->reply_buffer, MESSAGE_SIZE);
+			*notifier_reply_blocked = 0;
+		}else{
+			robprintfbusy((const unsigned char *)"\n did not ublock notifier\n");
+		}
+	}else{
+		robprintfbusy((const unsigned char *)"\nbuffer was empty\n");
 	}
 }

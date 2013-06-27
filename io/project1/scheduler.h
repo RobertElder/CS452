@@ -7,6 +7,7 @@
 #define SCHEDULER_H_
 
 typedef struct Scheduler {
+	unsigned int uart1_tx_ready;
 	unsigned int max_tasks;
 	/* Pointer to the currently scheduled task */
 	TD * current_task_descriptor;

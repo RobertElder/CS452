@@ -114,6 +114,6 @@ void TrainOutputServer_Start();
 
 void TrainOutputServer_Initialize(TrainOutputServer * server);
 
-void TrainOutputServer_SendData(TrainOutputServer * server);
+void TrainOutputServer_SendData(TrainOutputServer * server, int*);
 
 #endif

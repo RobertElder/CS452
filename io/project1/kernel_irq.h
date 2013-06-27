@@ -9,7 +9,8 @@
 #define INTERRUPT_TIS 0x4
 #define INTERRUPT_RTIS 0x8
 
-
+volatile static int * const UART1DATA = (int*) (UART1_BASE + UART_DATA_OFFSET);
+volatile static int * const UART2DATA = (int*) (UART2_BASE + UART_DATA_OFFSET);
 volatile static int * const UART1Flag = (int*) (UART1_BASE + UART_FLAG_OFFSET);
 volatile static int * const UART2Flag = (int*) (UART2_BASE + UART_FLAG_OFFSET);
 volatile static int * const timer_ldr = (int*)(TIMER3_BASE + LDR_OFFSET);
