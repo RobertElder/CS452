@@ -130,9 +130,24 @@ void UIServer_PrintTime(UIServer * server) {
 	unsigned int sec = time % 60;
 	time /= 60;
 	unsigned int min = time % 60;
+	time /= 60;
+	unsigned int hours = time % 60;
+	time /= 24;
+	unsigned int days = time % 24;
+	
+	char ms_str[5];
+	char sec_str[5];
+	char min_str[5];
+	char hours_str[5];
+	char days_str[5];
+	rob_zero_pad(ms, ms_str);
+	rob_zero_pad(sec, sec_str);
+	rob_zero_pad(min, min_str);
+	rob_zero_pad(hours, hours_str);
+	rob_zero_pad(days, days_str);
 	
 	ANSI_Cursor(1, sizeof(UI_SERVER_HEADER) + 1);
-	PutString(COM2, "{ SYSTIME = %d:%d,%d }", min, sec, ms);
+	PutString(COM2, "{ SYSTIME = %s:%s:%s:%s,%s }", days_str, hours_str, min_str, sec_str, ms_str);
 	ANSI_ClearLine(CLEAR_TO_END);
 }
 

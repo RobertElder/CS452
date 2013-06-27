@@ -603,3 +603,12 @@ int rob_next_whitespace(const char * str) {
 		assert(i < 100, "rob_next_whitespace running too long");
 	}
 }
+
+void rob_zero_pad(int num, char * str) {
+	if (num < 10) {
+		str[0] = '0';
+		bwi2a(num, &str[1]);
+	} else {
+		bwi2a(num, str);
+	}
+}
