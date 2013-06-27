@@ -117,6 +117,7 @@ void UIServer_Render(UIServer * server) {
 	UIServer_PrintMap(server);
 	UIServer_PrintSensors(server);
 	UIServer_PrintSwitches(server);
+	UIServer_PrintTrainEngineStatus(server);
 	UIServer_PrintCommandLine(server);
 	
 	server->dirty = 0;
@@ -450,6 +451,25 @@ void UIServer_PrintSwitches(UIServer * server) {
 			
 			server->switch_states_cache[switch_num] = switch_state;
 		}
+	}
+}
+
+void UIServer_PrintTrainEngineStatus(UIServer * server) {
+	if (server->dirty) {
+		ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET, ENGINE_STATUS_COL_OFFSET);
+		PutString(COM2, "                       TRAIN:");
+		ANSI_CursorNextLine(1);
+		PutString(COM2, "            Current Waypoint:");
+		ANSI_CursorNextLine(1);
+		PutString(COM2, "               Next Waypoint:");
+		ANSI_CursorNextLine(1);
+		PutString(COM2, "                       Speed:");
+		ANSI_CursorNextLine(1);
+		PutString(COM2, "     Expected Time to Sensor:");
+		ANSI_CursorNextLine(1);
+		PutString(COM2, "Last Expected Time to Sensor:");
+		ANSI_CursorNextLine(1);
+		PutString(COM2, "  Last Actual Time to Sensor:");
 	}
 }
 

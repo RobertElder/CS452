@@ -73,9 +73,9 @@ typedef struct TrainEngine {
 	TrainEngineState state;
 	track_node * current_node;
 	double speed;
-	double expected_time_at_next_node;
-	double expected_time_at_last_node;
-	double actual_time_at_last_node;
+	double expected_time_at_next_sensor;
+	double expected_time_at_last_sensor;
+	double actual_time_at_last_sensor;
 } TrainEngine;
 
 typedef struct TrainServer {
