@@ -7,8 +7,6 @@
 #include "scheduler.h"
 
 void UARTErrorCheck(int sts, const char * context){
-return;
-/// TODO dont ignore this
 	assertf(!(sts && FE_MASK), "Framing error detected communicating with %s", context);
 	assertf(!(sts && PE_MASK), "Parity error detected communicating with %s", context);
 	assertf(!(sts && BE_MASK), "Break error detected communicating with %s", context);
@@ -108,6 +106,9 @@ void KeyboardInputServer_Start() {
 	KeyboardInputServer server;
 	KeyboardInputServer_Initialize(&server);
 	int data;
+
+	//  Clear any errors
+	*UART2RXSts = 0;
 	
 	while (server.state != UARTSS_SHUTDOWN) {
 		Receive(&server.source_tid, server.receive_buffer, MESSAGE_SIZE);
@@ -193,6 +194,7 @@ void KeyboardInputServer_UnblockQueued(KeyboardInputServer * server) {
 
 void ScreenOutputServer_Start() {
 	int i;
+	int notifier_reply_blocked = 0;
 	ScreenOutputServer server;
 	ScreenOutputServer_Initialize(&server);
 
@@ -218,7 +220,8 @@ void ScreenOutputServer_Start() {
 		case MESSAGE_TYPE_NOTIFIER:
 			// from the notifier
 			server.state = UARTSS_READY;
-			ScreenOutputServer_SendData(&server);
+			notifier_reply_blocked = 1;
+			ScreenOutputServer_SendData(&server, &notifier_reply_blocked);
 			break;
 		case MESSAGE_TYPE_DATA:
 			// from public_kernel_interface Putc()
@@ -226,7 +229,7 @@ void ScreenOutputServer_Start() {
 				CharBuffer_PutChar(&server.char_buffer, server.char_message->chars[i]);
 			}
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
-			ScreenOutputServer_SendData(&server);
+			ScreenOutputServer_SendData(&server, &notifier_reply_blocked);
 			break;
 		default:
 			assert(0, "KeyboardInputServer unknown event type");
@@ -250,7 +253,7 @@ void ScreenOutputServer_Initialize(ScreenOutputServer * server) {
 	assert(server->notifier_tid, "ScreenOutputServer_Start notifier did not start");
 }
 
-void ScreenOutputServer_SendData(ScreenOutputServer * server) {
+void ScreenOutputServer_SendData(ScreenOutputServer * server,int * notifier_reply_blocked) {
 	if (server->state != UARTSS_READY) {
 		return;
 	}
@@ -262,7 +265,10 @@ void ScreenOutputServer_SendData(ScreenOutputServer * server) {
 		server->state = UARTSS_WAITING;
 		
 		// Tell notifier to start checking again
-		Reply(server->notifier_tid, server->reply_buffer, MESSAGE_SIZE);
+		if(*notifier_reply_blocked){
+			Reply(server->notifier_tid, server->reply_buffer, MESSAGE_SIZE);
+			*notifier_reply_blocked = 0;
+		}
 	}
 }
 
@@ -270,6 +276,9 @@ void TrainInputServer_Start() {
 	TrainInputServer server;
 	TrainInputServer_Initialize(&server);
 	char data;
+
+	//  Clear any errors
+	*UART1RXSts = 0;
 	
 	while (server.state != UARTSS_SHUTDOWN) {
 		Receive(&server.source_tid, server.receive_buffer, MESSAGE_SIZE);

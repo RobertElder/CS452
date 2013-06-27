@@ -100,7 +100,7 @@ void ScreenOutputServer_Start();
 
 void ScreenOutputServer_Initialize(ScreenOutputServer * server);
 
-void ScreenOutputServer_SendData(ScreenOutputServer * server);
+void ScreenOutputServer_SendData(ScreenOutputServer * server, int *);
 
 void TrainInputServer_Start();
 

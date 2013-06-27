@@ -10,7 +10,7 @@
 
 void RPSTestStart() {
 	int tid;
-	const int num_clients = 540;
+	const int num_clients = 380;
 
 	//tid = Create(NORMAL, &NameServer_Start);
 	//assert(tid == 2, "NameServer tid not 2");

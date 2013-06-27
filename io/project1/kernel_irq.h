@@ -4,6 +4,8 @@
 #ifndef KERNEL_IRQ_H_
 #define KERNEL_IRQ_H_
 
+volatile static int * const UART1Flag = (int*) (UART1_BASE + UART_FLAG_OFFSET);
+volatile static int * const UART2Flag = (int*) (UART2_BASE + UART_FLAG_OFFSET);
 volatile static int * const timer_ldr = (int*)(TIMER3_BASE + LDR_OFFSET);
 volatile static int * const timer_val = (int*)(TIMER3_BASE + VAL_OFFSET);
 volatile static int * const timer_ctrl = (int*)(TIMER3_BASE + CRTL_OFFSET);
@@ -13,6 +15,10 @@ volatile static const int UART1RXINTR1 = 23;
 volatile static const int UART1TXINTR1 = 24;
 volatile static const int UART2RXINTR2 = 25;
 volatile static const int UART2TXINTR2 = 26;
+volatile static const int INT_UART1 = 52;
+volatile static const int INT_UART2 = 54;
+volatile static int * const UART1IntIDIntClr = (int *)0x808C001C;
+volatile static int * const UART2IntIDIntClr = (int *)0x808D001C;
 volatile static int * const VIC1BaseAddress = (int *) 0x800B0000;
 volatile static int * const VIC1IntSelect = (int *)0x800B000C;
 volatile static int * const VIC1IntEnable = (int *)0x800B0010;

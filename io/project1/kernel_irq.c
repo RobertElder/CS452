@@ -47,6 +47,22 @@ void IRQ_TimerVIC2Handler() {
 // User space task will need to handle the rest
 // Interrupts automatically reenabled in AwaitEvent
 
+void IRQ_UART1Handler() {
+	if(*UART1IntIDIntClr & 0x4){
+		IRQ_UART1TransmitHandler();
+	}else if((*UART1IntIDIntClr & 0x2) || (*UART1IntIDIntClr & 0x8)){
+		IRQ_UART1RecieveHandler();
+	}
+}
+
+void IRQ_UART2Handler() {
+	if(*UART2IntIDIntClr & 0x4){
+		IRQ_UART2TransmitHandler();
+	}else if((*UART2IntIDIntClr & 0x2) || (*UART2IntIDIntClr & 0x8)){
+		IRQ_UART2RecieveHandler();
+	}
+}
+
 void IRQ_UART1RecieveHandler() {
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	
@@ -120,42 +136,27 @@ void IRQ_ClearTimerInterrupt() {
 }
 
 void IRQ_SetupUARTInterrupts() {
-	*VIC1IntSelect &= 0;
+	// TODO:  disable other interrupts
 
 	// Enable the interrupt emitters
-	*VIC1IntEnable |= 1 << UART1RXINTR1;
-	*VIC1IntEnable |= 1 << UART1TXINTR1;
-	*VIC1IntEnable |= 1 << UART2RXINTR2;
-	*VIC1IntEnable |= 1 << UART2TXINTR2;
+	*VIC2IntEnable |= 1 << (INT_UART1 - 32);
+	*VIC2IntEnable |= 1 << (INT_UART2 - 32);
 	
 	// Set vectored interrupt handlers
+	int * VIC2VectAddr1 = (int*) 0x800C0104;
+	*VIC2VectAddr1 = (int) &IRQ_UART1Handler;
+	int * VIC2VectCntl1 = (int*) 0x800C0204;
+	*VIC2VectCntl1 = (INT_UART1 - 32) | 1 << 5;
 	
-	// UART 1 Receive on VIC1-1
-	int * VIC1VectAddr1 = (int*) 0x800B0104;
-	*VIC1VectAddr1 = (int) &IRQ_UART1RecieveHandler;
-	int * VIC1VectCntl1 = (int*) 0x800B0204;
-	*VIC1VectCntl1 = UART1RXINTR1 | 1 << 5;
+	int * VIC2VectAddr2 = (int*) 0x800C0108;
+	*VIC2VectAddr2 = (int) &IRQ_UART2Handler;
+	int * VIC2VectCntl2 = (int*) 0x800C0208;
+	*VIC2VectCntl2 = (INT_UART2 - 32) | 1 << 5;
 	
-	// UART 1 Transmit on VIC1-2
-	int * VIC1VectAddr2 = (int*) 0x800B0108;
-	*VIC1VectAddr2 = (int) &IRQ_UART1TransmitHandler;
-	int * VIC1VectCntl2 = (int*) 0x800B0208;
-	*VIC1VectCntl2 = UART1TXINTR1 | 1 << 5;
-	
-	// UART 2 Receive on VIC1-3
-	int * VIC1VectAddr3 = (int*) 0x800B010C;
-	*VIC1VectAddr3 = (int) &IRQ_UART2RecieveHandler;
-	int * VIC1VectCntl3 = (int*) 0x800B020C;
-	*VIC1VectCntl3 = UART2RXINTR2 | 1 << 5;
-	
-	// UART 2 Transmit on VIC1-4
-	int * VIC1VectAddr4 = (int*) 0x800B0110;
-	*VIC1VectAddr4 = (int) &IRQ_UART2TransmitHandler;
-	int * VIC1VectCntl4 = (int*) 0x800B0210;
-	*VIC1VectCntl4 = UART2TXINTR2 | 1 << 5;
 }
 
 void IRQ_DisableUARTInterrupts() {
+	/*
 	*VIC1IntEnable &= (0xFFFFFFFF ^(1 << UART1RXINTR1));
 	*VIC1IntEnable &= (0xFFFFFFFF ^(1 << UART1TXINTR1));
 	*VIC1IntEnable &= (0xFFFFFFFF ^(1 << UART2RXINTR2));
@@ -165,13 +166,14 @@ void IRQ_DisableUARTInterrupts() {
 	*VIC1IntEnClear |= 1 << UART1TXINTR1;
 	*VIC1IntEnClear |= 1 << UART2RXINTR2;
 	*VIC1IntEnClear |= 1 << UART2TXINTR2;
+	*/
 }
 
 void IRQ_SetUART1Receive(short enable) {
 	int * UART1Ctrl = (int*) (UART1_BASE | UART_CTLR_OFFSET);
 	
 	if (enable) {
-		*UART1Ctrl |= RIEN_MASK | RTIEN_MASK;
+		*UART1Ctrl |= RIEN_MASK | RTIEN_MASK | UARTEN_MASK; 
 	} else {
 		*UART1Ctrl &= ~(RIEN_MASK | RTIEN_MASK);
 	}
@@ -181,7 +183,7 @@ void IRQ_SetUART1Transmit(short enable) {
 	int * UART1Ctrl = (int*) (UART1_BASE | UART_CTLR_OFFSET);
 	
 	if (enable) {
-		*UART1Ctrl |= TIEN_MASK;
+		*UART1Ctrl |= TIEN_MASK | UARTEN_MASK;
 	} else {
 		*UART1Ctrl &= ~TIEN_MASK;
 	}
@@ -191,7 +193,7 @@ void IRQ_SetUART2Receive(short enable) {
 	int * UART2Ctrl = (int*) (UART2_BASE | UART_CTLR_OFFSET);
 	
 	if (enable) {
-		*UART2Ctrl |= RIEN_MASK | RTIEN_MASK;
+		*UART2Ctrl |= RIEN_MASK | RTIEN_MASK | UARTEN_MASK;
 	} else {
 		*UART2Ctrl &= ~(RIEN_MASK | RTIEN_MASK);
 	}
@@ -201,7 +203,7 @@ void IRQ_SetUART2Transmit(short enable) {
 	int * UART2Ctrl = (int*) (UART2_BASE | UART_CTLR_OFFSET);
 	
 	if (enable) {
-		*UART2Ctrl |= TIEN_MASK;
+		*UART2Ctrl |= TIEN_MASK | UARTEN_MASK;
 	} else {
 		*UART2Ctrl &= ~TIEN_MASK;
 	}
