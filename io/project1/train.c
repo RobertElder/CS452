@@ -273,6 +273,9 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 	case TRAIN_ENGINE_RUNNING:
 		TrainServer_ProcessEngineRunning(server, engine);
 		break;
+	case TRAIN_ENGINE_AT_DESTINATION:
+		TrainServer_ProcessEngineAtDestination(server, engine);
+		break;
 	default:
 		assert(0, "Unknown Train Engine State");
 		break;
@@ -299,7 +302,7 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 	// Wait for destination to be input
 	if (engine->destination_node) {
 		engine->state = TRAIN_ENGINE_RUNNING;
-		SendTrainCommand(TRAIN_SPEED, 10 | 16, engine->train_num, 0, 0);
+		SendTrainCommand(TRAIN_SPEED, 10 | LIGHTS_MASK, engine->train_num, 0, 0);
 	}
 }
 
@@ -309,6 +312,20 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	
 	if (node) {
 		engine->current_node = node;
+		
+		if (engine->current_node == engine->destination_node) {
+			engine->state = TRAIN_ENGINE_AT_DESTINATION;
+			SendTrainCommand(TRAIN_SPEED, 0, engine->train_num, 0, 0);
+		}
+	}
+}
+
+void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * engine) {
+	// Blink the lights
+	if (Time() % 10 == 0) {
+		SendTrainCommand(TRAIN_SPEED, LIGHTS_MASK, engine->train_num, 0, 0);
+		Delay(1);
+		SendTrainCommand(TRAIN_SPEED, 0, engine->train_num, 0, 0);
 	}
 }
 
@@ -506,6 +523,7 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->train_num = train_num;
 	engine->state = TRAIN_ENGINE_IDLE;
 	engine->current_node = 0;
+	engine->destination_node = 0;
 }
 
 track_node * SensorToTrackNode(track_node * track_nodes, int module_num, int sensor_num) {

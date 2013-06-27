@@ -11,6 +11,8 @@ static const char const TRAIN_SERVER_NAME[] = "TrnSvr";
 static const char const TRAIN_COMMAND_SERVER_NAME[] = "TCmSvr";
 static const char const TRAIN_SERVER_TIMER_NAME[] = "TrSTmr";
 
+static const int const LIGHTS_MASK = 16;
+
 typedef enum TrainCommand {
 	TRAIN_STOP,
 	TRAIN_GO,
@@ -79,6 +81,7 @@ typedef enum TrainEngineState {
 	TRAIN_ENGINE_FINDING_POSITION,
 	TRAIN_ENGINE_FOUND_STARTING_POSITION,
 	TRAIN_ENGINE_RUNNING,
+	TRAIN_ENGINE_AT_DESTINATION,
 } TrainEngineState;
 
 typedef struct TrainEngine {
@@ -154,6 +157,8 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine);
 
 void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine);
+
+void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * engine);
 
 track_node * TrainServer_GetEnginePosition(TrainServer * server);
 
