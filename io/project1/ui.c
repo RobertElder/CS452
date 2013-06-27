@@ -124,7 +124,7 @@ void UIServer_Render(UIServer * server) {
 }
 
 void UIServer_PrintTime(UIServer * server) {
-	unsigned int time = (unsigned int) (TimeSeconds() * 1000);
+	unsigned long long time = TimeSeconds() * 1000;
 	unsigned int ms = time % 1000;
 	time /= 1000;
 	unsigned int sec = time % 60;
