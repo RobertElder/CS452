@@ -514,17 +514,31 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	const int const col_offset = 32;
 	int train_num = reply_message->train_num;
 	int speed_setting = reply_message->speed_setting;
-	ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET, ENGINE_STATUS_COL_OFFSET);
+	const char * current_node_name = reply_message->current_node_name;
 	
-	ANSI_CursorForward(col_offset);
-	ANSI_ClearLine(CLEAR_TO_END);
-	PutString(COM2, "%d", train_num);
-	ANSI_CursorNextLine(1);
+	int new_hash = train_num ^ speed_setting ^ (int) current_node_name;
+	int differs = new_hash != server->train_engine_status_hash;
 	
-	ANSI_CursorForward(col_offset);
-	ANSI_ClearLine(CLEAR_TO_END);
-	PutString(COM2, "%d", speed_setting);
-	ANSI_CursorNextLine(1);
+	if (differs || server->dirty) {
+		ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET, ENGINE_STATUS_COL_OFFSET);
+	
+		ANSI_CursorForward(col_offset);
+		ANSI_ClearLine(CLEAR_TO_END);
+		PutString(COM2, "%d", train_num);
+		ANSI_CursorNextLine(1);
+	
+		ANSI_CursorForward(col_offset);
+		ANSI_ClearLine(CLEAR_TO_END);
+		PutString(COM2, "%d", speed_setting);
+		ANSI_CursorNextLine(1);
+	
+		ANSI_CursorForward(col_offset);
+		ANSI_ClearLine(CLEAR_TO_END);
+		PutString(COM2, "%s", current_node_name);
+		ANSI_CursorNextLine(1);
+	}
+
+	server->train_engine_status_hash = new_hash;
 }
 
 void UITimer_Start() {

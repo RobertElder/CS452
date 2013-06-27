@@ -41,6 +41,8 @@ typedef struct GenericTrainMessage {
 
 typedef struct TrainEngineStatusMessage {
 	MessageType message_type;
+	const char * current_node_name;
+	const char * next_node_name;
 	char train_num;
 	char speed_setting;
 } TrainEngineStatusMessage;
@@ -81,11 +83,13 @@ typedef struct TrainEngine {
 	int train_num;
 	TrainEngineState state;
 	track_node * current_node;
+	track_node * next_node;
 	int speed_setting;
 	double calculated_speed;
 	double expected_time_at_next_sensor;
 	double expected_time_at_last_sensor;
 	double actual_time_at_last_sensor;
+	track_node * destination_node;
 } TrainEngine;
 
 typedef struct TrainServer {
@@ -141,6 +145,10 @@ void TrainServer_HandleQueryTrainEngine(TrainServer * server);
 
 void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine);
 
+void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine);
+
+void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine * engine);
+
 void TrainServerTimer_Start();
 
 void TrainCommandServer_Start();
@@ -148,5 +156,7 @@ void TrainCommandServer_Start();
 void TrainSensorReader_Start();
 
 void TrainEngine_Initialize(TrainEngine * engine, int train_num);
+
+track_node * SensorToTrackNode(track_node * track_nodes, int module_num, int sensor_num);
 
 #endif

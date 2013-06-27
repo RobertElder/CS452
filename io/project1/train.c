@@ -246,6 +246,12 @@ void TrainServer_HandleQueryTrainEngine(TrainServer * server) {
 	reply_message->train_num = server->train_engine.train_num;
 	reply_message->speed_setting = server->train_engine.speed_setting;
 
+	if (server->train_engine.current_node) {
+		reply_message->current_node_name = server->train_engine.current_node->name;
+	} else {
+		reply_message->current_node_name = "?";
+	}
+
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 }
 
@@ -254,18 +260,38 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 		return;
 	}
 	
-	if (engine->state == TRAIN_ENGINE_IDLE) {
-		SendTrainCommand(TRAIN_SPEED, 5, engine->train_num, 0, 0);
-		engine->state = TRAIN_ENGINE_FINDING_POSITION;
-	} else if (engine->state == TRAIN_ENGINE_FINDING_POSITION) {
-		int sensor_module;
-		
-		for (sensor_module = 0; sensor_module < NUM_SENSOR_MODULES; sensor_module++) {
-			if (server->sensor_bit_flags[sensor_module]) {
+	switch(engine->state) {
+	case TRAIN_ENGINE_IDLE:
+		TrainServer_ProcessEngineIdle(server, engine);
+		break;
+	case TRAIN_ENGINE_FINDING_POSITION:
+		TrainServer_ProcessEngineFindingPosition(server, engine);
+		break;
+	case TRAIN_ENGINE_FOUND_STARTING_POSITION:
+		// TODO make it go somewhere
+		break;
+	default:
+		assert(0, "Unknown Train Engine State");
+		break;
+	}
+}
+
+void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine) {
+	SendTrainCommand(TRAIN_SPEED, 5, engine->train_num, 0, 0);
+	engine->state = TRAIN_ENGINE_FINDING_POSITION;
+}
+
+void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine * engine) {
+	int sensor_module;
+	int sensor_num;
+	
+	for (sensor_module = 0; sensor_module < NUM_SENSOR_MODULES; sensor_module++) {
+		for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
+			if ((server->sensor_bit_flags[sensor_module] >> sensor_num) & 0x01) {
 				SendTrainCommand(TRAIN_SPEED, 0, engine->train_num, 0, 0);
 				engine->state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
-				// TODO grab the train node and put it into train engine
-				break;
+				engine->current_node = SensorToTrackNode(server->current_track_nodes, sensor_module, sensor_num);
+				return;
 			}
 		}
 	}
@@ -450,5 +476,20 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->train_num = train_num;
 	engine->state = TRAIN_ENGINE_IDLE;
 	engine->current_node = 0;
+}
+
+track_node * SensorToTrackNode(track_node * track_nodes, int module_num, int sensor_num) {
+	int indexed_sensor_num = module_num * SENSORS_PER_MODULE + sensor_num;
+	int i;
+	for (i = 0; i < TRACK_MAX; i++) {
+		track_node * node = &track_nodes[i];
+		
+		if (node->type == NODE_SENSOR && node->num == indexed_sensor_num) {
+			return node;
+		}
+	}
+	
+	assertf(0, "SensorToTrackNode: Unknown node for Module=%d, Sensor=%d", module_num, sensor_num);
+	return 0;
 }
 
