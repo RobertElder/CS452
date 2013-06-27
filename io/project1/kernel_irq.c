@@ -46,17 +46,17 @@ void IRQ_TimerVIC2Handler() {
 // Interrupts automatically reenabled in AwaitEvent
 
 void IRQ_UART1Handler() {
-	if(*UART1IntIDIntClr & 0x4){
+	if(*UART1IntIDIntClr & INTERRUPT_TIS){
 		IRQ_UART1TransmitHandler();
-	}else if((*UART1IntIDIntClr & 0x2) || (*UART1IntIDIntClr & 0x8)){
+	}else if((*UART1IntIDIntClr & INTERRUPT_RIS) || (*UART1IntIDIntClr & INTERRUPT_RTIS)){
 		IRQ_UART1RecieveHandler();
 	}
 }
 
 void IRQ_UART2Handler() {
-	if(*UART2IntIDIntClr & 0x4){
+	if(*UART2IntIDIntClr & INTERRUPT_TIS){
 		IRQ_UART2TransmitHandler();
-	}else if((*UART2IntIDIntClr & 0x2) || (*UART2IntIDIntClr & 0x8)){
+	}else if((*UART2IntIDIntClr & INTERRUPT_RIS) || (*UART2IntIDIntClr & INTERRUPT_RTIS)){
 		IRQ_UART2RecieveHandler();
 	}
 }

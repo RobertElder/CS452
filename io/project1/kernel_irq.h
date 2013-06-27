@@ -4,6 +4,12 @@
 #ifndef KERNEL_IRQ_H_
 #define KERNEL_IRQ_H_
 
+#define INTERRUPT_MIS 0x1
+#define INTERRUPT_RIS 0x2
+#define INTERRUPT_TIS 0x4
+#define INTERRUPT_RTIS 0x8
+
+
 volatile static int * const UART1Flag = (int*) (UART1_BASE + UART_FLAG_OFFSET);
 volatile static int * const UART2Flag = (int*) (UART2_BASE + UART_FLAG_OFFSET);
 volatile static int * const timer_ldr = (int*)(TIMER3_BASE + LDR_OFFSET);
