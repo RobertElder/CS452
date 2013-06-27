@@ -70,7 +70,7 @@ void TrainServer_Start() {
 			break;
 		}
 		
-		TrainServer_ProcessEngine(&server);
+		TrainServer_ProcessEngine(&server, &server.train_engine);
 	}
 	
 	assert(admin_tid, "TrainServer: did not get admin tid");
@@ -218,8 +218,26 @@ void TrainServer_HandleSetTrain(TrainServer * server) {
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 }
 
-void TrainServer_ProcessEngine(TrainServer * server) {
-	// TODO process TrainEngine
+void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
+	if (!engine->train_num) {
+		return;
+	}
+	
+	if (engine->state == TRAIN_ENGINE_IDLE) {
+		SendTrainCommand(TRAIN_SPEED, 5, engine->train_num, 0, 0);
+		engine->state = TRAIN_ENGINE_FINDING_POSITION;
+	} else if (engine->state == TRAIN_ENGINE_FINDING_POSITION) {
+		int sensor_module;
+		
+		for (sensor_module = 0; sensor_module < NUM_SENSOR_MODULES; sensor_module++) {
+			if (server->sensor_bit_flags[sensor_module]) {
+				SendTrainCommand(TRAIN_SPEED, 0, engine->train_num, 0, 0);
+				engine->state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
+				// TODO grab the train node and put it into train engine
+				break;
+			}
+		}
+	}
 }
 
 void TrainServerTimer_Start() {
@@ -399,7 +417,7 @@ void TrainSensorReader_Start() {
 
 void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->train_num = train_num;
-	engine->state = TRAIN_ENGINE_FIND_POSITION;
+	engine->state = TRAIN_ENGINE_IDLE;
 	engine->current_node = 0;
 }
 

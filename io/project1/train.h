@@ -66,7 +66,9 @@ typedef enum SwitchDirectionCode {
 } SwitchDirectionCode;
 
 typedef enum TrainEngineState {
-	TRAIN_ENGINE_FIND_POSITION,
+	TRAIN_ENGINE_IDLE,
+	TRAIN_ENGINE_FINDING_POSITION,
+	TRAIN_ENGINE_FOUND_STARTING_POSITION,
 } TrainEngineState;
 
 typedef struct TrainEngine {
@@ -127,7 +129,7 @@ void TrainServer_HandleSelectTrack(TrainServer * server);
 
 void TrainServer_HandleSetTrain(TrainServer * server);
 
-void TrainServer_ProcessEngine(TrainServer * server);
+void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine);
 
 void TrainServerTimer_Start();
 
