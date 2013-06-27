@@ -9,6 +9,7 @@
 
 static const char const TRAIN_SERVER_NAME[] = "TrnSvr";
 static const char const TRAIN_COMMAND_SERVER_NAME[] = "TCmSvr";
+static const char const TRAIN_SERVER_TIMER_NAME[] = "TrSTmr";
 
 typedef enum TrainCommand {
 	TRAIN_STOP,
@@ -72,7 +73,8 @@ typedef struct TrainEngine {
 	int train_num;
 	TrainEngineState state;
 	track_node * current_node;
-	double speed;
+	int speed_setting;
+	double calculated_speed;
 	double expected_time_at_next_sensor;
 	double expected_time_at_last_sensor;
 	double actual_time_at_last_sensor;
@@ -97,6 +99,7 @@ typedef struct TrainServer {
 	int train_command_server_tid;
 	int train_sensor_reader_tid;
 	int blocked_tid;
+	int train_server_timer_tid;
 	
 	track_node track_a_nodes[TRACK_MAX];
 	track_node track_b_nodes[TRACK_MAX];
@@ -123,6 +126,10 @@ void TrainServer_HandleSwitchQuery(TrainServer * server);
 void TrainServer_HandleSelectTrack(TrainServer * server);
 
 void TrainServer_HandleSetTrain(TrainServer * server);
+
+void TrainServer_ProcessEngine(TrainServer * server);
+
+void TrainServerTimer_Start();
 
 void TrainCommandServer_Start();
 

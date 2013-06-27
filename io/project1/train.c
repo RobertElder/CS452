@@ -24,6 +24,18 @@ void TrainServer_Start() {
 
 			server.num_child_task_running--;
 			break;
+		case MESSAGE_TYPE_HELLO:
+			// from TrainServerTimer
+			if (server.state == TRAIN_SERVER_SHUTDOWN) {
+				server.reply_message->message_type = MESSAGE_TYPE_SHUTDOWN;
+			}
+			
+			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
+			
+			if (server.state == TRAIN_SERVER_SHUTDOWN) {
+				server.num_child_task_running--;
+			}
+			break;
 		case MESSAGE_TYPE_SENSOR_DATA:
 			// from TrainSensorReader
 			TrainServer_HandleSensorReaderData(&server);
@@ -57,6 +69,8 @@ void TrainServer_Start() {
 			assert(0, "TrainServer: unknown message type");
 			break;
 		}
+		
+		TrainServer_ProcessEngine(&server);
 	}
 	
 	assert(admin_tid, "TrainServer: did not get admin tid");
@@ -83,7 +97,10 @@ void TrainServer_Initialize(TrainServer * server) {
 	server->train_command_server_tid = Create(HIGH, TrainCommandServer_Start);
 	assert(server->train_command_server_tid, "TrainServer failed to create TrainCommandServer");
 	
-	server->num_child_task_running = 2;
+	server->train_server_timer_tid = Create(HIGH, TrainServerTimer_Start);
+	assert(server->train_server_timer_tid, "TrainServer failed to create TrainServerTimer");
+	
+	server->num_child_task_running = 3;
 	
 	int module_num;
 	
@@ -199,6 +216,37 @@ void TrainServer_HandleSetTrain(TrainServer * server) {
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
+}
+
+void TrainServer_ProcessEngine(TrainServer * server) {
+	// TODO process TrainEngine
+}
+
+void TrainServerTimer_Start() {
+	int return_code = RegisterAs((char*) TRAIN_SERVER_TIMER_NAME);
+	assert(return_code == 0, "TrainServerTimer failed to register name");
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	GenericMessage * send_message = (GenericMessage *) send_buffer;
+	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
+	int server_tid = WhoIs((char*) TRAIN_SERVER_NAME);
+	assert(server_tid, "TrainServerTimer: server tid not found");
+	
+	send_message->message_type = MESSAGE_TYPE_HELLO;
+	
+	while (1) {
+		DelaySeconds(0.5);
+		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+		assert(reply_message->message_type == MESSAGE_TYPE_ACK || reply_message->message_type == MESSAGE_TYPE_SHUTDOWN, 
+			"TrainServerTimer: didn't get ACK message");
+
+		if(reply_message->message_type == MESSAGE_TYPE_SHUTDOWN){
+			robprintfbusy((const unsigned char *)"TrainServerTimer shutting down by request.\n");
+			break;
+		}
+	}
+	
+	Exit();
 }
 
 void TrainCommandServer_Start() {
