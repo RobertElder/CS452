@@ -49,6 +49,10 @@ void TrainServer_Start() {
 			// from ui server
 			TrainServer_HandleSelectTrack(&server);
 			break;
+		case MESSAGE_TYPE_SET_TRAIN:
+			// from ui server
+			TrainServer_HandleSetTrain(&server);
+			break;
 		default:
 			assert(0, "TrainServer: unknown message type");
 			break;
@@ -100,6 +104,8 @@ void TrainServer_Initialize(TrainServer * server) {
 	for (switch_num = 0; switch_num < NUM_SWITCHES; switch_num++) {
 		server->switch_states[switch_num] = SWITCH_UNKNOWN;
 	}
+	
+	TrainEngine_Initialize(&server->train_engine, 0);
 }
 
 void TrainServer_HandleSensorReaderData(TrainServer * server) {
@@ -180,6 +186,16 @@ void TrainServer_HandleSelectTrack(TrainServer * server) {
 	} else {
 		server->current_track_nodes = server->track_b_nodes;
 	}
+	
+	reply_message->message_type = MESSAGE_TYPE_ACK;
+	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
+}
+
+void TrainServer_HandleSetTrain(TrainServer * server) {
+	GenericTrainMessage  * receive_message = (GenericTrainMessage *) server->receive_buffer;
+	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	
+	TrainEngine_Initialize(&server->train_engine, receive_message->int1);
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
@@ -331,5 +347,11 @@ void TrainSensorReader_Start() {
 	robprintfbusy((const unsigned char *)"TrainSensorReader exit. tid=%d\n", MyTid());
 	
 	Exit();
+}
+
+void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
+	engine->train_num = train_num;
+	engine->state = TRAIN_ENGINE_FIND_POSITION;
+	engine->current_node = 0;
 }
 

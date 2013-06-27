@@ -64,6 +64,20 @@ typedef enum SwitchDirectionCode {
 	SWITCH_CURVED_CODE = 34,
 } SwitchDirectionCode;
 
+typedef enum TrainEngineState {
+	TRAIN_ENGINE_FIND_POSITION,
+} TrainEngineState;
+
+typedef struct TrainEngine {
+	int train_num;
+	TrainEngineState state;
+	track_node * current_node;
+	double speed;
+	double expected_time_at_next_node;
+	double expected_time_at_last_node;
+	double actual_time_at_last_node;
+} TrainEngine;
+
 typedef struct TrainServer {
 	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
@@ -90,6 +104,7 @@ typedef struct TrainServer {
 	
 	SwitchState switch_states[NUM_SWITCHES];
 	
+	TrainEngine train_engine;
 } TrainServer;
 
 
@@ -107,8 +122,12 @@ void TrainServer_HandleSwitchQuery(TrainServer * server);
 
 void TrainServer_HandleSelectTrack(TrainServer * server);
 
+void TrainServer_HandleSetTrain(TrainServer * server);
+
 void TrainCommandServer_Start();
 
 void TrainSensorReader_Start();
+
+void TrainEngine_Initialize(TrainEngine * engine, int train_num);
 
 #endif

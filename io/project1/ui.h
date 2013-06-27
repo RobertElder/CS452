@@ -69,6 +69,8 @@ void UIServer_HandleMapCommand(UIServer * server);
 
 void UIServer_HandleTimeStopCommand(UIServer * server);
 
+void UIServer_HandleSetTrainCommand(UIServer * server);
+
 void UIServer_PrintSensors(UIServer * server);
 
 void UIServer_PrintMap(UIServer * server);

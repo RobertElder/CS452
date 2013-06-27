@@ -194,6 +194,8 @@ void UIServer_RunCommand(UIServer * server) {
 		UIServer_HandleMapCommand(server);
 	} else if (server->command_buffer[0] == 't' && server->command_buffer[1] == 's') {
 		UIServer_HandleTimeStopCommand(server);
+	} else if (server->command_buffer[0] == 's' && server->command_buffer[1] == 'e') {
+		UIServer_HandleSetTrainCommand(server);
 	} else {
 		UIServer_PrintCommandHelp(server);
 	}
@@ -208,7 +210,7 @@ void UIServer_ResetCommandBuffer(UIServer * server) {
 }
 
 void UIServer_PrintCommandHelp(UIServer * server) {
-	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, ts");
+	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, ts, set");
 }
 
 void UIServer_HandleTrainCommand(UIServer * server) {
@@ -313,6 +315,23 @@ void UIServer_HandleTimeStopCommand(UIServer * server) {
 	int time_diff_ms = (time_after_command - time_before_command) * 1000;
 	
 	PutString(COM2, "Stop command latency=%d ms.", time_diff_ms);
+}
+
+void UIServer_HandleSetTrainCommand(UIServer * server) {
+	int next_whitespace = rob_next_whitespace(server->command_buffer);
+	char train_num = robatoi(&server->command_buffer[next_whitespace]);
+
+	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
+	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	
+	send_message->message_type = MESSAGE_TYPE_SET_TRAIN;
+	send_message->int1 = train_num;
+	
+	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+	
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_HandleMapCommand failed to get ack message");
+	
+	PutString(COM2, "Train set to %d.", train_num);
 }
 
 void UIServer_PrintSensors(UIServer * server) {
