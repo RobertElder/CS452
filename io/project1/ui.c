@@ -491,6 +491,8 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET, ENGINE_STATUS_COL_OFFSET);
 		PutString(COM2, "                       TRAIN:");
 		ANSI_CursorNextLine(1);
+		PutString(COM2, "                       State:");
+		ANSI_CursorNextLine(1);
 		PutString(COM2, "                       Speed:");
 		ANSI_CursorNextLine(1);
 		PutString(COM2, "            Current Waypoint:");
@@ -513,11 +515,21 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_PrintTrainEngineStatus: did not get ack message");
 	
 	const int const col_offset = 32;
-	int train_num = reply_message->train_num;
-	int speed_setting = reply_message->speed_setting;
-	const char * current_node_name = reply_message->current_node_name;
+	// TODO: don't use pointers in messages
+	TrainEngine * engine = reply_message->train_engine;
+	int train_num = engine->train_num; //reply_message->train_num;
+	int speed_setting = engine->speed_setting; //reply_message->speed_setting;
+	const char * current_node_name; //reply_message->current_node_name;
 	
-	int new_hash = train_num ^ speed_setting ^ (int) current_node_name;
+	if (engine->current_node) {
+		current_node_name = engine->current_node->name;
+	} else {
+		current_node_name = "???";
+	}
+	
+	int state = engine->state; //reply_message->state;
+	
+	int new_hash = train_num ^ speed_setting ^ (int) current_node_name ^ state;
 	int differs = new_hash != server->train_engine_status_hash;
 	
 	if (differs || server->dirty) {
@@ -526,6 +538,11 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		ANSI_CursorForward(col_offset);
 		ANSI_ClearLine(CLEAR_TO_END);
 		PutString(COM2, "%d", train_num);
+		ANSI_CursorNextLine(1);
+		
+		ANSI_CursorForward(col_offset);
+		ANSI_ClearLine(CLEAR_TO_END);
+		PutString(COM2, "%s", TRAIN_ENGINE_STATE_NAMES[state]);
 		ANSI_CursorNextLine(1);
 	
 		ANSI_CursorForward(col_offset);

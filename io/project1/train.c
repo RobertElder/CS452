@@ -243,14 +243,17 @@ void TrainServer_HandleQueryTrainEngine(TrainServer * server) {
 	assert(sizeof(TrainEngineStatusMessage) <= MESSAGE_SIZE, "TrainEngineStatusMessage too big");
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
-	reply_message->train_num = server->train_engine.train_num;
+/*	reply_message->train_num = server->train_engine.train_num;
 	reply_message->speed_setting = server->train_engine.speed_setting;
+	reply_message->state = server->train_engine.state;
 
 	if (server->train_engine.current_node) {
 		reply_message->current_node_name = server->train_engine.current_node->name;
 	} else {
 		reply_message->current_node_name = "?";
 	}
+*/
+	reply_message->train_engine = &server->train_engine;
 
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 }
@@ -322,7 +325,7 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 
 void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * engine) {
 	// Blink the lights
-	if (Time() % 10 == 0) {
+	if (Time() % 50 == 0) {
 		SendTrainCommand(TRAIN_SPEED, LIGHTS_MASK, engine->train_num, 0, 0);
 		Delay(1);
 		SendTrainCommand(TRAIN_SPEED, 0, engine->train_num, 0, 0);

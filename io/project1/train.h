@@ -22,34 +22,6 @@ typedef enum TrainCommand {
 	TRAIN_READ_SENSOR,
 } TrainCommand;
 
-typedef struct TrainCommandMessage {
-	MessageType message_type;
-	TrainCommand command;
-	char c1;
-	char c2;
-} TrainCommandMessage;
-
-typedef struct TrainSensorMessage {
-	MessageType message_type;
-	int module_num;
-	int sensor_bit_flag;
-} TrainSensorMessage;
-
-typedef struct GenericTrainMessage {
-	MessageType message_type;
-	int int1;
-	int int2;
-	char * char1;
-} GenericTrainMessage;
-
-typedef struct TrainEngineStatusMessage {
-	MessageType message_type;
-	const char * current_node_name;
-	const char * next_node_name;
-	char train_num;
-	char speed_setting;
-} TrainEngineStatusMessage;
-
 typedef enum SENSOR_MODULE {
 	SENSOR_MODULE_A = 0,
 	SENSOR_MODULE_B = 1,
@@ -84,7 +56,48 @@ typedef enum TrainEngineState {
 	TRAIN_ENGINE_AT_DESTINATION,
 } TrainEngineState;
 
-typedef struct TrainEngine {
+typedef struct TrainCommandMessage {
+	MessageType message_type;
+	TrainCommand command;
+	char c1;
+	char c2;
+} TrainCommandMessage;
+
+typedef struct TrainSensorMessage {
+	MessageType message_type;
+	int module_num;
+	int sensor_bit_flag;
+} TrainSensorMessage;
+
+typedef struct GenericTrainMessage {
+	MessageType message_type;
+	int int1;
+	int int2;
+	char * char1;
+} GenericTrainMessage;
+
+typedef struct TrainEngine TrainEngine;
+
+typedef struct TrainEngineStatusMessage {
+	MessageType message_type;
+/*	const char * current_node_name;
+	const char * next_node_name;
+	TrainEngineState state;
+	char train_num;
+	char speed_setting;
+*/
+	TrainEngine * train_engine;
+} TrainEngineStatusMessage;
+
+static const char const TRAIN_ENGINE_STATE_NAMES[][20] = {
+	"Idle",
+	"Finding Position",
+	"Found Start Posn",
+	"Running",
+	"At Destination",
+};
+
+struct TrainEngine {
 	int train_num;
 	TrainEngineState state;
 	track_node * current_node;
@@ -95,7 +108,7 @@ typedef struct TrainEngine {
 	double expected_time_at_last_sensor;
 	double actual_time_at_last_sensor;
 	track_node * destination_node;
-} TrainEngine;
+};
 
 typedef struct TrainServer {
 	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
