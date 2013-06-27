@@ -129,6 +129,8 @@ void TrainServer_HandleSelectTrack(TrainServer * server);
 
 void TrainServer_HandleSetTrain(TrainServer * server);
 
+void TrainServer_HandleSetDestination(TrainServer * server);
+
 void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine);
 
 void TrainServerTimer_Start();

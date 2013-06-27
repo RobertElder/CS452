@@ -197,6 +197,8 @@ void UIServer_RunCommand(UIServer * server) {
 		UIServer_HandleTimeStopCommand(server);
 	} else if (server->command_buffer[0] == 's' && server->command_buffer[1] == 'e') {
 		UIServer_HandleSetTrainCommand(server);
+	} else if (server->command_buffer[0] == 'd' && server->command_buffer[1] == 'e') {
+		UIServer_HandleSetDestinationCommand(server);
 	} else {
 		UIServer_PrintCommandHelp(server);
 	}
@@ -211,7 +213,7 @@ void UIServer_ResetCommandBuffer(UIServer * server) {
 }
 
 void UIServer_PrintCommandHelp(UIServer * server) {
-	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, ts, set");
+	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, ts, set, dest");
 }
 
 void UIServer_HandleTrainCommand(UIServer * server) {
@@ -333,6 +335,20 @@ void UIServer_HandleSetTrainCommand(UIServer * server) {
 	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_HandleMapCommand failed to get ack message");
 	
 	PutString(COM2, "Train set to %d.", train_num);
+}
+
+void UIServer_HandleSetDestinationCommand(UIServer * server) {
+	int next_whitespace = rob_next_whitespace(server->command_buffer);
+	GenericMessage  * send_message = (GenericMessage *) server->send_buffer;
+	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	
+	send_message->message_type = MESSAGE_TYPE_SET_DESTINATION;
+	
+	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+	
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_HandleSetDestinationCommand failed to get ack message");
+	
+	PutString(COM2, "Destination set to %s.", &server->command_buffer[next_whitespace]);
 }
 
 void UIServer_PrintSensors(UIServer * server) {

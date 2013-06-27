@@ -65,6 +65,10 @@ void TrainServer_Start() {
 			// from ui server
 			TrainServer_HandleSetTrain(&server);
 			break;
+		case MESSAGE_TYPE_SET_DESTINATION:
+			// from ui server
+			TrainServer_HandleSetDestination(&server);
+			break;
 		default:
 			assert(0, "TrainServer: unknown message type");
 			break;
@@ -213,6 +217,17 @@ void TrainServer_HandleSetTrain(TrainServer * server) {
 	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
 	
 	TrainEngine_Initialize(&server->train_engine, receive_message->int1);
+	
+	reply_message->message_type = MESSAGE_TYPE_ACK;
+	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
+}
+
+void TrainServer_HandleSetDestination(TrainServer * server) {
+	GenericMessage * receive_message = (GenericMessage *) server->receive_buffer;
+	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	
+	// TODO set the destination on the train engine
+	(void) receive_message;
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
