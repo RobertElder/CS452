@@ -31,6 +31,9 @@ void UARTBootstrapTask_Start() {
 	
 	tid = Create(NORMAL, &TrainOutputServer_Start);
 	assert(tid, "TrainOutputServer create failed");
+
+	tid = Create(NORMAL, &TrainIONotifier_Start);
+	assert(tid, "TrainIONotifier_Start create failed");
 	
 	Exit();
 }
@@ -276,6 +279,12 @@ void TrainInputServer_Start() {
 	TrainInputServer server;
 	TrainInputServer_Initialize(&server);
 	char data;
+	server.seconds_passed = 0;
+	/* 
+	 * Make the timeout for input larger than output so we know if
+	 * we didn't receive data because we didn't request it
+	 */
+	server.seconds_timeout = 6;
 
 	//  Clear any errors
 	*UART1RXSts = 0;
@@ -298,12 +307,21 @@ void TrainInputServer_Start() {
 			
 			break;
 		case MESSAGE_TYPE_NOTIFIER:
+			//  Reset the timeout
+			server.seconds_passed = 0;
 			// From notifier
 			data = *UART1DATA & DATA_MASK;
 			
 			UARTErrorCheck(*UART1RXSts, "trains");
 			
 			CharBuffer_PutChar(&server.char_buffer, data);
+			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
+			break;
+		case MESSAGE_TYPE_HELLO:
+			//  If there are things blocked on input, count seconds.
+			if(Queue_CurrentCount((Queue*)&server.task_queue) > 0)
+				server.seconds_passed++;
+			assert(server.seconds_passed < server.seconds_timeout, "Timeout receiving data from train.");
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			break;
 		case MESSAGE_TYPE_DATA:
@@ -366,6 +384,8 @@ void TrainOutputServer_Start() {
 	int i;
 	TrainOutputServer server;
 	TrainOutputServer_Initialize(&server);
+	server.seconds_passed = 0;
+	server.seconds_timeout = 3;
 	
 	server.reply_message->message_type = MESSAGE_TYPE_ACK;
 	
@@ -397,6 +417,13 @@ void TrainOutputServer_Start() {
 			}
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			TrainOutputServer_SendData(&server);
+			break;
+		case MESSAGE_TYPE_HELLO:
+			//  If there are characters to send, increment count
+			if (!CharBuffer_IsEmpty(&server.char_buffer))
+				server.seconds_passed++;
+			assert(server.seconds_passed < server.seconds_timeout, "Timeout sending data to train.");
+			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			break;
 		default:
 			assert(0, "TrainOutputServer unknown event type");
@@ -440,6 +467,7 @@ void TrainOutputServer_SendData(TrainOutputServer * server) {
 		
 		*UART1DATA = data;
 		server->state = UARTSS_WAITING;
+		server->seconds_passed = 0;
 		
 		// Restart the notifier
 		Reply(server->notifier_tid, server->reply_buffer, MESSAGE_SIZE);

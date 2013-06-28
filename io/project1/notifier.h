@@ -19,5 +19,6 @@ void TrainInputNotifier_Start();
 
 void TrainOutputNotifier_Start();
 
+void TrainIONotifier_Start();
 
 #endif

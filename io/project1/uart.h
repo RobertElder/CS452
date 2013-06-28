@@ -56,6 +56,8 @@ typedef struct TrainOutputServer {
 	GenericMessage * reply_message;
 	CharMessage * char_message;
 	int notifier_tid;
+	int seconds_passed;
+	int seconds_timeout;
 } TrainOutputServer;
 
 typedef struct KeyboardInputServer {
@@ -78,6 +80,8 @@ typedef struct TrainInputServer {
 	CharMessage * reply_message;
 	CharBuffer char_buffer;
 	TaskQueue task_queue;
+	int seconds_passed;
+	int seconds_timeout;
 } TrainInputServer;
 
 void UARTBootstrapTask_Start();

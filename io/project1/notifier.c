@@ -154,4 +154,52 @@ void TrainOutputNotifier_Start() {
 	Exit();
 }
 
+void TrainIONotifier_Start() {
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
+	NotifyMessage * send_message = (NotifyMessage *) send_buffer;
+	
+	send_message->message_type = MESSAGE_TYPE_HELLO;
+	
+	robprintfbusy((const unsigned char *)"TrainIONotifier_Start TID=%d: start\n", MyTid());
+
+	int input_server_id = 0;
+	int output_server_id = 0;
+
+	int i = 0;
+	while (1) {
+		input_server_id = WhoIs((char*)TRAIN_INPUT_SERVER_NAME);
+		output_server_id = WhoIs((char*)TRAIN_OUTPUT_SERVER_NAME);
+		
+		if (input_server_id && output_server_id) {
+			break;
+		}
+		
+		i++;
+		assert(i < 1000, "TrainIONotifier_Start: did not get server id");
+	}
+
+	while (1) {
+		//  Wake up the input and output servers every second so they can timeout IO requests.
+		DelaySeconds(1);
+		
+		Send(input_server_id, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+		
+		if (reply_message->message_type == MESSAGE_TYPE_SHUTDOWN) {
+			break;
+		}
+
+		Send(output_server_id, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+		
+		if (reply_message->message_type == MESSAGE_TYPE_SHUTDOWN) {
+			break;
+		}
+	}
+
+	robprintfbusy((const unsigned char *)"TrainIONotifier_Start TID=%d: exit\n", MyTid());
+
+	Exit();
+}
+
 
