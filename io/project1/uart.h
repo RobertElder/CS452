@@ -43,6 +43,7 @@ typedef struct ScreenOutputServer {
 	GenericMessage * reply_message;
 	CharMessage * char_message;
 	int notifier_tid;
+	int notifier_reply_blocked;
 } ScreenOutputServer;
 
 typedef struct TrainOutputServer {
@@ -58,6 +59,7 @@ typedef struct TrainOutputServer {
 	int notifier_tid;
 	int seconds_passed;
 	int seconds_timeout;
+	int notifier_reply_blocked;
 } TrainOutputServer;
 
 typedef struct KeyboardInputServer {
@@ -104,7 +106,7 @@ void ScreenOutputServer_Start();
 
 void ScreenOutputServer_Initialize(ScreenOutputServer * server);
 
-void ScreenOutputServer_SendData(ScreenOutputServer * server, int *);
+void ScreenOutputServer_SendData(ScreenOutputServer * server);
 
 void TrainInputServer_Start();
 
