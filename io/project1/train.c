@@ -286,6 +286,7 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 }
 
 void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine) {
+	TrainServer_SetInitialSwitches(server);
 	SendTrainCommand(TRAIN_SPEED, 5, engine->train_num, 0, 0);
 	engine->state = TRAIN_ENGINE_FINDING_POSITION;
 }
@@ -345,6 +346,16 @@ track_node * TrainServer_GetEnginePosition(TrainServer * server) {
 	}
 	
 	return 0;
+}
+
+void TrainServer_SetInitialSwitches(TrainServer * server) {
+	SendTrainCommand(TRAIN_SWITCH, SWITCH_CURVED_CODE, 11, 0, 0);
+	SendTrainCommand(TRAIN_SWITCH, SWITCH_STRAIGHT_CODE, 14, 0, 0);
+	SendTrainCommand(TRAIN_SWITCH, SWITCH_STRAIGHT_CODE, 15, 0, 0);
+	SendTrainCommand(TRAIN_SWITCH, SWITCH_STRAIGHT_CODE, 6, 0, 0);
+	SendTrainCommand(TRAIN_SWITCH, SWITCH_STRAIGHT_CODE, 7, 0, 0);
+	SendTrainCommand(TRAIN_SWITCH, SWITCH_STRAIGHT_CODE, 8, 0, 0);
+	SendTrainCommand(TRAIN_SWITCH, SWITCH_STRAIGHT_CODE, 9, 0, 0);
 }
 
 void TrainServerTimer_Start() {

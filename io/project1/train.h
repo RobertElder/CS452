@@ -175,6 +175,8 @@ void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * 
 
 track_node * TrainServer_GetEnginePosition(TrainServer * server);
 
+void TrainServer_SetInitialSwitches(TrainServer * server);
+
 void TrainServerTimer_Start();
 
 void TrainCommandServer_Start();
