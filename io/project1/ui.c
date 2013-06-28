@@ -519,6 +519,7 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	TrainEngine * engine = reply_message->train_engine;
 	int train_num = engine->train_num; //reply_message->train_num;
 	int speed_setting = engine->speed_setting; //reply_message->speed_setting;
+	int calculated_speed = engine->calculated_speed;
 	const char * current_node_name; //reply_message->current_node_name;
 	
 	if (engine->current_node) {
@@ -529,7 +530,7 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	
 	int state = engine->state; //reply_message->state;
 	
-	int new_hash = train_num ^ speed_setting ^ (int) current_node_name ^ state;
+	int new_hash = train_num ^ speed_setting ^ calculated_speed ^ (int) current_node_name ^ state;
 	int differs = new_hash != server->train_engine_status_hash;
 	
 	if (differs || server->dirty) {
@@ -547,7 +548,7 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	
 		ANSI_CursorForward(col_offset);
 		ANSI_ClearLine(CLEAR_TO_END);
-		PutString(COM2, "%d", speed_setting);
+		PutString(COM2, "%d mm/s (%d)", calculated_speed, speed_setting);
 		ANSI_CursorNextLine(1);
 	
 		ANSI_CursorForward(col_offset);

@@ -225,6 +225,8 @@ void TrainServer_HandleSetTrain(TrainServer * server) {
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
+	
+	server->train_engine.state = TRAIN_ENGINE_IDLE;
 }
 
 void TrainServer_HandleSetDestination(TrainServer * server) {
@@ -235,6 +237,8 @@ void TrainServer_HandleSetDestination(TrainServer * server) {
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
+	
+	server->train_engine.state = TRAIN_ENGINE_FINDING_POSITION;
 }
 
 void TrainServer_HandleQueryTrainEngine(TrainServer * server) {
@@ -279,6 +283,9 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 	case TRAIN_ENGINE_AT_DESTINATION:
 		TrainServer_ProcessEngineAtDestination(server, engine);
 		break;
+	case TRAIN_ENGINE_CALIBRATING_SPEED:
+		TrainServer_ProcessEngineCalibratingSpeed(server, engine);
+		break;
 	default:
 		assert(0, "Unknown Train Engine State");
 		break;
@@ -286,9 +293,11 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 }
 
 void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine) {
-	TrainServer_SetInitialSwitches(server);
-	SendTrainCommand(TRAIN_SPEED, 5, engine->train_num, 0, 0);
-	engine->state = TRAIN_ENGINE_FINDING_POSITION;
+	SendTrainCommand(TRAIN_SPEED, 10, engine->train_num, 0, 0);
+	engine->state = TRAIN_ENGINE_CALIBRATING_SPEED;
+	
+	// TODO: make this not deadlock
+	// TrainServer_SetInitialSwitches(server);
 }
 
 void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine * engine) {
@@ -346,6 +355,34 @@ track_node * TrainServer_GetEnginePosition(TrainServer * server) {
 	}
 	
 	return 0;
+}
+
+void TrainServer_ProcessEngineCalibratingSpeed(TrainServer * server, TrainEngine * engine) {
+	// TODO this calibration is too hard coded
+	double difference;
+
+	// ticks in both directions
+	int t_11 = server->sensor_time_log[SENSOR_MODULE_C][16 - 1];
+	int t_12 = server->sensor_time_log[SENSOR_MODULE_D][11 - 1];
+	int t_21 = server->sensor_time_log[SENSOR_MODULE_C][15 - 1];
+	int t_22 = server->sensor_time_log[SENSOR_MODULE_D][12 - 1];
+	
+	if (t_11 && t_12) {
+		difference = (t_11 - t_12) * TICK_SIZE / 1000.0;
+	} else if (t_21 && t_22) {
+		difference = (t_21 - t_22) * TICK_SIZE / 1000.0;
+	} else {
+		return;
+	}
+	
+	if (difference < 0) {
+		difference = -difference;
+	}
+	
+	engine->calculated_speed = 45.0 / difference; // 45mm over time
+	SendTrainCommand(TRAIN_SPEED, 0, engine->train_num, 0, 0);
+	SendTrainCommand(TRAIN_SPEED, 5, engine->train_num, 0, 0);
+	engine->state = TRAIN_ENGINE_FINDING_POSITION;
 }
 
 void TrainServer_SetInitialSwitches(TrainServer * server) {
@@ -537,6 +574,12 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->train_num = train_num;
 	engine->state = TRAIN_ENGINE_IDLE;
 	engine->current_node = 0;
+	engine->next_node = 0;
+	engine->speed_setting = 0;
+	engine->calculated_speed = 0;
+	engine->expected_time_at_next_sensor = 0;
+	engine->expected_time_at_last_sensor = 0;
+	engine->actual_time_at_last_sensor = 0;
 	engine->destination_node = 0;
 }
 

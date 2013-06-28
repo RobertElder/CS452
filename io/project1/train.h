@@ -54,6 +54,7 @@ typedef enum TrainEngineState {
 	TRAIN_ENGINE_FOUND_STARTING_POSITION,
 	TRAIN_ENGINE_RUNNING,
 	TRAIN_ENGINE_AT_DESTINATION,
+	TRAIN_ENGINE_CALIBRATING_SPEED,
 } TrainEngineState;
 
 typedef struct TrainCommandMessage {
@@ -95,6 +96,7 @@ static const char const TRAIN_ENGINE_STATE_NAMES[][20] = {
 	"Found Start Posn",
 	"Running",
 	"At Destination",
+	"Calibrate Speed",
 };
 
 struct TrainEngine {
@@ -172,6 +174,8 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine);
 
 void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * engine);
+
+void TrainServer_ProcessEngineCalibratingSpeed(TrainServer * server, TrainEngine * engine);
 
 track_node * TrainServer_GetEnginePosition(TrainServer * server);
 
