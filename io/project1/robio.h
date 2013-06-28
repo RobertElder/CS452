@@ -90,4 +90,6 @@ int robatoi(const char * str);
 
 int rob_next_whitespace(const char * str);
 
+void rob_zero_pad(int num, char * str);
+
 #endif

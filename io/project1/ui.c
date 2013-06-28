@@ -117,21 +117,37 @@ void UIServer_Render(UIServer * server) {
 	UIServer_PrintMap(server);
 	UIServer_PrintSensors(server);
 	UIServer_PrintSwitches(server);
+	UIServer_PrintTrainEngineStatus(server);
 	UIServer_PrintCommandLine(server);
 	
 	server->dirty = 0;
 }
 
 void UIServer_PrintTime(UIServer * server) {
-	unsigned int time = (unsigned int) (TimeSeconds() * 1000);
+	unsigned long long time = TimeSeconds() * 1000;
 	unsigned int ms = time % 1000;
 	time /= 1000;
 	unsigned int sec = time % 60;
 	time /= 60;
 	unsigned int min = time % 60;
+	time /= 60;
+	unsigned int hours = time % 60;
+	time /= 24;
+	unsigned int days = time % 24;
+	
+	char ms_str[5];
+	char sec_str[5];
+	char min_str[5];
+	char hours_str[5];
+	char days_str[5];
+	rob_zero_pad(ms, ms_str);
+	rob_zero_pad(sec, sec_str);
+	rob_zero_pad(min, min_str);
+	rob_zero_pad(hours, hours_str);
+	rob_zero_pad(days, days_str);
 	
 	ANSI_Cursor(1, sizeof(UI_SERVER_HEADER) + 1);
-	PutString(COM2, "{ SYSTIME = %d:%d,%d }", min, sec, ms);
+	PutString(COM2, "{ SYSTIME = %s:%s:%s:%s,%s }", days_str, hours_str, min_str, sec_str, ms_str);
 	ANSI_ClearLine(CLEAR_TO_END);
 }
 
@@ -194,6 +210,10 @@ void UIServer_RunCommand(UIServer * server) {
 		UIServer_HandleMapCommand(server);
 	} else if (server->command_buffer[0] == 't' && server->command_buffer[1] == 's') {
 		UIServer_HandleTimeStopCommand(server);
+	} else if (server->command_buffer[0] == 's' && server->command_buffer[1] == 'e') {
+		UIServer_HandleSetTrainCommand(server);
+	} else if (server->command_buffer[0] == 'd' && server->command_buffer[1] == 'e') {
+		UIServer_HandleSetDestinationCommand(server);
 	} else {
 		UIServer_PrintCommandHelp(server);
 	}
@@ -208,7 +228,7 @@ void UIServer_ResetCommandBuffer(UIServer * server) {
 }
 
 void UIServer_PrintCommandHelp(UIServer * server) {
-	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, ts");
+	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, ts, set, dest");
 }
 
 void UIServer_HandleTrainCommand(UIServer * server) {
@@ -268,6 +288,15 @@ void UIServer_HandleMapCommand(UIServer * server) {
 		PutString(COM2, "Unknown map. Use A or B");
 		return;
 	}
+	
+	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
+	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	send_message->message_type = MESSAGE_TYPE_SELECT_TRACK;
+	send_message->int1 = map;
+	
+	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+	
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_HandleMapCommand failed to get ack message");
 }
 
 void UIServer_HandleTimeStopCommand(UIServer * server) {
@@ -304,6 +333,38 @@ void UIServer_HandleTimeStopCommand(UIServer * server) {
 	int time_diff_ms = (time_after_command - time_before_command) * 1000;
 	
 	PutString(COM2, "Stop command latency=%d ms.", time_diff_ms);
+}
+
+void UIServer_HandleSetTrainCommand(UIServer * server) {
+	int next_whitespace = rob_next_whitespace(server->command_buffer);
+	char train_num = robatoi(&server->command_buffer[next_whitespace]);
+
+	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
+	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	
+	send_message->message_type = MESSAGE_TYPE_SET_TRAIN;
+	send_message->int1 = train_num;
+	
+	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+	
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_HandleMapCommand failed to get ack message");
+	
+	PutString(COM2, "Train set to %d.", train_num);
+}
+
+void UIServer_HandleSetDestinationCommand(UIServer * server) {
+	int next_whitespace = rob_next_whitespace(server->command_buffer);
+	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
+	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	
+	send_message->message_type = MESSAGE_TYPE_SET_DESTINATION;
+	send_message->char1 = &server->command_buffer[next_whitespace];
+	
+	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+	
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_HandleSetDestinationCommand failed to get ack message");
+	
+	PutString(COM2, "Destination set to %s.", &server->command_buffer[next_whitespace]);
 }
 
 void UIServer_PrintSensors(UIServer * server) {
@@ -423,6 +484,80 @@ void UIServer_PrintSwitches(UIServer * server) {
 			server->switch_states_cache[switch_num] = switch_state;
 		}
 	}
+}
+
+void UIServer_PrintTrainEngineStatus(UIServer * server) {
+	if (server->dirty) {
+		ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET, ENGINE_STATUS_COL_OFFSET);
+		PutString(COM2, "                       TRAIN:");
+		ANSI_CursorNextLine(1);
+		PutString(COM2, "                       State:");
+		ANSI_CursorNextLine(1);
+		PutString(COM2, "                       Speed:");
+		ANSI_CursorNextLine(1);
+		PutString(COM2, "            Current Waypoint:");
+		ANSI_CursorNextLine(1);
+		PutString(COM2, "               Next Waypoint:");
+		ANSI_CursorNextLine(1);
+		PutString(COM2, "     Expected Time to Sensor:");
+		ANSI_CursorNextLine(1);
+		PutString(COM2, "Last Expected Time to Sensor:");
+		ANSI_CursorNextLine(1);
+		PutString(COM2, "  Last Actual Time to Sensor:");
+	}
+	
+	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
+	TrainEngineStatusMessage * reply_message = (TrainEngineStatusMessage *) server->reply_buffer;
+	
+	send_message->message_type = MESSAGE_TYPE_QUERY_TRAIN_ENGINE;
+	
+	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_PrintTrainEngineStatus: did not get ack message");
+	
+	const int const col_offset = 32;
+	// TODO: don't use pointers in messages
+	TrainEngine * engine = reply_message->train_engine;
+	int train_num = engine->train_num; //reply_message->train_num;
+	int speed_setting = engine->speed_setting; //reply_message->speed_setting;
+	int calculated_speed = engine->calculated_speed;
+	const char * current_node_name; //reply_message->current_node_name;
+	
+	if (engine->current_node) {
+		current_node_name = engine->current_node->name;
+	} else {
+		current_node_name = "???";
+	}
+	
+	int state = engine->state; //reply_message->state;
+	
+	int new_hash = train_num ^ speed_setting ^ calculated_speed ^ (int) current_node_name ^ state;
+	int differs = new_hash != server->train_engine_status_hash;
+	
+	if (differs || server->dirty) {
+		ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET, ENGINE_STATUS_COL_OFFSET);
+	
+		ANSI_CursorForward(col_offset);
+		ANSI_ClearLine(CLEAR_TO_END);
+		PutString(COM2, "%d", train_num);
+		ANSI_CursorNextLine(1);
+		
+		ANSI_CursorForward(col_offset);
+		ANSI_ClearLine(CLEAR_TO_END);
+		PutString(COM2, "%s", TRAIN_ENGINE_STATE_NAMES[state]);
+		ANSI_CursorNextLine(1);
+	
+		ANSI_CursorForward(col_offset);
+		ANSI_ClearLine(CLEAR_TO_END);
+		PutString(COM2, "%d mm/s (%d)", calculated_speed, speed_setting);
+		ANSI_CursorNextLine(1);
+	
+		ANSI_CursorForward(col_offset);
+		ANSI_ClearLine(CLEAR_TO_END);
+		PutString(COM2, "%s", current_node_name);
+		ANSI_CursorNextLine(1);
+	}
+
+	server->train_engine_status_hash = new_hash;
 }
 
 void UITimer_Start() {

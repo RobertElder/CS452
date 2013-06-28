@@ -17,6 +17,8 @@ static const int const SENSOR_TABLE_ROW_OFFSET = 5;
 static const int const SENSOR_TABLE_COL_OFFSET = 1;
 static const int const MAP_ROW_OFFSET = 5;
 static const int const MAP_COL_OFFSET = 20;
+static const int const ENGINE_STATUS_ROW_OFFSET = 23;
+static const int const ENGINE_STATUS_COL_OFFSET = 1;
 
 typedef struct UIMessage {
 	MessageType message_type;
@@ -39,6 +41,7 @@ typedef struct UIServer {
 	SwitchState switch_states_cache[NUM_SWITCHES];
 	ANSIColor foreground_color;
 	ANSIColor background_color;
+	int train_engine_status_hash;
 } UIServer;
 
 void UIServer_Start();
@@ -69,11 +72,17 @@ void UIServer_HandleMapCommand(UIServer * server);
 
 void UIServer_HandleTimeStopCommand(UIServer * server);
 
+void UIServer_HandleSetTrainCommand(UIServer * server);
+
+void UIServer_HandleSetDestinationCommand(UIServer * server);
+
 void UIServer_PrintSensors(UIServer * server);
 
 void UIServer_PrintMap(UIServer * server);
 
 void UIServer_PrintSwitches(UIServer * server);
+
+void UIServer_PrintTrainEngineStatus(UIServer * server);
 
 void UITimer_Start();
 
