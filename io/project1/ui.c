@@ -1,3 +1,4 @@
+#include "priorities.h"
 #include "ui.h"
 #include "public_kernel_interface.h"
 #include "ansi.h"
@@ -14,13 +15,13 @@ void UIServer_Start() {
 	short shutdown = 0;
 	assert(return_code == 0, "UIServer_Start failed to register name");
 	
-	int tid = Create(HIGH, &UITimer_Start);
+	int tid = Create(UITIMER_START_PRIORITY, &UITimer_Start);
 	assert(tid, "UITimer tid 0");
 	
 	UIServer server;
 	UIServer_Initialize(&server);
 	
-	int keyboard_input_tid = Create(NORMAL, UIKeyboardInput_Start);
+	int keyboard_input_tid = Create(UIKEYBOARDINPUT_START_PRIORITY, UIKeyboardInput_Start);
 	assert(keyboard_input_tid, "UIServer failed to create UIKeyboardInput");
 
 	GenericMessage * receive_message = (GenericMessage *) server.receive_buffer;

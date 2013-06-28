@@ -1,3 +1,4 @@
+#include "priorities.h"
 #include "rps.h"
 #include "robio.h"
 #include "public_kernel_interface.h"
@@ -12,16 +13,11 @@ void RPSTestStart() {
 	int tid;
 	const int num_clients = 380;
 
-	//tid = Create(NORMAL, &NameServer_Start);
-	//assert(tid == 2, "NameServer tid not 2");
-
 	tid = Create(NORMAL, &RPSServer_Start);
-	//assert(tid == 3, "RPServer tid not 3");
 
 	int i;
 	for (i = 0; i < num_clients; i++) {
-		tid = Create(LOW, &RPSClient_Start);
-		//assert(tid == 3 + i + 1, "RPSClient tid not");
+		tid = Create(RPSCLIENT_START_PRIORITY, &RPSClient_Start);
 	}
 
 	Exit();

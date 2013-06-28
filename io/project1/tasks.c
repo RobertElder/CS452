@@ -1,3 +1,4 @@
+#include "priorities.h"
 #include "tasks.h"
 #include "rps.h"
 #include "public_kernel_interface.h"
@@ -38,7 +39,7 @@ void KernelTask_Start() {
 	robprintfbusy((const unsigned char *)"\033[1;37;41mUI is OFF!\033[0m\n");
 #endif
 
-	int tid = Create(HIGHEST, &FirstTask_Start);
+	int tid = Create(FIRSTTASK_START_PRIORITY, &FirstTask_Start);
 	
 	assertf(tid == 1, "FirstTask tid not 1, got %d", tid);
 	
@@ -52,44 +53,44 @@ void FirstTask_Start() {
 	robprintfbusy((const unsigned char *)"FirstTask Start tid=%d\n", MyTid());
 	
 	// System user tasks
-	tid = Create(HIGHEST + 1, &NameServer_Start);
+	tid = Create(NAMESERVER_START_PRIORITY, &NameServer_Start);
 	assert(tid == 2, "NameServer tid not 2");
 
-	tid = Create(HIGHEST, &ClockServer_Start);
+	tid = Create(CLOCKSERVER_START_PRIORITY, &ClockServer_Start);
 	assert(tid > 0, "ClockServer tid not positive");
 	
-	tid = Create(HIGHEST + 2, &AdministratorTask_Start);
+	tid = Create(ADMINISTRATORTASK_START_PRIORITY, &AdministratorTask_Start);
 	assert(tid > 0, "AdministratorTask tid not positive");
 	
 #ifndef TEST
-	tid = Create(HIGH, &UARTBootstrapTask_Start);
+	tid = Create(UARTBOOTSTRAPTASK_START_PRIORITY, &UARTBootstrapTask_Start);
 	assert(tid > 0, "UARTBootstrapTask tid not positive");
 
-	tid = Create(HIGH, &TrainServer_Start);
+	tid = Create(TRAINSERVER_START_PRIORITY, &TrainServer_Start);
 	assert(tid > 0, "TrainServer tid not positive");
 	
-	tid = Create(NORMAL, &UIServer_Start);
+	tid = Create(UISERVER_START_PRIORITY, &UIServer_Start);
 	assert(tid > 0, "UIServer_Start tid not positive");
 #endif // TEST
 	
 #ifdef TEST
 	// Begin testing tasks
 	
-	tid = Create(HIGHEST + 3, &RPSTestStart);
+	tid = Create(RPSTESTSTART_PRIORITY, &RPSTestStart);
 	// 1
-	tid = Create(3, &ClockClient_Start);
+	tid = Create(CLOCKCLIENT_START_PRIORITY_3, &ClockClient_Start);
 	assertf(tid > 0, "ClockClient tid not positive, got %d", tid);
 	
 	// 2
-	tid = Create(4, &ClockClient_Start);
+	tid = Create(CLOCKCLIENT_START_PRIORITY_4, &ClockClient_Start);
 	assert(tid > 0, "ClockClient tid not positive");
 	
 	// 3
-	tid = Create(5, &ClockClient_Start);
+	tid = Create(CLOCKCLIENT_START_PRIORITY_5, &ClockClient_Start);
 	assert(tid > 0, "ClockClient tid not positive");
 	
 	// 4
-	tid = Create(6, &ClockClient_Start);
+	tid = Create(CLOCKCLIENT_START_PRIORITY_6, &ClockClient_Start);
 	assert(tid > 0, "ClockClient tid not positive");
 	
 	robprintfbusy((const unsigned char *)"FirstTask begin receive\n");

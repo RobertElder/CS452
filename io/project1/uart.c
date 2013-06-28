@@ -1,3 +1,4 @@
+#include "priorities.h"
 #include "uart.h"
 #include "robio.h"
 #include "public_kernel_interface.h"
@@ -20,19 +21,19 @@ void UARTBootstrapTask_Start() {
 	
 	int tid;
 	
-	tid = Create(NORMAL, &KeyboardInputServer_Start);
+	tid = Create(KEYBOARDINPUTSERVER_START_PRIORITY, &KeyboardInputServer_Start);
 	assert(tid, "KeyboardInputServer create failed");
 	
-	tid = Create(NORMAL, &ScreenOutputServer_Start);
+	tid = Create(SCREENOUTPUTSERVER_START_PRIORITY, &ScreenOutputServer_Start);
 	assert(tid, "ScreenOutputServer create failed");
 	
-	tid = Create(NORMAL, &TrainInputServer_Start);
+	tid = Create(TRAININPUTSERVER_START_PRIORITY, &TrainInputServer_Start);
 	assert(tid, "TrainInputServer create failed");
 	
-	tid = Create(NORMAL, &TrainOutputServer_Start);
+	tid = Create(TRAINOUTPUTSERVER_START_PRIORITY, &TrainOutputServer_Start);
 	assert(tid, "TrainOutputServer create failed");
 
-	tid = Create(NORMAL, &TrainIONotifier_Start);
+	tid = Create(TRAINIONOTIFIER_START_PRIORITY, &TrainIONotifier_Start);
 	assert(tid, "TrainIONotifier_Start create failed");
 	
 	Exit();
@@ -158,7 +159,7 @@ void KeyboardInputServer_Initialize(KeyboardInputServer * server) {
 	int return_code = RegisterAs((char*)KEYBOARD_INPUT_SERVER_NAME);
 	assert(return_code == 0, "KeyboardInputServer_Start failed to register");
 
-	int notifier_tid = Create(HIGH, &KeyboardInputNotifier_Start);
+	int notifier_tid = Create(KEYBOARDINPUTNOTIFIER_START_PRIORITY, &KeyboardInputNotifier_Start);
 	assert(notifier_tid, "KeyboardInputServer_Start notifier did not start");
 
 	server->state = UARTSS_WAITING;
@@ -252,7 +253,7 @@ void ScreenOutputServer_Initialize(ScreenOutputServer * server) {
 	int return_code = RegisterAs((char*) SCREEN_OUTPUT_SERVER_NAME);
 	assert(return_code == 0, "ScreenOutputServer_Start failed to register");
 	
-	server->notifier_tid = Create(HIGH, &ScreenOutputNotifier_Start);
+	server->notifier_tid = Create(SCREENOUTPUTNOTIFIER_START_PRIORITY, &ScreenOutputNotifier_Start);
 	assert(server->notifier_tid, "ScreenOutputServer_Start notifier did not start");
 }
 
@@ -343,7 +344,7 @@ void TrainInputServer_Initialize(TrainInputServer * server) {
 	int return_code = RegisterAs((char*)TRAIN_INPUT_SERVER_NAME);
 	assert(return_code == 0, "TrainInputServer_Start failed to register");
 
-	int notifier_tid = Create(HIGH, &TrainInputNotifier_Start);
+	int notifier_tid = Create(TRAININPUTNOTIFIER_START_PRIORITY, &TrainInputNotifier_Start);
 	assert(notifier_tid, "TrainInputServer_Start notifier did not start");
 
 	server->state = UARTSS_WAITING;
@@ -443,7 +444,7 @@ void TrainOutputServer_Initialize(TrainOutputServer * server) {
 	int return_code = RegisterAs((char*)TRAIN_OUTPUT_SERVER_NAME);
 	assert(return_code == 0, "TrainOutputServer_Start failed to register");
 
-	server->notifier_tid = Create(HIGH, &TrainOutputNotifier_Start);
+	server->notifier_tid = Create(TRAINOUTPUTNOTIFIER_START_PRIORITY, &TrainOutputNotifier_Start);
 	assert(server->notifier_tid, "TrainOutputServer_Start notifier did not start");
 }
 

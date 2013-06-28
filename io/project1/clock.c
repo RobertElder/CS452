@@ -1,3 +1,4 @@
+#include "priorities.h"
 #include "clock.h"
 #include "robio.h"
 #include "message.h"
@@ -22,7 +23,7 @@ void ClockServer_Start() {
 	int return_code = RegisterAs((char *)CLOCK_SERVER_NAME);
 	assert(return_code == 0, "ClockServer: Failed to register name");
 	
-	int tid = Create(HIGHEST, ClockNotifier_Start);
+	int tid = Create(CLOCKSERVER_START_PRIORITY, ClockNotifier_Start);
 	assert(tid > 0, "ClockNotifier tid not positive");
 	
 	// For Debugging
