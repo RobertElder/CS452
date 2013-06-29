@@ -15,6 +15,7 @@ void UARTErrorCheck(int sts, const char * context){
 }
 
 void UARTBootstrapTask_Start() {
+	DebugRegisterFunction(&UARTBootstrapTask_Start,__func__);
 	robprintfbusy((const unsigned char *)"UARTBootstrapTask_Start tid=%d", MyTid());
 	UARTBootstrapTask uart;
 	UARTBootstrapTask_Initialize(&uart);
@@ -107,6 +108,7 @@ void Channel_SetSpeed( Channel * channel) {
 }
 
 void KeyboardInputServer_Start() {
+	DebugRegisterFunction(&KeyboardInputServer_Start,__func__);
 	KeyboardInputServer server;
 	KeyboardInputServer_Initialize(&server);
 	int data;
@@ -156,6 +158,7 @@ void KeyboardInputServer_Start() {
 }
 
 void KeyboardInputServer_Initialize(KeyboardInputServer * server) {
+	DebugRegisterFunction(&KeyboardInputServer_Initialize,__func__);
 	int return_code = RegisterAs((char*)KEYBOARD_INPUT_SERVER_NAME);
 	assert(return_code == 0, "KeyboardInputServer_Start failed to register");
 
@@ -197,6 +200,7 @@ void KeyboardInputServer_UnblockQueued(KeyboardInputServer * server) {
 }
 
 void ScreenOutputServer_Start() {
+	DebugRegisterFunction(&ScreenOutputServer_Start,__func__);
 	int i;
 	ScreenOutputServer server;
 	ScreenOutputServer_Initialize(&server);
@@ -277,6 +281,7 @@ void ScreenOutputServer_SendData(ScreenOutputServer * server) {
 }
 
 void TrainInputServer_Start() {
+	DebugRegisterFunction(&TrainInputServer_Start,__func__);
 	TrainInputServer server;
 	TrainInputServer_Initialize(&server);
 	char data;
@@ -382,6 +387,7 @@ void TrainInputServer_UnblockQueued(TrainInputServer * server) {
 }
 
 void TrainOutputServer_Start() {
+	DebugRegisterFunction(&TrainOutputServer_Start,__func__);
 	int i;
 	TrainOutputServer server;
 	TrainOutputServer_Initialize(&server);

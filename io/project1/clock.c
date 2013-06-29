@@ -9,6 +9,7 @@
 static int profile_last_time_value = 0;
 
 void ClockServer_Start() {
+	DebugRegisterFunction(&ClockServer_Start,__func__);
 	ClockServer server;
 	ClockServer_Initialize(&server);
 	
@@ -201,6 +202,7 @@ void ClockServer_HandleShutdownRequest(ClockServer * server, int source_tid, Clo
 
 
 void ClockClient_Start() {
+	DebugRegisterFunction(&ClockClient_Start,__func__);
 	ClockClient client;
 	ClockClient_Initialize(&client);
 	robprintfbusy((const unsigned char *)"ClockClient TID=%d: start\n", client.tid);

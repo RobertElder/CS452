@@ -19,6 +19,7 @@
 #include "train.h"
 
 void KernelTask_Start() {
+	DebugRegisterFunction(&KernelTask_Start,__func__);
 #ifndef ASSERTS
 	robprintfbusy((const unsigned char *)"\033[1;37;41mAsserts are OFF!\033[0m\n");
 #endif
@@ -48,6 +49,7 @@ void KernelTask_Start() {
 }
 
 void FirstTask_Start() {
+	DebugRegisterFunction(&FirstTask_Start,__func__);
 	int tid;
 	
 	robprintfbusy((const unsigned char *)"FirstTask Start tid=%d\n", MyTid());
@@ -163,6 +165,7 @@ void FirstTask_Start() {
 }
 
 void ClockPrintTask_Start() {
+	DebugRegisterFunction(&ClockPrintTask_Start,__func__);
 	while (TimeSeconds() < 4) {
 		print_current_time();
 		DelaySeconds(1);
@@ -174,6 +177,7 @@ void ClockPrintTask_Start() {
 }
 
 void IdleTask_Start(){
+	DebugRegisterFunction(&IdleTask_Start,__func__);
 	RegisterAs((char*) IDLE_TASK_NAME);
 
 	/* While we are waiting for events, this task and the administrator just send messages back and forth */
@@ -220,6 +224,7 @@ void IdleTask_Start(){
 }
 
 void AdministratorTask_Start() {
+	DebugRegisterFunction(&AdministratorTask_Start,__func__);
 	/* The purpose of the administrator is to keep track of when we should shutdown everything in the system */
 	int return_code = RegisterAs((char*) ADMINISTRATOR_TASK_NAME);
 

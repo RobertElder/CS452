@@ -22,6 +22,7 @@ void Scheduler_Initialize(Scheduler * scheduler) {
 	scheduler->num_event_blocked = 0;
 	scheduler->num_active = 0;
 	scheduler->num_zombie = 0;
+	scheduler->functions_registered = 0;
 	
 	int i;
 	for (i = 0; i < MAX_TASKS + 1; i++) {
@@ -30,6 +31,24 @@ void Scheduler_Initialize(Scheduler * scheduler) {
 	for (i = 0; i < NUM_EVENTS; i++) {
 		scheduler->has_tasks_event_blocked[i] = 0;
 	}
+}
+
+void DebugRegisterFunction(void * entry, const char * name){
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	assert(k_state->scheduler.functions_registered < MAX_FUNCTION_MAPPINGS,"There are too many debug function names registered.");
+	assertf(!GetRegisteredFunctionName(&k_state->scheduler,entry),"Attempting to register the function named %s twice.",name);
+	k_state->scheduler.function_mappings[k_state->scheduler.functions_registered].entry_point = entry;
+	k_state->scheduler.function_mappings[k_state->scheduler.functions_registered].function_name = name;
+	k_state->scheduler.functions_registered = k_state->scheduler.functions_registered + 1;
+}
+
+const char * GetRegisteredFunctionName(Scheduler * scheduler, void * entry){
+	int i;
+	for(i = 0; i < scheduler->functions_registered; i++){
+		if(scheduler->function_mappings[i].entry_point == entry)
+			return scheduler->function_mappings[i].function_name;
+	}
+	return (char *)0;
 }
 
 void Scheduler_InitAndSetKernelTask(Scheduler * scheduler, KernelState * k_state) {
@@ -166,6 +185,7 @@ void Scheduler_SetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
 		k_state->user_proc_spsr = scheduler->current_task_descriptor->spsr_register;
 		k_state->user_proc_entry_mode = scheduler->current_task_descriptor->entry_mode;
 	}
+
 }
 
 void Scheduler_ScheduleAndSetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
@@ -307,17 +327,28 @@ void Scheduler_PrintTDCounts(Scheduler * scheduler) {
 	robprintfbusy((const unsigned char *)" 5. REPLY_BLOCKED = %d\n", scheduler->num_reply_blocked);
 	robprintfbusy((const unsigned char *)" 6. EVENT_BLOCKED = %d\n", scheduler->num_event_blocked);
 	
-	robprintfbusy((const unsigned char *)" TDs: ");
+	robprintfbusy((const unsigned char *)" TDs: \n");
 	
 	int i;
-	int count = 0;
 	for (i = 0; i < MAX_TASKS + 1; i++) {
 		if (Scheduler_IsInitedTid(scheduler, i)) {
-			robprintfbusy((const unsigned char *)" %d: %s  (%x->%d)", i, 
-				TASK_STATE_NAMES[scheduler->task_descriptors[i].state], scheduler->task_descriptors[i].entry_point, scheduler->task_descriptors[i].send_to_tid);
-			count++;
-			if (count % 10 == 0) {
-				robprintfbusy((const unsigned char *)"\n");
+			const char * function_name = GetRegisteredFunctionName(scheduler, scheduler->task_descriptors[i].entry_point);
+			if(function_name){
+				robprintfbusy(
+					(const unsigned char *)" %d: %s  (%s->%d)\n",
+					i, 
+					TASK_STATE_NAMES[scheduler->task_descriptors[i].state],
+					function_name,
+					scheduler->task_descriptors[i].send_to_tid
+				);
+			}else{
+				robprintfbusy(
+					(const unsigned char *)" %d: %s  (%x->%d)\n",
+					i, 
+					TASK_STATE_NAMES[scheduler->task_descriptors[i].state],
+					scheduler->task_descriptors[i].entry_point,
+					scheduler->task_descriptors[i].send_to_tid
+				);
 			}
 		}
 	}

@@ -6,6 +6,13 @@
 #ifndef SCHEDULER_H_
 #define SCHEDULER_H_
 
+#define MAX_FUNCTION_MAPPINGS 30
+
+typedef struct FunctionMapping{
+	void * entry_point;
+	const char * function_name;
+} FunctionMapping;
+
 typedef struct Scheduler {
 	unsigned int max_tasks;
 	/* Pointer to the currently scheduled task */
@@ -23,6 +30,8 @@ typedef struct Scheduler {
 	unsigned int num_event_blocked;
 	unsigned int num_tasks;
 	unsigned int has_tasks_event_blocked[NUM_EVENTS];
+	unsigned int functions_registered;
+	FunctionMapping function_mappings[MAX_FUNCTION_MAPPINGS];
 } Scheduler;
 
 void Scheduler_Initialize(Scheduler * scheduler);
@@ -48,6 +57,10 @@ void Scheduler_PrintTDCounts(Scheduler * scheduler);
 void Scheduler_UnblockTasksOnEvent(Scheduler * scheduler, EventID event_id);
 
 void safely_add_task_to_priority_queue(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority priority);
+
+void DebugRegisterFunction();
+
+const char * GetRegisteredFunctionName(Scheduler * scheduler, void * entry);
 
 
 #endif

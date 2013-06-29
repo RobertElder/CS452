@@ -5,6 +5,7 @@
 #include "robio.h"
 
 void NameServer_Start() {
+	DebugRegisterFunction(&NameServer_Start,__func__);
 	NameServer ns;
 	NameServer_Initialize(&ns);
 	int sender_id;

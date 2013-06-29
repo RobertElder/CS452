@@ -5,6 +5,7 @@
 #include "uart.h"
 
 void ClockNotifier_Start() {
+	DebugRegisterFunction(&ClockNotifier_Start,__func__);
 	int clock_server_id;
 	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
@@ -50,6 +51,7 @@ void ClockNotifier_Start() {
 }
 
 void KeyboardInputNotifier_Start() {
+	DebugRegisterFunction(&KeyboardInputNotifier_Start,__func__);
 	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
@@ -74,6 +76,7 @@ void KeyboardInputNotifier_Start() {
 }
 
 void ScreenOutputNotifier_Start() {
+	DebugRegisterFunction(&ScreenOutputNotifier_Start,__func__);
 	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
@@ -104,6 +107,7 @@ void ScreenOutputNotifier_Start() {
 }
 
 void TrainInputNotifier_Start() {
+	DebugRegisterFunction(&TrainInputNotifier_Start,__func__);
 	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
@@ -127,6 +131,7 @@ void TrainInputNotifier_Start() {
 }
 
 void TrainOutputNotifier_Start() {
+	DebugRegisterFunction(&TrainOutputNotifier_Start,__func__);
 	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
@@ -155,6 +160,7 @@ void TrainOutputNotifier_Start() {
 }
 
 void TrainIONotifier_Start() {
+	DebugRegisterFunction(&TrainIONotifier_Start,__func__);
 	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;

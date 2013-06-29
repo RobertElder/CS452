@@ -1,4 +1,5 @@
 #include "priorities.h"
+#include "scheduler.h"
 #include "ui.h"
 #include "public_kernel_interface.h"
 #include "ansi.h"
@@ -9,6 +10,7 @@
 #include "train.h"
 
 void UIServer_Start() {
+	DebugRegisterFunction(&UIServer_Start,__func__);
 	int return_code = RegisterAs((char*) UI_SERVER_NAME);
 	int source_tid;
 	int num_child_task_running = 2;
@@ -562,6 +564,7 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 }
 
 void UITimer_Start() {
+	DebugRegisterFunction(&UITimer_Start,__func__);
 	int return_code = RegisterAs((char*) UI_TIMER_NAME);
 	assert(return_code == 0, "UITimer_Start failed to register name");
 	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));

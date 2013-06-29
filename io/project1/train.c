@@ -2,8 +2,10 @@
 #include "public_kernel_interface.h"
 #include "robio.h"
 #include "memory.h"
+#include "scheduler.h"
 
 void TrainServer_Start() {
+	DebugRegisterFunction(&TrainServer_Start,__func__);
 	TrainServer server;
 	TrainServer_Initialize(&server);
 	int admin_tid = 0;
@@ -396,6 +398,7 @@ void TrainServer_SetInitialSwitches(TrainServer * server) {
 }
 
 void TrainServerTimer_Start() {
+	DebugRegisterFunction(&TrainServerTimer_Start,__func__);
 	int return_code = RegisterAs((char*) TRAIN_SERVER_TIMER_NAME);
 	assert(return_code == 0, "TrainServerTimer failed to register name");
 	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
@@ -423,6 +426,7 @@ void TrainServerTimer_Start() {
 }
 
 void TrainCommandServer_Start() {
+	DebugRegisterFunction(&TrainCommandServer_Start,__func__);
 	robprintfbusy((const unsigned char *)"TrainCommandServer_Start. tid=%d\n", MyTid());
 	
 	int return_code = RegisterAs((char*) TRAIN_COMMAND_SERVER_NAME);
@@ -505,6 +509,7 @@ void TrainCommandServer_Start() {
 }
 
 void TrainSensorReader_Start() {
+	DebugRegisterFunction(&TrainSensorReader_Start,__func__);
 	robprintfbusy((const unsigned char *)"TrainSensorReader_Start. tid=%d\n", MyTid());
 
 	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
