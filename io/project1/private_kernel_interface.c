@@ -201,7 +201,8 @@ void k_Exit(){
 int k_Send(int tid, char *msg, int msglen, char *reply, int replylen){
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 	Scheduler * scheduler = &k_state->scheduler;
-
+	// Remember who we sent to
+	scheduler->current_task_descriptor->send_to_tid = tid;
 	//Don't send messages to zombie tasks
 	assertf(scheduler->task_descriptors[tid].state != ZOMBIE,"Sending a message to zombie task id %d (%x) from task id %d (%x).\n", tid, scheduler->task_descriptors[tid].entry_point,scheduler->current_task_descriptor->id, scheduler->current_task_descriptor->entry_point);
 		
@@ -326,6 +327,7 @@ int k_Reply(int tid, char *reply, int replylen){
 			assert(replylen == MESSAGE_SIZE, "msglen not 100");	
 			m_strcpy(target_td->reply_msg, reply, replylen);
 			Scheduler_ChangeTDState(scheduler, target_td, READY);
+			scheduler->task_descriptors[target_td->id].send_to_tid = 0;
 		}
 	} else {
 		if (!is_tid_in_range(tid)) {

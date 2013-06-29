@@ -30,6 +30,7 @@ typedef struct TaskDescriptor {
 	unsigned int reply_len;
 	char * reply_msg;
 	int * origin_tid;
+	int send_to_tid;
 	EventID event_id;
 } TD;
 

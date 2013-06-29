@@ -138,7 +138,7 @@ void TrainOutputNotifier_Start() {
 	send_message->event_id = UART1_TX_EVENT;
 	
 	robprintfbusy((const unsigned char *)"TrainOutputNotifier_Start: tid=%d\n", MyTid());
-	
+
 	while (1) {
 		AwaitEvent(UART1_TX_EVENT);
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
@@ -169,6 +169,8 @@ void TrainIONotifier_Start() {
 
 	int i = 0;
 	while (1) {
+		//  Give things a chance to get started.
+		DelaySeconds(0.1);
 		input_server_id = WhoIs((char*)TRAIN_INPUT_SERVER_NAME);
 		output_server_id = WhoIs((char*)TRAIN_OUTPUT_SERVER_NAME);
 		

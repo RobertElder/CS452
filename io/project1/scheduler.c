@@ -313,8 +313,8 @@ void Scheduler_PrintTDCounts(Scheduler * scheduler) {
 	int count = 0;
 	for (i = 0; i < MAX_TASKS + 1; i++) {
 		if (Scheduler_IsInitedTid(scheduler, i)) {
-			robprintfbusy((const unsigned char *)" %d: %s  (%x)", i, 
-				TASK_STATE_NAMES[scheduler->task_descriptors[i].state], scheduler->task_descriptors[i].entry_point);
+			robprintfbusy((const unsigned char *)" %d: %s  (%x->%d)", i, 
+				TASK_STATE_NAMES[scheduler->task_descriptors[i].state], scheduler->task_descriptors[i].entry_point, scheduler->task_descriptors[i].send_to_tid);
 			count++;
 			if (count % 10 == 0) {
 				robprintfbusy((const unsigned char *)"\n");
