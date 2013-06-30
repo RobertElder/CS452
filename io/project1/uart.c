@@ -7,7 +7,7 @@
 #include "private_kernel_interface.h"
 #include "scheduler.h"
 
-static int * const UART1Flag = (int*) (UART1_BASE + UART_FLAG_OFFSET);
+volatile static int * const UART1Flag = (int*) (UART1_BASE + UART_FLAG_OFFSET);
 
 void UARTErrorCheck(int sts, const char * context){
 	assertf(!(sts && FE_MASK), "Framing error detected communicating with %s", context);
@@ -471,7 +471,8 @@ void TrainOutputServer_SendData(TrainOutputServer * server) {
 			char data = CharBuffer_GetChar(&server->char_buffer);
 			
 			assert(*UART1Flag & CTS_MASK, "TrainOutputServer: CTS not set");
-			assert((*UART1Flag & TXBUSY_MASK) == 0, "TrainOutputServer: TXBusy!");
+			assert(*UART1Flag & TXFE_MASK, "TrainOutputServer: TXFE not set");
+			//assert((*UART1Flag & TXBUSY_MASK) == 0, "TrainOutputServer: TXBusy!");
 			
 			*UART1DATA = data;
 			server->state = UARTSS_WAITING;

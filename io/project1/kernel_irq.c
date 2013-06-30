@@ -6,7 +6,7 @@
 #include "public_kernel_interface.h"
 #include "private_kernel_interface.h"
 
-static int * const UART1Flag = (int*) (UART1_BASE + UART_FLAG_OFFSET);
+volatile static int * const UART1Flag = (int*) (UART1_BASE + UART_FLAG_OFFSET);
 
 void irq_handler() {
 	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
@@ -51,6 +51,7 @@ void IRQ_UART1Handler() {
 	if(*UART1IntIDIntClr & INTERRUPT_MIS){
 		if(*UART1Flag & CTS_MASK){
 			assert(*UART1Flag & TXFE_MASK,"CTS asserted, but TXFE not asserted.\n");
+			//assert(!(*UART1Flag & TXBUSY_MASK),"CTS asserted, but its busy.\n");
 			IRQ_UART1TransmitHandler();
 		}
 	}else if((*UART1IntIDIntClr & INTERRUPT_RIS) || (*UART1IntIDIntClr & INTERRUPT_RTIS)){
@@ -148,14 +149,14 @@ void IRQ_SetupUARTInterrupts() {
 	*VIC2IntEnable |= 1 << (INT_UART2 - 32);
 	
 	// Set vectored interrupt handlers
-	int * VIC2VectAddr1 = (int*) 0x800C0104;
+	volatile int * VIC2VectAddr1 = (int*) 0x800C0104;
 	*VIC2VectAddr1 = (int) &IRQ_UART1Handler;
-	int * VIC2VectCntl1 = (int*) 0x800C0204;
+	volatile int * VIC2VectCntl1 = (int*) 0x800C0204;
 	*VIC2VectCntl1 = (INT_UART1 - 32) | 1 << 5;
 	
-	int * VIC2VectAddr2 = (int*) 0x800C0108;
+	volatile int * VIC2VectAddr2 = (int*) 0x800C0108;
 	*VIC2VectAddr2 = (int) &IRQ_UART2Handler;
-	int * VIC2VectCntl2 = (int*) 0x800C0208;
+	volatile int * VIC2VectCntl2 = (int*) 0x800C0208;
 	*VIC2VectCntl2 = (INT_UART2 - 32) | 1 << 5;
 	
 }

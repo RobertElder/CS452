@@ -10,10 +10,10 @@ static const char const SCREEN_OUTPUT_SERVER_NAME[] = "KbOSvr";
 static const char const TRAIN_INPUT_SERVER_NAME[] = "TrISvr";
 static const char const TRAIN_OUTPUT_SERVER_NAME[] = "TrOSvr";
 
-static int * const UART1DATA = (int*) (UART1_BASE + UART_DATA_OFFSET);
-static int * const UART2DATA = (int*) (UART2_BASE + UART_DATA_OFFSET);
-static int * const UART1RXSts = (int*) (UART1_BASE + UART_RSR_OFFSET);
-static int * const UART2RXSts = (int*) (UART2_BASE + UART_RSR_OFFSET);
+volatile static int * const UART1DATA = (int*) (UART1_BASE + UART_DATA_OFFSET);
+volatile static int * const UART2DATA = (int*) (UART2_BASE + UART_DATA_OFFSET);
+volatile static int * const UART1RXSts = (int*) (UART1_BASE + UART_RSR_OFFSET);
+volatile static int * const UART2RXSts = (int*) (UART2_BASE + UART_RSR_OFFSET);
 
 typedef struct Channel {
 	unsigned int channel;
