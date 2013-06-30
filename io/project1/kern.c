@@ -6,6 +6,7 @@
 #include "tasks.h"
 #include "queue.h"
 #include "ts7200.h"
+#include "test_uart.h"
 #include "kernel_irq.h"
 
 void asm_SwiCallEntry();
@@ -46,6 +47,8 @@ int main(){
 	*timerirq_stack_base = TIMER_IRQ_STACK_START;
 
 	asm_SetUpIRQStack();
+
+	TEST_UART();
 	
 	InitKernel();
 	

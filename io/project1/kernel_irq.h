@@ -10,8 +10,6 @@
 #define INTERRUPT_RTIS 0x8
 
 
-volatile static int * const UART1Flag = (int*) (UART1_BASE + UART_FLAG_OFFSET);
-volatile static int * const UART2Flag = (int*) (UART2_BASE + UART_FLAG_OFFSET);
 volatile static int * const timer_ldr = (int*)(TIMER3_BASE + LDR_OFFSET);
 volatile static int * const timer_val = (int*)(TIMER3_BASE + VAL_OFFSET);
 volatile static int * const timer_ctrl = (int*)(TIMER3_BASE + CRTL_OFFSET);

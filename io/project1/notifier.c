@@ -144,8 +144,13 @@ void TrainOutputNotifier_Start() {
 	
 	robprintfbusy((const unsigned char *)"TrainOutputNotifier_Start: tid=%d\n", MyTid());
 
+	int first = 1;
 	while (1) {
-		AwaitEvent(UART1_TX_EVENT);
+		if(!first){
+			AwaitEvent(UART1_TX_EVENT);
+		}else{
+			first = 0;
+		}
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		
 		if (reply_message->message_type == MESSAGE_TYPE_SHUTDOWN) {

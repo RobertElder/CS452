@@ -23,6 +23,7 @@ void Scheduler_Initialize(Scheduler * scheduler) {
 	scheduler->num_active = 0;
 	scheduler->num_zombie = 0;
 	scheduler->functions_registered = 0;
+	scheduler->aaa = 0;
 	
 	int i;
 	for (i = 0; i < MAX_TASKS + 1; i++) {
@@ -186,6 +187,12 @@ void Scheduler_SetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
 		k_state->user_proc_entry_mode = scheduler->current_task_descriptor->entry_mode;
 	}
 
+	k_state->scheduler.aaa = k_state->scheduler.aaa +1;
+
+	if(k_state->scheduler.aaa % 100000 == 0){
+		//Scheduler_PrintTDCounts(scheduler);
+	}
+
 }
 
 void Scheduler_ScheduleAndSetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
@@ -335,19 +342,21 @@ void Scheduler_PrintTDCounts(Scheduler * scheduler) {
 			const char * function_name = GetRegisteredFunctionName(scheduler, scheduler->task_descriptors[i].entry_point);
 			if(function_name){
 				robprintfbusy(
-					(const unsigned char *)" %d: %s  (%s->%d)\n",
+					(const unsigned char *)" %d: %s  (%s->%d) P=%d\n",
 					i, 
 					TASK_STATE_NAMES[scheduler->task_descriptors[i].state],
 					function_name,
-					scheduler->task_descriptors[i].send_to_tid
+					scheduler->task_descriptors[i].send_to_tid,
+					scheduler->task_descriptors[i].priority
 				);
 			}else{
 				robprintfbusy(
-					(const unsigned char *)" %d: %s  (%x->%d)\n",
+					(const unsigned char *)" %d: %s  (%x->%d) P=%d\n",
 					i, 
 					TASK_STATE_NAMES[scheduler->task_descriptors[i].state],
 					scheduler->task_descriptors[i].entry_point,
-					scheduler->task_descriptors[i].send_to_tid
+					scheduler->task_descriptors[i].send_to_tid,
+					scheduler->task_descriptors[i].priority
 				);
 			}
 		}
@@ -359,6 +368,7 @@ void Scheduler_PrintTDCounts(Scheduler * scheduler) {
 void Scheduler_UnblockTasksOnEvent(Scheduler * scheduler, EventID event_id) {
 	unsigned int task_id = scheduler->has_tasks_event_blocked[event_id];
 	if (!task_id) {
+		assert(event_id != UART1_TX_EVENT,"Lost transmit event so outputserver will deadlock.");
 		return;
 	}else{
 		Scheduler_ChangeTDState(scheduler, &scheduler->task_descriptors[task_id], READY);

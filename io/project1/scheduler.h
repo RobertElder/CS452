@@ -31,6 +31,7 @@ typedef struct Scheduler {
 	unsigned int num_tasks;
 	unsigned int has_tasks_event_blocked[NUM_EVENTS];
 	unsigned int functions_registered;
+	unsigned int aaa;
 	FunctionMapping function_mappings[MAX_FUNCTION_MAPPINGS];
 } Scheduler;
 

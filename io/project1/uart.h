@@ -14,7 +14,6 @@ static int * const UART1DATA = (int*) (UART1_BASE + UART_DATA_OFFSET);
 static int * const UART2DATA = (int*) (UART2_BASE + UART_DATA_OFFSET);
 static int * const UART1RXSts = (int*) (UART1_BASE + UART_RSR_OFFSET);
 static int * const UART2RXSts = (int*) (UART2_BASE + UART_RSR_OFFSET);
-static int * const UART1Flag = (int*) (UART1_BASE + UART_FLAG_OFFSET);
 
 typedef struct Channel {
 	unsigned int channel;

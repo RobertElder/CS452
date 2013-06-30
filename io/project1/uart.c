@@ -7,6 +7,8 @@
 #include "private_kernel_interface.h"
 #include "scheduler.h"
 
+static int * const UART1Flag = (int*) (UART1_BASE + UART_FLAG_OFFSET);
+
 void UARTErrorCheck(int sts, const char * context){
 	assertf(!(sts && FE_MASK), "Framing error detected communicating with %s", context);
 	assertf(!(sts && PE_MASK), "Parity error detected communicating with %s", context);
@@ -136,6 +138,10 @@ void KeyboardInputServer_Start() {
 		case MESSAGE_TYPE_NOTIFIER:
 			// From notifier
 			data = *UART2DATA & DATA_MASK;
+			if(data == 'z'){
+				KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+				Scheduler_PrintTDCounts(&k_state->scheduler);
+			}
 
 			UARTErrorCheck(*UART2RXSts, "terminal");
 
@@ -316,6 +322,7 @@ void TrainInputServer_Start() {
 			//  Reset the timeout
 			server.seconds_passed = 0;
 			// From notifier
+			assert((*UART1Flag & TXBUSY_MASK) == 0, "TrainOutputServer: TXBusy!");
 			data = *UART1DATA & DATA_MASK;
 			
 			UARTErrorCheck(*UART1RXSts, "trains");
@@ -372,6 +379,8 @@ void TrainInputServer_ReplyQueued(TrainInputServer * server) {
 		server->reply_message->chars[0] = c;
 	
 		Reply(tid, server->reply_buffer, MESSAGE_SIZE);
+		//  We sent data to someone, reset timeout
+		server->seconds_passed = 0;
 	}
 }
 
@@ -457,26 +466,17 @@ void TrainOutputServer_Initialize(TrainOutputServer * server) {
 }
 
 void TrainOutputServer_SendData(TrainOutputServer * server) {
-	if (server->state != UARTSS_READY) {
-		return;
-	}
-	
-	if ((*UART1Flag & TXBUSY_MASK) || !(*UART1Flag & CTS_MASK)) {
-		// Restart the notifier
-		server->state = UARTSS_WAITING;
-		Reply(server->notifier_tid, server->reply_buffer, MESSAGE_SIZE);
-		return;
-	}
-	
 	if (!CharBuffer_IsEmpty(&server->char_buffer)) {
-		char data = CharBuffer_GetChar(&server->char_buffer);
-		
-		//assert(*UART1Flag & CTS_MASK, "TrainOutputServer: CTS not set");
-		assert((*UART1Flag & TXBUSY_MASK) == 0, "TrainOutputServer: TXBusy!");
-		
-		*UART1DATA = data;
-		server->state = UARTSS_WAITING;
-		server->seconds_passed = 0;
+		if(server->state == UARTSS_READY){
+			char data = CharBuffer_GetChar(&server->char_buffer);
+			
+			assert(*UART1Flag & CTS_MASK, "TrainOutputServer: CTS not set");
+			assert((*UART1Flag & TXBUSY_MASK) == 0, "TrainOutputServer: TXBusy!");
+			
+			*UART1DATA = data;
+			server->state = UARTSS_WAITING;
+			server->seconds_passed = 0;
+		}
 	
 		if(server->notifier_reply_blocked){
 			server->notifier_reply_blocked = 0;
