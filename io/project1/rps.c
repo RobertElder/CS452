@@ -10,6 +10,7 @@
 
 
 void RPSTestStart() {
+	DebugRegisterFunction(&RPSTestStart,__func__);
 	int tid;
 	const int num_clients = 380;
 
@@ -26,6 +27,8 @@ void RPSTestStart() {
 }
 
 void RPSServer_Start() {
+	DebugRegisterFunction(&RPSServer_Start,__func__);
+	DebugRegisterFunction(&RPSClient_Start,"RPSClient_Start");
 	robprintfbusy((const unsigned char *)"RPSServer created tid=%d\n", MyTid());
 
 	int result = RegisterAs((char*) RPS_SERVER_NAME);
