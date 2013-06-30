@@ -15,8 +15,6 @@ void ClockNotifier_Start() {
 	send_message->message_type = MESSAGE_TYPE_NOTIFIER;
 	send_message->event_id = CLOCK_TICK_EVENT;
 	
-	robprintfbusy((const unsigned char *)"ClockNotifier TID=%d: start\n", MyTid());
-	
 	int i = 0;
 	while (1) {
 		clock_server_id = WhoIs((char*)CLOCK_SERVER_NAME);
@@ -62,8 +60,6 @@ void KeyboardInputNotifier_Start() {
 	send_message->message_type = MESSAGE_TYPE_NOTIFIER;
 	send_message->event_id = UART2_RX_EVENT;
 	
-	robprintfbusy((const unsigned char *)"KeyboardInputNotifier_Start: tid=%d\n", MyTid());
-	
 	while (1) {
 		AwaitEvent(UART2_RX_EVENT);
 //		robprintfbusy((const unsigned char *)"KeyboardInputNotifier_Start: keypressed");
@@ -87,8 +83,6 @@ void ScreenOutputNotifier_Start() {
 	send_message->message_type = MESSAGE_TYPE_NOTIFIER;
 	send_message->event_id = UART2_TX_EVENT;
 	(void)reply_message;
-	
-	robprintfbusy((const unsigned char *)"ScreenOutputNotifier_Start: tid=%d\n", MyTid());
 	
 	while (1) {
 		AwaitEvent(UART2_TX_EVENT);
@@ -118,8 +112,6 @@ void TrainInputNotifier_Start() {
 	send_message->message_type = MESSAGE_TYPE_NOTIFIER;
 	send_message->event_id = UART1_RX_EVENT;
 	
-	robprintfbusy((const unsigned char *)"TrainInputNotifier_Start: tid=%d\n", MyTid());
-	
 	while (1) {
 		AwaitEvent(UART1_RX_EVENT);
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
@@ -142,8 +134,6 @@ void TrainOutputNotifier_Start() {
 	send_message->message_type = MESSAGE_TYPE_NOTIFIER;
 	send_message->event_id = UART1_TX_EVENT;
 	
-	robprintfbusy((const unsigned char *)"TrainOutputNotifier_Start: tid=%d\n", MyTid());
-
 	int first = 1;
 	while (1) {
 		if(!first){
@@ -173,8 +163,6 @@ void TrainIONotifier_Start() {
 	
 	send_message->message_type = MESSAGE_TYPE_HELLO;
 	
-	robprintfbusy((const unsigned char *)"TrainIONotifier_Start TID=%d: start\n", MyTid());
-
 	int input_server_id = 0;
 	int output_server_id = 0;
 

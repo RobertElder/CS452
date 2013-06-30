@@ -52,80 +52,92 @@ void FirstTask_Start() {
 	DebugRegisterFunction(&FirstTask_Start,__func__);
 	int tid;
 	
-	robprintfbusy((const unsigned char *)"FirstTask Start tid=%d\n", MyTid());
-	
 	// System user tasks
 	tid = Create(NAMESERVER_START_PRIORITY, &NameServer_Start);
 	assert(tid == 2, "NameServer tid not 2");
+	Pass();
 
 	tid = Create(CLOCKSERVER_START_PRIORITY, &ClockServer_Start);
 	assert(tid > 0, "ClockServer tid not positive");
+	Pass();
 	
 	tid = Create(ADMINISTRATORTASK_START_PRIORITY, &AdministratorTask_Start);
 	assert(tid > 0, "AdministratorTask tid not positive");
+	Pass();
 	
 #ifndef TEST
 	tid = Create(UARTBOOTSTRAPTASK_START_PRIORITY, &UARTBootstrapTask_Start);
 	assert(tid > 0, "UARTBootstrapTask tid not positive");
+	Pass();
 
 	tid = Create(TRAINSERVER_START_PRIORITY, &TrainServer_Start);
 	assert(tid > 0, "TrainServer tid not positive");
+	Pass();
 	
 	tid = Create(UISERVER_START_PRIORITY, &UIServer_Start);
 	assert(tid > 0, "UIServer_Start tid not positive");
+	Pass();
 #endif // TEST
 	
 #ifdef TEST
 	// Begin testing tasks
 	
 	tid = Create(RPSTESTSTART_PRIORITY, &RPSTestStart);
+	Pass();
 	// 1
 	tid = Create(CLOCKCLIENT_START_PRIORITY_3, &ClockClient_Start);
 	assertf(tid > 0, "ClockClient tid not positive, got %d", tid);
+	Pass();
 	
 	// 2
 	tid = Create(CLOCKCLIENT_START_PRIORITY_4, &ClockClient_Start);
 	assert(tid > 0, "ClockClient tid not positive");
+	Pass();
 	
 	// 3
 	tid = Create(CLOCKCLIENT_START_PRIORITY_5, &ClockClient_Start);
 	assert(tid > 0, "ClockClient tid not positive");
+	Pass();
 	
 	// 4
 	tid = Create(CLOCKCLIENT_START_PRIORITY_6, &ClockClient_Start);
 	assert(tid > 0, "ClockClient tid not positive");
-	
-	robprintfbusy((const unsigned char *)"FirstTask begin receive\n");
+	Pass();
 	
 	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	int source_tid;
 	K3Message * receive_message = (K3Message *) receive_buffer;
 	K3Message * reply_message = (K3Message *) reply_buffer;
+	Pass();
 	
 	// 1
 	Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
 	assertf(source_tid > 0, "Receive 1: wrong tid=%d", source_tid);
 	assertf(receive_message->message_type == MESSAGE_TYPE_HELLO, "Receive 1: wrong message type");
 	int client_1_tid = source_tid;
+	Pass();
 	
 	// 2
 	Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
 	assertf(source_tid > 0, "Receive 2: wrong tid=%d", source_tid);
 	assertf(receive_message->message_type == MESSAGE_TYPE_HELLO, "Receive 2: wrong message type");
 	int client_2_tid = source_tid;
+	Pass();
 	
 	// 3
 	Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
 	assertf(source_tid > 0, "Receive 3: wrong tid=%d", source_tid);
 	assertf(receive_message->message_type == MESSAGE_TYPE_HELLO, "Receive 3: wrong message type");
 	int client_3_tid = source_tid;
+	Pass();
 	
 	// 4
 	Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
 	assertf(source_tid > 0, "Receive 4: wrong tid=%d", source_tid);
 	assertf(receive_message->message_type == MESSAGE_TYPE_HELLO, "Receive 4: wrong message type");
 	int client_4_tid = source_tid;
+	Pass();
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 	
@@ -133,21 +145,25 @@ void FirstTask_Start() {
 	reply_message->delay_time = 10;
 	reply_message->num_delays = 20;
 	Reply(client_1_tid, reply_buffer, MESSAGE_SIZE);
+	Pass();
 	
 	// 2
 	reply_message->delay_time = 23;
 	reply_message->num_delays = 9;
 	Reply(client_2_tid, reply_buffer, MESSAGE_SIZE);
+	Pass();
 	
 	// 3
 	reply_message->delay_time = 33;
 	reply_message->num_delays = 6;
 	Reply(client_3_tid, reply_buffer, MESSAGE_SIZE);
+	Pass();
 	
 	// 4
 	reply_message->delay_time = 71;
 	reply_message->num_delays = 3;
 	Reply(client_4_tid, reply_buffer, MESSAGE_SIZE);
+	Pass();
 	
 	// End testing tasks above
 #endif // TEST
@@ -155,10 +171,7 @@ void FirstTask_Start() {
 	tid = Create(LOWEST, &IdleTask_Start);
 	assertf(tid, "IdleTask tid not postive");
 	
-	//tid = Create(LOW, &ClockPrintTask_Start);
-	//assert(tid > 0, "ClockPrintTask_Start tid not positive");
 	
-	robprintfbusy((const unsigned char *)"FirstTask Exit\n");
 	Exit();
 	
 	assert(0, "Shouldn't see me\n");

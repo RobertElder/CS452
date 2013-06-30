@@ -70,7 +70,7 @@ void Scheduler_InitAndSetKernelTask(Scheduler * scheduler, KernelState * k_state
 TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 	int times = 0;
 	int min_priority = 0;
-	
+
 	while (min_priority < NUM_PRIORITIES) {
 		int i;
 		for (i = 0; i < MAX_TASKS + 2; i++) {

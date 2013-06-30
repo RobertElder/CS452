@@ -106,7 +106,9 @@ void ClockServer_HandleNotifier(ClockServer * server, int source_tid, NotifyMess
 #ifdef SLOWWARN
 	// Debugging code
 	if (diff > TICK_SIZE * 1000 + 1000) {
-		robprintfbusy((const unsigned char *) "\033[1;31mSLOW! %dus\033[0m\n", diff);
+		server->slow_counter = server->slow_counter + 1;
+		if(server->slow_counter % 2 == 0)
+			robprintfbusy((const unsigned char *) "\033[1;31mSLOW! %dus\033[0m\n", diff);
 	}
 #endif
 	

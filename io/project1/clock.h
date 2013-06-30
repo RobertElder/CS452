@@ -23,6 +23,7 @@ typedef struct ClockServer {
 	short shutdown;
 	short running;
 	unsigned int last_timer_value; // for debugging
+	unsigned int slow_counter; 
 } ClockServer;
 
 void ClockServer_Start();
