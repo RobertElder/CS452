@@ -23,7 +23,6 @@ void Scheduler_Initialize(Scheduler * scheduler) {
 	scheduler->num_active = 0;
 	scheduler->num_zombie = 0;
 	scheduler->functions_registered = 0;
-	scheduler->aaa = 0;
 	
 	int i;
 	for (i = 0; i < MAX_TASKS + 1; i++) {
@@ -186,13 +185,6 @@ void Scheduler_SetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
 		k_state->user_proc_spsr = scheduler->current_task_descriptor->spsr_register;
 		k_state->user_proc_entry_mode = scheduler->current_task_descriptor->entry_mode;
 	}
-
-	k_state->scheduler.aaa = k_state->scheduler.aaa +1;
-
-	if(k_state->scheduler.aaa % 100000 == 0){
-		//Scheduler_PrintTDCounts(scheduler);
-	}
-
 }
 
 void Scheduler_ScheduleAndSetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
