@@ -14,7 +14,7 @@ void RPSTestStart() {
 	int tid;
 	const int num_clients = 380;
 
-	tid = Create(NORMAL, &RPSServer_Start);
+	tid = Create(RPSSERVER_START_PRIORITY, &RPSServer_Start);
 
 	int i;
 	for (i = 0; i < num_clients; i++) {

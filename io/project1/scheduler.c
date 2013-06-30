@@ -55,7 +55,7 @@ void Scheduler_InitAndSetKernelTask(Scheduler * scheduler, KernelState * k_state
 	TD * task_descriptor = &(scheduler->task_descriptors[0]);
 	/*  Initialize so it does not point at garbage, will be set again later. */
 	scheduler->current_task_descriptor = task_descriptor;
-	int task_priority = LOWEST;
+	int task_priority = PRIORITY_31;
 	int task_id = 0;
 	/* TODO: add define special case for partent of first task */
 	TD_Initialize(task_descriptor, task_id, task_priority, 99, get_stack_base(task_id), (void *)&KernelTask_Start);

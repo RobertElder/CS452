@@ -90,7 +90,7 @@ int PriorityQueue_Put(PriorityQueue * queue, QUEUE_ITEM_TYPE item, QueuePriority
 }
 
 QUEUE_ITEM_TYPE PriorityQueue_Get(PriorityQueue * queue) {
-	return PriorityQueue_GetLower(queue, HIGHEST, 0);
+	return PriorityQueue_GetLower(queue, PRIORITY_0, 0);
 }
 
 QUEUE_ITEM_TYPE PriorityQueue_Remove(PriorityQueue * queue, QueuePriority p, QUEUE_ITEM_TYPE it) {

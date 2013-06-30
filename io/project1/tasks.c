@@ -168,7 +168,7 @@ void FirstTask_Start() {
 	// End testing tasks above
 #endif // TEST
 
-	tid = Create(LOWEST, &IdleTask_Start);
+	tid = Create(IDLETASK_START_PRIORITY, &IdleTask_Start);
 	assertf(tid, "IdleTask tid not postive");
 	
 	

@@ -2,6 +2,7 @@
 #include "public_kernel_interface.h"
 #include "robio.h"
 #include "memory.h"
+#include "priorities.h"
 #include "scheduler.h"
 
 void TrainServer_Start() {
@@ -102,13 +103,13 @@ void TrainServer_Initialize(TrainServer * server) {
 	server->receive_message = (GenericMessage *) server->receive_buffer;
 	server->reply_message = (GenericMessage *) server->reply_buffer;
 
-	server->train_sensor_reader_tid = Create(HIGH, TrainSensorReader_Start);
+	server->train_sensor_reader_tid = Create(TRAINSENSORREADER_START_PRIORITY, TrainSensorReader_Start);
 	assert(server->train_sensor_reader_tid, "TrainServer failed to create TrainSensorReader");
 	
-	server->train_command_server_tid = Create(HIGH, TrainCommandServer_Start);
+	server->train_command_server_tid = Create(TRAINCOMMANDSERVER_START_PRIORITY, TrainCommandServer_Start);
 	assert(server->train_command_server_tid, "TrainServer failed to create TrainCommandServer");
 	
-	server->train_server_timer_tid = Create(HIGH, TrainServerTimer_Start);
+	server->train_server_timer_tid = Create(TRAINSERVERTIMER_START_PRIORITY, TrainServerTimer_Start);
 	assert(server->train_server_timer_tid, "TrainServer failed to create TrainServerTimer");
 	
 	server->num_child_task_running = 3;
