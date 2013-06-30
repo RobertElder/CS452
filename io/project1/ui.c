@@ -94,10 +94,17 @@ void UIServer_Initialize(UIServer * server) {
 	TrainMap_Initialize_A(&server->train_map_a);
 	TrainMap_Initialize_B(&server->train_map_b);
 	server->current_train_map = &server->train_map_a;
+
+	while(1){	
+		server->train_server_tid = WhoIs((char*) TRAIN_SERVER_NAME);
+		if(server->train_server_tid){
+			break;
+		}
+		DelaySeconds(0.21);
+		i++;
+		assert(i < 10, "UIServer: failed whois");
+	}
 	
-	server->train_server_tid = WhoIs((char*) TRAIN_SERVER_NAME);
-	
-	assert(server->train_server_tid, "UIServer: failed whois");
 	
 	for (i = 0; i < NUM_SWITCHES; i++) {
 		server->switch_states_cache[i] = SWITCH_UNKNOWN;
