@@ -355,3 +355,32 @@ int SendTrainCommand(TrainCommand command, char c1, char c2, char * c1_reply, ch
 	
 	return 0;
 }
+
+void PrintMessage(const char * fmt, ...) {
+	va_list va;
+	va_start(va,fmt);
+	PrintMessageFormat(fmt, va);
+	va_end(va);
+}
+
+void PrintMessageFormat(const char * fmt, va_list va) {
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	int server_tid = WhoIs((char*) UI_SERVER_NAME);
+	
+	if (server_tid) {
+		UIPrintMessage * send_message = (UIPrintMessage *) send_buffer;
+		GenericMessage * reply_message = (GenericMessage *) reply_buffer;
+	
+		send_message->message_type = MESSAGE_TYPE_UI_PRINT_MESSAGE;
+		send_message->message = fmt;
+		send_message->va = va;
+	
+		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+	
+		assert(reply_message->message_type == MESSAGE_TYPE_ACK,
+			"PrintMessageFormat: Did not get ACK message from ui server");
+	} else {
+		PutStringFormat(COM2, fmt, va);
+	}
+}

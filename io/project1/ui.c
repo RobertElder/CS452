@@ -71,6 +71,10 @@ void UIServer_Start() {
 				UIServer_ProcessKeystroke(&server, char_message->chars[0]);
 			}
 			break;
+		case MESSAGE_TYPE_UI_PRINT_MESSAGE:
+			UIServer_PrintMessage(&server);
+			Reply(source_tid, server.reply_buffer, MESSAGE_SIZE);
+			break;
 		default:
 			assert(0, "UIServer_Start: unknown message type");
 			break;
@@ -568,6 +572,18 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	}
 
 	server->train_engine_status_hash = new_hash;
+}
+
+void UIServer_PrintMessage(UIServer * server) {
+	UIPrintMessage * receive_message = (UIPrintMessage *) server->receive_buffer;
+	
+	ANSI_SaveCursor();
+	ANSI_Cursor(PRINT_MESSAGE_OFFSET + server->print_message_count, 1);
+	PutString(COM2, "%d: ", Time());
+	PutStringFormat(COM2, receive_message->message, receive_message->va);
+	server->print_message_count++;
+	server->print_message_count %= MAX_PRINT_MESSAGE;
+	ANSI_RestoreCursor();
 }
 
 void UITimer_Start() {

@@ -19,11 +19,19 @@ static const int const MAP_ROW_OFFSET = 5;
 static const int const MAP_COL_OFFSET = 20;
 static const int const ENGINE_STATUS_ROW_OFFSET = 23;
 static const int const ENGINE_STATUS_COL_OFFSET = 1;
+static const int const PRINT_MESSAGE_OFFSET = 35;
+static const int const MAX_PRINT_MESSAGE = 20;
 
 typedef struct UIMessage {
 	MessageType message_type;
 	int row;
 } UIMessage;
+
+typedef struct UIPrintMessage {
+	MessageType message_type;
+	const char * message;
+	va_list va;
+} UIPrintMessage;
 
 typedef struct UIServer {
 	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
@@ -83,6 +91,8 @@ void UIServer_PrintMap(UIServer * server);
 void UIServer_PrintSwitches(UIServer * server);
 
 void UIServer_PrintTrainEngineStatus(UIServer * server);
+
+void UIServer_PrintMessage(UIServer * server);
 
 void UITimer_Start();
 

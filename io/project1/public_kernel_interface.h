@@ -53,5 +53,7 @@ int PutString(int channel, const char * fmt, ...);
 int PutcAtomic(int channel, unsigned int count, ...);
 int PutcAtomicVa(int channel, unsigned int count, va_list va);
 int SendTrainCommand(TrainCommand command, char c1, char c2, char * c1_reply, char * c2_reply);
+void PrintMessage(const char * fmt, ...);
+void PrintMessageFormat(const char * fmt, va_list va);
 
 #endif
