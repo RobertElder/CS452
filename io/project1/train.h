@@ -143,7 +143,7 @@ typedef struct TrainServer {
 	
 	SwitchState switch_states[NUM_SWITCHES];
 	
-	TrainEngine train_engines[0];
+	TrainEngine train_engines[NUM_ENGINES];
 } TrainServer;
 
 
