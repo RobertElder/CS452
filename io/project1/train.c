@@ -447,6 +447,9 @@ void TrainCommandServer_Start() {
 	int train_server_tid = WhoIs((char*) TRAIN_SERVER_NAME);
 	
 	assert(train_server_tid, "TrainCommandServer_Start: failed to get train server tid");
+
+	int lower_buffer[5];
+	int upper_buffer[5];
 	
 	while (1) {
 		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
@@ -502,6 +505,28 @@ void TrainCommandServer_Start() {
 			command_reply_message->c1 = lower;
 			command_reply_message->c2 = upper;
 			break;
+		case TRAIN_CACHE_ALL_SENSORS:
+			module_num = command_receive_message->c1;
+			assert(module_num <= SENSOR_MODULE_E, "module_num out of range (not using 0-indexed?)");
+			Putc(COM1, 128 + NUM_SENSOR_MODULES);
+			
+			// The course website train manual is wrong, the website is right
+			lower_buffer[0] = Getc(COM1);
+			upper_buffer[0] = Getc(COM1);
+			lower_buffer[1] = Getc(COM1);
+			upper_buffer[1] = Getc(COM1);
+			lower_buffer[2] = Getc(COM1);
+			upper_buffer[2] = Getc(COM1);
+			lower_buffer[3] = Getc(COM1);
+			upper_buffer[3] = Getc(COM1);
+			lower_buffer[4] = Getc(COM1);
+			upper_buffer[4] = Getc(COM1);
+			break;
+		case TRAIN_GET_CACHED_SENSOR_DATA:
+			module_num = command_receive_message->c1;
+			command_reply_message->c1 = lower_buffer[(int)module_num];
+			command_reply_message->c2 = upper_buffer[(int)module_num];
+			break;
 		default:
 			assert(0, "Unknown train command");
 			break;
@@ -545,8 +570,9 @@ void TrainSensorReader_Start() {
 	DelaySeconds(1); // TODO Wait for IO to start up
 	
 	while (1) {
+		SendTrainCommand(TRAIN_CACHE_ALL_SENSORS, 0, 0, &lower, &upper);
 		for (module_num = SENSOR_MODULE_A; module_num <= SENSOR_MODULE_E; module_num++) {
-			SendTrainCommand(TRAIN_READ_SENSOR, module_num, 0, &lower, &upper);
+			SendTrainCommand(TRAIN_GET_CACHED_SENSOR_DATA, module_num, 0, &lower, &upper);
 			
 			// Reverse it so it is easier to mask. see train.h
 			// http://graphics.stanford.edu/~seander/bithacks.html#ReverseByteWith32Bits

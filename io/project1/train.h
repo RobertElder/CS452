@@ -20,6 +20,8 @@ typedef enum TrainCommand {
 	TRAIN_REVERSE,
 	TRAIN_SWITCH,
 	TRAIN_READ_SENSOR,
+	TRAIN_CACHE_ALL_SENSORS,
+	TRAIN_GET_CACHED_SENSOR_DATA,
 } TrainCommand;
 
 typedef enum SENSOR_MODULE {

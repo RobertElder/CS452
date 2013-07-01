@@ -89,8 +89,6 @@ void TEST_UART(){
 
 	volatile int in_data;
 
-	int polls = 50000;
-	
 	for(j = 0; j < 1; j++){
 		while(!(CTS_MASK & flags)){
 			flags = *UART1Flag;
@@ -102,7 +100,7 @@ void TEST_UART(){
 		}
 		i = 0;
 		/* Request some sensor data and look a the results */
-		*UART1DATA = 193;
+		*UART1DATA = 133;
 		while(1){
 			flags = *UART1Flag;
 			if(flags != states[state_number - 1]){
@@ -128,7 +126,7 @@ void TEST_UART(){
 				state_number++;
 			}
 			i++;
-			if(i == polls){
+			if(!(RXFE_MASK & flags)){
 				states[state_number] = FIN_TAKE;
 				times[state_number] = *timer_val;
 				state_number++;
@@ -145,7 +143,143 @@ void TEST_UART(){
 				state_number++;
 			}
 			i++;
-			if(i == polls){
+			if(!(RXFE_MASK & flags)){
+				states[state_number] = FIN_TAKE;
+				times[state_number] = *timer_val;
+				state_number++;
+				break;
+			}
+		}
+		i = 0;
+		in_data = *UART1DATA;
+		while(1){
+			flags = *UART1Flag;
+			if(flags != states[state_number - 1]){
+				states[state_number] = flags;
+				times[state_number] = *timer_val;
+				state_number++;
+			}
+			i++;
+			if(!(RXFE_MASK & flags)){
+				states[state_number] = FIN_TAKE;
+				times[state_number] = *timer_val;
+				state_number++;
+				break;
+			}
+		}
+		i = 0;
+		in_data = *UART1DATA;
+		while(1){
+			flags = *UART1Flag;
+			if(flags != states[state_number - 1]){
+				states[state_number] = flags;
+				times[state_number] = *timer_val;
+				state_number++;
+			}
+			i++;
+			if(!(RXFE_MASK & flags)){
+				states[state_number] = FIN_TAKE;
+				times[state_number] = *timer_val;
+				state_number++;
+				break;
+			}
+		}
+		i = 0;
+		in_data = *UART1DATA;
+		while(1){
+			flags = *UART1Flag;
+			if(flags != states[state_number - 1]){
+				states[state_number] = flags;
+				times[state_number] = *timer_val;
+				state_number++;
+			}
+			i++;
+			if(!(RXFE_MASK & flags)){
+				states[state_number] = FIN_TAKE;
+				times[state_number] = *timer_val;
+				state_number++;
+				break;
+			}
+		}
+		i = 0;
+		in_data = *UART1DATA;
+		while(1){
+			flags = *UART1Flag;
+			if(flags != states[state_number - 1]){
+				states[state_number] = flags;
+				times[state_number] = *timer_val;
+				state_number++;
+			}
+			i++;
+			if(!(RXFE_MASK & flags)){
+				states[state_number] = FIN_TAKE;
+				times[state_number] = *timer_val;
+				state_number++;
+				break;
+			}
+		}
+		i = 0;
+		in_data = *UART1DATA;
+		while(1){
+			flags = *UART1Flag;
+			if(flags != states[state_number - 1]){
+				states[state_number] = flags;
+				times[state_number] = *timer_val;
+				state_number++;
+			}
+			i++;
+			if(!(RXFE_MASK & flags)){
+				states[state_number] = FIN_TAKE;
+				times[state_number] = *timer_val;
+				state_number++;
+				break;
+			}
+		}
+		i = 0;
+		in_data = *UART1DATA;
+		while(1){
+			flags = *UART1Flag;
+			if(flags != states[state_number - 1]){
+				states[state_number] = flags;
+				times[state_number] = *timer_val;
+				state_number++;
+			}
+			i++;
+			if(!(RXFE_MASK & flags)){
+				states[state_number] = FIN_TAKE;
+				times[state_number] = *timer_val;
+				state_number++;
+				break;
+			}
+		}
+		i = 0;
+		in_data = *UART1DATA;
+		while(1){
+			flags = *UART1Flag;
+			if(flags != states[state_number - 1]){
+				states[state_number] = flags;
+				times[state_number] = *timer_val;
+				state_number++;
+			}
+			i++;
+			if(!(RXFE_MASK & flags)){
+				states[state_number] = FIN_TAKE;
+				times[state_number] = *timer_val;
+				state_number++;
+				break;
+			}
+		}
+		i = 0;
+		in_data = *UART1DATA;
+		while(1){
+			flags = *UART1Flag;
+			if(flags != states[state_number - 1]){
+				states[state_number] = flags;
+				times[state_number] = *timer_val;
+				state_number++;
+			}
+			i++;
+			if((RXFE_MASK & flags)){
 				states[state_number] = FIN_TAKE;
 				times[state_number] = *timer_val;
 				state_number++;
