@@ -118,6 +118,7 @@ void TrainServer_Initialize(TrainServer * server) {
 	
 	for (module_num = SENSOR_MODULE_A; module_num <= SENSOR_MODULE_E; module_num++) {
 		server->sensor_bit_flags[module_num] = 0;
+		server->new_sensor_bit_flags_for_ui[module_num] = 0;
 		
 		int sensor_num;
 		for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
@@ -154,6 +155,8 @@ void TrainServer_HandleSensorReaderData(TrainServer * server) {
 	int sensor_bit_flag = recv_sensor_message->sensor_bit_flag;
 
 	server->sensor_bit_flags[module_num] = sensor_bit_flag;
+	//  Add the new sensors to the set the UI will see
+	server->new_sensor_bit_flags_for_ui[module_num] =  server->new_sensor_bit_flags_for_ui[module_num] | sensor_bit_flag;
 	
 	int sensor_num;
 	int current_time = Time();
@@ -176,7 +179,9 @@ void TrainServer_HandleSensorQuery(TrainServer * server) {
 	
 	int module_num = recv_sensor_message->module_num;
 
-	reply_sensor_message->sensor_bit_flag = server->sensor_bit_flags[module_num];
+	reply_sensor_message->sensor_bit_flag = server->new_sensor_bit_flags_for_ui[module_num];
+	server->new_sensor_bit_flags_for_ui[module_num] = 0;
+
 	reply_sensor_message->message_type = MESSAGE_TYPE_ACK;
 
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);

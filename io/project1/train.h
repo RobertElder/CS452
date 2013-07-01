@@ -125,6 +125,7 @@ typedef struct TrainServer {
 	// flag & 1<<15 is the 16th sensor
 	// Modules and sensors are 0-index internally, but rememeber they should be presented 1-index to the train and to the screen.
 	int sensor_bit_flags[NUM_SENSOR_MODULES];
+	int new_sensor_bit_flags_for_ui[NUM_SENSOR_MODULES];
 	int sensor_time_log[NUM_SENSOR_MODULES][SENSORS_PER_MODULE];
 	int source_tid;
 	int num_child_task_running;
