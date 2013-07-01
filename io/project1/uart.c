@@ -323,6 +323,7 @@ void TrainInputServer_Start() {
 			server.seconds_passed = 0;
 			// From notifier
 			assert((*UART1Flag & TXBUSY_MASK) == 0, "TrainOutputServer: TXBusy!");
+			assert((!(*UART1Flag & RXFE_MASK)), "TrainOutputServer: RXFE on read!");
 			data = *UART1DATA & DATA_MASK;
 			
 			UARTErrorCheck(*UART1RXSts, "trains");
