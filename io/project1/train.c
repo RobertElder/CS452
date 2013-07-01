@@ -112,6 +112,9 @@ void TrainServer_Initialize(TrainServer * server) {
 	
 	server->train_server_timer_tid = Create(TRAINSERVERTIMER_START_PRIORITY, TrainServerTimer_Start);
 	assert(server->train_server_timer_tid, "TrainServer failed to create TrainServerTimer");
+
+	server->train_engines[0].tid = Create(TRAINENGINE_START_PRIORITY, TrainEngine_Start);
+	assert(server->train_engines[0].tid, "TrainServer failed to create TrainEngine_Start");
 	
 	server->num_child_task_running = 3;
 	
@@ -648,5 +651,9 @@ track_node * NodeNameToTrackNode(track_node * track_nodes, char * name) {
 	}
 	
 	return 0;
+}
+
+void TrainEngine_Start(){
+	Exit();
 }
 

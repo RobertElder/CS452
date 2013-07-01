@@ -103,6 +103,7 @@ static const char const TRAIN_ENGINE_STATE_NAMES[][20] = {
 };
 
 struct TrainEngine {
+	int tid;
 	int train_num;
 	TrainEngineState state;
 	track_node * current_node;
@@ -190,6 +191,8 @@ void TrainServerTimer_Start();
 void TrainCommandServer_Start();
 
 void TrainSensorReader_Start();
+
+void TrainEngine_Start();
 
 void TrainEngine_Initialize(TrainEngine * engine, int train_num);
 
