@@ -6,6 +6,7 @@
 
 #define SENSORS_PER_MODULE 16
 #define NUM_SWITCHES 256
+#define NUM_ENGINES 1
 
 static const char const TRAIN_SERVER_NAME[] = "TrnSvr";
 static const char const TRAIN_COMMAND_SERVER_NAME[] = "TCmSvr";
@@ -142,7 +143,7 @@ typedef struct TrainServer {
 	
 	SwitchState switch_states[NUM_SWITCHES];
 	
-	TrainEngine train_engine;
+	TrainEngine train_engines[0];
 } TrainServer;
 
 

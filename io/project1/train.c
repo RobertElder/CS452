@@ -81,8 +81,9 @@ void TrainServer_Start() {
 			assert(0, "TrainServer: unknown message type");
 			break;
 		}
-		
-		TrainServer_ProcessEngine(&server, &server.train_engine);
+		int i;
+		for(i = 0; i < NUM_ENGINES; i++)
+			TrainServer_ProcessEngine(&server, &(server.train_engines[i]));
 	}
 	
 	assert(admin_tid, "TrainServer: did not get admin tid");
@@ -134,8 +135,9 @@ void TrainServer_Initialize(TrainServer * server) {
 	for (switch_num = 0; switch_num < NUM_SWITCHES; switch_num++) {
 		server->switch_states[switch_num] = SWITCH_UNKNOWN;
 	}
-	
-	TrainEngine_Initialize(&server->train_engine, 0);
+	int i;
+	for(i = 0; i < NUM_ENGINES; i++)
+		TrainEngine_Initialize(&(server->train_engines[i]), i);
 }
 
 void TrainServer_HandleSensorReaderData(TrainServer * server) {
@@ -229,24 +231,24 @@ void TrainServer_HandleSetTrain(TrainServer * server) {
 	GenericTrainMessage  * receive_message = (GenericTrainMessage *) server->receive_buffer;
 	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
 	
-	TrainEngine_Initialize(&server->train_engine, receive_message->int1);
+	TrainEngine_Initialize(&(server->train_engines[0]), receive_message->int1);
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 	
-	server->train_engine.state = TRAIN_ENGINE_IDLE;
+	server->train_engines[0].state = TRAIN_ENGINE_IDLE;
 }
 
 void TrainServer_HandleSetDestination(TrainServer * server) {
 	GenericTrainMessage * receive_message = (GenericTrainMessage *) server->receive_buffer;
 	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
 	
-	server->train_engine.destination_node = NodeNameToTrackNode(server->current_track_nodes, receive_message->char1);
+	server->train_engines[0].destination_node = NodeNameToTrackNode(server->current_track_nodes, receive_message->char1);
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 	
-	server->train_engine.state = TRAIN_ENGINE_FINDING_POSITION;
+	server->train_engines[0].state = TRAIN_ENGINE_FINDING_POSITION;
 }
 
 void TrainServer_HandleQueryTrainEngine(TrainServer * server) {
@@ -265,7 +267,7 @@ void TrainServer_HandleQueryTrainEngine(TrainServer * server) {
 		reply_message->current_node_name = "?";
 	}
 */
-	reply_message->train_engine = &server->train_engine;
+	reply_message->train_engine = &server->train_engines[0];
 
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 }
