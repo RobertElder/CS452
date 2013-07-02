@@ -4,6 +4,7 @@
 #include "memory.h"
 #include "priorities.h"
 #include "scheduler.h"
+#include "random.h"
 
 void TrainServer_Start() {
 	DebugRegisterFunction(&TrainServer_Start,__func__);
@@ -651,6 +652,54 @@ track_node * NodeNameToTrackNode(track_node * track_nodes, char * name) {
 	}
 	
 	return 0;
+}
+
+track_node * GetRandomSensor(RNG * rng, track_node * track_nodes) {
+	while(1){
+		int index = RNG_Get(rng) % TRACK_MAX;
+		if(track_nodes[index].reverse && track_nodes[index].type == NODE_SENSOR){
+			return &(track_nodes[index]);
+		}
+	}
+
+}
+
+track_node * GetRandomSensorReachableViaDirectedGraph(RNG * rng, track_node * track_nodes, track_node * start_node) {
+	int i = 0;
+	while(1){
+		track_node * random_sensor = GetRandomSensor(rng, track_nodes);
+		if(IsNodeReachableViaDirectedGraph(track_nodes, start_node, random_sensor, 0)){
+			return random_sensor;
+		}
+		i++;
+		assert(i < 100, "Unable to find a sensor that was reachable via the directed graph in current direction.");
+	}
+}
+
+int IsNodeReachableViaDirectedGraph(track_node * track_nodes, track_node * start_node, track_node * test_sensor, int levels) {
+	//  Don't go too deep
+	if (levels > 20){
+		return 0;
+	}
+
+	if(start_node == test_sensor){
+		return 1;
+	}else if(start_node->type == NODE_MERGE){
+		return IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_AHEAD].dest, test_sensor, levels + 1);
+	}else if(start_node->type == NODE_SENSOR){
+		return IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_AHEAD].dest, test_sensor, levels + 1);
+	}else if (start_node->type == NODE_EXIT){
+		return 0;
+	}else if (start_node->type == NODE_ENTER){
+		return 0;
+	}else if (start_node->type == NODE_BRANCH){
+		int rtn1 = IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_STRAIGHT].dest, test_sensor, levels + 1);
+		int rtn2 = IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_CURVED].dest, test_sensor, levels + 1);
+		return rtn1 || rtn2;
+	}else{
+		assert(0,"Case should not happen");
+		return 0;
+	}
 }
 
 void TrainEngine_Start(){
