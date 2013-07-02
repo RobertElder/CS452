@@ -356,6 +356,29 @@ int SendTrainCommand(TrainCommand command, char c1, char c2, char * c1_reply, ch
 	return 0;
 }
 
+int SetTrainSwitch(SwitchDirectionCode direction_code, char switch_num) {
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	int server_tid = WhoIs((char*) TRAIN_SERVER_NAME);
+	
+	assert(server_tid, "SetTrainSwitch: whois failed");
+	
+	TrainCommandMessage * send_message = (TrainCommandMessage*) send_buffer;
+	TrainCommandMessage * reply_message = (TrainCommandMessage*) reply_buffer;
+	
+	send_message->message_type = MESSAGE_TYPE_SET_SWITCH;
+	send_message->command = TRAIN_SWITCH;
+	send_message->c1 = direction_code;
+	send_message->c2 = switch_num;
+	
+	Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+	
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK,
+		"SetTrainSwitch: Did not get ACK message from train server");
+		
+	return 0;
+}
+
 void PrintMessage(const char * fmt, ...) {
 	va_list va;
 	va_start(va,fmt);

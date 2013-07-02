@@ -12,6 +12,7 @@
 static const char const TRAIN_SERVER_NAME[] = "TrnSvr";
 static const char const TRAIN_COMMAND_SERVER_NAME[] = "TCmSvr";
 static const char const TRAIN_SERVER_TIMER_NAME[] = "TrSTmr";
+static const char const TRAIN_SWITCH_MASTER_NAME[] = "TrSwMr";
 
 static const int const LIGHTS_MASK = 16;
 
@@ -61,12 +62,24 @@ typedef enum TrainEngineState {
 	TRAIN_ENGINE_CALIBRATING_SPEED,
 } TrainEngineState;
 
+typedef enum TrainEngineClientCommand {
+	TRAIN_ENGINE_CLIENT_DO_NOTHING,
+	TRAIN_ENGINE_CLIENT_SET_SPEED,
+} TrainEngineClientCommand;
+
 typedef struct TrainCommandMessage {
 	MessageType message_type;
 	TrainCommand command;
 	char c1;
 	char c2;
 } TrainCommandMessage;
+
+typedef struct TrainEngineClientMessage {
+	MessageType message_type;
+	TrainEngineClientCommand command;
+	char c1;
+	char c2;
+} TrainEngineClientMessage;
 
 typedef struct TrainSensorMessage {
 	MessageType message_type;
@@ -138,12 +151,14 @@ typedef struct TrainServer {
 	int train_sensor_reader_tid;
 	int blocked_tid;
 	int train_server_timer_tid;
+	int switch_master_tid;
 	
 	track_node track_a_nodes[TRACK_MAX];
 	track_node track_b_nodes[TRACK_MAX];
 	track_node * current_track_nodes;
 	
 	SwitchState switch_states[NUM_SWITCHES];
+	SwitchState queued_switch_states[NUM_SWITCHES];
 	
 	TrainEngine train_engines[NUM_ENGINES];
 } TrainServer;
@@ -169,6 +184,12 @@ void TrainServer_HandleSetDestination(TrainServer * server);
 
 void TrainServer_HandleQueryTrainEngine(TrainServer * server);
 
+void TrainServer_HandleTrainEngineClientCommandRequest(TrainServer * server);
+
+void TrainServer_HandleGetSwitchRequest(TrainServer * server);
+
+void TrainServer_HandleSetSwitch(TrainServer * server);
+
 void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine);
 
 void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine);
@@ -185,7 +206,6 @@ void TrainServer_ProcessEngineCalibratingSpeed(TrainServer * server, TrainEngine
 
 track_node * TrainServer_GetEnginePosition(TrainServer * server);
 
-void TrainServer_SetInitialSwitches(TrainServer * server);
 
 void TrainServerTimer_Start();
 
@@ -193,9 +213,11 @@ void TrainCommandServer_Start();
 
 void TrainSensorReader_Start();
 
-void TrainEngine_Start();
+void TrainEngineClient_Start();
 
 void TrainEngine_Initialize(TrainEngine * engine, int train_num);
+
+void TrainEngine_SetInitialSwitches();
 
 track_node * SensorToTrackNode(track_node * track_nodes, int module_num, int sensor_num);
 
@@ -206,4 +228,8 @@ track_node * GetRandomSensor(RNG * rng, track_node * track_nodes);
 track_node * GetRandomSensorReachableViaDirectedGraph(RNG *, track_node *, track_node *);
 
 int IsNodeReachableViaDirectedGraph(track_node * , track_node * , track_node * , int );
+
+void TrainSwitchMaster_Start();
+
 #endif
+
