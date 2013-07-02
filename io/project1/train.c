@@ -729,30 +729,66 @@ track_node * GetRandomSensorReachableViaDirectedGraph(RNG * rng, track_node * tr
 	}
 }
 
-int IsNodeReachableViaDirectedGraph(track_node * track_nodes, track_node * start_node, track_node * test_sensor, int levels) {
+int IsNodeReachableViaDirectedGraph(track_node * track_nodes, track_node * start_node, track_node * dest_node, int levels) {
 	//  Don't go too deep
 	if (levels > 20){
 		return 0;
 	}
 
-	if(start_node == test_sensor){
+	if(start_node == dest_node){
 		return 1;
 	}else if(start_node->type == NODE_MERGE){
-		return IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_AHEAD].dest, test_sensor, levels + 1);
+		return IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
 	}else if(start_node->type == NODE_SENSOR){
-		return IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_AHEAD].dest, test_sensor, levels + 1);
+		return IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
 	}else if (start_node->type == NODE_EXIT){
 		return 0;
 	}else if (start_node->type == NODE_ENTER){
 		return 0;
 	}else if (start_node->type == NODE_BRANCH){
-		int rtn1 = IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_STRAIGHT].dest, test_sensor, levels + 1);
-		int rtn2 = IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_CURVED].dest, test_sensor, levels + 1);
+		int rtn1 = IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1);
+		int rtn2 = IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1);
 		return rtn1 || rtn2;
 	}else{
 		assert(0,"Case should not happen");
 		return 0;
 	}
+}
+
+int QueueSwitchStatesForDirectedPath(SwitchState * switch_queue, track_node * track_nodes, track_node * start_node, track_node * dest_node, int levels) {
+
+	//  Don't go too deep
+	if (levels > 20){
+		return 0;
+	}
+
+	if(start_node == dest_node){
+		return 1;
+	}else if(start_node->type == NODE_MERGE){
+		return QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
+	}else if(start_node->type == NODE_SENSOR){
+		return QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
+	}else if (start_node->type == NODE_EXIT){
+		return 0;
+	}else if (start_node->type == NODE_ENTER){
+		return 0;
+	}else if (start_node->type == NODE_BRANCH){
+		int rtn1 = QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1);
+		int rtn2 = QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1);
+		if(rtn1){
+			//  We need to switch this one to get to our destination
+			assertf((switch_queue[start_node->num] == SWITCH_UNKNOWN),"This path requires that switch %d be set twice.",start_node->num);
+			switch_queue[start_node->num] = SWITCH_STRAIGHT;
+		}else if (rtn2){
+			assertf((switch_queue[start_node->num] == SWITCH_UNKNOWN),"This path requires that switch %d be set twice.",start_node->num);
+			switch_queue[start_node->num] = SWITCH_CURVED;
+		}
+		return rtn1 || rtn2;
+	}else{
+		assert(0,"Case should not happen");
+		return 0;
+	}
+	
 }
 
 void TrainEngineClient_Start(){
