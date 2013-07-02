@@ -284,7 +284,7 @@ void UIServer_HandleSwitchCommand(UIServer * server) {
 	}
 	
 	PutString(COM2, "Switch=%d Direction=%c. switch on fire.", switch_num, direction);
-	SendTrainCommand(TRAIN_SWITCH, direction_code, switch_num, 0, 0);
+	SetTrainSwitch(direction_code, switch_num);
 }
 
 void UIServer_HandleMapCommand(UIServer * server) {

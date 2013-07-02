@@ -81,6 +81,13 @@ void TrainServer_Start() {
 			// from TrainEngineClient
 			TrainServer_HandleTrainEngineClientCommandRequest(&server);
 			break;
+		case MESSAGE_TYPE_GET_SWITCH_REQUEST:
+			// TrainSwitchMaster
+			TrainServer_HandleGetSwitchRequest(&server);
+			break;
+		case MESSAGE_TYPE_SET_SWITCH:
+			TrainServer_HandleSetSwitch(&server);
+			break;
 		default:
 			assert(0, "TrainServer: unknown message type");
 			break;
@@ -120,7 +127,10 @@ void TrainServer_Initialize(TrainServer * server) {
 	server->train_engines[0].tid = Create(TRAINENGINE_START_PRIORITY, TrainEngineClient_Start);
 	assert(server->train_engines[0].tid, "TrainServer failed to create TrainEngineClient_Start");
 	
-	server->num_child_task_running = 3;
+	server->switch_master_tid = Create(TRAINSWITCHMASTER_START_PRIORITY, TrainSwitchMaster_Start);
+	assert(server->switch_master_tid, "TrainServer failed to create TrainSwitchMaster");
+	
+	server->num_child_task_running = 4;
 	
 	int module_num;
 	
@@ -141,6 +151,7 @@ void TrainServer_Initialize(TrainServer * server) {
 	int switch_num;
 	for (switch_num = 0; switch_num < NUM_SWITCHES; switch_num++) {
 		server->switch_states[switch_num] = SWITCH_UNKNOWN;
+		server->queued_switch_states[switch_num] = SWITCH_UNKNOWN;
 	}
 	int i;
 	for(i = 0; i < NUM_ENGINES; i++)
@@ -289,6 +300,51 @@ void TrainServer_HandleTrainEngineClientCommandRequest(TrainServer * server) {
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 }
 
+void TrainServer_HandleGetSwitchRequest(TrainServer * server) {
+	TrainCommandMessage * reply_message = (TrainCommandMessage *) server->reply_buffer;
+	
+	reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
+	
+	int switch_num;
+	for (switch_num = 0; switch_num < NUM_SWITCHES; switch_num++) {
+		if (server->switch_states[switch_num] != server->queued_switch_states[switch_num]) {
+			reply_message->message_type = MESSAGE_TYPE_ACK;
+			int direction_code;
+			
+			if (server->queued_switch_states[switch_num] == SWITCH_CURVED) {
+				direction_code = SWITCH_CURVED_CODE;
+			} else {
+				direction_code = SWITCH_STRAIGHT_CODE;
+			}
+			
+			reply_message->c1 = direction_code;
+			reply_message->c2 = switch_num;
+			server->switch_states[switch_num] = server->queued_switch_states[switch_num];
+			break;
+		}
+	}
+	
+	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
+}
+
+void TrainServer_HandleSetSwitch(TrainServer * server) {
+	TrainCommandMessage * receive_message = (TrainCommandMessage *) server->receive_buffer;
+	TrainCommandMessage * reply_message = (TrainCommandMessage *) server->reply_buffer;
+	
+	reply_message->message_type = MESSAGE_TYPE_ACK;
+	
+	int direction_code = receive_message->c1;
+	int switch_num = receive_message->c2;
+	
+	if (direction_code == SWITCH_CURVED_CODE) {
+		server->queued_switch_states[switch_num] = SWITCH_CURVED;
+	} else {
+		server->queued_switch_states[switch_num] = SWITCH_STRAIGHT;
+	}
+	
+	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
+}
+
 void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 	if (!engine->train_num) {
 		return;
@@ -322,9 +378,6 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine) {
 	SendTrainCommand(TRAIN_SPEED, 10, engine->train_num, 0, 0);
 	engine->state = TRAIN_ENGINE_CALIBRATING_SPEED;
-	
-	// TODO: make this not deadlock
-	// TrainServer_SetInitialSwitches(server);
 }
 
 void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine * engine) {
@@ -412,16 +465,6 @@ void TrainServer_ProcessEngineCalibratingSpeed(TrainServer * server, TrainEngine
 	engine->state = TRAIN_ENGINE_FINDING_POSITION;
 }
 
-void TrainServer_SetInitialSwitches(TrainServer * server) {
-	SendTrainCommand(TRAIN_SWITCH, SWITCH_CURVED_CODE, 11, 0, 0);
-	SendTrainCommand(TRAIN_SWITCH, SWITCH_STRAIGHT_CODE, 14, 0, 0);
-	SendTrainCommand(TRAIN_SWITCH, SWITCH_STRAIGHT_CODE, 15, 0, 0);
-	SendTrainCommand(TRAIN_SWITCH, SWITCH_STRAIGHT_CODE, 6, 0, 0);
-	SendTrainCommand(TRAIN_SWITCH, SWITCH_STRAIGHT_CODE, 7, 0, 0);
-	SendTrainCommand(TRAIN_SWITCH, SWITCH_STRAIGHT_CODE, 8, 0, 0);
-	SendTrainCommand(TRAIN_SWITCH, SWITCH_STRAIGHT_CODE, 9, 0, 0);
-}
-
 void TrainServerTimer_Start() {
 	DebugRegisterFunction(&TrainServerTimer_Start,__func__);
 	int return_code = RegisterAs((char*) TRAIN_SERVER_TIMER_NAME);
@@ -507,10 +550,6 @@ void TrainCommandServer_Start() {
 			DelaySeconds(0.2);
 			Putc(COM1, 32);
 			
-			// Need to tell the train server the new switch state
-			command_receive_message->message_type = MESSAGE_TYPE_SWITCH_DATA;
-			Send(train_server_tid, receive_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
-			assert(command_reply_message->message_type == MESSAGE_TYPE_ACK, "TrainCommandServer: failed to get ack from train server");
 			break;
 		case TRAIN_READ_SENSOR:
 			module_num = command_receive_message->c1;
@@ -677,6 +716,8 @@ void TrainEngineClient_Start(){
 	
 	send_message->message_type = MESSAGE_TYPE_TRAIN_ENGINE_COMMAND_REQUEST;
 	
+	TrainEngine_SetInitialSwitches();
+	
 	while (1) {
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		
@@ -691,6 +732,49 @@ void TrainEngineClient_Start(){
 		default:
 			assertf(0, "TrainEngineClient: unknown message type %d", reply_message->command);
 			break;
+		}
+	}
+	
+	Exit();
+}
+
+void TrainEngine_SetInitialSwitches() {
+	SetTrainSwitch(SWITCH_CURVED_CODE, 11);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 14);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 15);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 6);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 7);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 8);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 9);
+}
+
+void TrainSwitchMaster_Start() {
+	DebugRegisterFunction(&TrainSwitchMaster_Start,__func__);
+	robprintfbusy((const unsigned char *)"TrainSwitchMaster_Start. tid=%d\n", MyTid());
+	
+	int return_code = RegisterAs((char*) TRAIN_SWITCH_MASTER_NAME);
+	assertf(return_code == 0, "TrainSwitchMaster failed to register");
+	
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	TrainCommandMessage * command_send_message = (TrainCommandMessage*) send_buffer;
+	TrainCommandMessage * command_reply_message = (TrainCommandMessage*) reply_buffer;
+	char direction_code, switch_num;
+	int train_server_tid = WhoIs((char*) TRAIN_SERVER_NAME);
+	
+	assert(train_server_tid, "TrainSwitchMaster_Start: failed to get train server tid");
+	
+	command_send_message->message_type = MESSAGE_TYPE_GET_SWITCH_REQUEST;
+	
+	while (1) {
+		Send(train_server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+		
+		if (command_reply_message->message_type == MESSAGE_TYPE_ACK) {
+			direction_code = command_reply_message->c1;
+			switch_num = command_reply_message->c2;
+			SendTrainCommand(TRAIN_SWITCH, direction_code, switch_num, 0, 0);
+		} else {
+			DelaySeconds(0.05);
 		}
 	}
 	
