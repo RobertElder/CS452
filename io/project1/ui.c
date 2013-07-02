@@ -669,8 +669,11 @@ void UIPrintTask_Start() {
 			Reply(source_tid, reply_buffer, MESSAGE_SIZE);
 			ANSI_SaveCursor();
 			ANSI_Cursor(PRINT_MESSAGE_OFFSET + print_message_count, 1);
+			ANSI_ClearLine(CLEAR_TO_END);
 			PutString(COM2, "%d: ", Time());
 			PutStringFormat(COM2, receive_message->message, receive_message->va);
+			ANSI_CursorNextLine(1);
+			ANSI_ClearLine(CLEAR_TO_END);
 			print_message_count++;
 			print_message_count %= MAX_PRINT_MESSAGE;
 			ANSI_RestoreCursor();
