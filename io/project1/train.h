@@ -229,6 +229,8 @@ track_node * GetRandomSensorReachableViaDirectedGraph(RNG *, track_node *, track
 
 int IsNodeReachableViaDirectedGraph(track_node * , track_node * , track_node * , int );
 
+int QueueSwitchStatesForDirectedPath(SwitchState * , track_node * , track_node * , track_node * , int levels);
+
 void TrainSwitchMaster_Start();
 
 #endif
