@@ -377,7 +377,7 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 }
 
 void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine) {
-	PrintMessage("Engine %d is starting", engine->train_num);
+	PrintMessage("Engine %d is starting.", engine->train_num);
 	SendTrainCommand(TRAIN_SPEED, 3, engine->train_num, 0, 0);
 	engine->state = TRAIN_ENGINE_FINDING_POSITION;
 }
@@ -394,12 +394,12 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 
 
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine) {
-	PrintMessage("Found starting position");
+	PrintMessage("Found starting position.");
 	RNG rng;
 	RNG_Initialize(&rng,100);
 	engine->destination_node = GetRandomSensorReachableViaDirectedGraph(&rng, server->current_track_nodes, engine->current_node);
 	
-	PrintMessage("Destination node is %s", engine->destination_node->name);
+	PrintMessage("Destination node is %s.", engine->destination_node->name);
 
 	engine->state = TRAIN_ENGINE_RUNNING;
 	SendTrainCommand(TRAIN_SPEED, 8 | LIGHTS_MASK, engine->train_num, 0, 0);
@@ -414,6 +414,7 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 		if (engine->current_node == engine->destination_node) {
 			engine->state = TRAIN_ENGINE_AT_DESTINATION;
 			SendTrainCommand(TRAIN_SPEED, 0, engine->train_num, 0, 0);
+			PrintMessage("At destination.");
 		}
 	}
 }
