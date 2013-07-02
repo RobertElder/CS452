@@ -60,12 +60,21 @@ typedef enum TrainEngineState {
 	TRAIN_ENGINE_CALIBRATING_SPEED,
 } TrainEngineState;
 
+typedef enum TrainEngineClientCommand {
+	TRAIN_ENGINE_CLIENT_DO_NOTHING,
+} TrainEngineClientCommand;
+
 typedef struct TrainCommandMessage {
 	MessageType message_type;
 	TrainCommand command;
 	char c1;
 	char c2;
 } TrainCommandMessage;
+
+typedef struct TrainEngineClientMessage {
+	MessageType message_type;
+	TrainEngineClientCommand command;
+} TrainEngineClientMessage;
 
 typedef struct TrainSensorMessage {
 	MessageType message_type;
@@ -168,6 +177,8 @@ void TrainServer_HandleSetDestination(TrainServer * server);
 
 void TrainServer_HandleQueryTrainEngine(TrainServer * server);
 
+void TrainServer_HandleTrainEngineClientCommandRequest(TrainServer * server);
+
 void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine);
 
 void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine);
@@ -192,7 +203,7 @@ void TrainCommandServer_Start();
 
 void TrainSensorReader_Start();
 
-void TrainEngine_Start();
+void TrainEngineClient_Start();
 
 void TrainEngine_Initialize(TrainEngine * engine, int train_num);
 

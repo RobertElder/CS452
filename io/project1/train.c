@@ -77,6 +77,10 @@ void TrainServer_Start() {
 			// from ui server
 			TrainServer_HandleQueryTrainEngine(&server);
 			break;
+		case MESSAGE_TYPE_TRAIN_ENGINE_COMMAND_REQUEST:
+			// from TrainEngineClient
+			TrainServer_HandleTrainEngineClientCommandRequest(&server);
+			break;
 		default:
 			assert(0, "TrainServer: unknown message type");
 			break;
@@ -113,8 +117,8 @@ void TrainServer_Initialize(TrainServer * server) {
 	server->train_server_timer_tid = Create(TRAINSERVERTIMER_START_PRIORITY, TrainServerTimer_Start);
 	assert(server->train_server_timer_tid, "TrainServer failed to create TrainServerTimer");
 
-	server->train_engines[0].tid = Create(TRAINENGINE_START_PRIORITY, TrainEngine_Start);
-	assert(server->train_engines[0].tid, "TrainServer failed to create TrainEngine_Start");
+	server->train_engines[0].tid = Create(TRAINENGINE_START_PRIORITY, TrainEngineClient_Start);
+	assert(server->train_engines[0].tid, "TrainServer failed to create TrainEngineClient_Start");
 	
 	server->num_child_task_running = 3;
 	
@@ -272,6 +276,16 @@ void TrainServer_HandleQueryTrainEngine(TrainServer * server) {
 */
 	reply_message->train_engine = &server->train_engines[0];
 
+	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
+}
+
+void TrainServer_HandleTrainEngineClientCommandRequest(TrainServer * server) {
+	TrainEngineClientMessage * reply_message = (TrainEngineClientMessage *) server->reply_buffer;
+	
+	// TODO tell train engine client to do things
+	reply_message->message_type = MESSAGE_TYPE_ACK;
+	reply_message->command = TRAIN_ENGINE_CLIENT_DO_NOTHING;
+	
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 }
 
@@ -653,7 +667,31 @@ track_node * NodeNameToTrackNode(track_node * track_nodes, char * name) {
 	return 0;
 }
 
-void TrainEngine_Start(){
+void TrainEngineClient_Start(){
+	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	GenericMessage * send_message = (GenericMessage *) send_buffer;
+	TrainEngineClientMessage * reply_message = (TrainEngineClientMessage *) reply_buffer;
+	int server_tid = MyParentTid();
+	assert(server_tid, "TrainEngineClient failed to get server tid");
+	
+	send_message->message_type = MESSAGE_TYPE_TRAIN_ENGINE_COMMAND_REQUEST;
+	
+	while (1) {
+		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+		
+		switch(reply_message->command) {
+		case TRAIN_ENGINE_CLIENT_DO_NOTHING:
+			// do nothing
+			break;
+		default:
+			assertf(0, "TrainEngineClient: unknown message type %d", reply_message->command);
+			break;
+		}
+		
+		DelaySeconds(0.01);
+	}
+	
 	Exit();
 }
 
