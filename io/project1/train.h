@@ -62,6 +62,7 @@ typedef enum TrainEngineState {
 
 typedef enum TrainEngineClientCommand {
 	TRAIN_ENGINE_CLIENT_DO_NOTHING,
+	TRAIN_ENGINE_CLIENT_SET_SPEED,
 } TrainEngineClientCommand;
 
 typedef struct TrainCommandMessage {
@@ -74,6 +75,8 @@ typedef struct TrainCommandMessage {
 typedef struct TrainEngineClientMessage {
 	MessageType message_type;
 	TrainEngineClientCommand command;
+	char c1;
+	char c2;
 } TrainEngineClientMessage;
 
 typedef struct TrainSensorMessage {

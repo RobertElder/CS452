@@ -684,6 +684,9 @@ void TrainEngineClient_Start(){
 		case TRAIN_ENGINE_CLIENT_DO_NOTHING:
 			// do nothing
 			break;
+		case TRAIN_ENGINE_CLIENT_SET_SPEED:
+			SendTrainCommand(TRAIN_SPEED, reply_message->c1, reply_message->c2, 0, 0);
+			break;
 		default:
 			assertf(0, "TrainEngineClient: unknown message type %d", reply_message->command);
 			break;
