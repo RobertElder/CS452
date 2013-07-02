@@ -12,6 +12,7 @@
 
 static const char const UI_SERVER_NAME[] = "UISvr";
 static const char const UI_TIMER_NAME[] = "UITmr";
+static const char const UI_PRINT_TASK_NAME[] = "UIPrt";
 static const char const UI_SERVER_HEADER[] = "> THOMAS TANK ENGINE (TM) TRAIN MASTER CONTROL SYSTEM CS-452-2013 <";
 static const int const SENSOR_TABLE_ROW_OFFSET = 5;
 static const int const SENSOR_TABLE_COL_OFFSET = 1;
@@ -37,7 +38,6 @@ typedef struct UIServer {
 	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
-	unsigned int print_message_count;
 	short dirty;
 	char command_buffer[UI_SERVER_COMMAND_BUFFER_SIZE];
 	unsigned int command_buffer_index;
@@ -97,5 +97,7 @@ void UIServer_PrintMessage(UIServer * server);
 void UITimer_Start();
 
 void UIKeyboardInput_Start();
+
+void UIPrintTask_Start();
 
 #endif

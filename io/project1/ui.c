@@ -25,6 +25,9 @@ void UIServer_Start() {
 	
 	int keyboard_input_tid = Create(UIKEYBOARDINPUT_START_PRIORITY, UIKeyboardInput_Start);
 	assert(keyboard_input_tid, "UIServer failed to create UIKeyboardInput");
+	
+	int print_tid = Create(UIPRINTTASK_START_PRIORITY, UIPrintTask_Start);
+	assert(print_tid, "UIserver failed to create print task");
 
 	GenericMessage * receive_message = (GenericMessage *) server.receive_buffer;
 	GenericMessage * reply_message = (GenericMessage *) server.reply_buffer;
@@ -71,21 +74,20 @@ void UIServer_Start() {
 				UIServer_ProcessKeystroke(&server, char_message->chars[0]);
 			}
 			break;
-		case MESSAGE_TYPE_UI_PRINT_MESSAGE:
-			UIServer_PrintMessage(&server);
-			Reply(source_tid, server.reply_buffer, MESSAGE_SIZE);
-			break;
 		default:
 			assert(0, "UIServer_Start: unknown message type");
 			break;
 		}
 	}
 	
+	receive_message->message_type = MESSAGE_TYPE_SHUTDOWN;
+	Send(print_tid, server.receive_buffer, MESSAGE_SIZE, server.reply_buffer, MESSAGE_SIZE);
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer: Failed to get Ack from print task");
+	
 	Exit();
 }
 
 void UIServer_Initialize(UIServer * server) {
-	server->print_message_count = 0;
 	server->dirty = 1;
 	server->command_buffer_index = 0;
 	
@@ -574,18 +576,6 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	server->train_engine_status_hash = new_hash;
 }
 
-void UIServer_PrintMessage(UIServer * server) {
-	UIPrintMessage * receive_message = (UIPrintMessage *) server->receive_buffer;
-	
-	ANSI_SaveCursor();
-	ANSI_Cursor(PRINT_MESSAGE_OFFSET + server->print_message_count, 1);
-	PutString(COM2, "%d: ", Time());
-	PutStringFormat(COM2, receive_message->message, receive_message->va);
-	server->print_message_count++;
-	server->print_message_count %= MAX_PRINT_MESSAGE;
-	ANSI_RestoreCursor();
-}
-
 void UITimer_Start() {
 	DebugRegisterFunction(&UITimer_Start,__func__);
 	int return_code = RegisterAs((char*) UI_TIMER_NAME);
@@ -655,5 +645,47 @@ void UIKeyboardInput_Start() {
 	
 	robprintfbusy((const unsigned char *)"UIKeyboardInput_Start exit\n");
 	Exit();
+}
+
+void UIPrintTask_Start() {
+	RegisterAs((char*) UI_PRINT_TASK_NAME);
+
+	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
+	
+	UIPrintMessage * receive_message = (UIPrintMessage *) receive_buffer;
+	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
+
+	int source_tid;
+	int print_message_count = 0;
+	short running = 1;
+	
+	while (running) {
+		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
+		reply_message->message_type = MESSAGE_TYPE_ACK;
+		
+		switch(receive_message->message_type) {
+		case MESSAGE_TYPE_UI_PRINT_MESSAGE:
+			Reply(source_tid, reply_buffer, MESSAGE_SIZE);
+			ANSI_SaveCursor();
+			ANSI_Cursor(PRINT_MESSAGE_OFFSET + print_message_count, 1);
+			PutString(COM2, "%d: ", Time());
+			PutStringFormat(COM2, receive_message->message, receive_message->va);
+			print_message_count++;
+			print_message_count %= MAX_PRINT_MESSAGE;
+			ANSI_RestoreCursor();
+			break;
+		case MESSAGE_TYPE_SHUTDOWN:
+			Reply(source_tid, reply_buffer, MESSAGE_SIZE);
+			running = 0;
+			break;
+		default:
+			assert(0, "UIPrintTask: unknown message type");
+			break;
+		}
+	}
+	
+	Exit();
+	
 }
 
