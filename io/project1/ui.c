@@ -224,7 +224,7 @@ void UIServer_RunCommand(UIServer * server) {
 		UIServer_HandleMapCommand(server);
 	} else if (server->command_buffer[0] == 't' && server->command_buffer[1] == 's') {
 		UIServer_HandleTimeStopCommand(server);
-	} else if (server->command_buffer[0] == 's' && server->command_buffer[1] == 'e') {
+	} else if (server->command_buffer[0] == 'g' && server->command_buffer[1] == 'o') {
 		UIServer_HandleSetTrainCommand(server);
 	} else if (server->command_buffer[0] == 'd' && server->command_buffer[1] == 'e') {
 		UIServer_HandleSetDestinationCommand(server);
@@ -242,7 +242,7 @@ void UIServer_ResetCommandBuffer(UIServer * server) {
 }
 
 void UIServer_PrintCommandHelp(UIServer * server) {
-	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, ts, set, dest");
+	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, ts, go, dest");
 }
 
 void UIServer_HandleTrainCommand(UIServer * server) {
