@@ -400,7 +400,9 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 	engine->destination_node = GetRandomSensorReachableViaDirectedGraph(&rng, server->current_track_nodes, engine->current_node);
 	
 	PrintMessage("Destination node is %s.", engine->destination_node->name);
-
+	
+	QueueSwitchStatesForDirectedPath(server->queued_switch_states, server->current_track_nodes, engine->current_node, engine->destination_node, 0);
+	
 	engine->state = TRAIN_ENGINE_RUNNING;
 	SendTrainCommand(TRAIN_SPEED, 8 | LIGHTS_MASK, engine->train_num, 0, 0);
 }
@@ -766,7 +768,7 @@ int QueueSwitchStatesForDirectedPath(SwitchState * switch_queue, track_node * tr
 	if (levels > 20){
 		return 0;
 	}
-
+	
 	if(start_node == dest_node){
 		return 1;
 	}else if(start_node->type == NODE_MERGE){
