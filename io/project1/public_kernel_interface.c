@@ -391,7 +391,7 @@ void PrintMessageFormat(const char * fmt, va_list va) {
 	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	int server_tid = WhoIs((char*) UI_SERVER_NAME);
 	
-	if (server_tid) {
+	if (0 && server_tid) {
 		UIPrintMessage * send_message = (UIPrintMessage *) send_buffer;
 		GenericMessage * reply_message = (GenericMessage *) reply_buffer;
 	

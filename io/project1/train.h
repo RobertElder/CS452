@@ -136,6 +136,7 @@ typedef struct TrainServer {
 	GenericMessage * receive_message;
 	GenericMessage * reply_message;
 	TrainServerState state;
+	RNG rng;
 	
 	// Bit flags for each sensor is stored from right to left where
 	// flag & 1<<0 is the first sensor

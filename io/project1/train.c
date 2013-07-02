@@ -132,6 +132,8 @@ void TrainServer_Initialize(TrainServer * server) {
 	assert(server->switch_master_tid, "TrainServer failed to create TrainSwitchMaster");
 	
 	server->num_child_task_running = 4;
+
+	RNG_Initialize(&server->rng,101);
 	
 	int module_num;
 	
@@ -395,12 +397,15 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine) {
 	PrintMessage("Found starting position.");
-	RNG rng;
-	RNG_Initialize(&rng,100);
-	engine->destination_node = GetRandomSensorReachableViaDirectedGraph(&rng, server->current_track_nodes, engine->current_node);
+	engine->destination_node = GetRandomSensorReachableViaDirectedGraph(&server->rng, server->current_track_nodes, engine->current_node);
 	
 	PrintMessage("Destination node is %s.", engine->destination_node->name);
-	
+
+	int switch_num;
+	for (switch_num = 0; switch_num < NUM_SWITCHES; switch_num++) {
+		server->switch_states[switch_num] = SWITCH_UNKNOWN;
+		server->queued_switch_states[switch_num] = SWITCH_UNKNOWN;
+	}
 	QueueSwitchStatesForDirectedPath(server->queued_switch_states, server->current_track_nodes, engine->current_node, engine->destination_node, 0);
 	
 	engine->state = TRAIN_ENGINE_RUNNING;
@@ -763,18 +768,26 @@ int IsNodeReachableViaDirectedGraph(track_node * track_nodes, track_node * start
 }
 
 int QueueSwitchStatesForDirectedPath(SwitchState * switch_queue, track_node * track_nodes, track_node * start_node, track_node * dest_node, int levels) {
-
+	
 	//  Don't go too deep
 	if (levels > 20){
 		return 0;
 	}
-	
+
 	if(start_node == dest_node){
 		return 1;
 	}else if(start_node->type == NODE_MERGE){
-		return QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
+		int r = QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
+		if(r){
+			robprintfbusy((const unsigned char *)"Going through merge %s.\n",start_node->name);
+		}
+		return r;
 	}else if(start_node->type == NODE_SENSOR){
-		return QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
+		int r = QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
+		if(r){
+			robprintfbusy((const unsigned char *)"Going through sensor %s.\n",start_node->name);
+		}
+		return r;
 	}else if (start_node->type == NODE_EXIT){
 		return 0;
 	}else if (start_node->type == NODE_ENTER){
@@ -786,16 +799,18 @@ int QueueSwitchStatesForDirectedPath(SwitchState * switch_queue, track_node * tr
 			//  We need to switch this one to get to our destination
 			assertf((switch_queue[start_node->num] == SWITCH_UNKNOWN),"This path requires that switch %d be set twice.",start_node->num);
 			switch_queue[start_node->num] = SWITCH_STRAIGHT;
+			robprintfbusy((const unsigned char *)"Going through switch %d straight.\n",start_node->num );
 		}else if (rtn2){
 			assertf((switch_queue[start_node->num] == SWITCH_UNKNOWN),"This path requires that switch %d be set twice.",start_node->num);
 			switch_queue[start_node->num] = SWITCH_CURVED;
+			robprintfbusy((const unsigned char *)"Going through switch %d curved.\n",start_node->num );
 		}
 		return rtn1 || rtn2;
 	}else{
 		assert(0,"Case should not happen");
 		return 0;
 	}
-	
+
 }
 
 void TrainEngineClient_Start(){
