@@ -5,6 +5,7 @@
 #include "priorities.h"
 #include "scheduler.h"
 #include "random.h"
+#include "route.h"
 
 void TrainServer_Start() {
 	DebugRegisterFunction(&TrainServer_Start,__func__);
