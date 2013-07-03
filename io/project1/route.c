@@ -133,6 +133,7 @@ int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, 
 	if(start_node == dest_node){
 		info_array[array_index].node = start_node;
 		info_array[array_index].switch_state = SWITCH_UNKNOWN;
+		info_array[array_index].edge = 0;
 		return 1;
 	}else if(start_node->type == NODE_MERGE){
 		int r = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1, array_index + 1);
@@ -140,6 +141,7 @@ int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, 
 		if (r) {
 			info_array[array_index].node = start_node;
 			info_array[array_index].switch_state = SWITCH_UNKNOWN;
+			info_array[array_index].edge = &start_node->edge[DIR_AHEAD];
 		}
 		
 		return r;
@@ -148,6 +150,7 @@ int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, 
 		if(r){
 			info_array[array_index].node = start_node;
 			info_array[array_index].switch_state = SWITCH_UNKNOWN;
+			info_array[array_index].edge = &start_node->edge[DIR_AHEAD];
 		}
 		return r;
 	}else if (start_node->type == NODE_EXIT){
@@ -160,9 +163,11 @@ int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, 
 		if(rtn1){
 			info_array[array_index].node = start_node;
 			info_array[array_index].switch_state = SWITCH_STRAIGHT;
+			info_array[array_index].edge = &start_node->edge[DIR_STRAIGHT];
 		}else if (rtn2){
 			info_array[array_index].node = start_node;
 			info_array[array_index].switch_state = SWITCH_CURVED;
+			info_array[array_index].edge = &start_node->edge[DIR_CURVED];
 		}
 		return rtn1 || rtn2;
 	}else{
@@ -171,5 +176,20 @@ int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, 
 	}
 }
 
-
+int DistanceToNextSensor(RouteNodeInfo * info_array, int array_index) {
+	int distance = 0;
+	int i;
+	
+	for (i = array_index; i < MAX_ROUTE_NODE_INFO; i++) {
+		RouteNodeInfo info = info_array[i];
+		
+		if (info.node->type == NODE_SENSOR) {
+			break;
+		}
+		
+		distance += info.edge->dist;
+	}
+	
+	return distance;
+}
 
