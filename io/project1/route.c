@@ -90,13 +90,13 @@ int QueueSwitchStatesForDirectedPath(SwitchState * switch_queue, track_node * tr
 	}else if(start_node->type == NODE_MERGE){
 		int r = QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
 		if(r){
-			robprintfbusy((const unsigned char *)"Going through merge %s.\n",start_node->name);
+//			robprintfbusy((const unsigned char *)"Going through merge %s.\n",start_node->name);
 		}
 		return r;
 	}else if(start_node->type == NODE_SENSOR){
 		int r = QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
 		if(r){
-			robprintfbusy((const unsigned char *)"Going through sensor %s.\n",start_node->name);
+//			robprintfbusy((const unsigned char *)"Going through sensor %s.\n",start_node->name);
 		}
 		return r;
 	}else if (start_node->type == NODE_EXIT){
@@ -108,13 +108,13 @@ int QueueSwitchStatesForDirectedPath(SwitchState * switch_queue, track_node * tr
 		int rtn2 = QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1);
 		if(rtn1){
 			//  We need to switch this one to get to our destination
-			assertf((switch_queue[start_node->num] == SWITCH_UNKNOWN),"This path requires that switch %d be set twice.",start_node->num);
+//			assertf((switch_queue[start_node->num] == SWITCH_UNKNOWN),"This path requires that switch %d be set twice.",start_node->num);
 			switch_queue[start_node->num] = SWITCH_STRAIGHT;
-			robprintfbusy((const unsigned char *)"Going through switch %d straight.\n",start_node->num );
+//			robprintfbusy((const unsigned char *)"Going through switch %d straight.\n",start_node->num );
 		}else if (rtn2){
-			assertf((switch_queue[start_node->num] == SWITCH_UNKNOWN),"This path requires that switch %d be set twice.",start_node->num);
+//			assertf((switch_queue[start_node->num] == SWITCH_UNKNOWN),"This path requires that switch %d be set twice.",start_node->num);
 			switch_queue[start_node->num] = SWITCH_CURVED;
-			robprintfbusy((const unsigned char *)"Going through switch %d curved.\n",start_node->num );
+//			robprintfbusy((const unsigned char *)"Going through switch %d curved.\n",start_node->num );
 		}
 		return rtn1 || rtn2;
 	}else{
@@ -122,6 +122,53 @@ int QueueSwitchStatesForDirectedPath(SwitchState * switch_queue, track_node * tr
 		return 0;
 	}
 
+}
+
+int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, track_node * start_node, track_node * dest_node, int levels, int array_index) {
+	//  Don't go too deep
+	if (levels > 20){
+		return 0;
+	}
+
+	if(start_node == dest_node){
+		info_array[array_index].node = start_node;
+		info_array[array_index].switch_state = SWITCH_UNKNOWN;
+		return 1;
+	}else if(start_node->type == NODE_MERGE){
+		int r = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1, array_index + 1);
+		
+		if (r) {
+			info_array[array_index].node = start_node;
+			info_array[array_index].switch_state = SWITCH_UNKNOWN;
+		}
+		
+		return r;
+	}else if(start_node->type == NODE_SENSOR){
+		int r = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1, array_index + 1);
+		if(r){
+			info_array[array_index].node = start_node;
+			info_array[array_index].switch_state = SWITCH_UNKNOWN;
+		}
+		return r;
+	}else if (start_node->type == NODE_EXIT){
+		return 0;
+	}else if (start_node->type == NODE_ENTER){
+		return 0;
+	}else if (start_node->type == NODE_BRANCH){
+		int rtn1 = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1, array_index + 1);
+		int rtn2 = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1, array_index + 1);
+		if(rtn1){
+			info_array[array_index].node = start_node;
+			info_array[array_index].switch_state = SWITCH_STRAIGHT;
+		}else if (rtn2){
+			info_array[array_index].node = start_node;
+			info_array[array_index].switch_state = SWITCH_CURVED;
+		}
+		return rtn1 || rtn2;
+	}else{
+		assert(0,"Case should not happen");
+		return 0;
+	}
 }
 
 

@@ -1,9 +1,8 @@
+#ifndef TRAIN_H_
+#define TRAIN_H_
 #include "message.h"
 #include "random.h"
 #include "tracks/track_data.h"
-
-#ifndef TRAIN_H_
-#define TRAIN_H_
 
 #define SENSORS_PER_MODULE 16
 #define NUM_SWITCHES 256
@@ -116,6 +115,8 @@ static const char const TRAIN_ENGINE_STATE_NAMES[][20] = {
 	"Calibrate Speed",
 };
 
+#include "route.h"
+
 struct TrainEngine {
 	int tid;
 	int train_num;
@@ -128,6 +129,8 @@ struct TrainEngine {
 	double expected_time_at_last_sensor;
 	double actual_time_at_last_sensor;
 	track_node * destination_node;
+	RouteNodeInfo route_node_info[MAX_ROUTE_NODE_INFO];
+	int route_node_index;
 };
 
 typedef struct TrainServer {

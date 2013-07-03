@@ -381,7 +381,7 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 
 void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine) {
 	PrintMessage("Engine %d is starting.", engine->train_num);
-	SendTrainCommand(TRAIN_SPEED, 3, engine->train_num, 0, 0);
+	SendTrainCommand(TRAIN_SPEED, 4, engine->train_num, 0, 0);
 	engine->state = TRAIN_ENGINE_FINDING_POSITION;
 }
 
@@ -407,7 +407,10 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 		server->switch_states[switch_num] = SWITCH_UNKNOWN;
 		server->queued_switch_states[switch_num] = SWITCH_UNKNOWN;
 	}
+	
 	QueueSwitchStatesForDirectedPath(server->queued_switch_states, server->current_track_nodes, engine->current_node, engine->destination_node, 0);
+	
+	PopulateRouteNodeInfo(engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0);
 	
 	engine->state = TRAIN_ENGINE_RUNNING;
 	SendTrainCommand(TRAIN_SPEED, 8 | LIGHTS_MASK, engine->train_num, 0, 0);
@@ -418,11 +421,32 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	
 	if (node) {
 		engine->current_node = node;
+		engine->next_node = 0;
 		
 		if (engine->current_node == engine->destination_node) {
 			engine->state = TRAIN_ENGINE_AT_DESTINATION;
 			SendTrainCommand(TRAIN_SPEED, 0, engine->train_num, 0, 0);
-			PrintMessage("At destination.");
+			PrintMessage("At destination %s.", node->name);
+		} else {
+			int i;
+			for (i = engine->route_node_index; i < MAX_ROUTE_NODE_INFO; i++) {
+				if (engine->route_node_info[i].node == engine->current_node) {
+					engine->route_node_index = i;
+					break;
+				}
+			}
+			
+			RouteNodeInfo * next_route_node_info = &engine->route_node_info[engine->route_node_index + 1];
+			
+			engine->next_node = next_route_node_info->node;
+			int next_switch_num = next_route_node_info->node->num;
+			SwitchState next_switch_state = next_route_node_info->switch_state;
+			
+			if (next_switch_state != SWITCH_UNKNOWN && server->queued_switch_states[next_switch_num] != next_switch_state) {
+				server->queued_switch_states[next_switch_num] = next_switch_state;
+				
+				PrintMessage("Switching %d to %c", next_switch_num, next_switch_state);
+			}
 		}
 	}
 }
@@ -690,6 +714,7 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->expected_time_at_last_sensor = 0;
 	engine->actual_time_at_last_sensor = 0;
 	engine->destination_node = 0;
+	engine->route_node_index = 0;
 }
 
 void TrainEngineClient_Start(){
