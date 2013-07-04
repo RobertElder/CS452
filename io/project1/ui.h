@@ -20,8 +20,8 @@ static const int const MAP_ROW_OFFSET = 5;
 static const int const MAP_COL_OFFSET = 20;
 static const int const ENGINE_STATUS_ROW_OFFSET = 23;
 static const int const ENGINE_STATUS_COL_OFFSET = 1;
-static const int const PRINT_MESSAGE_OFFSET = 32;
-static const int const MAX_PRINT_MESSAGE = 20;
+static const int const PRINT_MESSAGE_OFFSET = 33;
+static const int const MAX_PRINT_MESSAGE = 15;
 
 typedef struct UIMessage {
 	MessageType message_type;

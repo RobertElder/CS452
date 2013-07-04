@@ -515,11 +515,13 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		ANSI_CursorNextLine(1);
 		PutString(COM2, "               Next Waypoint:");
 		ANSI_CursorNextLine(1);
-		PutString(COM2, "     Expected Time to Sensor:");
+		PutString(COM2, "                 Destination:");
 		ANSI_CursorNextLine(1);
-		PutString(COM2, "Last Expected Time to Sensor:");
+		PutString(COM2, "     Expected Time at Sensor:");
 		ANSI_CursorNextLine(1);
-		PutString(COM2, "  Last Actual Time to Sensor:");
+		PutString(COM2, "Last Expected Time at Sensor:");
+		ANSI_CursorNextLine(1);
+		PutString(COM2, "  Last Actual Time at Sensor:");
 	}
 	
 	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
@@ -538,6 +540,7 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	int calculated_speed = engine->calculated_speed;
 	const char * current_node_name; //reply_message->current_node_name;
 	const char * next_node_name;
+	const char * dest_node_name;
 	int expected_time_at_next_sensor = engine->expected_time_at_next_sensor;
 	int expected_time_at_last_sensor = engine->expected_time_at_last_sensor;
 	int actual_time_at_last_sensor = engine->actual_time_at_last_sensor;
@@ -554,6 +557,12 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		next_node_name = "-";
 	}
 	
+	if (engine->destination_node) {
+		dest_node_name = engine->destination_node->name;
+	} else {
+		dest_node_name = "-";
+	}
+	
 	int time_difference = expected_time_at_last_sensor - actual_time_at_last_sensor;
 	if (time_difference < 0) {
 		time_difference = -time_difference;
@@ -561,7 +570,7 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	
 	int state = engine->state; //reply_message->state;
 	
-	int new_hash = train_num ^ speed_setting ^ calculated_speed ^ (int) current_node_name ^ state ^ (int) next_node_name ^ expected_time_at_next_sensor ^ expected_time_at_last_sensor ^ actual_time_at_last_sensor;
+	int new_hash = train_num ^ speed_setting ^ calculated_speed ^ (int) current_node_name ^ state ^ (int) next_node_name ^ (int) dest_node_name ^ expected_time_at_next_sensor ^ expected_time_at_last_sensor ^ actual_time_at_last_sensor;
 	int differs = new_hash != server->train_engine_status_hash;
 	
 	if (differs || server->dirty) {
@@ -590,6 +599,11 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		ANSI_CursorForward(col_offset);
 		ANSI_ClearLine(CLEAR_TO_END);
 		PutString(COM2, "%s", next_node_name);
+		ANSI_CursorNextLine(1);
+	
+		ANSI_CursorForward(col_offset);
+		ANSI_ClearLine(CLEAR_TO_END);
+		PutString(COM2, "%s", dest_node_name);
 		ANSI_CursorNextLine(1);
 		
 		ANSI_CursorForward(col_offset);
