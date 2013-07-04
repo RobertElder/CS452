@@ -108,7 +108,7 @@ int QueueSwitchStatesForDirectedPath(SwitchState * switch_queue, track_node * tr
 		int rtn2 = QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1);
 		if(rtn1){
 			//  We need to switch this one to get to our destination
-//			assertf((switch_queue[start_node->num] == SWITCH_UNKNOWN),"This path requires that switch %d be set twice.",start_node->num);
+			assertf((switch_queue[start_node->num] == SWITCH_UNKNOWN),"This path requires that switch %d be set twice.",start_node->num);
 			switch_queue[start_node->num] = SWITCH_STRAIGHT;
 //			robprintfbusy((const unsigned char *)"Going through switch %d straight.\n",start_node->num );
 		}else if (rtn2){

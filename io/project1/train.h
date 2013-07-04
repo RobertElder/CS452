@@ -207,6 +207,8 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 
 void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine);
 
+void TrainServer_QueueSwitchStates(TrainServer *, TrainEngine * engine);
+
 void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * engine);
 
 void TrainServer_ProcessEngineCalibratingSpeed(TrainServer * server, TrainEngine * engine);
