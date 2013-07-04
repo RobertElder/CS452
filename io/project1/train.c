@@ -419,35 +419,47 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine) {
 	track_node * node = TrainServer_GetEnginePosition(server);
 	
-	if (node) {
+	if (node && node != engine->current_node) {
 		engine->current_node = node;
-		engine->next_node = 0;
-		
-		if (engine->current_node == engine->destination_node) {
-			engine->state = TRAIN_ENGINE_AT_DESTINATION;
-			SendTrainCommand(TRAIN_SPEED, 0, engine->train_num, 0, 0);
-			PrintMessage("At destination %s.", node->name);
-		} else {
-			int i;
-			for (i = engine->route_node_index; i < MAX_ROUTE_NODE_INFO; i++) {
-				if (engine->route_node_info[i].node == engine->current_node) {
-					engine->route_node_index = i;
-					break;
-				}
-			}
-			
-			RouteNodeInfo * next_route_node_info = &engine->route_node_info[engine->route_node_index + 1];
-			
-			engine->next_node = next_route_node_info->node;
-			int next_switch_num = next_route_node_info->node->num;
-			SwitchState next_switch_state = next_route_node_info->switch_state;
-			
-			if (next_switch_state != SWITCH_UNKNOWN && server->queued_switch_states[next_switch_num] != next_switch_state) {
-				server->queued_switch_states[next_switch_num] = next_switch_state;
-				
-				PrintMessage("Switching %d to %c", next_switch_num, next_switch_state);
-			}
+		TrainServer_ProcessSensorData(server, engine);
+	}
+}
+
+void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
+	double time = TimeSeconds();
+	engine->calculated_speed = engine->distance_to_next_sensor / time;
+	engine->actual_time_at_last_sensor = time;
+	engine->expected_time_at_last_sensor = engine->expected_time_at_next_sensor;
+	engine->next_node = 0;
+	
+	if (engine->current_node == engine->destination_node) {
+		engine->state = TRAIN_ENGINE_AT_DESTINATION;
+		SendTrainCommand(TRAIN_SPEED, 0, engine->train_num, 0, 0);
+		PrintMessage("At destination %s.", engine->current_node->name);
+		return;
+	}
+	
+	int i = 0;
+	for (i = engine->route_node_index; i < MAX_ROUTE_NODE_INFO; i++) {
+		if (engine->route_node_info[i].node == engine->current_node) {
+			engine->route_node_index = i;
+			break;
 		}
+	}
+
+	engine->distance_to_next_sensor = DistanceToNextSensor(engine->route_node_info, engine->route_node_index);
+	engine->expected_time_at_next_sensor = (double) engine->distance_to_next_sensor / engine->calculated_speed;
+	
+	RouteNodeInfo * next_route_node_info = &engine->route_node_info[engine->route_node_index + 1];
+	
+	engine->next_node = next_route_node_info->node;
+	int next_switch_num = next_route_node_info->node->num;
+	SwitchState next_switch_state = next_route_node_info->switch_state;
+	
+	if (next_switch_state != SWITCH_UNKNOWN && server->queued_switch_states[next_switch_num] != next_switch_state) {
+		server->queued_switch_states[next_switch_num] = next_switch_state;
+		
+		PrintMessage("Switching %d to %c", next_switch_num, next_switch_state);
 	}
 }
 

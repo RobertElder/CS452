@@ -538,6 +538,9 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	int calculated_speed = engine->calculated_speed;
 	const char * current_node_name; //reply_message->current_node_name;
 	const char * next_node_name;
+	int expected_time_at_next_sensor = engine->expected_time_at_next_sensor;
+	int expected_time_at_last_sensor = engine->expected_time_at_last_sensor;
+	int actual_time_at_last_sensor = engine->actual_time_at_last_sensor;
 	
 	if (engine->current_node) {
 		current_node_name = engine->current_node->name;
@@ -551,9 +554,14 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		next_node_name = "-";
 	}
 	
+	int time_difference = expected_time_at_last_sensor - actual_time_at_last_sensor;
+	if (time_difference < 0) {
+		time_difference = -time_difference;
+	}
+	
 	int state = engine->state; //reply_message->state;
 	
-	int new_hash = train_num ^ speed_setting ^ calculated_speed ^ (int) current_node_name ^ state ^ (int) next_node_name;
+	int new_hash = train_num ^ speed_setting ^ calculated_speed ^ (int) current_node_name ^ state ^ (int) next_node_name ^ expected_time_at_next_sensor ^ expected_time_at_last_sensor ^ actual_time_at_last_sensor;
 	int differs = new_hash != server->train_engine_status_hash;
 	
 	if (differs || server->dirty) {
@@ -582,6 +590,31 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		ANSI_CursorForward(col_offset);
 		ANSI_ClearLine(CLEAR_TO_END);
 		PutString(COM2, "%s", next_node_name);
+		ANSI_CursorNextLine(1);
+		
+		ANSI_CursorForward(col_offset);
+		ANSI_ClearLine(CLEAR_TO_END);
+		PutString(COM2, "%d", expected_time_at_next_sensor);
+		ANSI_CursorNextLine(1);
+		
+		ANSI_CursorForward(col_offset);
+		ANSI_ClearLine(CLEAR_TO_END);
+		PutString(COM2, "%d", expected_time_at_last_sensor);
+		ANSI_CursorNextLine(1);
+		
+		ANSI_CursorForward(col_offset);
+		ANSI_ClearLine(CLEAR_TO_END);
+		
+		if (time_difference > 2) {
+			ANSI_Color(WHITE, RED);
+			ANSI_Style(BOLD_STYLE);
+		}
+		
+		PutString(COM2, "%d", actual_time_at_last_sensor);
+		
+		ANSI_Style(NORMAL_STYLE);
+		ANSI_Color(server->foreground_color, server->background_color);
+		
 		ANSI_CursorNextLine(1);
 	}
 

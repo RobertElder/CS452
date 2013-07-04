@@ -128,6 +128,7 @@ struct TrainEngine {
 	double expected_time_at_next_sensor;
 	double expected_time_at_last_sensor;
 	double actual_time_at_last_sensor;
+	int distance_to_next_sensor;
 	track_node * destination_node;
 	RouteNodeInfo route_node_info[MAX_ROUTE_NODE_INFO];
 	int route_node_index;
@@ -203,6 +204,8 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine);
 
 void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine);
+
+void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine);
 
 void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * engine);
 
