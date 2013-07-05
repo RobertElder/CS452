@@ -179,34 +179,23 @@ void IdleTask_Start(){
 	send_message->message_type = MESSAGE_TYPE_HELLO;
 	
 	int admin_tid;
-	int tid_i = 0;
 	while (1) {
 		admin_tid = WhoIs((char*) ADMINISTRATOR_TASK_NAME);
 		
 		if (admin_tid) {
 			break;
 		}
-		
-		tid_i++;
-		assert(tid_i < 1000, "IdleTask: admin tid not found");
+
+		DelaySeconds(0.2);
 	}
 	
-	int i = 0;
 	while(1){
-		if (i > 5000) {
-			Send(admin_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
-			assertf(reply_message->message_type == MESSAGE_TYPE_ACK || reply_message->message_type == MESSAGE_TYPE_SHUTDOWN, "fail\n");
-		
-			if(reply_message->message_type == MESSAGE_TYPE_SHUTDOWN){
-				break;
-			}
-			
-			i = 0;
-		} else {
-			Pass();
+		Send(admin_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+		assertf(reply_message->message_type == MESSAGE_TYPE_ACK || reply_message->message_type == MESSAGE_TYPE_SHUTDOWN, "fail\n");
+	
+		if(reply_message->message_type == MESSAGE_TYPE_SHUTDOWN){
+			break;
 		}
-		
-		i++;
 	}
 
 	Exit();
