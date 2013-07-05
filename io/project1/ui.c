@@ -133,6 +133,7 @@ void UIServer_Render(UIServer * server) {
 	UIServer_PrintMap(server);
 	UIServer_PrintSensors(server);
 	UIServer_PrintSwitches(server);
+	UIServer_PrintTrainMapPosition(server);
 	UIServer_PrintTrainEngineStatus(server);
 	UIServer_PrintCommandLine(server);
 	
@@ -633,6 +634,39 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	}
 
 	server->train_engine_status_hash = new_hash;
+}
+
+void UIServer_PrintTrainMapPosition(UIServer * server) {
+	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
+	TrainEngineStatusMessage * reply_message = (TrainEngineStatusMessage *) server->reply_buffer;
+	
+	send_message->message_type = MESSAGE_TYPE_QUERY_TRAIN_ENGINE;
+	
+	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_PrintTrainMapPosition: did not get ack message");
+	
+	TrainEngine * engine = reply_message->train_engine;
+	TrainMapLabelPosition * pos;
+	int new_hash = (int) engine->destination_node;
+	
+	if (new_hash != server->train_map_position_hash || server->dirty) {
+		server->train_map_position_hash = new_hash;
+		
+		if (engine->destination_node) {
+			pos = &server->current_train_map->sensors[engine->destination_node->num];
+
+			ANSI_Cursor(MAP_ROW_OFFSET + pos->row, MAP_COL_OFFSET + pos->col + 1);
+			ANSI_Color(server->foreground_color, GREEN);
+			PutString(COM2, "%c", server->current_train_map->ascii[pos->ascii_offset]);
+			ANSI_Color(server->foreground_color, server->background_color);
+		} else {
+			// Invalid the sensors cache to cause the print sensors function to repaint
+			int i;
+			for (i = 0; i < NUM_SENSOR_MODULES; i++) {
+				server->sensor_bit_flags_cache[i] = ~server->sensor_bit_flags_cache[i];
+			}
+		}
+	}
 }
 
 void UITimer_Start() {

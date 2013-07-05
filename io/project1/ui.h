@@ -50,6 +50,7 @@ typedef struct UIServer {
 	ANSIColor foreground_color;
 	ANSIColor background_color;
 	int train_engine_status_hash;
+	int train_map_position_hash;
 } UIServer;
 
 void UIServer_Start();
@@ -91,6 +92,8 @@ void UIServer_PrintMap(UIServer * server);
 void UIServer_PrintSwitches(UIServer * server);
 
 void UIServer_PrintTrainEngineStatus(UIServer * server);
+
+void UIServer_PrintTrainMapPosition(UIServer * server);
 
 void UIServer_PrintMessage(UIServer * server);
 
