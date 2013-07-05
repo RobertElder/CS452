@@ -32,6 +32,9 @@ typedef struct Scheduler {
 	unsigned int has_tasks_event_blocked[NUM_EVENTS];
 	unsigned int functions_registered;
 	FunctionMapping function_mappings[MAX_FUNCTION_MAPPINGS];
+	unsigned int scheduled_counter;
+	TD * watchdog_td;
+	unsigned int watchdog_feed_counter;
 } Scheduler;
 
 void Scheduler_Initialize(Scheduler * scheduler);
@@ -62,5 +65,6 @@ void DebugRegisterFunction();
 
 const char * GetRegisteredFunctionName(Scheduler * scheduler, void * entry);
 
+void SchedulerWatchdogTask_Start();
 
 #endif

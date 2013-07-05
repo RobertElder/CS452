@@ -54,7 +54,7 @@ void FirstTask_Start() {
 	
 	// System user tasks
 	tid = Create(NAMESERVER_START_PRIORITY, &NameServer_Start);
-	assert(tid == 2, "NameServer tid not 2");
+	assert(tid == NAMESERVER_TID, "NameServer tid not 2");
 	Pass();
 
 	tid = Create(CLOCKSERVER_START_PRIORITY, &ClockServer_Start);

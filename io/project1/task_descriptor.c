@@ -22,6 +22,8 @@ void TD_Initialize(TD * td, int id, QueuePriority priority, int parent_id, void 
 	td->event_id = NULL_EVENT;
 	td->reply_len = 0;
 	td->send_to_tid = 0;
+	td->schedule_timestamp = 0;
+	td->scheduled_counter = 0;
 }
 
 int is_tid_in_range(int tid) {

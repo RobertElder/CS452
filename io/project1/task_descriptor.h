@@ -32,6 +32,8 @@ typedef struct TaskDescriptor {
 	int * origin_tid;
 	int send_to_tid;
 	EventID event_id;
+	unsigned int schedule_timestamp;
+	unsigned int scheduled_counter;
 } TD;
 
 static const char const TASK_STATE_NAMES[][20] = {
