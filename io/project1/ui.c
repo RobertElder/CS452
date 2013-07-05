@@ -698,6 +698,8 @@ void UITimer_Start() {
 }
 
 void UIKeyboardInput_Start() {
+	DebugRegisterFunction(&UIKeyboardInput_Start,__func__);
+	
 	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
@@ -741,6 +743,7 @@ void UIKeyboardInput_Start() {
 }
 
 void UIPrintTask_Start() {
+	DebugRegisterFunction(&UIPrintTask_Start,__func__);
 	RegisterAs((char*) UI_PRINT_TASK_NAME);
 
 	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));

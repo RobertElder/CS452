@@ -738,6 +738,7 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 }
 
 void TrainEngineClient_Start(){
+	DebugRegisterFunction(&TrainEngineClient_Start,__func__);
 	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	GenericMessage * send_message = (GenericMessage *) send_buffer;
