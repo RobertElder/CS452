@@ -52,5 +52,6 @@ void ANSI_CursorCol(int col);
 void ANSI_SaveCursor();
 void ANSI_RestoreCursor();
 void ANSI_GetCursor();
+void ANSI_ClearCell(int cells);
 
 #endif /* ANSI_H_ */

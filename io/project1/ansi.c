@@ -100,6 +100,15 @@ void ANSI_RestoreCursor() {
 void ANSI_GetCursor() {
 	PutString(COM2, "\x1b[6n");
 }
+
+void ANSI_ClearCell(int cells) {
+	int i;
+	for (i = 0; i < cells; i++) {
+		Putc(COM2, ' ');
+	}
+	ANSI_CursorBackward(cells);
+}
+
 #else
 void ANSI_ResetColor(){}
 void ANSI_Color(ANSIColor text, ANSIColor background){}
@@ -117,5 +126,6 @@ void ANSI_CursorCol(int col){}
 void ANSI_SaveCursor(){}
 void ANSI_RestoreCursor(){}
 void ANSI_GetCursor(){}
+void ANSI_ClearCell(int cells){}
 #endif
 

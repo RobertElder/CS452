@@ -505,22 +505,24 @@ void UIServer_PrintSwitches(UIServer * server) {
 void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	if (server->dirty) {
 		ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET, ENGINE_STATUS_COL_OFFSET);
-		PutString(COM2, "                       TRAIN:");
+		PutString(COM2, "           TRAIN:");
 		ANSI_CursorNextLine(1);
-		PutString(COM2, "                       State:");
+		PutString(COM2, "           State:");
 		ANSI_CursorNextLine(1);
-		PutString(COM2, "                       Speed:");
+		PutString(COM2, "           Speed:");
 		ANSI_CursorNextLine(1);
-		PutString(COM2, "            Current Waypoint:");
+		PutString(COM2, "Current Waypoint:");
 		ANSI_CursorNextLine(1);
-		PutString(COM2, "               Next Waypoint:");
+		PutString(COM2, "   Next Waypoint:");
 		ANSI_CursorNextLine(1);
-		PutString(COM2, "                 Destination:");
-		ANSI_CursorNextLine(1);
+		PutString(COM2, "     Destination:");
+		ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET, ENGINE_STATUS_COL_2_OFFSET);
 		PutString(COM2, "     Expected Time at Sensor:");
 		ANSI_CursorNextLine(1);
+		ANSI_CursorCol(ENGINE_STATUS_COL_2_OFFSET);
 		PutString(COM2, "Last Expected Time at Sensor:");
 		ANSI_CursorNextLine(1);
+		ANSI_CursorCol(ENGINE_STATUS_COL_2_OFFSET);
 		PutString(COM2, "  Last Actual Time at Sensor:");
 	}
 	
@@ -532,7 +534,6 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
 	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_PrintTrainEngineStatus: did not get ack message");
 	
-	const int const col_offset = 32;
 	// TODO: don't use pointers in messages
 	TrainEngine * engine = reply_message->train_engine;
 	int train_num = engine->train_num; //reply_message->train_num;
@@ -576,47 +577,49 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	if (differs || server->dirty) {
 		ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET, ENGINE_STATUS_COL_OFFSET);
 	
-		ANSI_CursorForward(col_offset);
-		ANSI_ClearLine(CLEAR_TO_END);
+		ANSI_CursorCol(ENGINE_DATA_COL_OFFSET);
+		ANSI_ClearCell(10);
 		PutString(COM2, "%d", train_num);
 		ANSI_CursorNextLine(1);
 		
-		ANSI_CursorForward(col_offset);
-		ANSI_ClearLine(CLEAR_TO_END);
+		ANSI_CursorCol(ENGINE_DATA_COL_OFFSET);
+		ANSI_ClearCell(10);
 		PutString(COM2, "%s", TRAIN_ENGINE_STATE_NAMES[state]);
 		ANSI_CursorNextLine(1);
 	
-		ANSI_CursorForward(col_offset);
-		ANSI_ClearLine(CLEAR_TO_END);
+		ANSI_CursorCol(ENGINE_DATA_COL_OFFSET);
+		ANSI_ClearCell(10);
 		PutString(COM2, "%d mm/s (%d)", calculated_speed, speed_setting);
 		ANSI_CursorNextLine(1);
 	
-		ANSI_CursorForward(col_offset);
-		ANSI_ClearLine(CLEAR_TO_END);
+		ANSI_CursorCol(ENGINE_DATA_COL_OFFSET);
+		ANSI_ClearCell(10);
 		PutString(COM2, "%s", current_node_name);
 		ANSI_CursorNextLine(1);
 		
-		ANSI_CursorForward(col_offset);
-		ANSI_ClearLine(CLEAR_TO_END);
+		ANSI_CursorCol(ENGINE_DATA_COL_OFFSET);
+		ANSI_ClearCell(10);
 		PutString(COM2, "%s", next_node_name);
 		ANSI_CursorNextLine(1);
 	
-		ANSI_CursorForward(col_offset);
-		ANSI_ClearLine(CLEAR_TO_END);
+		ANSI_CursorCol(ENGINE_DATA_COL_OFFSET);
+		ANSI_ClearCell(10);
 		PutString(COM2, "%s", dest_node_name);
 		ANSI_CursorNextLine(1);
 		
-		ANSI_CursorForward(col_offset);
+		ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET, ENGINE_STATUS_COL_OFFSET);
+		
+		ANSI_CursorCol(ENGINE_DATA_COL_2_OFFSET);
 		ANSI_ClearLine(CLEAR_TO_END);
 		PutString(COM2, "%d", expected_time_at_next_sensor);
 		ANSI_CursorNextLine(1);
 		
-		ANSI_CursorForward(col_offset);
+		ANSI_CursorCol(ENGINE_DATA_COL_2_OFFSET);
 		ANSI_ClearLine(CLEAR_TO_END);
 		PutString(COM2, "%d", expected_time_at_last_sensor);
 		ANSI_CursorNextLine(1);
 		
-		ANSI_CursorForward(col_offset);
+		ANSI_CursorCol(ENGINE_DATA_COL_2_OFFSET);
 		ANSI_ClearLine(CLEAR_TO_END);
 		
 		if (time_difference > 2) {
