@@ -406,7 +406,7 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 		server->queued_switch_states[switch_num] = SWITCH_UNKNOWN;
 	}
 	
-	PopulateRouteNodeInfo(engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0);
+	PopulateRouteNodeInfo(engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length));
 	
 	engine->state = TRAIN_ENGINE_RUNNING;
 	SendTrainCommand(TRAIN_SPEED, 8 | LIGHTS_MASK, engine->train_num, 0, 0);
@@ -456,7 +456,7 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	}
 	
 	int i = 0;
-	for (i = engine->route_node_index; i < MAX_ROUTE_NODE_INFO; i++) {
+	for (i = engine->route_node_index; i < engine->route_nodes_length; i++) {
 		if (engine->route_node_info[i].node == engine->current_node) {
 			engine->route_node_index = i;
 			break;
@@ -728,6 +728,7 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->actual_time_at_last_sensor = 0;
 	engine->destination_node = 0;
 	engine->route_node_index = 0;
+	engine->route_nodes_length = 0;
 }
 
 void TrainEngineClient_Start(){
