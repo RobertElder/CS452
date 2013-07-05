@@ -138,6 +138,11 @@ void KeyboardInputServer_Start() {
 				KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 				Scheduler_PrintTDCounts(&k_state->scheduler);
 			}
+			
+			if (*UART2RXSts & OE_MASK) {
+				// Ignore and drop the characters
+				*UART2RXSts = 0;
+			}
 
 			UARTErrorCheck(*UART2RXSts, "terminal");
 
