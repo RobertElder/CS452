@@ -23,6 +23,9 @@ void Scheduler_Initialize(Scheduler * scheduler) {
 	scheduler->num_active = 0;
 	scheduler->num_zombie = 0;
 	scheduler->functions_registered = 0;
+	scheduler->watchdog_feed_counter = 0;
+	scheduler->watchdog_td = 0;
+	scheduler->scheduled_counter = 0;
 	
 	int i;
 	for (i = 0; i < MAX_TASKS + 1; i++) {
@@ -64,6 +67,9 @@ void Scheduler_InitAndSetKernelTask(Scheduler * scheduler, KernelState * k_state
 	scheduler->num_tasks++; 
 	safely_add_task_to_priority_queue(&scheduler->task_queue, task_descriptor, task_priority);
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
+	Scheduler_CreateAndScheduleNewTask(scheduler, k_state, PRIORITY_31, SchedulerWatchdogTask_Start);
+	int watchdog_tid = scheduler->current_task_descriptor->return_value;
+	scheduler->watchdog_td = &scheduler->task_descriptors[watchdog_tid];
 }
 
 TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
@@ -167,6 +173,8 @@ void Scheduler_SaveCurrentTaskState(Scheduler * scheduler, KernelState * k_state
 }
 
 void Scheduler_SetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
+	scheduler->scheduled_counter++;
+	
 	if (scheduler->current_task_descriptor == 0) {
 		/* Nothing to do, exit to redboot. */
 		k_state->user_proc_sp_value = k_state->redboot_sp_value;
@@ -180,6 +188,22 @@ void Scheduler_SetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
 		k_state->user_proc_return_value = scheduler->current_task_descriptor->return_value;
 		k_state->user_proc_spsr = scheduler->current_task_descriptor->spsr_register;
 		k_state->user_proc_entry_mode = scheduler->current_task_descriptor->entry_mode;
+		scheduler->current_task_descriptor->schedule_timestamp = scheduler->scheduled_counter;
+		scheduler->current_task_descriptor->scheduled_counter++;
+		
+		if (scheduler->watchdog_td) {
+			if (scheduler->watchdog_td == scheduler->current_task_descriptor) {
+				scheduler->watchdog_feed_counter = 0;
+			} else {
+				scheduler->watchdog_feed_counter++;
+				
+				if (scheduler->watchdog_feed_counter > 1000000) {
+						robprintfbusy((const unsigned char *)"\033[0;1m ***** WATCHDOG *****\033[0m\n");
+					Scheduler_PrintTDCounts(scheduler);
+					while (1) {};
+				}
+			}
+		}
 	}
 }
 
@@ -328,23 +352,30 @@ void Scheduler_PrintTDCounts(Scheduler * scheduler) {
 	for (i = 0; i < MAX_TASKS + 1; i++) {
 		if (Scheduler_IsInitedTid(scheduler, i)) {
 			const char * function_name = GetRegisteredFunctionName(scheduler, scheduler->task_descriptors[i].entry_point);
+			int percentage_run = (float) scheduler->task_descriptors[i].scheduled_counter / scheduler->scheduled_counter * 100;
 			if(function_name){
 				robprintfbusy(
-					(const unsigned char *)" %d: %s  (%s->%d) P=%d\n",
+					(const unsigned char *)" %d: %s  (%s->%d) P=%d C=%d (%d%%) T=%d\n",
 					i, 
 					TASK_STATE_NAMES[scheduler->task_descriptors[i].state],
 					function_name,
 					scheduler->task_descriptors[i].send_to_tid,
-					scheduler->task_descriptors[i].priority
+					scheduler->task_descriptors[i].priority,
+					scheduler->task_descriptors[i].scheduled_counter,
+					percentage_run,
+					scheduler->task_descriptors[i].schedule_timestamp
 				);
 			}else{
 				robprintfbusy(
-					(const unsigned char *)" %d: %s  (%x->%d) P=%d\n",
+					(const unsigned char *)" %d: %s  (%x->%d) P=%d C=%d (%d%%) T=%d\n",
 					i, 
 					TASK_STATE_NAMES[scheduler->task_descriptors[i].state],
 					scheduler->task_descriptors[i].entry_point,
 					scheduler->task_descriptors[i].send_to_tid,
-					scheduler->task_descriptors[i].priority
+					scheduler->task_descriptors[i].priority,
+					scheduler->task_descriptors[i].scheduled_counter,
+					percentage_run,
+					scheduler->task_descriptors[i].schedule_timestamp
 				);
 			}
 		}
@@ -368,4 +399,11 @@ void safely_add_task_to_priority_queue(PriorityQueue * queue, QUEUE_ITEM_TYPE it
 	int queue_return_code = PriorityQueue_Put(queue, item, priority);
 	assert(queue_return_code != ERR_QUEUE_FULL,"priority queue full");
 	assert(queue_return_code != ERR_QUEUE_PRIORITY,"priority queue wrong priority");
+}
+
+void SchedulerWatchdogTask_Start() {
+	DebugRegisterFunction(&SchedulerWatchdogTask_Start,__func__);
+	while (1) {
+		Pass();
+	}
 }
