@@ -7,6 +7,11 @@
 #define SCHEDULER_H_
 
 #define MAX_FUNCTION_MAPPINGS 30
+#ifdef TEST
+	#define WATCHDOG_STARVATION_COUNT 4000000
+#else
+	#define WATCHDOG_STARVATION_COUNT 1000000
+#endif
 
 typedef struct FunctionMapping{
 	void * entry_point;

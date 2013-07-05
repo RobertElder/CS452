@@ -10,6 +10,7 @@
 #include "kernel_irq.h"
 
 extern int _EndOfProgram;
+static short SchedulerWatchdogEnabled = 1;
 
 void Scheduler_Initialize(Scheduler * scheduler) {
 	scheduler->max_tasks = MAX_TASKS;
@@ -189,12 +190,17 @@ void Scheduler_SetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
 		
 		if (scheduler->current_task_descriptor->entry_point == (int*) &SchedulerWatchdogTask_Start) {
 			scheduler->watchdog_feed_counter = 0;
+			
+			if (scheduler->num_ready + scheduler->num_event_blocked + scheduler->num_receive_blocked + scheduler->num_reply_blocked + scheduler->num_send_blocked + scheduler->num_event_blocked == 0) {
+				SchedulerWatchdogEnabled = 0;
+			}
 		} else {
 			scheduler->watchdog_feed_counter++;
 			
-			if (scheduler->watchdog_feed_counter > 1000000) {
-					robprintfbusy((const unsigned char *)"\033[0;1m ***** WATCHDOG *****\033[0m\n");
+			if (scheduler->watchdog_feed_counter > WATCHDOG_STARVATION_COUNT) {
+				robprintfbusy((const unsigned char *)"\033[0;1m ***** WATCHDOG *****\033[0m\n");
 				Scheduler_PrintTDCounts(scheduler);
+				robprintfbusy((const unsigned char *)"\033[0;1m ***** WATCHDOG *****\033[0m\n");
 				while (1) {};
 			}
 		}
@@ -397,7 +403,11 @@ void safely_add_task_to_priority_queue(PriorityQueue * queue, QUEUE_ITEM_TYPE it
 
 void SchedulerWatchdogTask_Start() {
 	DebugRegisterFunction(&SchedulerWatchdogTask_Start,__func__);
-	while (1) {
+
+	while (SchedulerWatchdogEnabled) {
 		Pass();
 	}
+	
+	robprintfbusy((const unsigned char *)"\033[0;1m * Watchdog exit *\033[0m\n");
+	Exit();
 }
