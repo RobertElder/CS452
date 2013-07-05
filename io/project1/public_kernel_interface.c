@@ -69,7 +69,6 @@ int RegisterAs( char *name ) {
 
 	receive_message = (NameServerMessage *) receive_buffer;
 	assert(receive_message->message_type == MESSAGE_TYPE_REGISTER_AS_OK, "Didn't get back a register ok message type");
-	robprintfbusy((const unsigned char *)"RegisterAs for %s returned OK. tid=%d\n", name, MyTid());
 
 
 	// TODO: I'm not sure if we ever send a message to the wrong server since

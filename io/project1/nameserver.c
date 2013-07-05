@@ -93,6 +93,5 @@ void NameServer_PrintTable(NameServer * ns) {
 		if (!ns->filled[tid]) {
 			continue;
 		}
-		robprintfbusy((const unsigned char *)"NameServer_PrintTable: Tid=%d Name=%s\n", tid, ns->names[tid]);
 	}
 }

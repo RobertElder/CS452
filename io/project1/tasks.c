@@ -20,26 +20,6 @@
 
 void KernelTask_Start() {
 	DebugRegisterFunction(&KernelTask_Start,__func__);
-#ifndef ASSERTS
-	robprintfbusy((const unsigned char *)"\033[1;37;41mAsserts are OFF!\033[0m\n");
-#endif
-
-#ifndef PREEMPT
-	robprintfbusy((const unsigned char *)"\033[1;37;41mPREEMPT is OFF!\033[0m\n");
-#endif
-
-#ifndef SLOWWARN
-	robprintfbusy((const unsigned char *)"\033[1;37;41mSLOWWARN is OFF!\033[0m\n");
-#endif
-
-#ifndef ANSI
-	robprintfbusy((const unsigned char *)"\033[1;37;41mANSI is OFF!\033[0m\n");
-#endif
-
-#ifndef UI
-	robprintfbusy((const unsigned char *)"\033[1;37;41mUI is OFF!\033[0m\n");
-#endif
-
 	int tid = Create(FIRSTTASK_START_PRIORITY, &FirstTask_Start);
 	
 	assertf(tid == 1, "FirstTask tid not 1, got %d", tid);
@@ -184,8 +164,6 @@ void ClockPrintTask_Start() {
 		DelaySeconds(1);
 	}
 	
-	robprintfbusy((const unsigned char *)"ClockPrintTask Exit\n");
-	
 	Exit();
 }
 
@@ -221,7 +199,6 @@ void IdleTask_Start(){
 		
 			if(reply_message->message_type == MESSAGE_TYPE_SHUTDOWN){
 				break;
-				robprintfbusy((const unsigned char *)"IdleTask_Start: Got shutdown\n" );
 			}
 			
 			i = 0;
@@ -268,7 +245,6 @@ void AdministratorTask_Start() {
 				shutdown_requests++;
 				reply_msg->message_type = MESSAGE_TYPE_ACK;
 				Reply(source_tid, reply_buffer, MESSAGE_SIZE);
-				robprintfbusy((const unsigned char *)"Got shutdown request %d, total.\n" , shutdown_requests);
 				break;
 			}case MESSAGE_TYPE_HELLO:{
 				if(shutdown_requests == required_requests){
@@ -288,7 +264,6 @@ void AdministratorTask_Start() {
 		Pass();
 	}
 	
-	robprintfbusy((const unsigned char *)"AdministratorTask_Start: Got %d shutdowns needed %d, shutdown send %d\n" , shutdown_requests, required_requests, idletask_shutdown_sent);
 	
 	GenericMessage * shutdown_send_message = (GenericMessage *) send_buffer;
 	GenericMessage * shutdown_reply_message = (GenericMessage *) reply_buffer;
@@ -332,13 +307,10 @@ void AdministratorTask_Start() {
 	Send(NAMESERVER_TID, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 	assert(ns_reply_message->message_type==MESSAGE_TYPE_ACK, "AdministratorTask_Start didn't get ACK from name server");
 
-	robprintfbusy((const unsigned char *)"AdministratorTask Exit\n");
-	
 	Exit();
 }
 
 int overflow(int times){
-	robprintfbusy((const unsigned char *)"Doing overflow in task %d with time as %d\n",times, MyTid());
 	int i = 0;
 	Pass();
 	if(times != 0){

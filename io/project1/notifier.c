@@ -43,8 +43,6 @@ void ClockNotifier_Start() {
 		}
 	}
 
-	robprintfbusy((const unsigned char *)"ClockNotifier TID=%d: exit\n", MyTid());
-
 	Exit();
 }
 
@@ -62,7 +60,6 @@ void KeyboardInputNotifier_Start() {
 	
 	while (1) {
 		AwaitEvent(UART2_RX_EVENT);
-//		robprintfbusy((const unsigned char *)"KeyboardInputNotifier_Start: keypressed");
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		assert(reply_message->message_type == MESSAGE_TYPE_ACK,
 			"KeyboardInputNotifier didn't get an ACK");
@@ -95,8 +92,6 @@ void ScreenOutputNotifier_Start() {
 		assert(reply_message->message_type == MESSAGE_TYPE_ACK, "ScreenOutputNotifier didn't get an ACK");
 	}
 	
-	robprintfbusy((const unsigned char *)"ScreenOutputNotifier_Start: exit\n");
-
 	Exit();
 }
 
@@ -197,8 +192,6 @@ void TrainIONotifier_Start() {
 			break;
 		}
 	}
-
-	robprintfbusy((const unsigned char *)"TrainIONotifier_Start TID=%d: exit\n", MyTid());
 
 	Exit();
 }

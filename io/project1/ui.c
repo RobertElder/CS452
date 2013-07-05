@@ -41,7 +41,6 @@ void UIServer_Start() {
 		switch(receive_message->message_type) {
 		case MESSAGE_TYPE_SHUTDOWN:
 			Reply(source_tid, server.reply_buffer, MESSAGE_SIZE);
-			robprintfbusy((const unsigned char *)"UIServer_Start Exiting because of shutdown.\n");
 
 			shutdown = 1;
 			break;
@@ -689,7 +688,6 @@ void UITimer_Start() {
 			"UITimer_Start: didn't get ACK message");
 
 		if(reply_message->message_type == MESSAGE_TYPE_SHUTDOWN){
-			robprintfbusy((const unsigned char *)"UITimer_Start shutting down by request.\n");
 			break;
 		}
 	}
@@ -707,8 +705,6 @@ void UIKeyboardInput_Start() {
 	char data;
 	int ui_server_tid;
 	int i = 0;
-	
-	robprintfbusy((const unsigned char *)"UIKeyboardInput_Start tid=%d\n", MyTid());
 	
 	while (1) {
 		ui_server_tid = WhoIs((char*) UI_SERVER_NAME);
@@ -738,7 +734,6 @@ void UIKeyboardInput_Start() {
 		assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIKeyboardInput: failed to send char to ui server");
 	}
 	
-	robprintfbusy((const unsigned char *)"UIKeyboardInput_Start exit\n");
 	Exit();
 }
 

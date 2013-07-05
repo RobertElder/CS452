@@ -18,12 +18,6 @@ extern int _BssEnd;
 extern int _EndOfProgram;
 
 void print_kernel_state(KernelState * k_state){
-	//TD * current_t = k_state->current_task_descriptor;
-	//robprintfbusy((const unsigned char *)"---- Kernel State ----.\n");
-	//robprintfbusy((const unsigned char *)"Max tasks: %d.\n",k_state->max_tasks);
-	//robprintfbusy((const unsigned char *)"SP value: %x task %d.\n",current_t->stack_pointer, current_t->id);
-	//robprintfbusy((const unsigned char *)"LR value: %x task %d.\n",current_t->link_register, current_t->id);
-	//robprintfbusy((const unsigned char *)"Return value (if applicable): %x.\n",k_state->user_proc_return_value);
 }
 
 /* TODO:  Calling a kernel function from inside another kernel function is currently not supported. */
@@ -311,7 +305,6 @@ int k_Reply(int tid, char *reply, int replylen){
 
 	scheduler->current_task_descriptor->reply_msg = reply;
 	if (Scheduler_IsInitedTid(scheduler, tid)) {
-		//robprintfbusy((unsigned const char *)"Task %d replies to task %d\n",k_state->current_task_descriptor->id,tid);
 		TD * target_td = &scheduler->task_descriptors[tid];
 		
 		assertf(target_td->state == REPLY_BLOCKED,
@@ -354,8 +347,6 @@ int k_AwaitEvent(EventID event_id) {
 	scheduler->current_task_descriptor->event_id = event_id;
 	assert(!(scheduler->has_tasks_event_blocked[event_id]),"More than one task is attempting to block on an event at once.  We don't support this right now.");
 	scheduler->has_tasks_event_blocked[event_id] = scheduler->current_task_descriptor->id;
-	
-	//robprintfbusy((const unsigned char *)"AwaitEvent called\n");
 	
 	// See kernel_irc.c for what is enabled/disabled
 	switch(event_id) {

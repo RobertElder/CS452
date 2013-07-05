@@ -18,7 +18,6 @@ void UARTErrorCheck(int sts, const char * context){
 
 void UARTBootstrapTask_Start() {
 	DebugRegisterFunction(&UARTBootstrapTask_Start,__func__);
-	robprintfbusy((const unsigned char *)"UARTBootstrapTask_Start tid=%d", MyTid());
 	UARTBootstrapTask uart;
 	UARTBootstrapTask_Initialize(&uart);
 	
@@ -125,9 +124,6 @@ void KeyboardInputServer_Start() {
 		switch(server.receive_message->message_type) {
 		case MESSAGE_TYPE_SHUTDOWN:
 			// from admin task
-			robprintfbusy((const unsigned char *)
-				"KeyboardInputServer_Start shutting down by request.\n");
-
 			server.state = UARTSS_SHUTDOWN;
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			
@@ -220,9 +216,6 @@ void ScreenOutputServer_Start() {
 		switch(server.receive_message->message_type) {
 		case MESSAGE_TYPE_SHUTDOWN:
 			// from admin task
-			robprintfbusy((const unsigned char *)
-				"ScreenOutputServer_Start shutting down by request.\n");
-
 			server.state = UARTSS_SHUTDOWN;
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 
@@ -308,9 +301,6 @@ void TrainInputServer_Start() {
 		switch(server.receive_message->message_type) {
 		case MESSAGE_TYPE_SHUTDOWN:
 			// from admin task
-			robprintfbusy((const unsigned char *)
-				"TrainInputServer_Start shutting down by request.\n");
-
 			server.state = UARTSS_SHUTDOWN;
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			
@@ -413,9 +403,6 @@ void TrainOutputServer_Start() {
 		switch(server.receive_message->message_type) {
 		case MESSAGE_TYPE_SHUTDOWN:
 			// from admin task
-			robprintfbusy((const unsigned char *)
-				"TrainOutputServer_Start shutting down by request.\n");
-
 			server.state = UARTSS_SHUTDOWN;
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			

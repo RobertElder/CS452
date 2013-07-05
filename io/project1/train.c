@@ -21,7 +21,6 @@ void TrainServer_Start() {
 		case MESSAGE_TYPE_SHUTDOWN:
 			// from admin tid
 			admin_tid = server.source_tid;
-			robprintfbusy((const unsigned char *)"TrainServer_Start Exiting because of shutdown.\n");
 			server.state = TRAIN_SERVER_SHUTDOWN;
 			
 			Send(server.train_command_server_tid, server.receive_buffer, MESSAGE_SIZE, server.reply_buffer, MESSAGE_SIZE);
@@ -104,7 +103,6 @@ void TrainServer_Start() {
 	assert(server.reply_message->message_type == MESSAGE_TYPE_ACK, "TrainServer: failed to set ack message");
 	Reply(admin_tid, server.reply_buffer, MESSAGE_SIZE);
 	
-	robprintfbusy((const unsigned char *)"TrainServer_Start exit.\n");
 
 	Exit();
 }
@@ -543,7 +541,6 @@ void TrainServerTimer_Start() {
 			"TrainServerTimer: didn't get ACK message");
 
 		if(reply_message->message_type == MESSAGE_TYPE_SHUTDOWN){
-			robprintfbusy((const unsigned char *)"TrainServerTimer shutting down by request.\n");
 			break;
 		}
 	}
@@ -553,7 +550,6 @@ void TrainServerTimer_Start() {
 
 void TrainCommandServer_Start() {
 	DebugRegisterFunction(&TrainCommandServer_Start,__func__);
-	robprintfbusy((const unsigned char *)"TrainCommandServer_Start. tid=%d\n", MyTid());
 	
 	int return_code = RegisterAs((char*) TRAIN_COMMAND_SERVER_NAME);
 	assertf(return_code == 0, "TrainCommandServer failed to register");
@@ -575,7 +571,6 @@ void TrainCommandServer_Start() {
 		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
 		
 		if (command_receive_message->message_type == MESSAGE_TYPE_SHUTDOWN) {
-			robprintfbusy((const unsigned char *)"TrainCommandServer got shutdown\n");
 			command_reply_message->message_type = MESSAGE_TYPE_ACK;
 			Reply(source_tid, reply_buffer, MESSAGE_SIZE);
 			break;
@@ -657,7 +652,6 @@ void TrainCommandServer_Start() {
 
 void TrainSensorReader_Start() {
 	DebugRegisterFunction(&TrainSensorReader_Start,__func__);
-	robprintfbusy((const unsigned char *)"TrainSensorReader_Start. tid=%d\n", MyTid());
 
 	char send_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
@@ -718,7 +712,6 @@ void TrainSensorReader_Start() {
 		}
 	}
 	
-	robprintfbusy((const unsigned char *)"TrainSensorReader exit. tid=%d\n", MyTid());
 	
 	Exit();
 }
@@ -782,7 +775,6 @@ void TrainEngine_SetInitialSwitches() {
 
 void TrainSwitchMaster_Start() {
 	DebugRegisterFunction(&TrainSwitchMaster_Start,__func__);
-	robprintfbusy((const unsigned char *)"TrainSwitchMaster_Start. tid=%d\n", MyTid());
 	
 	int return_code = RegisterAs((char*) TRAIN_SWITCH_MASTER_NAME);
 	assertf(return_code == 0, "TrainSwitchMaster failed to register");

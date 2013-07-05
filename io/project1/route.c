@@ -90,13 +90,11 @@ int QueueSwitchStatesForDirectedPath(SwitchState * switch_queue, track_node * tr
 	}else if(start_node->type == NODE_MERGE){
 		int r = QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
 		if(r){
-//			robprintfbusy((const unsigned char *)"Going through merge %s.\n",start_node->name);
 		}
 		return r;
 	}else if(start_node->type == NODE_SENSOR){
 		int r = QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
 		if(r){
-//			robprintfbusy((const unsigned char *)"Going through sensor %s.\n",start_node->name);
 		}
 		return r;
 	}else if (start_node->type == NODE_EXIT){
@@ -110,11 +108,9 @@ int QueueSwitchStatesForDirectedPath(SwitchState * switch_queue, track_node * tr
 			//  We need to switch this one to get to our destination
 			assertf((switch_queue[start_node->num] == SWITCH_UNKNOWN),"This path requires that switch %d be set twice.",start_node->num);
 			switch_queue[start_node->num] = SWITCH_STRAIGHT;
-//			robprintfbusy((const unsigned char *)"Going through switch %d straight.\n",start_node->num );
 		}else if (rtn2){
 //			assertf((switch_queue[start_node->num] == SWITCH_UNKNOWN),"This path requires that switch %d be set twice.",start_node->num);
 			switch_queue[start_node->num] = SWITCH_CURVED;
-//			robprintfbusy((const unsigned char *)"Going through switch %d curved.\n",start_node->num );
 		}
 		return rtn1 || rtn2;
 	}else{
