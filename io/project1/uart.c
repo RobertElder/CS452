@@ -10,10 +10,10 @@
 volatile static int * const UART1Flag = (int*) (UART1_BASE + UART_FLAG_OFFSET);
 
 void UARTErrorCheck(int sts, const char * context){
-	assertf(!(sts && FE_MASK), "Framing error detected communicating with %s", context);
-	assertf(!(sts && PE_MASK), "Parity error detected communicating with %s", context);
-	assertf(!(sts && BE_MASK), "Break error detected communicating with %s", context);
-	assertf(!(sts && OE_MASK), "Overrun error detected communicating with %s", context);
+	assertf(!(sts & FE_MASK), "Framing error detected communicating with %s", context);
+	assertf(!(sts & PE_MASK), "Parity error detected communicating with %s", context);
+	assertf(!(sts & BE_MASK), "Break error detected communicating with %s", context);
+	assertf(!(sts & OE_MASK), "Overrun error detected communicating with %s", context);
 }
 
 void UARTBootstrapTask_Start() {
