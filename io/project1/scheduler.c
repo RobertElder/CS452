@@ -24,7 +24,6 @@ void Scheduler_Initialize(Scheduler * scheduler) {
 	scheduler->num_zombie = 0;
 	scheduler->functions_registered = 0;
 	scheduler->watchdog_feed_counter = 0;
-	scheduler->watchdog_td = 0;
 	scheduler->scheduled_counter = 0;
 	
 	int i;
@@ -67,9 +66,6 @@ void Scheduler_InitAndSetKernelTask(Scheduler * scheduler, KernelState * k_state
 	scheduler->num_tasks++; 
 	safely_add_task_to_priority_queue(&scheduler->task_queue, task_descriptor, task_priority);
 	Scheduler_ScheduleAndSetNextTaskState(scheduler, k_state);
-	Scheduler_CreateAndScheduleNewTask(scheduler, k_state, PRIORITY_31, SchedulerWatchdogTask_Start);
-	int watchdog_tid = scheduler->current_task_descriptor->return_value;
-	scheduler->watchdog_td = &scheduler->task_descriptors[watchdog_tid];
 }
 
 TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
@@ -191,17 +187,15 @@ void Scheduler_SetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
 		scheduler->current_task_descriptor->schedule_timestamp = scheduler->scheduled_counter;
 		scheduler->current_task_descriptor->scheduled_counter++;
 		
-		if (scheduler->watchdog_td) {
-			if (scheduler->watchdog_td == scheduler->current_task_descriptor) {
-				scheduler->watchdog_feed_counter = 0;
-			} else {
-				scheduler->watchdog_feed_counter++;
-				
-				if (scheduler->watchdog_feed_counter > 1000000) {
-						robprintfbusy((const unsigned char *)"\033[0;1m ***** WATCHDOG *****\033[0m\n");
-					Scheduler_PrintTDCounts(scheduler);
-					while (1) {};
-				}
+		if (scheduler->current_task_descriptor->entry_point == (int*) &SchedulerWatchdogTask_Start) {
+			scheduler->watchdog_feed_counter = 0;
+		} else {
+			scheduler->watchdog_feed_counter++;
+			
+			if (scheduler->watchdog_feed_counter > 1000000) {
+					robprintfbusy((const unsigned char *)"\033[0;1m ***** WATCHDOG *****\033[0m\n");
+				Scheduler_PrintTDCounts(scheduler);
+				while (1) {};
 			}
 		}
 	}

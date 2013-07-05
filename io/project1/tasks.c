@@ -45,6 +45,10 @@ void FirstTask_Start() {
 	assert(tid > 0, "AdministratorTask tid not positive");
 	Pass();
 	
+	tid = Create(PRIORITY_31, SchedulerWatchdogTask_Start);
+	assert(tid > 0, "SchedulerWatchdogTask tid not positive");
+	Pass();
+	
 #ifndef TEST
 	tid = Create(UARTBOOTSTRAPTASK_START_PRIORITY, &UARTBootstrapTask_Start);
 	assert(tid > 0, "UARTBootstrapTask tid not positive");

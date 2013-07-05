@@ -33,7 +33,6 @@ typedef struct Scheduler {
 	unsigned int functions_registered;
 	FunctionMapping function_mappings[MAX_FUNCTION_MAPPINGS];
 	unsigned int scheduled_counter;
-	TD * watchdog_td;
 	unsigned int watchdog_feed_counter;
 } Scheduler;
 
