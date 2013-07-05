@@ -199,3 +199,17 @@ int DistanceToNextSensor(RouteNodeInfo * info_array, int array_index) {
 	return distance;
 }
 
+track_node * GetNextSensor(RouteNodeInfo * info_array, int array_index) {
+	int i;
+	
+	for (i = array_index; i < MAX_ROUTE_NODE_INFO; i++) {
+		RouteNodeInfo info = info_array[i];
+		
+		if (info.node->type == NODE_SENSOR && i != array_index) {
+			return info.node;
+		}
+		
+	}
+	
+	return 0;
+}
