@@ -184,13 +184,15 @@ void UIServer_ProcessKeystroke(UIServer * server, char c) {
 	if (c == '\r') {
 		UIServer_RunCommand(server);
 		UIServer_ResetCommandBuffer(server);
-	} else if (c == '\b' && server->command_buffer_index > 0) {
-		server->command_buffer_index--;
+	} else if (c == '\b') {
+		if (server->command_buffer_index > 0) {
+			server->command_buffer_index--;
 
-		server->command_buffer[server->command_buffer_index] = 0;
+			server->command_buffer[server->command_buffer_index] = 0;
 		
-		ANSI_CursorBackward(1);
-		PutString(COM2, " ");
+			ANSI_CursorBackward(1);
+			PutString(COM2, " ");
+		}
 	} else if (server->command_buffer_index < UI_SERVER_COMMAND_BUFFER_SIZE - 1) {
 		server->command_buffer[server->command_buffer_index] = c;
 		
