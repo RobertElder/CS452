@@ -583,12 +583,12 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		ANSI_CursorNextLine(1);
 		
 		ANSI_CursorCol(ENGINE_DATA_COL_OFFSET);
-		ANSI_ClearCell(10);
+		ANSI_ClearCell(20);
 		PutString(COM2, "%s", TRAIN_ENGINE_STATE_NAMES[state]);
 		ANSI_CursorNextLine(1);
 	
 		ANSI_CursorCol(ENGINE_DATA_COL_OFFSET);
-		ANSI_ClearCell(10);
+		ANSI_ClearCell(20);
 		PutString(COM2, "%d mm/s (%d)", calculated_speed, speed_setting);
 		ANSI_CursorNextLine(1);
 	
