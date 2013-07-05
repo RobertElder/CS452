@@ -132,6 +132,7 @@ struct TrainEngine {
 	track_node * destination_node;
 	RouteNodeInfo route_node_info[MAX_ROUTE_NODE_INFO];
 	int route_node_index;
+	int route_nodes_length;
 };
 
 typedef struct TrainServer {

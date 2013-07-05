@@ -120,21 +120,25 @@ int QueueSwitchStatesForDirectedPath(SwitchState * switch_queue, track_node * tr
 
 }
 
-int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, track_node * start_node, track_node * dest_node, int levels, int array_index) {
+int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, track_node * start_node, track_node * dest_node, int levels, int array_index, int * route_nodes_length) {
 	//  Don't go too deep
 	if (levels > 20){
 		return 0;
 	}
 
 	if(start_node == dest_node){
+		*route_nodes_length = (*route_nodes_length) + 1;
+		assert(*route_nodes_length <= MAX_ROUTE_NODE_INFO,"Too many route nodes.\n");
 		info_array[array_index].node = start_node;
 		info_array[array_index].switch_state = SWITCH_UNKNOWN;
 		info_array[array_index].edge = 0;
 		return 1;
 	}else if(start_node->type == NODE_MERGE){
-		int r = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1, array_index + 1);
+		int r = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1, array_index + 1, route_nodes_length);
 		
 		if (r) {
+			*route_nodes_length = (*route_nodes_length) + 1;
+			assert(*route_nodes_length <= MAX_ROUTE_NODE_INFO,"Too many route nodes.\n");
 			info_array[array_index].node = start_node;
 			info_array[array_index].switch_state = SWITCH_UNKNOWN;
 			info_array[array_index].edge = &start_node->edge[DIR_AHEAD];
@@ -142,8 +146,10 @@ int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, 
 		
 		return r;
 	}else if(start_node->type == NODE_SENSOR){
-		int r = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1, array_index + 1);
+		int r = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1, array_index + 1, route_nodes_length);
 		if(r){
+			*route_nodes_length = (*route_nodes_length) + 1;
+			assert(*route_nodes_length <= MAX_ROUTE_NODE_INFO,"Too many route nodes.\n");
 			info_array[array_index].node = start_node;
 			info_array[array_index].switch_state = SWITCH_UNKNOWN;
 			info_array[array_index].edge = &start_node->edge[DIR_AHEAD];
@@ -154,13 +160,17 @@ int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, 
 	}else if (start_node->type == NODE_ENTER){
 		return 0;
 	}else if (start_node->type == NODE_BRANCH){
-		int rtn1 = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1, array_index + 1);
-		int rtn2 = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1, array_index + 1);
+		int rtn1 = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1, array_index + 1, route_nodes_length);
+		int rtn2 = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1, array_index + 1, route_nodes_length);
 		if(rtn1){
+			*route_nodes_length = (*route_nodes_length) + 1;
+			assert(*route_nodes_length <= MAX_ROUTE_NODE_INFO,"Too many route nodes.\n");
 			info_array[array_index].node = start_node;
 			info_array[array_index].switch_state = SWITCH_STRAIGHT;
 			info_array[array_index].edge = &start_node->edge[DIR_STRAIGHT];
 		}else if (rtn2){
+			*route_nodes_length = (*route_nodes_length) + 1;
+			assert(*route_nodes_length <= MAX_ROUTE_NODE_INFO,"Too many route nodes.\n");
 			info_array[array_index].node = start_node;
 			info_array[array_index].switch_state = SWITCH_CURVED;
 			info_array[array_index].edge = &start_node->edge[DIR_CURVED];

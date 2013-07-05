@@ -29,7 +29,7 @@ int IsNodeReachableViaDirectedGraph(track_node * , track_node * , track_node * ,
 
 int QueueSwitchStatesForDirectedPath(SwitchState * , track_node * , track_node * , track_node * , int levels);
 
-int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, track_node * start_node, track_node * end_node, int levels, int array_index);
+int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, track_node * start_node, track_node * end_node, int levels, int array_index, int *);
 
 int DistanceToNextSensor(RouteNodeInfo * info_array, int array_index);
 
