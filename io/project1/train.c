@@ -783,6 +783,7 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->train_num = train_num;
 	engine->state = TRAIN_ENGINE_IDLE;
 	engine->current_node = 0;
+	engine->next_node = 0;
 	engine->speed_setting = 0;
 	engine->calculated_speed = 0;
 	engine->expected_time_at_next_sensor = 0;
