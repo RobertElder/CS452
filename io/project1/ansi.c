@@ -109,6 +109,14 @@ void ANSI_ClearCell(int cells) {
 	ANSI_CursorBackward(cells);
 }
 
+void ANSI_SetScrollRegion(int first_row, int last_row) {
+	PutString(COM2, "\x1b[%d;%dr", first_row, last_row);
+}
+
+void ANSI_SetScrollRegionAll() {
+	PutString(COM2, "\x1b[r");
+}
+
 #else
 void ANSI_ResetColor(){}
 void ANSI_Color(ANSIColor text, ANSIColor background){}
@@ -127,5 +135,7 @@ void ANSI_SaveCursor(){}
 void ANSI_RestoreCursor(){}
 void ANSI_GetCursor(){}
 void ANSI_ClearCell(int cells){}
+void ANSI_SetScrollRegion(int first_row, int last_row){}
+void ANSI_SetScrollRegionAll(){}
 #endif
 

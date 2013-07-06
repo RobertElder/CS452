@@ -210,6 +210,7 @@ void UIServer_RunCommand(UIServer * server) {
 		UIServer_PrintCommandHelp(server);
 	} else if (server->command_buffer[0] == 'q') {
 		PutString(COM2, "Quiting. Goodbye.");
+		ANSI_SetScrollRegionAll();
 		DelaySeconds(1);
 		int admin_tid = WhoIs((char*) ADMINISTRATOR_TASK_NAME);
 		GenericMessage * send_message = (GenericMessage *) server->send_buffer;
@@ -757,8 +758,9 @@ void UIPrintTask_Start() {
 	GenericMessage * reply_message = (GenericMessage *) reply_buffer;
 
 	int source_tid;
-	int print_message_count = 0;
 	short running = 1;
+	
+	ANSI_SetScrollRegion(PRINT_MESSAGE_OFFSET, PRINT_MESSAGE_OFFSET + MAX_PRINT_MESSAGE);
 	
 	while (running) {
 		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
@@ -768,14 +770,11 @@ void UIPrintTask_Start() {
 		case MESSAGE_TYPE_UI_PRINT_MESSAGE:
 			Reply(source_tid, reply_buffer, MESSAGE_SIZE);
 			ANSI_SaveCursor();
-			ANSI_Cursor(PRINT_MESSAGE_OFFSET + print_message_count, 1);
+			ANSI_Cursor(PRINT_MESSAGE_OFFSET + MAX_PRINT_MESSAGE, 1);
 			ANSI_ClearLine(CLEAR_TO_END);
 			PutString(COM2, "%d: ", Time());
 			PutStringFormat(COM2, receive_message->message, receive_message->va);
-			ANSI_CursorNextLine(1);
-			ANSI_ClearLine(CLEAR_TO_END);
-			print_message_count++;
-			print_message_count %= MAX_PRINT_MESSAGE;
+			PutString(COM2, "\n");
 			ANSI_RestoreCursor();
 			break;
 		case MESSAGE_TYPE_SHUTDOWN:

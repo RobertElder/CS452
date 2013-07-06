@@ -313,7 +313,9 @@ void TrainServer_HandleTrainEngineClientCommandRequest(TrainServer * server) {
 		int train_num = train_speed_settings & 0xff;
 		reply_message->c1 = train_speed;
 		reply_message->c2 = train_num;
-		PrintMessage("Setting train %d to speed %d", train_num, train_speed);
+		if (train_speed != 0 && train_speed != 16) {
+			PrintMessage("Setting train %d to speed %d", train_num, train_speed);
+		}
 	} else {
 		reply_message->command = TRAIN_ENGINE_CLIENT_DO_NOTHING;
 	}
