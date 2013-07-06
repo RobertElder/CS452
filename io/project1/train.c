@@ -160,6 +160,8 @@ void TrainServer_Initialize(TrainServer * server) {
 	int i;
 	for(i = 0; i < NUM_ENGINES; i++)
 		TrainEngine_Initialize(&(server->train_engines[i]), i);
+	
+	Queue_Initialize((Queue*) &server->train_speed_queue, TRAIN_SPEED_QUEUE_SIZE);
 
 	//  The train engine relies on the server model being set up correctly first.
 	server->train_engines[0].tid = Create(TRAINENGINE_START_PRIORITY, TrainEngineClient_Start);
@@ -301,9 +303,20 @@ void TrainServer_HandleQueryTrainEngine(TrainServer * server) {
 void TrainServer_HandleTrainEngineClientCommandRequest(TrainServer * server) {
 	TrainEngineClientMessage * reply_message = (TrainEngineClientMessage *) server->reply_buffer;
 	
-	// TODO tell train engine client to do things
 	reply_message->message_type = MESSAGE_TYPE_ACK;
-	reply_message->command = TRAIN_ENGINE_CLIENT_DO_NOTHING;
+	
+	int train_speed_settings = (int) Queue_PopStart((Queue*) &server->train_speed_queue);
+	
+	if (train_speed_settings) {
+		reply_message->command = TRAIN_ENGINE_CLIENT_SET_SPEED;
+		int train_speed = train_speed_settings >> 8 & 0xff;
+		int train_num = train_speed_settings & 0xff;
+		reply_message->c1 = train_speed;
+		reply_message->c2 = train_num;
+		PrintMessage("Setting train %d to speed %d", train_num, train_speed);
+	} else {
+		reply_message->command = TRAIN_ENGINE_CLIENT_DO_NOTHING;
+	}
 	
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 }
@@ -392,7 +405,7 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 
 void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine) {
 	PrintMessage("Engine %d is starting.", engine->train_num);
-	SendTrainCommand(TRAIN_SPEED, 4, engine->train_num, 0, 0);
+	TrainServer_SetTrainSpeed(server, 4, engine->train_num);
 	engine->state = TRAIN_ENGINE_FINDING_POSITION;
 }
 
@@ -402,7 +415,7 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 	if (node) {
 		engine->state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
 		engine->current_node = node;
-		SendTrainCommand(TRAIN_SPEED, 0, engine->train_num, 0, 0);
+		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
 	}
 }
 
@@ -422,7 +435,7 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 	PopulateRouteNodeInfo(engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length));
 	
 	engine->state = TRAIN_ENGINE_RUNNING;
-	SendTrainCommand(TRAIN_SPEED, 8 | LIGHTS_MASK, engine->train_num, 0, 0);
+	TrainServer_SetTrainSpeed(server, 8 | LIGHTS_MASK, engine->train_num);
 }
 
 void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine) {
@@ -481,7 +494,7 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	
 	if (engine->current_node == engine->destination_node) {
 		engine->state = TRAIN_ENGINE_AT_DESTINATION;
-		SendTrainCommand(TRAIN_SPEED, 0, engine->train_num, 0, 0);
+		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
 		PrintMessage("At destination %s.", engine->current_node->name);
 		return;
 	}
@@ -502,7 +515,7 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	track_node * next_node = GetNextSensor(engine->route_node_info, engine->route_node_index);
 		
 	if (next_node && next_node == engine->destination_node) {
-		SendTrainCommand(TRAIN_SPEED, 3, engine->train_num, 0, 0);
+		TrainServer_SetTrainSpeed(server, 3, engine->train_num);
 		PrintMessage("Slowing down");
 	}
 }
@@ -510,9 +523,9 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * engine) {
 	// Blink the lights
 	if (Time() % 50 == 0) {
-		SendTrainCommand(TRAIN_SPEED, LIGHTS_MASK, engine->train_num, 0, 0);
+		TrainServer_SetTrainSpeed(server, LIGHTS_MASK, engine->train_num);
 		Delay(1);
-		SendTrainCommand(TRAIN_SPEED, 0, engine->train_num, 0, 0);
+		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
 	}
 }
 
@@ -554,9 +567,22 @@ void TrainServer_ProcessEngineCalibratingSpeed(TrainServer * server, TrainEngine
 	}
 	
 	engine->calculated_speed = 45.0 / difference; // 45mm over time
-	SendTrainCommand(TRAIN_SPEED, 0, engine->train_num, 0, 0);
-	SendTrainCommand(TRAIN_SPEED, 5, engine->train_num, 0, 0);
+	TrainServer_SetTrainSpeed(server, 0, engine->train_num);
+	TrainServer_SetTrainSpeed(server, 5, engine->train_num);
 	engine->state = TRAIN_ENGINE_FINDING_POSITION;
+}
+
+void TrainServer_SetTrainSpeed(TrainServer * server, int speed, int train_num) {
+	int train_speed_settings = speed << 8 | train_num;
+	Queue_PushEnd((Queue*) &server->train_speed_queue, (QUEUE_ITEM_TYPE) train_speed_settings);
+	
+	int i;
+	for (i = 0; i < NUM_ENGINES; i++) {
+		if (server->train_engines[i].train_num == train_num) {
+			server->train_engines[i].speed_setting = speed;
+			break;
+		}
+	}
 }
 
 void TrainServerTimer_Start() {

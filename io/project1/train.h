@@ -168,6 +168,7 @@ typedef struct TrainServer {
 	SwitchQueue queued_switch_changes;
 	
 	TrainEngine train_engines[NUM_ENGINES];
+	TrainSpeedQueue train_speed_queue;
 } TrainServer;
 
 
@@ -221,6 +222,7 @@ void TrainServer_ProcessEngineCalibratingSpeed(TrainServer * server, TrainEngine
 
 track_node * TrainServer_GetEnginePosition(TrainServer * server);
 
+void TrainServer_SetTrainSpeed(TrainServer * server, int speed, int train_num);
 
 void TrainServerTimer_Start();
 

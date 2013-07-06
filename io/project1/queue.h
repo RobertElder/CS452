@@ -6,6 +6,7 @@
 #define SWITCH_QUEUE_SIZE 256
 #define QUEUE_ITEM_TYPE void*
 #define NUM_PRIORITIES 32
+#define TRAIN_SPEED_QUEUE_SIZE 10
 
 static const int ERR_QUEUE_FULL = -1;
 static const int ERR_QUEUE_PRIORITY = -2;
@@ -81,6 +82,14 @@ typedef struct SwitchQueue {
 	unsigned int size;
 	QueueItem items[SWITCH_QUEUE_SIZE];
 } SwitchQueue;
+
+typedef struct TrainSpeedQueue {
+	unsigned int start;
+	unsigned int end;
+	unsigned int current_count;
+	unsigned int size;
+	QueueItem items[TRAIN_SPEED_QUEUE_SIZE];
+} TrainSpeedQueue;
 
 typedef struct PriorityQueue {
 	TaskQueue queues[NUM_PRIORITIES];
