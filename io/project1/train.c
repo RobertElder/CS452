@@ -324,17 +324,27 @@ void TrainServer_HandleGetSwitchRequest(TrainServer * server) {
 		} else if(GetQueuedSwitchState(server, switch_num) == SWITCH_STRAIGHT) {
 			direction_code = SWITCH_STRAIGHT_CODE;
 		} else if(GetQueuedSwitchState(server, switch_num) == SWITCH_UNKNOWN) {
-			assert(0,"Attempting to tell switch master to set to unknown state.");
-			direction_code = 0;
+			PrintMessage("\x1b[31;44mAttempting to tell switch master to set to switch %d unknown state.",switch_num);
+			while(Queue_CurrentCount((Queue*)&server->queued_switch_changes)){
+				int s = (int)Queue_PopStart((Queue *)&server->queued_switch_changes);
+				PrintMessage("\x1b[31;44mQueue contains %d.",s);
+			}
+			direction_code = SWITCH_CURVED_CODE;
 		} else {
 			assert(0,"Invalid switch state.");
-			direction_code = 0;
+			direction_code = SWITCH_CURVED_CODE;
 		}
-		
-		PrintMessage("Telling switchmaster to set %d to be %c", switch_num, GetQueuedSwitchState(server, switch_num));
-		reply_message->c1 = direction_code;
-		reply_message->c2 = switch_num;
-		server->switch_states[switch_num] = GetQueuedSwitchState(server, switch_num);
+
+		if(server->switch_states[switch_num] == GetQueuedSwitchState(server, switch_num)){
+			//  Don't keep telling it to change if is already set.
+			reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
+		}else{
+			PrintMessage("Telling switchmaster to set %d to be %c", switch_num, GetQueuedSwitchState(server, switch_num));
+			reply_message->c1 = direction_code;
+			reply_message->c2 = switch_num;
+			server->switch_states[switch_num] = GetQueuedSwitchState(server, switch_num);
+		}
+		//  We don't need to keep this information in the queue anymore, it has been dealth with.
 		QueueSwitchState(server, switch_num, SWITCH_UNKNOWN);
 	}
 	
@@ -425,9 +435,9 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 	PopulateRouteNodeInfo(engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length));
 
 	int i;
-	PrintMessage("Path length is %d.",engine->route_nodes_length);
+	//PrintMessage("Path length is %d.",engine->route_nodes_length);
 	for (i = 0; i < engine->route_nodes_length; i++) {
-		PrintMessage("Path %d: %s.",i, engine->route_node_info[i].node->name);
+		//PrintMessage("Path %d: %s.",i, engine->route_node_info[i].node->name);
 	}
 
 	engine->state = TRAIN_ENGINE_RUNNING;
@@ -506,7 +516,7 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	}
 
 	if(!(found)){
-		PrintMessage("Unable to find current sensor (%s) in route list from %s to %s.", engine->current_node->name, engine->source_node->name, engine->destination_node->name);
+		//PrintMessage("\x1b[31;44mUnable to find current sensor (%s) in route list from %s to %s.", engine->current_node->name, engine->source_node->name, engine->destination_node->name);
 	}
 
 	engine->distance_to_next_sensor = DistanceToNextSensor(engine->route_node_info, engine->route_node_index);
