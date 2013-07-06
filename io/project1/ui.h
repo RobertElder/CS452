@@ -8,6 +8,7 @@
 #ifndef UI_H_
 #define UI_H_
 
+#define UI_COMMAND_START_POS 31
 #define UI_SERVER_COMMAND_BUFFER_SIZE 80
 
 static const char const UI_SERVER_NAME[] = "UISvr";
@@ -24,7 +25,7 @@ static const int const ENGINE_STATUS_COL_2_OFFSET = 40;
 static const int const ENGINE_DATA_COL_OFFSET = 19;
 static const int const ENGINE_DATA_COL_2_OFFSET = 40 + 30;
 static const int const PRINT_MESSAGE_OFFSET = 30;
-static const int const MAX_PRINT_MESSAGE = 15;
+static const int const MAX_PRINT_MESSAGE = 25;
 
 typedef struct UIMessage {
 	MessageType message_type;

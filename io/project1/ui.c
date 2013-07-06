@@ -171,15 +171,15 @@ void UIServer_PrintCommandLine(UIServer * server) {
 	if (server->dirty) {
 		ANSI_Cursor(2, 1);
 		ANSI_Style(BOLD_STYLE);
-		PutString(COM2, "C:\\> ");
+		PutString(COM2, "tomas@shining-time-station:~$ ");
 		ANSI_Style(NORMAL_STYLE);
 	}
 	
-	ANSI_Cursor(2, 6 + server->command_buffer_index);
+	ANSI_Cursor(2, UI_COMMAND_START_POS + server->command_buffer_index);
 }
 
 void UIServer_ProcessKeystroke(UIServer * server, char c) {
-	ANSI_Cursor(2, 6 + server->command_buffer_index);
+	ANSI_Cursor(2, UI_COMMAND_START_POS + server->command_buffer_index);
 	
 	if (c == '\r') {
 		UIServer_RunCommand(server);
@@ -241,7 +241,7 @@ void UIServer_RunCommand(UIServer * server) {
 void UIServer_ResetCommandBuffer(UIServer * server) {
 	server->command_buffer_index = 0;
 	server->command_buffer[0] = 0;
-	ANSI_Cursor(2, 6);
+	ANSI_Cursor(2, UI_COMMAND_START_POS);
 	ANSI_ClearLine(CLEAR_TO_END);
 }
 

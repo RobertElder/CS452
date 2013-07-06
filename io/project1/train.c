@@ -410,19 +410,25 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine) {
 	PrintMessage("Found starting position.");
 	engine->destination_node = GetRandomSensorReachableViaDirectedGraph(&server->rng, server->current_track_nodes, engine->current_node);
-	
-	PrintMessage("Travelling from %s to %s.",engine->current_node->name ,engine->destination_node->name);
-
 	engine->source_node = engine->current_node;
+
+	PrintMessage("Travelling from %s to %s.",engine->current_node->name ,engine->destination_node->name);
 
 	int switch_num;
 	for (switch_num = 0; switch_num < NUM_SWITCHES; switch_num++) {
 		server->switch_states[switch_num] = SWITCH_UNKNOWN;
 		QueueSwitchState(server, switch_num, SWITCH_UNKNOWN);
 	}
-	
+
+	engine->route_nodes_length = 0;
 	PopulateRouteNodeInfo(engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length));
-	
+
+	int i;
+	PrintMessage("Path length is %d.",engine->route_nodes_length);
+	for (i = 0; i < engine->route_nodes_length; i++) {
+		PrintMessage("Path %d: %s.",i, engine->route_node_info[i].node->name);
+	}
+
 	engine->state = TRAIN_ENGINE_RUNNING;
 	SendTrainCommand(TRAIN_SPEED, 8 | LIGHTS_MASK, engine->train_num, 0, 0);
 }
