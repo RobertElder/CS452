@@ -121,7 +121,6 @@ struct TrainEngine {
 	int tid;
 	int train_num;
 	TrainEngineState state;
-	track_node * current_node;
 	track_node * next_node;
 	int speed_setting;
 	double calculated_speed;
@@ -129,6 +128,8 @@ struct TrainEngine {
 	double expected_time_at_last_sensor;
 	double actual_time_at_last_sensor;
 	int distance_to_next_sensor;
+	track_node * current_node;
+	track_node * source_node;
 	track_node * destination_node;
 	RouteNodeInfo route_node_info[MAX_ROUTE_NODE_INFO];
 	int route_node_index;

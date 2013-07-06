@@ -413,6 +413,8 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 	
 	PrintMessage("Travelling from %s to %s.",engine->current_node->name ,engine->destination_node->name);
 
+	engine->source_node = engine->current_node;
+
 	int switch_num;
 	for (switch_num = 0; switch_num < NUM_SWITCHES; switch_num++) {
 		server->switch_states[switch_num] = SWITCH_UNKNOWN;
@@ -445,7 +447,7 @@ void QueueSwitchState(TrainServer * server, int switch_num, SwitchState new_stat
 	} else{
 		//  We should never be attempting to overwrite an already queued switch state, unless it is the same
 		
-		assertf((!((server->switches_to_change[switch_num] == SWITCH_CURVED && new_state == SWITCH_STRAIGHT) ||  (server->switches_to_change[switch_num] == SWITCH_STRAIGHT && new_state == SWITCH_CURVED))), "Attempting to queue switch state that overwrites previous queued switch state. Setting switch number %d to %c, but queued state is %c.",switch_num, new_state, server->switches_to_change[switch_num]);
+		assertf((!((!(server->switches_to_change[switch_num] == SWITCH_UNKNOWN || new_state == SWITCH_UNKNOWN)) && server->switches_to_change[switch_num] != new_state)), "Attempting to queue switch state that overwrites previous queued switch state. Setting switch number %d to %c, but queued state is %c.",switch_num, new_state, server->switches_to_change[switch_num]);
 		//  Add it to the queue so that the switch master will set it, but not if it is already queued.
 		Queue_PushEnd((Queue*)&server->queued_switch_changes, (QUEUE_ITEM_TYPE)switch_num);
 		server->switches_to_change[switch_num] = new_state;
@@ -487,11 +489,17 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	}
 	
 	int i = 0;
+	int found = 0;
 	for (i = engine->route_node_index; i < engine->route_nodes_length; i++) {
 		if (engine->route_node_info[i].node == engine->current_node) {
+			found = 1;
 			engine->route_node_index = i;
 			break;
 		}
+	}
+
+	if(!(found)){
+		assertf(0,"Unable to find current sensor (%s) in route list from %s to %s.", engine->current_node->name, engine->source_node->name, engine->destination_node->name);
 	}
 
 	engine->distance_to_next_sensor = DistanceToNextSensor(engine->route_node_info, engine->route_node_index);
@@ -758,7 +766,6 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->train_num = train_num;
 	engine->state = TRAIN_ENGINE_IDLE;
 	engine->current_node = 0;
-	engine->next_node = 0;
 	engine->speed_setting = 0;
 	engine->calculated_speed = 0;
 	engine->expected_time_at_next_sensor = 0;

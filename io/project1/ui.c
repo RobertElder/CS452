@@ -492,9 +492,13 @@ void UIServer_PrintSwitches(UIServer * server) {
 				if (switch_state == SWITCH_CURVED) {
 					ANSI_Color(RED, server->background_color);
 					PutString(COM2, "C");
-				} else {
+				} else if (switch_state == SWITCH_STRAIGHT){
 					ANSI_Color(GREEN, server->background_color);
 					PutString(COM2, "S");
+				} else if (switch_state == SWITCH_UNKNOWN){
+					PutString(COM2, "U");
+				} else {
+					assert(0,"UI got unknown switch state.");
 				}
 				ANSI_Color(server->foreground_color, server->background_color);
 			}
