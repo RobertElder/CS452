@@ -331,6 +331,7 @@ void TrainServer_HandleGetSwitchRequest(TrainServer * server) {
 			direction_code = 0;
 		}
 		
+		PrintMessage("Telling switchmaster to set %d to be %c", switch_num, GetQueuedSwitchState(server, switch_num));
 		reply_message->c1 = direction_code;
 		reply_message->c2 = switch_num;
 		server->switch_states[switch_num] = GetQueuedSwitchState(server, switch_num);
@@ -430,6 +431,7 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 	}
 
 	engine->state = TRAIN_ENGINE_RUNNING;
+	TrainServer_QueueSwitchStates(server, engine);
 	SendTrainCommand(TRAIN_SPEED, 8 | LIGHTS_MASK, engine->train_num, 0, 0);
 }
 
@@ -472,7 +474,6 @@ void TrainServer_QueueSwitchStates(TrainServer * server, TrainEngine * engine ){
 				break;
 			}else{
 				QueueSwitchState(server, switch_num, next_switch_state);
-				PrintMessage("Queuing switch %d to be %c", switch_num, next_switch_state);
 			}
 		}
 		current_route_node_index++;
@@ -505,7 +506,7 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	}
 
 	if(!(found)){
-		assertf(0,"Unable to find current sensor (%s) in route list from %s to %s.", engine->current_node->name, engine->source_node->name, engine->destination_node->name);
+		PrintMessage("Unable to find current sensor (%s) in route list from %s to %s.", engine->current_node->name, engine->source_node->name, engine->destination_node->name);
 	}
 
 	engine->distance_to_next_sensor = DistanceToNextSensor(engine->route_node_info, engine->route_node_index);
