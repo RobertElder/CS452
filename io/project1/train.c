@@ -612,7 +612,7 @@ void TrainServer_SetTrainSpeed(TrainServer * server, int speed, int train_num) {
 	int i;
 	for (i = 0; i < NUM_ENGINES; i++) {
 		if (server->train_engines[i].train_num == train_num) {
-			server->train_engines[i].speed_setting = speed;
+			server->train_engines[i].speed_setting = speed & ~LIGHTS_MASK;
 			break;
 		}
 	}
