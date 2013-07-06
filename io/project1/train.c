@@ -344,6 +344,7 @@ void TrainServer_HandleGetSwitchRequest(TrainServer * server) {
 			direction_code = 0;
 		}
 		
+		PrintMessage("Telling switchmaster to set %d to be %c", switch_num, GetQueuedSwitchState(server, switch_num));
 		reply_message->c1 = direction_code;
 		reply_message->c2 = switch_num;
 		server->switch_states[switch_num] = GetQueuedSwitchState(server, switch_num);
@@ -423,7 +424,8 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine) {
 	PrintMessage("Found starting position.");
 	engine->destination_node = GetRandomSensorReachableViaDirectedGraph(&server->rng, server->current_track_nodes, engine->current_node);
-	
+	engine->source_node = engine->current_node;
+
 	PrintMessage("Travelling from %s to %s.",engine->current_node->name ,engine->destination_node->name);
 
 	int switch_num;
@@ -431,10 +433,18 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 		server->switch_states[switch_num] = SWITCH_UNKNOWN;
 		QueueSwitchState(server, switch_num, SWITCH_UNKNOWN);
 	}
-	
+
+	engine->route_nodes_length = 0;
 	PopulateRouteNodeInfo(engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length));
-	
+
+	int i;
+	PrintMessage("Path length is %d.",engine->route_nodes_length);
+	for (i = 0; i < engine->route_nodes_length; i++) {
+		PrintMessage("Path %d: %s.",i, engine->route_node_info[i].node->name);
+	}
+
 	engine->state = TRAIN_ENGINE_RUNNING;
+	TrainServer_QueueSwitchStates(server, engine);
 	TrainServer_SetTrainSpeed(server, 8 | LIGHTS_MASK, engine->train_num);
 }
 
@@ -458,7 +468,7 @@ void QueueSwitchState(TrainServer * server, int switch_num, SwitchState new_stat
 	} else{
 		//  We should never be attempting to overwrite an already queued switch state, unless it is the same
 		
-		assertf((!((server->switches_to_change[switch_num] == SWITCH_CURVED && new_state == SWITCH_STRAIGHT) ||  (server->switches_to_change[switch_num] == SWITCH_STRAIGHT && new_state == SWITCH_CURVED))), "Attempting to queue switch state that overwrites previous queued switch state. Setting switch number %d to %c, but queued state is %c.",switch_num, new_state, server->switches_to_change[switch_num]);
+		assertf((!((!(server->switches_to_change[switch_num] == SWITCH_UNKNOWN || new_state == SWITCH_UNKNOWN)) && server->switches_to_change[switch_num] != new_state)), "Attempting to queue switch state that overwrites previous queued switch state. Setting switch number %d to %c, but queued state is %c.",switch_num, new_state, server->switches_to_change[switch_num]);
 		//  Add it to the queue so that the switch master will set it, but not if it is already queued.
 		Queue_PushEnd((Queue*)&server->queued_switch_changes, (QUEUE_ITEM_TYPE)switch_num);
 		server->switches_to_change[switch_num] = new_state;
@@ -477,7 +487,6 @@ void TrainServer_QueueSwitchStates(TrainServer * server, TrainEngine * engine ){
 				break;
 			}else{
 				QueueSwitchState(server, switch_num, next_switch_state);
-				PrintMessage("Queuing switch %d to be %c", switch_num, next_switch_state);
 			}
 		}
 		current_route_node_index++;
@@ -500,11 +509,17 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	}
 	
 	int i = 0;
+	int found = 0;
 	for (i = engine->route_node_index; i < engine->route_nodes_length; i++) {
 		if (engine->route_node_info[i].node == engine->current_node) {
+			found = 1;
 			engine->route_node_index = i;
 			break;
 		}
+	}
+
+	if(!(found)){
+		PrintMessage("Unable to find current sensor (%s) in route list from %s to %s.", engine->current_node->name, engine->source_node->name, engine->destination_node->name);
 	}
 
 	engine->distance_to_next_sensor = DistanceToNextSensor(engine->route_node_info, engine->route_node_index);
@@ -784,7 +799,6 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->train_num = train_num;
 	engine->state = TRAIN_ENGINE_IDLE;
 	engine->current_node = 0;
-	engine->next_node = 0;
 	engine->speed_setting = 0;
 	engine->calculated_speed = 0;
 	engine->expected_time_at_next_sensor = 0;

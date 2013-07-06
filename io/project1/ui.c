@@ -171,15 +171,15 @@ void UIServer_PrintCommandLine(UIServer * server) {
 	if (server->dirty) {
 		ANSI_Cursor(2, 1);
 		ANSI_Style(BOLD_STYLE);
-		PutString(COM2, "C:\\> ");
+		PutString(COM2, "tomas@shining-time-station:~$ ");
 		ANSI_Style(NORMAL_STYLE);
 	}
 	
-	ANSI_Cursor(2, 6 + server->command_buffer_index);
+	ANSI_Cursor(2, UI_COMMAND_START_POS + server->command_buffer_index);
 }
 
 void UIServer_ProcessKeystroke(UIServer * server, char c) {
-	ANSI_Cursor(2, 6 + server->command_buffer_index);
+	ANSI_Cursor(2, UI_COMMAND_START_POS + server->command_buffer_index);
 	
 	if (c == '\r') {
 		UIServer_RunCommand(server);
@@ -241,7 +241,7 @@ void UIServer_RunCommand(UIServer * server) {
 void UIServer_ResetCommandBuffer(UIServer * server) {
 	server->command_buffer_index = 0;
 	server->command_buffer[0] = 0;
-	ANSI_Cursor(2, 6);
+	ANSI_Cursor(2, UI_COMMAND_START_POS);
 	ANSI_ClearLine(CLEAR_TO_END);
 }
 
@@ -492,9 +492,13 @@ void UIServer_PrintSwitches(UIServer * server) {
 				if (switch_state == SWITCH_CURVED) {
 					ANSI_Color(RED, server->background_color);
 					PutString(COM2, "C");
-				} else {
+				} else if (switch_state == SWITCH_STRAIGHT){
 					ANSI_Color(GREEN, server->background_color);
 					PutString(COM2, "S");
+				} else if (switch_state == SWITCH_UNKNOWN){
+					PutString(COM2, "U");
+				} else {
+					assert(0,"UI got unknown switch state.");
 				}
 				ANSI_Color(server->foreground_color, server->background_color);
 			}

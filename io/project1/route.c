@@ -44,7 +44,7 @@ track_node * GetRandomSensorReachableViaDirectedGraph(RNG * rng, track_node * tr
 	int i = 0;
 	while(1){
 		track_node * random_sensor = GetRandomSensor(rng, track_nodes);
-		if(IsNodeReachableViaDirectedGraph(track_nodes, start_node, random_sensor, 0)){
+		if(random_sensor != start_node && IsNodeReachableViaDirectedGraph(track_nodes, start_node, random_sensor, 0)){
 			return random_sensor;
 		}
 		i++;
@@ -160,16 +160,21 @@ int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, 
 	}else if (start_node->type == NODE_ENTER){
 		return 0;
 	}else if (start_node->type == NODE_BRANCH){
+		//  Save this for when we search the two possibilities
+		int current_route_length = *route_nodes_length;
 		int rtn1 = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1, array_index + 1, route_nodes_length);
+		int route_length_1 = *route_nodes_length;
+		*route_nodes_length = current_route_length;
 		int rtn2 = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1, array_index + 1, route_nodes_length);
+		int route_length_2 = *route_nodes_length;
 		if(rtn1){
-			*route_nodes_length = (*route_nodes_length) + 1;
+			*route_nodes_length = route_length_1 + 1;
 			assert(*route_nodes_length <= MAX_ROUTE_NODE_INFO,"Too many route nodes.\n");
 			info_array[array_index].node = start_node;
 			info_array[array_index].switch_state = SWITCH_STRAIGHT;
 			info_array[array_index].edge = &start_node->edge[DIR_STRAIGHT];
 		}else if (rtn2){
-			*route_nodes_length = (*route_nodes_length) + 1;
+			*route_nodes_length = route_length_2 + 1;
 			assert(*route_nodes_length <= MAX_ROUTE_NODE_INFO,"Too many route nodes.\n");
 			info_array[array_index].node = start_node;
 			info_array[array_index].switch_state = SWITCH_CURVED;
