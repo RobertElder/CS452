@@ -124,8 +124,6 @@ void TrainServer_Initialize(TrainServer * server) {
 	server->train_server_timer_tid = Create(TRAINSERVERTIMER_START_PRIORITY, TrainServerTimer_Start);
 	assert(server->train_server_timer_tid, "TrainServer failed to create TrainServerTimer");
 
-	server->train_engines[0].tid = Create(TRAINENGINE_START_PRIORITY, TrainEngineClient_Start);
-	assert(server->train_engines[0].tid, "TrainServer failed to create TrainEngineClient_Start");
 	
 	server->switch_master_tid = Create(TRAINSWITCHMASTER_START_PRIORITY, TrainSwitchMaster_Start);
 	assert(server->switch_master_tid, "TrainServer failed to create TrainSwitchMaster");
@@ -153,11 +151,19 @@ void TrainServer_Initialize(TrainServer * server) {
 	int switch_num;
 	for (switch_num = 0; switch_num < NUM_SWITCHES; switch_num++) {
 		server->switch_states[switch_num] = SWITCH_UNKNOWN;
-		server->queued_switch_states[switch_num] = SWITCH_UNKNOWN;
+		server->switches_to_change[switch_num] = SWITCH_UNKNOWN;
 	}
+
+
+	Queue_Initialize((Queue*)&server->queued_switch_changes, SWITCH_QUEUE_SIZE);
+
 	int i;
 	for(i = 0; i < NUM_ENGINES; i++)
 		TrainEngine_Initialize(&(server->train_engines[i]), i);
+
+	//  The train engine relies on the server model being set up correctly first.
+	server->train_engines[0].tid = Create(TRAINENGINE_START_PRIORITY, TrainEngineClient_Start);
+	assert(server->train_engines[0].tid, "TrainServer failed to create TrainEngineClient_Start");
 }
 
 void TrainServer_HandleSensorReaderData(TrainServer * server) {
@@ -306,24 +312,29 @@ void TrainServer_HandleGetSwitchRequest(TrainServer * server) {
 	TrainCommandMessage * reply_message = (TrainCommandMessage *) server->reply_buffer;
 	
 	reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
-	
-	int switch_num;
-	for (switch_num = 0; switch_num < NUM_SWITCHES; switch_num++) {
-		if (server->switch_states[switch_num] != server->queued_switch_states[switch_num]) {
-			reply_message->message_type = MESSAGE_TYPE_ACK;
-			int direction_code;
-			
-			if (server->queued_switch_states[switch_num] == SWITCH_CURVED) {
-				direction_code = SWITCH_CURVED_CODE;
-			} else {
-				direction_code = SWITCH_STRAIGHT_CODE;
-			}
-			
-			reply_message->c1 = direction_code;
-			reply_message->c2 = switch_num;
-			server->switch_states[switch_num] = server->queued_switch_states[switch_num];
-			break;
+
+	if(Queue_CurrentCount((Queue*)&server->queued_switch_changes)){
+		reply_message->message_type = MESSAGE_TYPE_ACK;
+
+		int switch_num = (int)Queue_PopStart((Queue *)&server->queued_switch_changes);
+		int direction_code;
+		
+		if (GetQueuedSwitchState(server, switch_num) == SWITCH_CURVED) {
+			direction_code = SWITCH_CURVED_CODE;
+		} else if(GetQueuedSwitchState(server, switch_num) == SWITCH_STRAIGHT) {
+			direction_code = SWITCH_STRAIGHT_CODE;
+		} else if(GetQueuedSwitchState(server, switch_num) == SWITCH_UNKNOWN) {
+			assert(0,"Attempting to tell switch master to set to unknown state.");
+			direction_code = 0;
+		} else {
+			assert(0,"Invalid switch state.");
+			direction_code = 0;
 		}
+		
+		reply_message->c1 = direction_code;
+		reply_message->c2 = switch_num;
+		server->switch_states[switch_num] = GetQueuedSwitchState(server, switch_num);
+		QueueSwitchState(server, switch_num, SWITCH_UNKNOWN);
 	}
 	
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
@@ -339,9 +350,11 @@ void TrainServer_HandleSetSwitch(TrainServer * server) {
 	int switch_num = receive_message->c2;
 	
 	if (direction_code == SWITCH_CURVED_CODE) {
-		server->queued_switch_states[switch_num] = SWITCH_CURVED;
+		QueueSwitchState(server, switch_num, SWITCH_CURVED);
+	} else if (direction_code == SWITCH_STRAIGHT_CODE){
+		QueueSwitchState(server, switch_num, SWITCH_STRAIGHT);
 	} else {
-		server->queued_switch_states[switch_num] = SWITCH_STRAIGHT;
+		assert(0,"Invalid code in TrainServer_HandleSetSwitch.");
 	}
 	
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
@@ -403,7 +416,7 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 	int switch_num;
 	for (switch_num = 0; switch_num < NUM_SWITCHES; switch_num++) {
 		server->switch_states[switch_num] = SWITCH_UNKNOWN;
-		server->queued_switch_states[switch_num] = SWITCH_UNKNOWN;
+		QueueSwitchState(server, switch_num, SWITCH_UNKNOWN);
 	}
 	
 	PopulateRouteNodeInfo(engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length));
@@ -421,18 +434,36 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	}
 }
 
+SwitchState GetQueuedSwitchState(TrainServer * server, int switch_num){
+	return server->switches_to_change[switch_num];
+}
+
+void QueueSwitchState(TrainServer * server, int switch_num, SwitchState new_state){
+	//  We don't want to add the new state to the queue we are setting it to unknown or if it already queued
+	if(new_state == SWITCH_UNKNOWN || server->switches_to_change[switch_num] == new_state){
+		server->switches_to_change[switch_num] = new_state;
+	} else{
+		//  We should never be attempting to overwrite an already queued switch state, unless it is the same
+		
+		assertf((!((server->switches_to_change[switch_num] == SWITCH_CURVED && new_state == SWITCH_STRAIGHT) ||  (server->switches_to_change[switch_num] == SWITCH_STRAIGHT && new_state == SWITCH_CURVED))), "Attempting to queue switch state that overwrites previous queued switch state. Setting switch number %d to %c, but queued state is %c.",switch_num, new_state, server->switches_to_change[switch_num]);
+		//  Add it to the queue so that the switch master will set it, but not if it is already queued.
+		Queue_PushEnd((Queue*)&server->queued_switch_changes, (QUEUE_ITEM_TYPE)switch_num);
+		server->switches_to_change[switch_num] = new_state;
+	}
+}
+
 void TrainServer_QueueSwitchStates(TrainServer * server, TrainEngine * engine ){
-	
 	int current_route_node_index = engine->route_node_index;
 	while(engine->route_node_info[current_route_node_index].node != engine->destination_node){
 		if(engine->route_node_info[current_route_node_index].node->type == NODE_BRANCH){
 			int switch_num = engine->route_node_info[current_route_node_index].node->num;
 			int next_switch_state = engine->route_node_info[current_route_node_index].switch_state;
-			if(server->queued_switch_states[switch_num] != SWITCH_UNKNOWN && (server->queued_switch_states[switch_num] != next_switch_state)){
+			int queued_switch_state = GetQueuedSwitchState(server, switch_num);
+			if((queued_switch_state != SWITCH_UNKNOWN) && (queued_switch_state != next_switch_state)){
 				//  We have switched all the switches we can so far.
 				break;
 			}else{
-				server->queued_switch_states[switch_num] = next_switch_state;
+				QueueSwitchState(server, switch_num, next_switch_state);
 				PrintMessage("Queuing switch %d to be %c", switch_num, next_switch_state);
 			}
 		}

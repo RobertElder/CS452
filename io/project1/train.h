@@ -42,7 +42,7 @@ typedef enum TrainServerState {
 } TrainServerState;
 
 typedef enum SwitchState {
-	SWITCH_UNKNOWN = 0,
+	SWITCH_UNKNOWN = 'U',
 	SWITCH_STRAIGHT = 'S',
 	SWITCH_CURVED = 'C',
 } SwitchState;
@@ -164,7 +164,8 @@ typedef struct TrainServer {
 	track_node * current_track_nodes;
 	
 	SwitchState switch_states[NUM_SWITCHES];
-	SwitchState queued_switch_states[NUM_SWITCHES];
+	SwitchState switches_to_change[NUM_SWITCHES];
+	SwitchQueue queued_switch_changes;
 	
 	TrainEngine train_engines[NUM_ENGINES];
 } TrainServer;
@@ -179,6 +180,10 @@ void TrainServer_HandleSensorReaderData(TrainServer * server);
 void TrainServer_HandleSensorQuery(TrainServer * server);
 
 void TrainServer_HandleSwitchData(TrainServer * server);
+
+void QueueSwitchState(TrainServer * , int , SwitchState);
+
+SwitchState GetQueuedSwitchState(TrainServer *, int);
 
 void TrainServer_HandleSwitchQuery(TrainServer * server);
 

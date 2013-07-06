@@ -3,6 +3,7 @@
 
 #define TASK_QUEUE_SIZE 1570
 #define MESSAGE_QUEUE_SIZE 10
+#define SWITCH_QUEUE_SIZE 256
 #define QUEUE_ITEM_TYPE void*
 #define NUM_PRIORITIES 32
 
@@ -72,6 +73,14 @@ typedef struct MessageQueue {
 	unsigned int size;
 	QueueItem items[MESSAGE_QUEUE_SIZE];
 } MessageQueue;
+
+typedef struct SwitchQueue {
+	unsigned int start;
+	unsigned int end;
+	unsigned int current_count;
+	unsigned int size;
+	QueueItem items[SWITCH_QUEUE_SIZE];
+} SwitchQueue;
 
 typedef struct PriorityQueue {
 	TaskQueue queues[NUM_PRIORITIES];
