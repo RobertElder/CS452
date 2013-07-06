@@ -498,6 +498,13 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	engine->expected_time_at_next_sensor = (double) engine->distance_to_next_sensor / engine->calculated_speed + time;
 
 	TrainServer_QueueSwitchStates(server, engine);
+	
+	track_node * next_node = GetNextSensor(engine->route_node_info, engine->route_node_index);
+		
+	if (next_node && next_node == engine->destination_node) {
+		SendTrainCommand(TRAIN_SPEED, 3, engine->train_num, 0, 0);
+		PrintMessage("Slowing down");
+	}
 }
 
 void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * engine) {
