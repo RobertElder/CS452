@@ -53,7 +53,8 @@ typedef struct UIServer {
 	SwitchState switch_states_cache[NUM_SWITCHES];
 	ANSIColor foreground_color;
 	ANSIColor background_color;
-	int train_engine_status_hash;
+	int train_engine_status_hash_1;
+	int train_engine_status_hash_2;
 	int train_map_position_hash;
 } UIServer;
 

@@ -467,6 +467,9 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 		engine->current_node = node;
 		TrainServer_ProcessSensorData(server, engine);
 	}
+	
+	double time = TimeSeconds() - engine->actual_time_at_last_sensor;
+	engine->estimated_distance_after_node = engine->calculated_speed * time;
 }
 
 SwitchState GetQueuedSwitchState(TrainServer * server, int switch_num){
@@ -508,7 +511,10 @@ void TrainServer_QueueSwitchStates(TrainServer * server, TrainEngine * engine ){
 void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	double time = TimeSeconds();
 	double time_difference = time - engine->actual_time_at_last_sensor;
-	engine->calculated_speed = (double) engine->distance_to_next_sensor / time_difference;
+	double new_speed = (double) engine->distance_to_next_sensor / time_difference;
+	engine->last_calculated_speed = engine->calculated_speed;
+	engine->calculated_speed = SPEED_ALPHA * new_speed + (1 - SPEED_ALPHA) * engine->last_calculated_speed;
+	
 	engine->actual_time_at_last_sensor = time;
 	engine->expected_time_at_last_sensor = engine->expected_time_at_next_sensor;
 	engine->next_node = 0;
@@ -814,6 +820,7 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->next_node = 0;
 	engine->speed_setting = 0;
 	engine->calculated_speed = 0;
+	engine->last_calculated_speed = 0;
 	engine->expected_time_at_next_sensor = 0;
 	engine->expected_time_at_last_sensor = 0;
 	engine->actual_time_at_last_sensor = 0;

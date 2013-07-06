@@ -15,6 +15,8 @@ static const char const TRAIN_SWITCH_MASTER_NAME[] = "TrSwMr";
 
 static const int const LIGHTS_MASK = 16;
 
+static const double const SPEED_ALPHA = 0.8;
+
 typedef enum TrainCommand {
 	TRAIN_STOP,
 	TRAIN_GO,
@@ -124,10 +126,12 @@ struct TrainEngine {
 	track_node * next_node;
 	int speed_setting;
 	double calculated_speed;
+	double last_calculated_speed;
 	double expected_time_at_next_sensor;
 	double expected_time_at_last_sensor;
 	double actual_time_at_last_sensor;
 	int distance_to_next_sensor;
+	double estimated_distance_after_node;
 	track_node * current_node;
 	track_node * source_node;
 	track_node * destination_node;

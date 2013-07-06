@@ -531,6 +531,12 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		ANSI_CursorNextLine(1);
 		ANSI_CursorCol(ENGINE_STATUS_COL_2_OFFSET);
 		PutString(COM2, "  Last Actual Time at Sensor:");
+		ANSI_CursorNextLine(1);
+		ANSI_CursorCol(ENGINE_STATUS_COL_2_OFFSET);
+		PutString(COM2, "  Est. Distance after Sensor:");
+		ANSI_CursorNextLine(1);
+		ANSI_CursorCol(ENGINE_STATUS_COL_2_OFFSET);
+		PutString(COM2, "     Distance to Next Sensor:");
 	}
 	
 	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
@@ -552,6 +558,8 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	int expected_time_at_next_sensor = engine->expected_time_at_next_sensor;
 	int expected_time_at_last_sensor = engine->expected_time_at_last_sensor;
 	int actual_time_at_last_sensor = engine->actual_time_at_last_sensor;
+	int estimated_distance_after_node = engine->estimated_distance_after_node;
+	int distance_to_next_sensor = engine->distance_to_next_sensor;
 	
 	if (engine->current_node) {
 		current_node_name = engine->current_node->name;
@@ -578,10 +586,15 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	
 	int state = engine->state; //reply_message->state;
 	
-	int new_hash = train_num ^ speed_setting ^ calculated_speed ^ (int) current_node_name ^ state ^ (int) next_node_name ^ (int) dest_node_name ^ expected_time_at_next_sensor ^ expected_time_at_last_sensor ^ actual_time_at_last_sensor;
-	int differs = new_hash != server->train_engine_status_hash;
+	int new_hash_1 = train_num ^ speed_setting ^ calculated_speed ^ (int) current_node_name ^ state ^ (int) next_node_name ^ (int) dest_node_name;
+	int new_hash_2 = expected_time_at_next_sensor ^ expected_time_at_last_sensor ^ actual_time_at_last_sensor ^ estimated_distance_after_node ^ distance_to_next_sensor;
+	int differs_1 = new_hash_1 != server->train_engine_status_hash_1;
+	int differs_2 = new_hash_2 != server->train_engine_status_hash_2;
 	
-	if (differs || server->dirty) {
+	server->train_engine_status_hash_1 = new_hash_1;
+	server->train_engine_status_hash_2 = new_hash_2;
+	
+	if (differs_1 || server->dirty) {
 		ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET, ENGINE_STATUS_COL_OFFSET);
 	
 		ANSI_CursorCol(ENGINE_DATA_COL_OFFSET);
@@ -613,7 +626,10 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		ANSI_ClearCell(10);
 		PutString(COM2, "%s", dest_node_name);
 		ANSI_CursorNextLine(1);
-		
+	
+	}
+	
+	if (differs_2 || server->dirty) {
 		ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET, ENGINE_STATUS_COL_OFFSET);
 		
 		ANSI_CursorCol(ENGINE_DATA_COL_2_OFFSET);
@@ -638,11 +654,18 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		
 		ANSI_Style(NORMAL_STYLE);
 		ANSI_Color(server->foreground_color, server->background_color);
+		ANSI_CursorNextLine(1);
 		
+		ANSI_CursorCol(ENGINE_DATA_COL_2_OFFSET);
+		ANSI_ClearLine(CLEAR_TO_END);
+		PutString(COM2, "%d mm", estimated_distance_after_node);
+		ANSI_CursorNextLine(1);
+		
+		ANSI_CursorCol(ENGINE_DATA_COL_2_OFFSET);
+		ANSI_ClearLine(CLEAR_TO_END);
+		PutString(COM2, "%d mm", distance_to_next_sensor);
 		ANSI_CursorNextLine(1);
 	}
-
-	server->train_engine_status_hash = new_hash;
 }
 
 void UIServer_PrintTrainMapPosition(UIServer * server) {
