@@ -402,6 +402,7 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 		TrainServer_ProcessEngineFoundStartingPosition(server, engine);
 		break;
 	case TRAIN_ENGINE_RUNNING:
+	case TRAIN_ENGINE_NEAR_DESTINATION:
 		TrainServer_ProcessEngineRunning(server, engine);
 		break;
 	case TRAIN_ENGINE_AT_DESTINATION:
@@ -470,6 +471,11 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	
 	double time = TimeSeconds() - engine->actual_time_at_last_sensor;
 	engine->estimated_distance_after_node = engine->calculated_speed * time;
+	engine->distance_to_destination = DistanceToDestination(engine->route_node_info, engine->route_node_index, engine->destination_node);
+
+	if (engine->distance_to_destination < STOPPING_DISTANCE) {
+		TrainServer_SlowTrainDown(server, engine);
+	}
 }
 
 SwitchState GetQueuedSwitchState(TrainServer * server, int switch_num){
@@ -526,6 +532,16 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 		return;
 	}
 	
+	// Feedback control system
+	if (engine->state != TRAIN_ENGINE_NEAR_DESTINATION) {
+		if (engine->calculated_speed < TARGET_SPEED && engine->speed_setting < 12) {
+			TrainServer_SetTrainSpeed(server, engine->speed_setting + 1, engine->train_num);
+		} else if (engine->calculated_speed > TARGET_SPEED && engine->speed_setting > 8) {
+			TrainServer_SetTrainSpeed(server, engine->speed_setting - 1, engine->train_num);
+		}
+	}
+	
+	
 	int i = 0;
 	int found = 0;
 	for (i = engine->route_node_index; i < engine->route_nodes_length; i++) {
@@ -548,8 +564,7 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	track_node * next_node = GetNextSensor(engine->route_node_info, engine->route_node_index);
 		
 	if (next_node && next_node == engine->destination_node) {
-		TrainServer_SetTrainSpeed(server, 3, engine->train_num);
-		PrintMessage("Slowing down");
+		TrainServer_SlowTrainDown(server, engine);
 	}
 }
 
@@ -615,6 +630,14 @@ void TrainServer_SetTrainSpeed(TrainServer * server, int speed, int train_num) {
 			server->train_engines[i].speed_setting = speed & ~LIGHTS_MASK;
 			break;
 		}
+	}
+}
+
+void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
+	if (engine->state == TRAIN_ENGINE_RUNNING) {
+		TrainServer_SetTrainSpeed(server, 3, engine->train_num);
+		engine->state = TRAIN_ENGINE_NEAR_DESTINATION;
+		PrintMessage("Slowing down");
 	}
 }
 

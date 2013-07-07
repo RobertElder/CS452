@@ -16,6 +16,8 @@ static const char const TRAIN_SWITCH_MASTER_NAME[] = "TrSwMr";
 static const int const LIGHTS_MASK = 16;
 
 static const double const SPEED_ALPHA = 0.8;
+static const int const TARGET_SPEED = 500;  // mm
+static const int const STOPPING_DISTANCE = 1000; // mm
 
 typedef enum TrainCommand {
 	TRAIN_STOP,
@@ -61,6 +63,7 @@ typedef enum TrainEngineState {
 	TRAIN_ENGINE_RUNNING,
 	TRAIN_ENGINE_AT_DESTINATION,
 	TRAIN_ENGINE_CALIBRATING_SPEED,
+	TRAIN_ENGINE_NEAR_DESTINATION,
 } TrainEngineState;
 
 typedef enum TrainEngineClientCommand {
@@ -115,6 +118,7 @@ static const char const TRAIN_ENGINE_STATE_NAMES[][20] = {
 	"Running",
 	"At Destination",
 	"Calibrate Speed",
+	"Near Destination",
 };
 
 #include "route.h"
@@ -131,6 +135,7 @@ struct TrainEngine {
 	double expected_time_at_last_sensor;
 	double actual_time_at_last_sensor;
 	int distance_to_next_sensor;
+	int distance_to_destination;
 	double estimated_distance_after_node;
 	track_node * current_node;
 	track_node * source_node;
@@ -228,6 +233,8 @@ void TrainServer_ProcessEngineCalibratingSpeed(TrainServer * server, TrainEngine
 track_node * TrainServer_GetEnginePosition(TrainServer * server);
 
 void TrainServer_SetTrainSpeed(TrainServer * server, int speed, int train_num);
+
+void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine);
 
 void TrainServerTimer_Start();
 

@@ -33,6 +33,8 @@ int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, 
 
 int DistanceToNextSensor(RouteNodeInfo * info_array, int array_index);
 
+int DistanceToDestination(RouteNodeInfo * info_array, int array_index, track_node * destination_node);
+
 track_node * GetNextSensor(RouteNodeInfo * info_array, int array_index);
 
 #endif

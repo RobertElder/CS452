@@ -537,6 +537,9 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		ANSI_CursorNextLine(1);
 		ANSI_CursorCol(ENGINE_STATUS_COL_2_OFFSET);
 		PutString(COM2, "     Distance to Next Sensor:");
+		ANSI_CursorNextLine(1);
+		ANSI_CursorCol(ENGINE_STATUS_COL_2_OFFSET);
+		PutString(COM2, "     Distance to Destination:");
 	}
 	
 	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
@@ -560,6 +563,7 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	int actual_time_at_last_sensor = engine->actual_time_at_last_sensor;
 	int estimated_distance_after_node = engine->estimated_distance_after_node;
 	int distance_to_next_sensor = engine->distance_to_next_sensor;
+	int distance_to_destination = engine->distance_to_destination;
 	
 	if (engine->current_node) {
 		current_node_name = engine->current_node->name;
@@ -587,7 +591,7 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	int state = engine->state; //reply_message->state;
 	
 	int new_hash_1 = train_num ^ speed_setting ^ calculated_speed ^ (int) current_node_name ^ state ^ (int) next_node_name ^ (int) dest_node_name;
-	int new_hash_2 = expected_time_at_next_sensor ^ expected_time_at_last_sensor ^ actual_time_at_last_sensor ^ estimated_distance_after_node ^ distance_to_next_sensor;
+	int new_hash_2 = expected_time_at_next_sensor ^ expected_time_at_last_sensor ^ actual_time_at_last_sensor ^ estimated_distance_after_node ^ distance_to_next_sensor ^ distance_to_destination;
 	int differs_1 = new_hash_1 != server->train_engine_status_hash_1;
 	int differs_2 = new_hash_2 != server->train_engine_status_hash_2;
 	
@@ -664,6 +668,11 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		ANSI_CursorCol(ENGINE_DATA_COL_2_OFFSET);
 		ANSI_ClearLine(CLEAR_TO_END);
 		PutString(COM2, "%d mm", distance_to_next_sensor);
+		ANSI_CursorNextLine(1);
+		
+		ANSI_CursorCol(ENGINE_DATA_COL_2_OFFSET);
+		ANSI_ClearLine(CLEAR_TO_END);
+		PutString(COM2, "%d mm", distance_to_destination);
 		ANSI_CursorNextLine(1);
 	}
 }

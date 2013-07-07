@@ -204,6 +204,23 @@ int DistanceToNextSensor(RouteNodeInfo * info_array, int array_index) {
 	return distance;
 }
 
+int DistanceToDestination(RouteNodeInfo * info_array, int array_index, track_node * destination_node) {
+	int distance = 0;
+	int i;
+	
+	for (i = array_index; i < MAX_ROUTE_NODE_INFO; i++) {
+		RouteNodeInfo info = info_array[i];
+		
+		if (info.node == destination_node) {
+			break;
+		}
+		
+		distance += info.edge->dist;
+	}
+	
+	return distance;
+}
+
 track_node * GetNextSensor(RouteNodeInfo * info_array, int array_index) {
 	int i;
 	
