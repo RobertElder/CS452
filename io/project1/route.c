@@ -48,7 +48,11 @@ track_node * GetRandomSensorReachableViaDirectedGraph(RNG * rng, track_node * tr
 			return random_sensor;
 		}
 		i++;
-		assert(i < 100, "Unable to find a sensor that was reachable via the directed graph in current direction.");
+		//assert(i < 100, "Unable to find a sensor that was reachable via the directed graph in current direction.");
+		
+		if (i > 100) {
+			return 0;
+		}
 	}
 }
 

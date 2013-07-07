@@ -403,6 +403,7 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 		TrainServer_ProcessEngineIdle(server, engine);
 		break;
 	case TRAIN_ENGINE_FINDING_POSITION:
+	case TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN:
 		TrainServer_ProcessEngineFindingPosition(server, engine);
 		break;
 	case TRAIN_ENGINE_FOUND_STARTING_POSITION:
@@ -433,7 +434,7 @@ void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine) {
 void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine * engine) {
 	track_node * node = TrainServer_GetEnginePosition(server);
 	
-	if (node) {
+	if (node && engine->current_node != node) {
 		engine->state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
 		engine->current_node = node;
 		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
@@ -447,6 +448,15 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 	int i = 0;
 	while (1) {
 		engine->destination_node = GetRandomSensorReachableViaDirectedGraph(&server->rng, server->current_track_nodes, engine->current_node);
+		
+		if (!engine->destination_node) {
+			// Reverse and try again
+			PrintMessage("No destination in this direction! Reversing..");
+			TrainServer_SetTrainSpeed(server, REVERSE_SPEED, engine->train_num);
+			TrainServer_SetTrainSpeed(server, 4, engine->train_num);
+			engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
+			return;
+		}
 		
 		int module_num = engine->destination_node->num / SENSORS_PER_MODULE;
 		int sensor_num = engine->destination_node->num % SENSORS_PER_MODULE;
@@ -744,7 +754,7 @@ void TrainCommandServer_Start() {
 			train_num = command_receive_message->c1;
 			PutcAtomic(COM1, 2, 0, train_num);
 			DelaySeconds(0.5);
-			PutcAtomic(COM1, 2, 15, train_num);
+			PutcAtomic(COM1, 2, REVERSE_SPEED, train_num);
 			DelaySeconds(0.5);
 			PutcAtomic(COM1, 2, 5, train_num);
 			break;

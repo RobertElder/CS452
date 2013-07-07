@@ -14,6 +14,7 @@ static const char const TRAIN_SERVER_TIMER_NAME[] = "TrSTmr";
 static const char const TRAIN_SWITCH_MASTER_NAME[] = "TrSwMr";
 
 static const int const LIGHTS_MASK = 16;
+static const int const REVERSE_SPEED = 15;
 
 static const double const SPEED_ALPHA = 0.9;
 static const int const TARGET_SPEED = 500;  // mm
@@ -84,6 +85,7 @@ typedef enum TrainEngineState {
 	TRAIN_ENGINE_AT_DESTINATION,
 	TRAIN_ENGINE_CALIBRATING_SPEED,
 	TRAIN_ENGINE_NEAR_DESTINATION,
+	TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN,
 } TrainEngineState;
 
 typedef enum TrainEngineClientCommand {
@@ -139,6 +141,7 @@ static const char const TRAIN_ENGINE_STATE_NAMES[][20] = {
 	"At Destination",
 	"Calibrate Speed",
 	"Near Destination",
+	"Reversing",
 };
 
 #include "route.h"
