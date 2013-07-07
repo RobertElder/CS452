@@ -168,6 +168,15 @@ void TrainServer_Initialize(TrainServer * server) {
 	assert(server->train_engines[0].tid, "TrainServer failed to create TrainEngineClient_Start");
 }
 
+int is_sensor_blacklisted(int module_num, int sensor_bit_flag, TrainServer * server){
+	//  D9, D10
+	if(server->current_track_nodes == server->track_a_nodes && module_num == 3 && ((sensor_bit_flag & 1 << 8) || (sensor_bit_flag & 1 << 9))){
+		return 1;
+	}else{
+		return 0;
+	}
+}
+
 void TrainServer_HandleSensorReaderData(TrainServer * server) {
 	TrainSensorMessage * recv_sensor_message = (TrainSensorMessage *) server->receive_buffer;
 
@@ -184,20 +193,16 @@ void TrainServer_HandleSensorReaderData(TrainServer * server) {
 	int module_num = recv_sensor_message->module_num;
 	int sensor_bit_flag = recv_sensor_message->sensor_bit_flag;
 
-	server->sensor_bit_flags[module_num] = sensor_bit_flag;
-	//  Add the new sensors to the set the UI will see
-	server->new_sensor_bit_flags_for_ui[module_num] =  server->new_sensor_bit_flags_for_ui[module_num] | sensor_bit_flag;
-	
-	int sensor_num;
-	int current_time = Time();
-	for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
-		if (sensor_bit_flag & 1 << sensor_num) {
-			server->sensor_time_log[module_num][sensor_num] = current_time;
-			
-			if (server->state == TRAIN_SERVER_BLOCK_UNTIL_SENSOR && sensor_bit_flag) {
-				server->state = TRAIN_SERVER_IDLE;
-				PutString(COM2, "%c%d.", 'A' + module_num, sensor_num + 1);
-				Reply(server->blocked_tid, server->reply_buffer, MESSAGE_SIZE);
+	if(!(is_sensor_blacklisted(module_num, sensor_bit_flag, server))){
+		server->sensor_bit_flags[module_num] = sensor_bit_flag;
+		//  Add the new sensors to the set the UI will see
+		server->new_sensor_bit_flags_for_ui[module_num] =  server->new_sensor_bit_flags_for_ui[module_num] | sensor_bit_flag;
+		
+		int sensor_num;
+		int current_time = Time();
+		for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
+			if (sensor_bit_flag & 1 << sensor_num) {
+				server->sensor_time_log[module_num][sensor_num] = current_time;
 			}
 		}
 	}
