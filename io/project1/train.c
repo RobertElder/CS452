@@ -855,6 +855,9 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->destination_node = 0;
 	engine->route_node_index = 0;
 	engine->route_nodes_length = 0;
+	engine->distance_to_destination = 0;
+	engine->distance_to_next_sensor = 0;
+	engine->estimated_distance_after_node = 0;
 }
 
 void TrainEngineClient_Start(){
