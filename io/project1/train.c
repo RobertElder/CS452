@@ -532,6 +532,11 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	engine->last_calculated_speed = engine->calculated_speed;
 	engine->calculated_speed = SPEED_ALPHA * new_speed + (1 - SPEED_ALPHA) * engine->last_calculated_speed;
 	
+	if (engine->calculated_speed > MAX_PHYSICAL_SPEED) {
+		PrintMessage("Train speed calculation too fast (%d mm/s). Capping.", (int) engine->calculated_speed);
+		engine->calculated_speed = MAX_PHYSICAL_SPEED;
+	}
+	
 	engine->actual_time_at_last_sensor = time;
 	engine->expected_time_at_last_sensor = engine->expected_time_at_next_sensor;
 	engine->next_node = 0;

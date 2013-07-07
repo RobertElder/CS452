@@ -37,6 +37,7 @@ static const int const STOPPING_DISTANCE[] = {
 };
 static const double FEEDBACK_CONTROL_SPEED_INCREMENT = 0.75;
 static const int STARTUP_TRAIN_SPEED = 11;
+static const double MAX_PHYSICAL_SPEED = 750; // mm/s
 
 typedef enum TrainCommand {
 	TRAIN_STOP,
