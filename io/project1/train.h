@@ -17,7 +17,7 @@ static const int const LIGHTS_MASK = 16;
 
 static const double const SPEED_ALPHA = 0.8;
 static const int const TARGET_SPEED = 500;  // mm
-static const int const STOPPING_DISTANCE = 1000; // mm
+static const int const STOPPING_DISTANCE = 600; // mm
 
 typedef enum TrainCommand {
 	TRAIN_STOP,

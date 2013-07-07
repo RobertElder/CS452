@@ -471,7 +471,7 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	
 	double time = TimeSeconds() - engine->actual_time_at_last_sensor;
 	engine->estimated_distance_after_node = engine->calculated_speed * time;
-	engine->distance_to_destination = DistanceToDestination(engine->route_node_info, engine->route_node_index, engine->destination_node);
+	engine->distance_to_destination = DistanceToDestination(engine->route_node_info, engine->route_node_index, engine->destination_node) - engine->estimated_distance_after_node;
 
 	if (engine->distance_to_destination < STOPPING_DISTANCE) {
 		TrainServer_SlowTrainDown(server, engine);
@@ -535,9 +535,9 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	// Feedback control system
 	if (engine->state != TRAIN_ENGINE_NEAR_DESTINATION) {
 		if (engine->calculated_speed < TARGET_SPEED && engine->speed_setting < 12) {
-			TrainServer_SetTrainSpeed(server, engine->speed_setting + 1, engine->train_num);
+			TrainServer_SetTrainSpeed(server, (engine->speed_setting + 1) | LIGHTS_MASK, engine->train_num);
 		} else if (engine->calculated_speed > TARGET_SPEED && engine->speed_setting > 8) {
-			TrainServer_SetTrainSpeed(server, engine->speed_setting - 1, engine->train_num);
+			TrainServer_SetTrainSpeed(server, (engine->speed_setting - 1) | LIGHTS_MASK, engine->train_num);
 		}
 	}
 	
@@ -655,7 +655,7 @@ void TrainServerTimer_Start() {
 	send_message->message_type = MESSAGE_TYPE_HELLO;
 	
 	while (1) {
-		DelaySeconds(0.5);
+		DelaySeconds(0.1);
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		assert(reply_message->message_type == MESSAGE_TYPE_ACK || reply_message->message_type == MESSAGE_TYPE_SHUTDOWN, 
 			"TrainServerTimer: didn't get ACK message");
