@@ -443,7 +443,22 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine) {
 	PrintMessage("Found starting position.");
-	engine->destination_node = GetRandomSensorReachableViaDirectedGraph(&server->rng, server->current_track_nodes, engine->current_node);
+	
+	int i = 0;
+	while (1) {
+		engine->destination_node = GetRandomSensorReachableViaDirectedGraph(&server->rng, server->current_track_nodes, engine->current_node);
+		
+		int module_num = engine->destination_node->num / SENSORS_PER_MODULE;
+		int sensor_num = engine->destination_node->num % SENSORS_PER_MODULE;
+		
+		if (!is_sensor_blacklisted(module_num, sensor_num, server)) {
+			break;
+		}
+		
+		i++;
+		assert(i < 100, "Unable to find a random destination that is not blacklisted");
+	}
+	
 	engine->source_node = engine->current_node;
 
 	PrintMessage("Travelling from %s to %s.",engine->current_node->name ,engine->destination_node->name);
@@ -457,7 +472,6 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 	engine->route_nodes_length = 0;
 	PopulateRouteNodeInfo(engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length));
 
-	int i;
 	//PrintMessage("Path length is %d.",engine->route_nodes_length);
 	for (i = 0; i < engine->route_nodes_length; i++) {
 		//PrintMessage("Path %d: %s.",i, engine->route_node_info[i].node->name);
