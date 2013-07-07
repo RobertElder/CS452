@@ -68,7 +68,11 @@ void TrainServer_Start() {
 			break;
 		case MESSAGE_TYPE_SET_TRAIN:
 			// from ui server
-			TrainServer_HandleSetTrain(&server);
+			TrainServer_HandleSetTrain(&server, 0);
+			break;
+		case MESSAGE_TYPE_GO_FOREVER:
+			// from ui server
+			TrainServer_HandleSetTrain(&server, 1);
 			break;
 		case MESSAGE_TYPE_SET_DESTINATION:
 			// from ui server
@@ -262,11 +266,12 @@ void TrainServer_HandleSelectTrack(TrainServer * server) {
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 }
 
-void TrainServer_HandleSetTrain(TrainServer * server) {
+void TrainServer_HandleSetTrain(TrainServer * server, short go_forever) {
 	GenericTrainMessage  * receive_message = (GenericTrainMessage *) server->receive_buffer;
 	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
 	
 	TrainEngine_Initialize(&(server->train_engines[0]), receive_message->int1);
+	server->train_engines[0].go_forever = go_forever;
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
@@ -621,6 +626,12 @@ void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * 
 		Delay(1);
 		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
 	}
+	
+	if (engine->go_forever) {
+		TrainEngine_Initialize(engine, engine->train_num);
+		engine->go_forever = 1;
+		engine->state = TRAIN_ENGINE_IDLE;
+	}
 }
 
 track_node * TrainServer_GetEnginePosition(TrainServer * server) {
@@ -899,6 +910,7 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->distance_to_destination = 0;
 	engine->distance_to_next_sensor = 0;
 	engine->estimated_distance_after_node = 0;
+	engine->go_forever = 0;
 }
 
 void TrainEngineClient_Start(){

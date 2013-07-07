@@ -167,6 +167,7 @@ struct TrainEngine {
 	RouteNodeInfo route_node_info[MAX_ROUTE_NODE_INFO];
 	int route_node_index;
 	int route_nodes_length;
+	short go_forever;
 };
 
 typedef struct TrainServer {
@@ -224,7 +225,7 @@ void TrainServer_HandleSwitchQuery(TrainServer * server);
 
 void TrainServer_HandleSelectTrack(TrainServer * server);
 
-void TrainServer_HandleSetTrain(TrainServer * server);
+void TrainServer_HandleSetTrain(TrainServer * server, short go_forever);
 
 void TrainServer_HandleSetDestination(TrainServer * server);
 

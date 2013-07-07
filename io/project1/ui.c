@@ -230,7 +230,9 @@ void UIServer_RunCommand(UIServer * server) {
 	} else if (server->command_buffer[0] == 't' && server->command_buffer[1] == 's') {
 		UIServer_HandleTimeStopCommand(server);
 	} else if (server->command_buffer[0] == 'g' && server->command_buffer[1] == 'o') {
-		UIServer_HandleSetTrainCommand(server);
+		UIServer_HandleSetTrainCommand(server, 0);
+	} else if (server->command_buffer[0] == 'g' && server->command_buffer[1] == 'f') {
+		UIServer_HandleSetTrainCommand(server, 1);
 	} else if (server->command_buffer[0] == 'd' && server->command_buffer[1] == 'e') {
 		UIServer_HandleSetDestinationCommand(server);
 	} else {
@@ -354,14 +356,19 @@ void UIServer_HandleTimeStopCommand(UIServer * server) {
 	PutString(COM2, "Stop command latency=%d ms.", time_diff_ms);
 }
 
-void UIServer_HandleSetTrainCommand(UIServer * server) {
+void UIServer_HandleSetTrainCommand(UIServer * server, short go_forever) {
 	int next_whitespace = rob_next_whitespace(server->command_buffer);
 	char train_num = robatoi(&server->command_buffer[next_whitespace]);
 
 	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
 	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
 	
-	send_message->message_type = MESSAGE_TYPE_SET_TRAIN;
+	if (go_forever) {
+		send_message->message_type = MESSAGE_TYPE_GO_FOREVER;
+	} else {
+		send_message->message_type = MESSAGE_TYPE_SET_TRAIN;
+	}
+	
 	send_message->int1 = train_num;
 	
 	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
