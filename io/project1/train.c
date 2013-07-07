@@ -479,8 +479,11 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	double time = TimeSeconds() - engine->actual_time_at_last_sensor;
 	engine->estimated_distance_after_node = engine->calculated_speed * time;
 	engine->distance_to_destination = DistanceToDestination(engine->route_node_info, engine->route_node_index, engine->destination_node) - engine->estimated_distance_after_node;
+	
+	assert(engine->speed_setting < 16, "Train Speed Setting is set wrong");
+	int stopping_distance = STOPPING_DISTANCE[engine->speed_setting];
 
-	if (engine->distance_to_destination < STOPPING_DISTANCE) {
+	if (engine->distance_to_destination < stopping_distance) {
 		TrainServer_SlowTrainDown(server, engine);
 	}
 }
