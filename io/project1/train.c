@@ -465,7 +465,8 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 
 	engine->state = TRAIN_ENGINE_RUNNING;
 	TrainServer_QueueSwitchStates(server, engine);
-	TrainServer_SetTrainSpeed(server, 8 | LIGHTS_MASK, engine->train_num);
+	engine->granular_speed_setting = STARTUP_TRAIN_SPEED;
+	TrainServer_SetTrainSpeed(server, STARTUP_TRAIN_SPEED | LIGHTS_MASK, engine->train_num);
 }
 
 void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine) {
@@ -544,10 +545,16 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	
 	// Feedback control system
 	if (engine->state != TRAIN_ENGINE_NEAR_DESTINATION) {
-		if (engine->calculated_speed < TARGET_SPEED && engine->speed_setting < 12) {
-			TrainServer_SetTrainSpeed(server, (engine->speed_setting + 1) | LIGHTS_MASK, engine->train_num);
-		} else if (engine->calculated_speed > TARGET_SPEED && engine->speed_setting > 8) {
-			TrainServer_SetTrainSpeed(server, (engine->speed_setting - 1) | LIGHTS_MASK, engine->train_num);
+		if (engine->calculated_speed < TARGET_SPEED && engine->granular_speed_setting < 12) {
+			engine->granular_speed_setting += FEEDBACK_CONTROL_SPEED_INCREMENT;
+		} else if (engine->calculated_speed > TARGET_SPEED && engine->granular_speed_setting > 8) {
+			engine->granular_speed_setting -= FEEDBACK_CONTROL_SPEED_INCREMENT;
+		}
+		
+		int new_speed_setting = (int) engine->granular_speed_setting;
+		
+		if (new_speed_setting != engine->speed_setting) {
+			TrainServer_SetTrainSpeed(server, new_speed_setting | LIGHTS_MASK, engine->train_num);
 		}
 	}
 	

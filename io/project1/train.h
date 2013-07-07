@@ -15,7 +15,7 @@ static const char const TRAIN_SWITCH_MASTER_NAME[] = "TrSwMr";
 
 static const int const LIGHTS_MASK = 16;
 
-static const double const SPEED_ALPHA = 0.8;
+static const double const SPEED_ALPHA = 0.9;
 static const int const TARGET_SPEED = 500;  // mm
 static const int const STOPPING_DISTANCE[] = {
 	0, // 0
@@ -25,16 +25,18 @@ static const int const STOPPING_DISTANCE[] = {
 	50, // 4
 	100, // 5
 	200, // 6
-	300, // 7
-	400, // 8
-	500, // 9
-	600, // 10
-	700, // 11
-	800, // 12
-	900, // 13
+	400, // 7
+	600, // 8
+	800, // 9
+	800, // 10
+	900, // 11
+	900, // 12
+	1000, // 13
 	1000, // 14
 	0, // 15
 };
+static const double FEEDBACK_CONTROL_SPEED_INCREMENT = 0.75;
+static const int STARTUP_TRAIN_SPEED = 11;
 
 typedef enum TrainCommand {
 	TRAIN_STOP,
@@ -146,6 +148,7 @@ struct TrainEngine {
 	TrainEngineState state;
 	track_node * next_node;
 	int speed_setting;
+	double granular_speed_setting; 
 	double calculated_speed;
 	double last_calculated_speed;
 	double expected_time_at_next_sensor;
