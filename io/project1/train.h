@@ -168,6 +168,7 @@ struct TrainEngine {
 	int route_node_index;
 	int route_nodes_length;
 	short go_forever;
+	double wait_until;
 };
 
 typedef struct TrainServer {
