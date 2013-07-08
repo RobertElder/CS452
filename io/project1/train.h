@@ -275,5 +275,9 @@ void TrainEngine_SetInitialSwitches();
 
 void TrainSwitchMaster_Start();
 
+track_node * GetRandomSensorReachableViaDirectedGraph(TrainServer *, track_node *);
+
+track_node * GetRandomSensor(TrainServer *);
+
 #endif
 

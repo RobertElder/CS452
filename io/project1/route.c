@@ -30,31 +30,9 @@ track_node * NodeNameToTrackNode(track_node * track_nodes, char * name) {
 	return 0;
 }
 
-track_node * GetRandomSensor(RNG * rng, track_node * track_nodes) {
-	while(1){
-		int index = RNG_Get(rng) % TRACK_MAX;
-		if(track_nodes[index].reverse && track_nodes[index].type == NODE_SENSOR){
-			return &(track_nodes[index]);
-		}
-	}
 
-}
 
-track_node * GetRandomSensorReachableViaDirectedGraph(RNG * rng, track_node * track_nodes, track_node * start_node) {
-	int i = 0;
-	while(1){
-		track_node * random_sensor = GetRandomSensor(rng, track_nodes);
-		if(random_sensor != start_node && IsNodeReachableViaDirectedGraph(track_nodes, start_node, random_sensor, 0)){
-			return random_sensor;
-		}
-		i++;
-		//assert(i < 100, "Unable to find a sensor that was reachable via the directed graph in current direction.");
-		
-		if (i > 100) {
-			return 0;
-		}
-	}
-}
+
 
 int IsNodeReachableViaDirectedGraph(track_node * track_nodes, track_node * start_node, track_node * dest_node, int levels) {
 	//  Don't go too deep

@@ -173,6 +173,32 @@ void TrainServer_Initialize(TrainServer * server) {
 	assert(server->train_engines[0].tid, "TrainServer failed to create TrainEngineClient_Start");
 }
 
+
+track_node * GetRandomSensorReachableViaDirectedGraph(TrainServer * server, track_node * start_node) {
+	int i = 0;
+	while(1){
+		track_node * random_sensor = GetRandomSensor(server);
+		if(random_sensor != start_node && IsNodeReachableViaDirectedGraph(server->current_track_nodes, start_node, random_sensor, 0)){
+			return random_sensor;
+		}
+		i++;
+		//assert(i < 100, "Unable to find a sensor that was reachable via the directed graph in current direction.");
+		
+		if (i > 100) {
+			return 0;
+		}
+	}
+}
+
+track_node * GetRandomSensor(TrainServer * server) {
+	while(1){
+		int index = RNG_Get(&server->rng) % TRACK_MAX;
+		if(server->current_track_nodes[index].reverse && server->current_track_nodes[index].type == NODE_SENSOR){
+			return &(server->current_track_nodes[index]);
+		}
+	}
+}
+
 int is_sensor_blacklisted(int module_num, int sensor_num, TrainServer * server){
 	//  D9, D10
 	if(server->current_track_nodes == server->track_a_nodes && module_num == 3 && (sensor_num == 8 || sensor_num == 9)){
@@ -455,7 +481,7 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 	
 	int i = 0;
 	while (1) {
-		engine->destination_node = GetRandomSensorReachableViaDirectedGraph(&server->rng, server->current_track_nodes, engine->current_node);
+		engine->destination_node = GetRandomSensorReachableViaDirectedGraph(server, engine->current_node);
 		
 		if (!engine->destination_node) {
 			// Reverse and try again
