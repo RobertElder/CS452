@@ -65,6 +65,11 @@ Kernel
 
 * Interrupts have been completely refactored to increase stability with train communication.  This was done because we were previously attempting to send on the TXFE interrupt instead of waiting for CTS to be asserted.  We now listen for the modem status interrupt and correctly attempt to send information to the train only when CTS has been asserted after a de-assertion.
 
+*  Much investigation and refactoring was done to be sure that we will not miss any data when communication with the train.  A simple busy waiting test program was created to evaluate the timings and state transitions that happen when communicating with the train.  A diagram is shown in Figure 1 that presents the empirical timings of io flag assertions when communicating with the train.  One interesting finding is that the amount of time it takes for data to be returned from a specific sensor module can vary by about 5 milliseconds, however the time between bytes of data sent back from the train controller is very constant, at about 4.87ms.
+
+
+.. figure:: figure1.jpg
+
 
 System Calls
 ------------
@@ -400,6 +405,11 @@ When a sensor is triggered, the UI Server will display an bold number on the tab
 The ASCII map shows sensors as X and bold X. Switches are shown as U, C, or S which represent Unknown, Curved, or Straight. The ASCII map code was generated through a script from a text file.
 
 A green highlight shows the destination. Bug: the green highlight is not persistent if an updated sensor overwrites the cell.
+
+Some of the hilights of the UI are found in figure 4.
+
+
+.. figure:: figure4.jpg
 
 
 UI Timer
