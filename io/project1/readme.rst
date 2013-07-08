@@ -507,6 +507,12 @@ Train Command Server
 The Train Command Server is responsible for receiving Train Command messages such as ``SPEED`` and ``READ_SENSOR``. It calls ``Putc`` and ``Getc`` as required. Passing all train commands through this server is a form of mutual exclusion. It ensures that commands are fully sent to the trains and commands are not mangled by different tasks.
 
 
+Train Navigation
+++++++++++++++++
+
+Train navigation is currently accomplished using naive graph search algorithms, as well as a server called the SwitchMaster that is responsible for updating the positions of switches.
+
+
 UI Servers
 ++++++++++
 
@@ -552,10 +558,6 @@ Constant time unblocking of tasks has been added by adhering to the convention t
 
 Finally, our kernel has been updated to work in all compilation levels.  Our O3 version runs about twice as fast as the O0 version.
 
-Train Navigation
-++++++++++++++++
-
-Train navigation is currently accomplished using naive graph search algorithms, as well as a server called the SwitchMaster that is responsible for updating the positions of switches.
 
 Source Code
 ===========
