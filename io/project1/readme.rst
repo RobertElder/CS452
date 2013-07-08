@@ -442,7 +442,7 @@ In this deliverable we have several features that significantly improve the perf
 Source Code
 ===========
 
-The source code is located at ``/u4/chfoo/cs452/group/k4-submit/io/project1/``. It can be compiled by running ``make``.
+The source code is located at ``/u4/chfoo/cs452/group/p1-submit/io/project1/``. It can be compiled by running ``make``.
 
 Source code MD5 hashes::
 
