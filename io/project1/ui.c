@@ -227,8 +227,8 @@ void UIServer_RunCommand(UIServer * server) {
 		UIServer_HandleSwitchCommand(server);
 	} else if (server->command_buffer[0] == 'm' && server->command_buffer[1] == 'a') {
 		UIServer_HandleMapCommand(server);
-	} else if (server->command_buffer[0] == 't' && server->command_buffer[1] == 's') {
-		UIServer_HandleTimeStopCommand(server);
+//	} else if (server->command_buffer[0] == 't' && server->command_buffer[1] == 's') {
+//		UIServer_HandleTimeStopCommand(server);
 	} else if (server->command_buffer[0] == 'g' && server->command_buffer[1] == 'o') {
 		UIServer_HandleSetTrainCommand(server, 0);
 	} else if (server->command_buffer[0] == 'g' && server->command_buffer[1] == 'f') {
@@ -249,7 +249,7 @@ void UIServer_ResetCommandBuffer(UIServer * server) {
 }
 
 void UIServer_PrintCommandHelp(UIServer * server) {
-	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, ts, go, dest");
+	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, go, dest");
 }
 
 void UIServer_HandleTrainCommand(UIServer * server) {
