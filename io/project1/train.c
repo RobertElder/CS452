@@ -179,7 +179,12 @@ track_node * GetRandomSensorReachableViaDirectedGraph(TrainServer * server, trac
 	while(1){
 		track_node * random_sensor = GetRandomSensor(server);
 		if(random_sensor != start_node && IsNodeReachableViaDirectedGraph(server->current_track_nodes, start_node, random_sensor, 0)){
-			return random_sensor;
+			int module_num = random_sensor->name[0] - 65;
+			assert(module_num >= 0 && module_num <= 4, "Module num is being calculated incorrectly.");
+			int sensor_num = random_sensor->num;
+			if(!(is_sensor_blacklisted(module_num, sensor_num, server))){
+				return random_sensor;
+			}
 		}
 		i++;
 		//assert(i < 100, "Unable to find a sensor that was reachable via the directed graph in current direction.");
