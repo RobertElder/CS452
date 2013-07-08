@@ -541,6 +541,42 @@ Train Engine Client
 The Engine Client is responsible for picking up train speed commands from the Train Server and calling the Train Command Server. Like the Switch Master, the task is a worker hired by the Train Server.
 
 
+Train Engine States
+-------------------
+
+======================= =================================================
+Name                    Description
+======================= =================================================
+IDLE                    The engine is stopped and waiting.
+FINDING_POSITION        The engine is moving slowly and waiting for a
+                        sensor
+FOUND_STARTING_POSITION The engine has found its location and is
+                        calculating a path to the destination
+RUNNING                 The engine is running at high speeds to the 
+                        destination
+AT_DESTINATION          The engine is at the destination and stopped.
+NEAR_DESTINATION        The engine has slowed down and is waiting for a
+                        sensor report.
+REVERSE_AND_TRY_AGAIN   The engine is in a direction that provides no
+                        destination and is reversing to find a new
+                        sensor.
+======================= =================================================
+
+
+GO
+--
+
+The go command operates as following:
+
+1. Set the train speed to 4.
+2. If a sensor is hit, pick a random destination.
+3. Calculate a route to the destination.
+4. Speed up the train to 11.
+5. Using feedback control system, adjust the speed to achieve a speed of 50 cm/s.
+6. If the distance to destination is within the stopping distance, slow the train down.
+7. Wait for a sensor and stop.
+
+
 UI Servers
 ++++++++++
 
