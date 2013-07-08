@@ -1,22 +1,22 @@
 =========
-CS 452 K4
+CS 452 P1
 =========
 
 
 :Names: Robert Elder, Christopher Foo
 :ID #: 20335246, 20309244
 :Userids: relder, chfoo
-:Date due: June 24, 2013
+:Date due: July 9, 2013
 
 
 Running
 =======
 
-The executable is located at ``/u/cs452/tftp/ARM/relder-chfoo/k4-submit/kern.elf``.
+The executable is located at ``/u/cs452/tftp/ARM/relder-chfoo/p1-submit/kern.elf``.
 
 The entry point is located at ``0x00045000`` or ``%{FREEMEMLO}`` It *must* be executed with caching enabled::
 
-    load -b %{FREEMEMLO} -h 10.15.167.4 ARM/relder-chfoo/k4-submit/kern.elf
+    load -b %{FREEMEMLO} -h 10.15.167.4 ARM/relder-chfoo/p1-submit/kern.elf
     go -c
 
 
@@ -35,6 +35,17 @@ sw SWITCH DIRECTION
 q
     Quits the program.
 
+map NAME
+    Sets the current track. NAME should be A or B.
+
+go TRAIN
+    Begins the train route finding process. The train should start up, find position, and go to a random destination.
+
+gf TRAIN
+    Like ``go``, however, this make the train go forever by running ``go`` in an continuous loop.
+
+
+Pressing 'z' will cause the program to dump out a list of tasks information and statistics. 
 
 
 Description
@@ -43,7 +54,7 @@ Description
 Kernel
 ++++++
 
-* Caching improves the performance of the program and will be mandatory for this deliverable.  Due to some issues with timing that we will be addressing soon, some of the important user tasks will deadlock if you do not run the program with caches.  The root cause of this problem is related to improperly attempting to send bytes to the train when the FIFO buffer is empty instead of waiting for CTS to be driven low, then high.
+* Caching improves the performance of the program and will be mandatory for this deliverable.  We have finely tuned the duration of a time slice to be no longer than 700 microseconds.  Running the program without caches would require re-tuning of the time slice to prevent all CPU cycles being burnt up doing context switching.  The extremely small time quantum of 700 microseconds ensures fast responsiveness to train input.
 
 
 System Calls
@@ -111,6 +122,9 @@ System Calls
 
 ``SendTrainCommand``
     Sends a message type ``TRAIN_COMMAND`` to the Train Command Server. The call is for convenience.
+
+``PrintMessage``
+    Similar to ``PrintMessage``, but this sends the string to the UI Print Server to be displayed on the lower half of the screen using a ``UI_PRINT_MESSAGE`` message type
 
 
 Memory model
@@ -217,17 +231,7 @@ Priority Queue
 
 The Priority Queue uses 32 levels of priority by using 32 Queues.
 
-Named priority levels are available. Note the highest priority is 0 and the lowest priority is 31.
-
-======== ===
-Priority Int
-======== ===
-HIGHEST   0
-HIGH      8
-NORMAL    16
-LOW       24
-LOWEST    31
-======== ===
+Note the highest priority is 0 and the lowest priority is 31. Named priority levels are removed as they were no longer used. Explicit values are now required to remove ambiguity.
 
 
 When retrieving an item, the Priority Queue uses an integer to track which priority level has items. When a bit is 1, it means there is at least one item in the queue. For example, ``00110000...`` means there is at least one item in priority 2 and 3 queues. The count leading zero instruction is used so that we avoid checking all 32 queues when getting an item. ``0`` is returned when there is no item.
@@ -335,6 +339,7 @@ File: ``scheduler.c``
 * Number of tasks in each event states are tracked for debugging purposes.
 * Blocked tasks are not requeued in the ready queue until it is actually ready.
 * Preemptive scheduling is supported
+* Priorities of each task is defined in ``priorities.h``
 
 The following describes the process of context switching:
 
@@ -389,6 +394,12 @@ Event IDs
 
 ``UART2_TX_EVENT``
     A UART2 transmit holding register empty interrupt has fired
+
+
+Watchdog
+--------
+
+A watchdog was added to the scheduler. It runs as the lowest priority task. If the watchdog is not scheduled within 1,000,000 rounds, the scheduler will dump out task statistics and hang. This watchdog will indicate if any tasks are starved. If this condition does occur, it will report within a minute.
 
 
 Memory
@@ -510,19 +521,84 @@ Train Command Server
 The Train Command Server is responsible for receiving Train Command messages such as ``SPEED`` and ``READ_SENSOR``. It calls ``Putc`` and ``Getc`` as required. Passing all train commands through this server is a form of mutual exclusion. It ensures that commands are fully sent to the trains and commands are not mangled by different tasks.
 
 
+Train Navigation
+++++++++++++++++
+
+File: ``route.c``, ``tracks/track_data.c``
+
+Train navigation is currently accomplished using naive graph search algorithms, as well as a server called the SwitchMaster that is responsible for updating the positions of switches.
+
+
+Train Switch Master
+-------------------
+
+The Switch Master is responsible for picking up switch commands from the Train Server and calling Train Command Server. This task is a worker that removes the burden of waiting for train commands to complete.
+
+
+Train Engine Client
+-------------------
+
+The Engine Client is responsible for picking up train speed commands from the Train Server and calling the Train Command Server. Like the Switch Master, the task is a worker hired by the Train Server.
+
+
+Train Engine States
+-------------------
+
+======================= =================================================
+Name                    Description
+======================= =================================================
+IDLE                    The engine is stopped and waiting.
+FINDING_POSITION        The engine is moving slowly and waiting for a
+                        sensor
+FOUND_STARTING_POSITION The engine has found its location and is
+                        calculating a path to the destination
+RUNNING                 The engine is running at high speeds to the 
+                        destination
+AT_DESTINATION          The engine is at the destination and stopped.
+NEAR_DESTINATION        The engine has slowed down and is waiting for a
+                        sensor report.
+REVERSE_AND_TRY_AGAIN   The engine is in a direction that provides no
+                        destination and is reversing to find a new
+                        sensor.
+======================= =================================================
+
+
+GO
+--
+
+The go command operates as following:
+
+1. Set the train speed to 4.
+2. If a sensor is hit, pick a random destination.
+3. Calculate a route to the destination.
+4. Speed up the train to 11.
+5. Using feedback control system, adjust the speed to achieve a speed of 50 cm/s.
+6. If the distance to destination is within the stopping distance, slow the train down.
+7. Wait for a sensor and stop.
+
+
 UI Servers
 ++++++++++
 
-File: ``ui.c``, ``ansi.c``
+File: ``ui.c``, ``ansi.c``, ``maps/map_gen.py``, ``maps/map_a.txt``, ``maps/map_b.txt``
+
 
 UI Server
 ---------
 
-The UI Server is responsible for drawing the textual user interface. It draws a header, the time since start up, the command prompt, and a table of sensors readings.
+* Backspace has been fixed.
+* Minor bug: certain inputs will cause assertion failures.
+
+
+The UI Server is responsible for drawing the textual user interface. It draws a header, the time since start up, the command prompt, table of sensors readings, an ASCII diagram of the track layout, train status, and a scrolled area of train information.
 
 The command prompt supports up to 80 characters. Once this limit is reached, no input will be accepted and displayed. It supports backspace. Pressing the Enter key will execute the command and a response will be displayed under the command prompt.
 
-When a sensor is triggered, the UI Server will display an X on the table. Since the UI Server does not update quickly, a quickly activated and deactivated sensor may not display.
+When a sensor is triggered, the UI Server will display an bold number on the table. Sensor data for the UI is cached by the Train Server so displayed sensor readings may not reflect actual state. Sensor states in the Train Server, however, reflect actual states.
+
+The ASCII map shows sensors as X and bold X. Switches are shown as U, C, or S which represent Unknown, Curved, or Straight. The ASCII map code was generated through a script from a text file.
+
+A green highlight shows the destination. Bug: the green highlight is not persistent if an updated sensor overwrites the cell.
 
 
 UI Timer
@@ -535,6 +611,12 @@ UI Keyboard Input Task
 ----------------------
 
 The UI Keyboard Input task is responsible for calling ``Getc`` and sending the character to the UI Server.
+
+
+UI Print Message Task
+---------------------
+
+This task is responsible for printing messages into the scrolled area. It uses the ANSI feature to set scrolling areas. It is separate from the UI Server as messages may be from higher priority tasks like the Train Server. It is called via the ``PrintMessage`` call.
 
 
 Performance
@@ -555,75 +637,26 @@ Constant time unblocking of tasks has been added by adhering to the convention t
 
 Finally, our kernel has been updated to work in all compilation levels.  Our O3 version runs about twice as fast as the O0 version.
 
+
 Source Code
 ===========
 
-The source code is located at ``/u4/chfoo/cs452/group/k4-submit/io/kernel4``. It can be compiled by running ``make``.
+The source code is located at ``/u4/chfoo/cs452/group/k4-submit/io/project1/``. It can be compiled by running ``make``.
 
 Source code MD5 hashes::
 
-    linux032:~/cs452/group/k4-submit/io/kernel4> md5sum */*.* *.*
-    50ef0e1e3c71ab1e795fc3d39f75ef9d  include/bwio.h
-    9af226f127c1fd759530cd45236c37b8  include/ts7200.h
-    79cb95e061329765d7dd25c84bf70456  ansi.c
-    f1288936a928a94bd2170d746e1326a4  ansi.h
-    b8c8b5fafcd1fd43beaeee7da1e5550f  buffer.c
-    04c39523dd006155ba353fb3ba1dddfb  buffer.h
-    b5fcae4a1fde32dcd00b1895c3605961  clock.c
-    e458870bb98bf9740555b34b15550715  clock.h
-    fb923f79a79d5e46207578e84e5e695e  kern.c
-    34599bdbc904f30c66674b59d3f4e2b4  kern.elf
-    4e3dfc92cbd22b1989e190a26517d536  kernel_irq.c
-    71f92a7be8c22d1cb5d9cc15be002aa3  kernel_irq.h
-    5313c05e6242631f379b5141ebca4f5f  kernel_state.h
-    d41d8cd98f00b204e9800998ecf8427e  kern.h
-    5439df921ac46fd07959e43125fefa91  memory.c
-    b16265e8b0bfe3a510b3a25e05b8674a  memory.h
-    adcff2244ac92050360eacd7ab4f5dd9  message.c
-    85549de410590cc5033d8bf7399cf504  message.h
-    a90ee4bc4ce7f46d54b6363d8c8e4ba6  nameserver.c
-    f9335969b8c71be878a915c26e7a606c  nameserver.h
-    ca6745d94663494b718c48da853f30a9  notifier.c
-    f5af74c5dd1325eccdd70e4903640da2  notifier.h
-    78a32a3a80cad8a4cc40de1ce18fbe29  orex.ld
-    269c595b95aef41bc8c5931ce1e3c1cf  private_kernel_interface.c
-    2771aa5221a2b30980916a3ef55b9446  private_kernel_interface.h
-    080185c0fc743fa77108f3c5ee8e3baa  public_kernel_interface.c
-    681b789f0146b2589daae803f968ed2c  public_kernel_interface.h
-    cbdfb94443bcf8e298edc0cf3101b5d1  queue.c
-    c1157ac2859cc277d1df431dc85502d3  queue.h
-    cd7239008bf3fc8474819d9183b0cc0f  random.c
-    7b31c57ff692317d816c839156382596  random.h
-    9a43cb84e02f05d5b8ffca6e500d98b0  readme.rst
-    eb5a60f060d101d2536e96298aab4112  readme.tex
-    9806864a4bf5766bb12b1bd9c1467121  robio.c
-    0db55f361cec927bba27cdec6b5c2e55  robio.h
-    545aa195d4f3e0e844edac05715e094d  rps.c
-    222f8edffbfde11ee553b7561f4c10a8  rps.h
-    42432905121b8fe5715dcf1ec5367196  scheduler.c
-    606f31e642dd29602786c86d563b4470  scheduler.h
-    ecb99ee78c86924b6d54321792e68006  swi_kernel_interface.s
-    bd8b74d610f4d36af2ac42141d19e9a1  task_descriptor.c
-    7a03d71b4ace688192d79fcd44fd7420  task_descriptor.h
-    d09cc801a5f44195d473495a9dd0d78b  tasks.c
-    0d3699b1a8224eb6995bb042834f66b5  tasks.h
-    4bf41d22949ce27f1f2d7e5f32a0570f  train.c
-    6b8ab8c41f1c384a8dc0556e87b8651b  train.h
-    19f2f37c12c3cec419176823b30c1304  uart.c
-    205a1d49a746f5d83f3a6e0d5c981492  uart.h
-    214a8b02f9d8b6c9212685d493867b38  ui.c
-    b298d8ac96488af2ef904fbeac9d2abf  ui.h
-    5b609bdd0235c3858e16c053b8e53bfd  va_list_def.h
+    TODO
+    TODO
+    TODO
 
 
 
 Elf MD5 hash::
 
-    linux032:~> md5sum /u/cs452/tftp/ARM/relder-chfoo/k4-submit/kern.elf 
-    34599bdbc904f30c66674b59d3f4e2b4  /u/cs452/tftp/ARM/relder-chfoo/k4-submit/kern.elf
+    TODO
 
 
-Git sha1 hash: ``6cd3138e4c4808f1fbfe1790264f038a8cc67110``
+Git sha1 hash: ``TODO``
 
 
 

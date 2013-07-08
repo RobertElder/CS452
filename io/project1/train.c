@@ -465,9 +465,11 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 }
 
 void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine) {
-	PrintMessage("Engine %d is starting.", engine->train_num);
-	TrainServer_SetTrainSpeed(server, 4, engine->train_num);
-	engine->state = TRAIN_ENGINE_FINDING_POSITION;
+	if (engine->wait_until < TimeSeconds()) {
+		PrintMessage("Engine %d is starting.", engine->train_num);
+		TrainServer_SetTrainSpeed(server, 4, engine->train_num);
+		engine->state = TRAIN_ENGINE_FINDING_POSITION;
+	}
 }
 
 void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine * engine) {
@@ -654,6 +656,9 @@ void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * 
 		TrainEngine_Initialize(engine, engine->train_num);
 		engine->go_forever = 1;
 		engine->state = TRAIN_ENGINE_IDLE;
+		
+		// Pause a bit so we can see it found destination
+		engine->wait_until = TimeSeconds() + 4;
 	}
 }
 
@@ -934,6 +939,7 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->distance_to_next_sensor = 0;
 	engine->estimated_distance_after_node = 0;
 	engine->go_forever = 0;
+	engine->wait_until = 0;
 }
 
 void TrainEngineClient_Start(){
