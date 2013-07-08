@@ -38,6 +38,13 @@ q
 map NAME
     Sets the current track. NAME should be A or B.
 
+Figure 2 and Figure 3 show different map configurations.
+
+
+.. figure:: figure2.jpg
+.. figure:: figure3.jpg
+
+
 go TRAIN
     Begins the train route finding process. The train should start up, find position, and go to a random destination.
 
