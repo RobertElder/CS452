@@ -35,12 +35,17 @@ sw SWITCH DIRECTION
 q
     Quits the program.
 
+map NAME
+    Sets the current track. NAME should be A or B.
+
 go TRAIN
     Begins the train route finding process. The train should start up, find position, and go to a random destination.
 
 gf TRAIN
     Like ``go``, however, this make the train go forever by running ``go`` in an continuous loop.
 
+
+Pressing 'z' will cause the program to dump out a list of tasks information and statistics. 
 
 
 Description
@@ -117,6 +122,9 @@ System Calls
 
 ``SendTrainCommand``
     Sends a message type ``TRAIN_COMMAND`` to the Train Command Server. The call is for convenience.
+
+``PrintMessage``
+    Similar to ``PrintMessage``, but this sends the string to the UI Print Server to be displayed on the lower half of the screen using a ``UI_PRINT_MESSAGE`` message type
 
 
 Memory model
@@ -388,6 +396,12 @@ Event IDs
     A UART2 transmit holding register empty interrupt has fired
 
 
+Watchdog
+--------
+
+A watchdog was added to the scheduler. It runs as the lowest priority task. If the watchdog is not scheduled within 1,000,000 rounds, the scheduler will dump out task statistics and hang. This watchdog will indicate if any tasks are starved. If this condition does occur, it will report within a minute.
+
+
 Memory
 ++++++
 
@@ -510,22 +524,45 @@ The Train Command Server is responsible for receiving Train Command messages suc
 Train Navigation
 ++++++++++++++++
 
+File: ``route.c``, ``tracks/track_data.c``
+
 Train navigation is currently accomplished using naive graph search algorithms, as well as a server called the SwitchMaster that is responsible for updating the positions of switches.
+
+
+Train Switch Master
+-------------------
+
+The Switch Master is responsible for picking up switch commands from the Train Server and calling Train Command Server. This task is a worker that removes the burden of waiting for train commands to complete.
+
+
+Train Engine Client
+-------------------
+
+The Engine Client is responsible for picking up train speed commands from the Train Server and calling the Train Command Server. Like the Switch Master, the task is a worker hired by the Train Server.
 
 
 UI Servers
 ++++++++++
 
-File: ``ui.c``, ``ansi.c``
+File: ``ui.c``, ``ansi.c``, ``maps/map_gen.py``, ``maps/map_a.txt``, ``maps/map_b.txt``
+
 
 UI Server
 ---------
 
-The UI Server is responsible for drawing the textual user interface. It draws a header, the time since start up, the command prompt, and a table of sensors readings.
+* Backspace has been fixed.
+* Minor bug: certain inputs will cause assertion failures.
+
+
+The UI Server is responsible for drawing the textual user interface. It draws a header, the time since start up, the command prompt, table of sensors readings, an ASCII diagram of the track layout, train status, and a scrolled area of train information.
 
 The command prompt supports up to 80 characters. Once this limit is reached, no input will be accepted and displayed. It supports backspace. Pressing the Enter key will execute the command and a response will be displayed under the command prompt.
 
-When a sensor is triggered, the UI Server will display an X on the table. Since the UI Server does not update quickly, a quickly activated and deactivated sensor may not display.
+When a sensor is triggered, the UI Server will display an bold number on the table. Sensor data for the UI is cached by the Train Server so displayed sensor readings may not reflect actual state. Sensor states in the Train Server, however, reflect actual states.
+
+The ASCII map shows sensors as X and bold X. Switches are shown as U, C, or S which represent Unknown, Curved, or Straight. The ASCII map code was generated through a script from a text file.
+
+A green highlight shows the destination. Bug: the green highlight is not persistent if an updated sensor overwrites the cell.
 
 
 UI Timer
@@ -538,6 +575,12 @@ UI Keyboard Input Task
 ----------------------
 
 The UI Keyboard Input task is responsible for calling ``Getc`` and sending the character to the UI Server.
+
+
+UI Print Message Task
+---------------------
+
+This task is responsible for printing messages into the scrolled area. It uses the ANSI feature to set scrolling areas. It is separate from the UI Server as messages may be from higher priority tasks like the Train Server. It is called via the ``PrintMessage`` call.
 
 
 Performance
