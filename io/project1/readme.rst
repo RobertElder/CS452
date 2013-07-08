@@ -43,7 +43,7 @@ Description
 Kernel
 ++++++
 
-* Caching improves the performance of the program and will be mandatory for this deliverable.  Due to some issues with timing that we will be addressing soon, some of the important user tasks will deadlock if you do not run the program with caches.  The root cause of this problem is related to improperly attempting to send bytes to the train when the FIFO buffer is empty instead of waiting for CTS to be driven low, then high.
+* Caching improves the performance of the program and will be mandatory for this deliverable.  We have finely tuned the duration of a time slice to be no longer than 700 microseconds.  Running the program without caches would require re-tuning of the time slice to prevent all CPU cycles being burnt up doing context switching.  The extremely small time quantum of 700 microseconds ensures fast responsiveness to train input.
 
 
 System Calls
@@ -554,6 +554,11 @@ Constant time memory allocation is now used instead of the linear time memory al
 Constant time unblocking of tasks has been added by adhering to the convention that only one task can be blocked on a particular event at a time.  This removes the necessity to iterate through all tasks checking for their state, and unblocking them if they are blocked on the event being triggered.  This update saved as much as 540us on interrupts that involved unblocking tasks.
 
 Finally, our kernel has been updated to work in all compilation levels.  Our O3 version runs about twice as fast as the O0 version.
+
+Train Navigation
+++++++++++++++++
+
+Train navigation is currently accomplished using naive graph search algorithms, as well as a server called the SwitchMaster that is responsible for updating the positions of switches.
 
 Source Code
 ===========
