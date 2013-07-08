@@ -46,6 +46,7 @@ void TrainServer_Start() {
 			TrainServer_HandleSensorReaderData(&server);
 			break;
 		case MESSAGE_TYPE_SWITCH_DATA:
+			// TODO:  I don't think this is used? ...delete later
 			// from TrainCommandServer
 			TrainServer_HandleSwitchData(&server);
 			break;
@@ -234,8 +235,10 @@ void TrainServer_HandleSwitchData(TrainServer * server) {
 	
 	if (receive_message->c1 == SWITCH_CURVED_CODE) {
 		server->switch_states[(SwitchState) receive_message->c2] = SWITCH_CURVED;
-	} else {
+	} else if(receive_message->c1 == SWITCH_STRAIGHT_CODE) {
 		server->switch_states[(SwitchState) receive_message->c2] = SWITCH_STRAIGHT;
+	} else {
+		assert(0,"Invalid switch data.");
 	}
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
@@ -478,19 +481,8 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 
 	PrintMessage("Travelling from %s to %s.",engine->current_node->name ,engine->destination_node->name);
 
-	int switch_num;
-	for (switch_num = 0; switch_num < NUM_SWITCHES; switch_num++) {
-		server->switch_states[switch_num] = SWITCH_UNKNOWN;
-		QueueSwitchState(server, switch_num, SWITCH_UNKNOWN);
-	}
-
 	engine->route_nodes_length = 0;
 	PopulateRouteNodeInfo(engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length));
-
-	//PrintMessage("Path length is %d.",engine->route_nodes_length);
-	for (i = 0; i < engine->route_nodes_length; i++) {
-		//PrintMessage("Path %d: %s.",i, engine->route_node_info[i].node->name);
-	}
 
 	engine->state = TRAIN_ENGINE_RUNNING;
 	TrainServer_QueueSwitchStates(server, engine);
