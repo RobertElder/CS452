@@ -1,21 +1,8 @@
-#ifndef ROUTE_H_FORWARD_
-#define ROUTE_H_FORWARD_
-typedef struct RouteNodeInfo RouteNodeInfo;
-#define MAX_ROUTE_NODE_INFO 100
-#include "train.h"
-#endif
-
 #ifndef ROUTE_H_
 #define ROUTE_H_
+#include "train_data_structures.h"
 #include "tracks/track_data.h"
 #include "random.h"
-
-
-struct RouteNodeInfo {
-	track_node * node;
-	track_edge * edge;
-	SwitchState switch_state;
-};
 
 track_node * SensorToTrackNode(track_node * track_nodes, int module_num, int sensor_num);
 
