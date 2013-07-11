@@ -10,13 +10,23 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine);
 
+void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngine * engine);
+
+void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine * engine);
+
 void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine);
+
+void TrainServer_ProcessEngineNearDestination(TrainServer * server, TrainEngine * engine);
 
 void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine);
 
 void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * engine);
 
 void TrainServer_ProcessEngineCalibratingSpeed(TrainServer * server, TrainEngine * engine);
+
+void TrainServer_ProcessEngineWaitAndGoForever(TrainServer * server, TrainEngine * engine);
+
+void TrainServer_ProcessEngineReverseAndTryAgain(TrainServer * server, TrainEngine * engine);
 
 track_node * TrainServer_GetEnginePosition(TrainServer * server);
 

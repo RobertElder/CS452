@@ -42,22 +42,28 @@ typedef enum TrainEngineState {
 	TRAIN_ENGINE_IDLE,
 	TRAIN_ENGINE_FINDING_POSITION,
 	TRAIN_ENGINE_FOUND_STARTING_POSITION,
+	TRAIN_ENGINE_WAIT_FOR_DESTINATION,
+	TRAIN_ENGINE_GOT_DESTINATION,
 	TRAIN_ENGINE_RUNNING,
-	TRAIN_ENGINE_AT_DESTINATION,
-	TRAIN_ENGINE_CALIBRATING_SPEED,
 	TRAIN_ENGINE_NEAR_DESTINATION,
+	TRAIN_ENGINE_AT_DESTINATION,
+	TRAIN_ENGINE_WAIT_AND_GO_FOREVER,
 	TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN,
+	TRAIN_ENGINE_CALIBRATING_SPEED,
 } TrainEngineState;
 
 static const char const TRAIN_ENGINE_STATE_NAMES[][20] = {
 	"Idle",
 	"Finding Position",
 	"Found Start Posn",
+	"Wait for Dest",
+	"Got Destination",
 	"Running",
-	"At Destination",
-	"Calibrate Speed",
 	"Near Destination",
-	"Reversing",
+	"At Destination",
+	"Wait & Go 4evr",
+	"Reverse & Retry",
+	"Calibrate Speed",
 };
 
 typedef enum TrainCommand {
@@ -129,7 +135,6 @@ typedef struct GenericTrainMessage {
 	char * char1;
 } GenericTrainMessage;
 
-
 typedef struct RouteNodeInfo {
 	track_node * node;
 	track_edge * edge;
@@ -163,12 +168,6 @@ typedef struct TrainEngine {
 
 typedef struct TrainEngineStatusMessage {
 	MessageType message_type;
-/*	const char * current_node_name;
-	const char * next_node_name;
-	TrainEngineState state;
-	char train_num;
-	char speed_setting;
-*/
 	TrainEngine * train_engine;
 } TrainEngineStatusMessage;
 

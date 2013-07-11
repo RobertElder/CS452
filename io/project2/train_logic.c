@@ -12,18 +12,31 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 		TrainServer_ProcessEngineIdle(server, engine);
 		break;
 	case TRAIN_ENGINE_FINDING_POSITION:
-	case TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN:
 		TrainServer_ProcessEngineFindingPosition(server, engine);
+		break;
+	case TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN:
+		TrainServer_ProcessEngineReverseAndTryAgain(server, engine);
 		break;
 	case TRAIN_ENGINE_FOUND_STARTING_POSITION:
 		TrainServer_ProcessEngineFoundStartingPosition(server, engine);
 		break;
+	case TRAIN_ENGINE_WAIT_FOR_DESTINATION:
+		TrainServer_ProcessEngineWaitForDestination(server, engine);
+		break;
+	case TRAIN_ENGINE_GOT_DESTINATION:
+		TrainServer_ProcessEngineGotDestination(server, engine);
+		break;
 	case TRAIN_ENGINE_RUNNING:
-	case TRAIN_ENGINE_NEAR_DESTINATION:
 		TrainServer_ProcessEngineRunning(server, engine);
+		break;
+	case TRAIN_ENGINE_NEAR_DESTINATION:
+		TrainServer_ProcessEngineNearDestination(server, engine);
 		break;
 	case TRAIN_ENGINE_AT_DESTINATION:
 		TrainServer_ProcessEngineAtDestination(server, engine);
+		break;
+	case TRAIN_ENGINE_WAIT_AND_GO_FOREVER:
+		TrainServer_ProcessEngineWaitAndGoForever(server, engine);
 		break;
 	case TRAIN_ENGINE_CALIBRATING_SPEED:
 		TrainServer_ProcessEngineCalibratingSpeed(server, engine);
@@ -35,11 +48,9 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 }
 
 void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine) {
-	if (engine->wait_until < TimeSeconds()) {
-		PrintMessage("Engine %d is starting.", engine->train_num);
-		TrainServer_SetTrainSpeed(server, 4, engine->train_num);
-		engine->state = TRAIN_ENGINE_FINDING_POSITION;
-	}
+	PrintMessage("Engine %d is starting.", engine->train_num);
+	TrainServer_SetTrainSpeed(server, 4, engine->train_num);
+	engine->state = TRAIN_ENGINE_FINDING_POSITION;
 }
 
 void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine * engine) {
@@ -52,34 +63,29 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 	}
 }
 
-
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine) {
 	PrintMessage("Found starting position.");
 	
-	int i = 0;
-	while (1) {
-		engine->destination_node = GetRandomSensorReachableViaDirectedGraph(server, engine->current_node);
+	engine->state = TRAIN_ENGINE_WAIT_FOR_DESTINATION;
+}
+
+void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngine * engine) {
+	// TODO disambig whether the user should input the destination or random destination
+	engine->destination_node = GetRandomSensorReachableViaDirectedGraph(server, engine->current_node);
 		
-		if (!engine->destination_node) {
-			// Reverse and try again
-			PrintMessage("No destination in this direction! Reversing..");
-			TrainServer_SetTrainSpeed(server, REVERSE_SPEED, engine->train_num);
-			TrainServer_SetTrainSpeed(server, 4, engine->train_num);
-			engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
-			return;
-		}
-		
-		int module_num = engine->destination_node->num / SENSORS_PER_MODULE;
-		int sensor_num = engine->destination_node->num % SENSORS_PER_MODULE;
-		
-		if (!is_sensor_blacklisted(module_num, sensor_num, server)) {
-			break;
-		}
-		
-		i++;
-		assert(i < 100, "Unable to find a random destination that is not blacklisted");
+	if (!engine->destination_node) {
+		// Reverse and try again
+		PrintMessage("No destination in this direction! Reversing..");
+		TrainServer_SetTrainSpeed(server, REVERSE_SPEED, engine->train_num);
+		TrainServer_SetTrainSpeed(server, 4, engine->train_num);
+		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
+		return;
 	}
 	
+	engine->state = TRAIN_ENGINE_GOT_DESTINATION;
+}
+
+void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine * engine) {
 	engine->source_node = engine->current_node;
 
 	PrintMessage("Travelling from %s to %s.",engine->current_node->name ,engine->destination_node->name);
@@ -87,10 +93,11 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 	engine->route_nodes_length = 0;
 	PopulateRouteNodeInfo(engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length));
 
-	engine->state = TRAIN_ENGINE_RUNNING;
 	TrainServer_QueueSwitchStates(server, engine);
 	engine->granular_speed_setting = STARTUP_TRAIN_SPEED;
 	TrainServer_SetTrainSpeed(server, STARTUP_TRAIN_SPEED | LIGHTS_MASK, engine->train_num);
+	
+	engine->state = TRAIN_ENGINE_RUNNING;
 }
 
 void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine) {
@@ -111,6 +118,10 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	if (engine->distance_to_destination < stopping_distance) {
 		TrainServer_SlowTrainDown(server, engine);
 	}
+}
+
+void TrainServer_ProcessEngineNearDestination(TrainServer * server, TrainEngine * engine) {
+	TrainServer_ProcessEngineRunning(server, engine);
 }
 
 void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
@@ -187,16 +198,27 @@ void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * 
 	}
 	
 	if (engine->go_forever) {
-		TrainEngine_Initialize(engine, engine->train_num);
-		engine->go_forever = 1;
-		engine->state = TRAIN_ENGINE_IDLE;
-		
 		// Pause a bit so we can see it found destination
 		engine->wait_until = TimeSeconds() + 4;
+		engine->state = TRAIN_ENGINE_WAIT_AND_GO_FOREVER;
 	}
 }
 
+void TrainServer_ProcessEngineWaitAndGoForever(TrainServer * server, TrainEngine * engine) {
+	//TrainEngine_Initialize(engine, engine->train_num);
+	//engine->go_forever = 1;
+	
+	if (engine->wait_until < TimeSeconds()) {
+		engine->state = TRAIN_ENGINE_WAIT_FOR_DESTINATION;
+	}
+}
+
+void TrainServer_ProcessEngineReverseAndTryAgain(TrainServer * server, TrainEngine * engine) {
+	TrainServer_ProcessEngineFindingPosition(server, engine);
+}
+
 track_node * TrainServer_GetEnginePosition(TrainServer * server) {
+	// TODO, need to sensor attribution better
 	int sensor_module;
 	int sensor_num;
 	
