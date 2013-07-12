@@ -48,8 +48,9 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 }
 
 void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine) {
-	PrintMessage("Engine %d is starting.", engine->train_num);
-	TrainServer_SetTrainSpeed(server, 4, engine->train_num);
+	int speed = 14;
+	PrintMessage("Engine %d is starting, setting speed to %d.", engine->train_num, speed);
+	TrainServer_SetTrainSpeed(server, speed, engine->train_num);
 	engine->state = TRAIN_ENGINE_FINDING_POSITION;
 }
 
@@ -77,7 +78,7 @@ void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngi
 		// Reverse and try again
 		PrintMessage("No destination in this direction! Reversing..");
 		TrainServer_SetTrainSpeed(server, REVERSE_SPEED, engine->train_num);
-		TrainServer_SetTrainSpeed(server, 4, engine->train_num);
+		TrainServer_SetTrainSpeed(server, 14, engine->train_num);
 		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
 		return;
 	}
@@ -116,6 +117,7 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	int stopping_distance = STOPPING_DISTANCE[engine->speed_setting];
 
 	if (engine->distance_to_destination < stopping_distance) {
+		PrintMessage("Slowing down because distance (%d) less than stopping distance (%d).", engine->distance_to_destination, stopping_distance);
 		TrainServer_SlowTrainDown(server, engine);
 	}
 }
@@ -156,6 +158,7 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 		}
 		
 		int new_speed_setting = (int) engine->granular_speed_setting;
+		PrintMessage("Feedback control setting speed to %d for train %d.", new_speed_setting, engine->train_num);
 		
 		if (new_speed_setting != engine->speed_setting) {
 			TrainServer_SetTrainSpeed(server, new_speed_setting | LIGHTS_MASK, engine->train_num);
@@ -185,6 +188,7 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	track_node * next_node = GetNextSensor(engine->route_node_info, engine->route_node_index);
 		
 	if (next_node && next_node == engine->destination_node) {
+		PrintMessage("Slowing down because next node is destination node.");
 		TrainServer_SlowTrainDown(server, engine);
 	}
 }

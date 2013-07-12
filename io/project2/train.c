@@ -182,7 +182,8 @@ track_node * GetRandomSensorReachableViaDirectedGraph(TrainServer * server, trac
 		if(random_sensor != start_node && IsNodeReachableViaDirectedGraph(server->current_track_nodes, start_node, random_sensor, 0)){
 			int module_num = random_sensor->name[0] - 65;
 			assert(module_num >= 0 && module_num <= 4, "Module num is being calculated incorrectly.");
-			int sensor_num = random_sensor->num;
+			//  Parse the number out of the second part of the string
+			int sensor_num = robatoi(&(random_sensor->name[1])) -1;
 			if(!(is_sensor_blacklisted(module_num, sensor_num, server))){
 				return random_sensor;
 			}
@@ -206,8 +207,9 @@ track_node * GetRandomSensor(TrainServer * server) {
 }
 
 int is_sensor_blacklisted(int module_num, int sensor_num, TrainServer * server){
-	//  D9, D10
 	if(server->current_track_nodes == server->track_a_nodes && module_num == 3 && (sensor_num == 8 || sensor_num == 9)){
+		return 1;
+	}else if(server->current_track_nodes == server->track_b_nodes && module_num == 3 && (sensor_num == 7)){
 		return 1;
 	}else{
 		return 0;
@@ -293,8 +295,10 @@ void TrainServer_HandleSelectTrack(TrainServer * server) {
 	
 	if (receive_message->int1 == 'A') {
 		server->current_track_nodes = server->track_a_nodes;
-	} else {
+	} else if (receive_message->int1 == 'B') {
 		server->current_track_nodes = server->track_b_nodes;
+	}else{
+		assert(0,"Invalid map name.");
 	}
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
