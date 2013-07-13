@@ -21,6 +21,12 @@ float RNG_GetFloat(RNG * gen) {
 unsigned int RNG_GetRange(RNG * gen, unsigned int lower, unsigned int upper) {
 	unsigned int value = RNG_GetFloat(gen) * (upper + 1 - lower) + lower;
 
+	if (value > upper) {
+		value = upper;
+	} else if (value < lower) {
+		value = lower;
+	}
+
 	assert(value <= upper, "RNG_GetRange: returned an integer not in range (too big)");
 	assert(value >= lower, "RNG_GetRange: returned an integer not in range (too small)");
 
