@@ -1,0 +1,5 @@
+.PHONY: random_test
+
+random_test:
+	rm -f random_test
+	gcc -DLOCAL_DEBUGGING -g random.c random_test.c -I./include -o random_test
