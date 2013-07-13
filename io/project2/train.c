@@ -220,7 +220,16 @@ int is_sensor_blacklisted(int module_num, int sensor_num, TrainServer * server){
 	}else if(
 		server->current_track_nodes == server->track_b_nodes && (
 			(module_num == 0 && (sensor_num == 0 || sensor_num == 1)) ||
-			(module_num == 1 && (sensor_num == 10 || sensor_num == 11)) ||
+			//  The ones are too close to the end of the track.
+			(module_num == 1 && (
+					sensor_num == 6 ||
+					sensor_num == 7 ||
+					sensor_num == 8 ||
+					sensor_num == 9 ||
+					sensor_num == 10 ||
+					sensor_num == 11
+				)
+			) ||
 			(module_num == 3 && (sensor_num == 7))
 		)
 	){
@@ -379,7 +388,7 @@ void TrainServer_HandleTrainEngineClientCommandRequest(TrainServer * server) {
 		reply_message->c1 = train_speed;
 		reply_message->c2 = train_num;
 		if (train_speed != 0 && train_speed != 16) {
-			PrintMessage("Setting train %d to speed %d", train_num, train_speed);
+			//PrintMessage("Setting train %d to speed %d", train_num, train_speed);
 		}
 	} else {
 		reply_message->command = TRAIN_ENGINE_CLIENT_DO_NOTHING;
@@ -404,7 +413,7 @@ void TrainServer_HandleGetSwitchRequest(TrainServer * server) {
 		} else if(GetQueuedSwitchState(server, switch_num) == SWITCH_STRAIGHT) {
 			direction_code = SWITCH_STRAIGHT_CODE;
 		} else if(GetQueuedSwitchState(server, switch_num) == SWITCH_UNKNOWN) {
-			PrintMessage("\x1b[31;44mAttempting to tell switch master to set to switch %d unknown state.",switch_num);
+			//PrintMessage("\x1b[31;44mAttempting to tell switch master to set to switch %d unknown state.",switch_num);
 			while(Queue_CurrentCount((Queue*)&server->queued_switch_changes)){
 				int s = (int)Queue_PopStart((Queue *)&server->queued_switch_changes);
 				PrintMessage("\x1b[31;44mQueue contains %d.",s);

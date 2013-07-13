@@ -77,7 +77,7 @@ void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngi
 	if (!engine->destination_node) {
 		// Reverse and try again
 		PrintMessage("No destination in this direction! Reversing..");
-		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
+		TrainServer_SetTrainSpeed(server, 3, engine->train_num);
 		DelaySeconds(1);
 		TrainServer_SetTrainSpeed(server, REVERSE_SPEED, engine->train_num);
 		TrainServer_SetTrainSpeed(server, 14, engine->train_num);
@@ -96,6 +96,10 @@ void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine *
 	engine->route_nodes_length = 0;
 	engine->route_node_index = 0;
 	PopulateRouteNodeInfo(engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length));
+	int i = 0;
+	for(i = 0; i < engine->route_nodes_length; i++){
+		PrintMessage("Route %d) %s.",i, engine->route_node_info[i].node->name);
+	}
 
 	TrainServer_QueueSwitchStates(server, engine);
 	engine->granular_speed_setting = STARTUP_TRAIN_SPEED;
@@ -182,7 +186,7 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	engine->calculated_speed = SPEED_ALPHA * new_speed + (1 - SPEED_ALPHA) * engine->last_calculated_speed;
 	
 	if (engine->calculated_speed > MAX_PHYSICAL_SPEED) {
-		PrintMessage("Train speed calculation too fast (%d mm/s). Capping.", (int) engine->calculated_speed);
+		//PrintMessage("Train speed calculation too fast (%d mm/s). Capping.", (int) engine->calculated_speed);
 		engine->calculated_speed = MAX_PHYSICAL_SPEED;
 	}
 	
@@ -206,7 +210,7 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 		}
 		
 		int new_speed_setting = (int) engine->granular_speed_setting;
-		PrintMessage("Feedback control setting speed to %d for train %d.", new_speed_setting, engine->train_num);
+		//PrintMessage("Feedback control setting speed to %d for train %d.", new_speed_setting, engine->train_num);
 		
 		if (new_speed_setting != engine->speed_setting) {
 			TrainServer_SetTrainSpeed(server, new_speed_setting | LIGHTS_MASK, engine->train_num);
@@ -236,7 +240,7 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	track_node * next_node = GetNextSensor(engine);
 		
 	if (next_node && next_node == engine->destination_node) {
-		PrintMessage("Slowing down because next node is destination node.");
+		//PrintMessage("Slowing down because next node is destination node.");
 		TrainServer_SlowTrainDown(server, engine);
 	}
 }
@@ -316,6 +320,6 @@ void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
 	if (engine->state == TRAIN_ENGINE_RUNNING) {
 		TrainServer_SetTrainSpeed(server, 10, engine->train_num);
 		engine->state = TRAIN_ENGINE_NEAR_DESTINATION;
-		PrintMessage("Slowing down");
+		//PrintMessage("Slowing down");
 	}
 }
