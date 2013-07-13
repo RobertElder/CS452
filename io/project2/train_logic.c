@@ -92,13 +92,17 @@ void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine *
 	PrintMessage("Travelling from %s to %s.",engine->current_node->name ,engine->destination_node->name);
 
 	engine->route_nodes_length = 0;
+	engine->route_node_index = 0;
 	PopulateRouteNodeInfo(engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length));
 
+	PrintMessage("Got route %x to %x",engine->current_node ,engine->destination_node);
 	TrainServer_QueueSwitchStates(server, engine);
+	PrintMessage("queued switches");
 	engine->granular_speed_setting = STARTUP_TRAIN_SPEED;
 	TrainServer_SetTrainSpeed(server, STARTUP_TRAIN_SPEED | LIGHTS_MASK, engine->train_num);
 	
 	engine->state = TRAIN_ENGINE_RUNNING;
+	PrintMessage("did everything");
 }
 
 void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine) {
@@ -117,7 +121,7 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	int stopping_distance = STOPPING_DISTANCE[engine->speed_setting];
 
 	if (engine->distance_to_destination < stopping_distance) {
-		PrintMessage("Slowing down because distance (%d) less than stopping distance (%d).", engine->distance_to_destination, stopping_distance);
+		//PrintMessage("Slowing down because distance (%d) less than stopping distance (%d).", engine->distance_to_destination, stopping_distance);
 		TrainServer_SlowTrainDown(server, engine);
 	}
 }
@@ -194,27 +198,13 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 }
 
 void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * engine) {
-	// Blink the lights
-	if (Time() % 50 == 0) {
-		TrainServer_SetTrainSpeed(server, LIGHTS_MASK, engine->train_num);
-		Delay(1);
-		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
-	}
-	
 	if (engine->go_forever) {
-		// Pause a bit so we can see it found destination
-		engine->wait_until = TimeSeconds() + 4;
 		engine->state = TRAIN_ENGINE_WAIT_AND_GO_FOREVER;
 	}
 }
 
 void TrainServer_ProcessEngineWaitAndGoForever(TrainServer * server, TrainEngine * engine) {
-	//TrainEngine_Initialize(engine, engine->train_num);
-	//engine->go_forever = 1;
-	
-	if (engine->wait_until < TimeSeconds()) {
-		engine->state = TRAIN_ENGINE_WAIT_FOR_DESTINATION;
-	}
+	engine->state = TRAIN_ENGINE_WAIT_FOR_DESTINATION;
 }
 
 void TrainServer_ProcessEngineReverseAndTryAgain(TrainServer * server, TrainEngine * engine) {
