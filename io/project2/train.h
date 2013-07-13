@@ -58,9 +58,14 @@ void TrainSwitchMaster_Start();
 
 int is_sensor_blacklisted(int module_num, int sensor_num, TrainServer * server);
 
+int is_switch_blacklisted(TrainServer *, int switch_num);
+
 track_node * GetRandomSensorReachableViaDirectedGraph(TrainServer *, track_node *);
 
 track_node * GetRandomSensor(TrainServer *);
+
+int IsNodeReachableViaDirectedGraph(TrainServer * , track_node * , track_node * , int );
+
 
 #endif
 

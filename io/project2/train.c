@@ -174,12 +174,41 @@ void TrainServer_Initialize(TrainServer * server) {
 	assert(server->train_engines[0].tid, "TrainServer failed to create TrainEngineClient_Start");
 }
 
+int IsNodeReachableViaDirectedGraph(TrainServer * server, track_node * start_node, track_node * dest_node, int levels) {
+	//  Don't go too deep
+	if (levels > 20){
+		return 0;
+	}
+
+	if(start_node == dest_node){
+		return 1;
+	}else if(start_node->type == NODE_MERGE){
+		return IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
+	}else if(start_node->type == NODE_SENSOR){
+		return IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
+	}else if (start_node->type == NODE_EXIT){
+		return 0;
+	}else if (start_node->type == NODE_ENTER){
+		return 0;
+	}else if (start_node->type == NODE_BRANCH){
+		//  Don't try to go through broken switches.
+		if(is_switch_blacklisted(server, start_node->num))
+			return 0;
+		int rtn1 = IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1);
+		int rtn2 = IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1);
+		return rtn1 || rtn2;
+	}else{
+		assert(0,"Case should not happen");
+		return 0;
+	}
+}
+
 
 track_node * GetRandomSensorReachableViaDirectedGraph(TrainServer * server, track_node * start_node) {
 	int i = 0;
 	while(1){
 		track_node * random_sensor = GetRandomSensor(server);
-		if(random_sensor != start_node && IsNodeReachableViaDirectedGraph(server->current_track_nodes, start_node, random_sensor, 0)){
+		if(random_sensor != start_node && IsNodeReachableViaDirectedGraph(server, start_node, random_sensor, 0)){
 			int module_num = random_sensor->name[0] - 65;
 			assert(module_num >= 0 && module_num <= 4, "Module num is being calculated incorrectly.");
 			//  Parse the number out of the second part of the string
@@ -232,6 +261,18 @@ int is_sensor_blacklisted(int module_num, int sensor_num, TrainServer * server){
 				)
 			) ||
 			(module_num == 3 && (sensor_num == 7))
+		)
+	){
+		return 1;
+	}else{
+		return 0;
+	}
+}
+
+int is_switch_blacklisted(TrainServer * server, int switch_num){
+	if(
+		server->current_track_nodes == server->track_a_nodes && (
+			switch_num == 156
 		)
 	){
 		return 1;

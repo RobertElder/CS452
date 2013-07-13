@@ -34,31 +34,7 @@ track_node * NodeNameToTrackNode(track_node * track_nodes, char * name) {
 
 
 
-int IsNodeReachableViaDirectedGraph(track_node * track_nodes, track_node * start_node, track_node * dest_node, int levels) {
-	//  Don't go too deep
-	if (levels > 20){
-		return 0;
-	}
 
-	if(start_node == dest_node){
-		return 1;
-	}else if(start_node->type == NODE_MERGE){
-		return IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
-	}else if(start_node->type == NODE_SENSOR){
-		return IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
-	}else if (start_node->type == NODE_EXIT){
-		return 0;
-	}else if (start_node->type == NODE_ENTER){
-		return 0;
-	}else if (start_node->type == NODE_BRANCH){
-		int rtn1 = IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1);
-		int rtn2 = IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1);
-		return rtn1 || rtn2;
-	}else{
-		assert(0,"Case should not happen");
-		return 0;
-	}
-}
 
 int QueueSwitchStatesForDirectedPath(SwitchState * switch_queue, track_node * track_nodes, track_node * start_node, track_node * dest_node, int levels) {
 	
