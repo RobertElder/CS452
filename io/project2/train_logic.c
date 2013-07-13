@@ -95,14 +95,56 @@ void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine *
 	engine->route_node_index = 0;
 	PopulateRouteNodeInfo(engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length));
 
-	PrintMessage("Got route %x to %x",engine->current_node ,engine->destination_node);
 	TrainServer_QueueSwitchStates(server, engine);
-	PrintMessage("queued switches");
 	engine->granular_speed_setting = STARTUP_TRAIN_SPEED;
 	TrainServer_SetTrainSpeed(server, STARTUP_TRAIN_SPEED | LIGHTS_MASK, engine->train_num);
 	
 	engine->state = TRAIN_ENGINE_RUNNING;
-	PrintMessage("did everything");
+}
+
+int DistanceToNextSensor(TrainEngine * engine) {
+	int distance = 0;
+	int i;
+	
+	for (i = engine->route_node_index; i < engine->route_nodes_length; i++) {
+		if (engine->route_node_info[i].node->type == NODE_SENSOR && i != engine->route_node_index) {
+			break;
+		}
+		
+		distance += engine->route_node_info[i].edge->dist;
+	}
+	
+	return distance;
+}
+
+track_node * GetNextSensor(TrainEngine * engine) {
+	int i;
+	
+	for (i = engine->route_node_index; i < engine->route_nodes_length; i++) {
+		
+		if (engine->route_node_info[i].node->type == NODE_SENSOR && i != engine->route_node_index) {
+			return engine->route_node_info[i].node;
+		}
+		
+	}
+	
+	return 0;
+}
+
+int DistanceToDestination(TrainEngine * engine) {
+	int distance = 0;
+	int i;
+	
+	for (i = engine->route_node_index; i < engine->route_nodes_length; i++) {
+		
+		if (engine->route_node_info[i].node == engine->destination_node) {
+			break;
+		}
+		
+		distance += engine->route_node_info[i].edge->dist;
+	}
+	
+	return distance;
 }
 
 void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine) {
@@ -115,7 +157,7 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	
 	double time = TimeSeconds() - engine->actual_time_at_last_sensor;
 	engine->estimated_distance_after_node = engine->calculated_speed * time;
-	engine->distance_to_destination = DistanceToDestination(engine->route_node_info, engine->route_node_index, engine->destination_node) - engine->estimated_distance_after_node;
+	engine->distance_to_destination = DistanceToDestination(engine) - engine->estimated_distance_after_node;
 	
 	assert(engine->speed_setting < 16, "Train Speed Setting is set wrong");
 	int stopping_distance = STOPPING_DISTANCE[engine->speed_setting];
@@ -184,12 +226,12 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 		//PrintMessage("\x1b[31;44mUnable to find current sensor (%s) in route list from %s to %s.", engine->current_node->name, engine->source_node->name, engine->destination_node->name);
 	}
 
-	engine->distance_to_next_sensor = DistanceToNextSensor(engine->route_node_info, engine->route_node_index);
+	engine->distance_to_next_sensor = DistanceToNextSensor(engine);
 	engine->expected_time_at_next_sensor = (double) engine->distance_to_next_sensor / engine->calculated_speed + time;
 
 	TrainServer_QueueSwitchStates(server, engine);
 	
-	track_node * next_node = GetNextSensor(engine->route_node_info, engine->route_node_index);
+	track_node * next_node = GetNextSensor(engine);
 		
 	if (next_node && next_node == engine->destination_node) {
 		PrintMessage("Slowing down because next node is destination node.");
