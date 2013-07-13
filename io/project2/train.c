@@ -207,9 +207,23 @@ track_node * GetRandomSensor(TrainServer * server) {
 }
 
 int is_sensor_blacklisted(int module_num, int sensor_num, TrainServer * server){
-	if(server->current_track_nodes == server->track_a_nodes && module_num == 3 && (sensor_num == 8 || sensor_num == 9)){
+	if(
+		server->current_track_nodes == server->track_a_nodes && (
+			//  These ones will stick
+			(module_num == 3 && (sensor_num == 8 || sensor_num == 9)) ||
+			(module_num == 2 && (sensor_num == 8)) ||
+			//  These ones can't be reached because they are too close to the end of the track.
+			(module_num == 1 && (sensor_num == 10 || sensor_num == 11))
+		)
+	){
 		return 1;
-	}else if(server->current_track_nodes == server->track_b_nodes && module_num == 3 && (sensor_num == 7)){
+	}else if(
+		server->current_track_nodes == server->track_b_nodes && (
+			(module_num == 0 && (sensor_num == 0 || sensor_num == 1)) ||
+			(module_num == 1 && (sensor_num == 10 || sensor_num == 11)) ||
+			(module_num == 3 && (sensor_num == 7))
+		)
+	){
 		return 1;
 	}else{
 		return 0;
@@ -550,11 +564,6 @@ void TrainCommandServer_Start() {
 			PutcAtomic(COM1, 2, direction_code, switch_num);
 			DelaySeconds(0.15);
 			Putc(COM1, 32);
-
-			// Make sure the solenoid is really off
-			DelaySeconds(0.2);
-			Putc(COM1, 32);
-			
 			break;
 		case TRAIN_READ_SENSOR:
 			module_num = command_receive_message->c1;

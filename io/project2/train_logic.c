@@ -77,6 +77,8 @@ void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngi
 	if (!engine->destination_node) {
 		// Reverse and try again
 		PrintMessage("No destination in this direction! Reversing..");
+		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
+		DelaySeconds(1);
 		TrainServer_SetTrainSpeed(server, REVERSE_SPEED, engine->train_num);
 		TrainServer_SetTrainSpeed(server, 14, engine->train_num);
 		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
@@ -312,7 +314,7 @@ void TrainServer_SetTrainSpeed(TrainServer * server, int speed, int train_num) {
 
 void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
 	if (engine->state == TRAIN_ENGINE_RUNNING) {
-		TrainServer_SetTrainSpeed(server, 3, engine->train_num);
+		TrainServer_SetTrainSpeed(server, 10, engine->train_num);
 		engine->state = TRAIN_ENGINE_NEAR_DESTINATION;
 		PrintMessage("Slowing down");
 	}
