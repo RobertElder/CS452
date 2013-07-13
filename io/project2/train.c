@@ -210,6 +210,7 @@ int is_sensor_blacklisted(int module_num, int sensor_num, TrainServer * server){
 	if(
 		server->current_track_nodes == server->track_a_nodes && (
 			//  These ones will stick
+			(module_num == 4 && (sensor_num == 15 || sensor_num == 16)) ||
 			(module_num == 3 && (sensor_num == 8 || sensor_num == 9)) ||
 			(module_num == 2 && (sensor_num == 8)) ||
 			//  These ones can't be reached because they are too close to the end of the track.
