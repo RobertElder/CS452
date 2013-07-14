@@ -15,7 +15,7 @@ static const int const LIGHTS_MASK = 16;
 static const int const REVERSE_SPEED = 15;
 
 static const double const SPEED_ALPHA = 0.9;
-static const int const TARGET_SPEED = 500;  // mm
+static const int const TARGET_SPEED = 430;  // mm
 static const int const STOPPING_DISTANCE[52][16] = {
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 0-9
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 10-19
@@ -37,7 +37,7 @@ static const int const STOPPING_DISTANCE[52][16] = {
 		//  Train 49
 		{0, 50, 50, 50, 50, 100, 200, 400, 460, 520, 560, 600, 650, 700, 1000, 0}, 
 		//  Train 50
-		{0, 50, 50, 50, 50, 100, 200, 400, 460, 520, 560, 600, 650, 700, 1000, 0},
+		{0, 50, 50, 50, 50, 100, 200, 350, 430, 500, 540, 580, 620, 660, 700, 0},
 		//  Train 51
 		{0, 50, 50, 50, 50, 100, 200, 400, 460, 520, 560, 600, 650, 700, 1000, 0}
 };
@@ -162,6 +162,7 @@ typedef struct TrainEngine {
 	double expected_time_at_last_sensor;
 	double actual_time_at_last_sensor;
 	int distance_to_next_sensor;
+	int sample_distance_to_next_sensor;
 	int distance_to_destination;
 	double estimated_distance_after_node;
 	track_node * current_node;
