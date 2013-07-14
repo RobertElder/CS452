@@ -826,7 +826,7 @@ void TrainSwitchMaster_Start() {
 			switch_num = command_reply_message->c2;
 			SendTrainCommand(TRAIN_SWITCH, direction_code, switch_num, 0, 0);
 		} else {
-			DelaySeconds(0.05);
+			DelaySeconds(0.01);
 		}
 	}
 	

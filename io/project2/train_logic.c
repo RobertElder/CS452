@@ -83,7 +83,7 @@ void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngi
 		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
 		return;
 	}
-	
+
 	engine->state = TRAIN_ENGINE_GOT_DESTINATION;
 }
 
@@ -318,7 +318,27 @@ void TrainServer_SetTrainSpeed(TrainServer * server, int speed, int train_num) {
 
 void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
 	if (engine->state == TRAIN_ENGINE_RUNNING) {
-		TrainServer_SetTrainSpeed(server, 8, engine->train_num);
+		int slow_speed = 8;
+
+		//  These ones are close to switches so we need to slow down more.  We need to be at speed 8 for
+		//  the other ones, otherwise we stall.
+		if(
+			engine->destination_node == &(server->track_b_nodes[2]) || // A3
+			engine->destination_node == &(server->track_b_nodes[45]) || // C14
+			engine->destination_node == &(server->track_b_nodes[39]) || // C8
+			engine->destination_node == &(server->track_b_nodes[36]) || // C5
+			engine->destination_node == &(server->track_b_nodes[75]) || // E12
+			engine->destination_node == &(server->track_b_nodes[31]) // B16
+		){
+			slow_speed = 3;
+		}else if(
+			engine->destination_node == &(server->track_b_nodes[76]) || // E13
+			engine->destination_node == &(server->track_b_nodes[69]) // E6
+		){
+			slow_speed = 4;
+		}
+
+		TrainServer_SetTrainSpeed(server, slow_speed, engine->train_num);
 		engine->state = TRAIN_ENGINE_NEAR_DESTINATION;
 		PrintMessage("Slowing down");
 	}
