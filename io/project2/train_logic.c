@@ -166,7 +166,7 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	engine->distance_to_destination = DistanceToDestination(engine) - engine->estimated_distance_after_node;
 	
 	assert(engine->speed_setting < 16, "Train Speed Setting is set wrong");
-	int stopping_distance = STOPPING_DISTANCE[engine->speed_setting];
+	int stopping_distance = STOPPING_DISTANCE[engine->train_num][engine->speed_setting];
 
 	if (engine->distance_to_destination < stopping_distance) {
 		//PrintMessage("Slowing down because distance (%d) less than stopping distance (%d).", engine->distance_to_destination, stopping_distance);
@@ -318,8 +318,8 @@ void TrainServer_SetTrainSpeed(TrainServer * server, int speed, int train_num) {
 
 void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
 	if (engine->state == TRAIN_ENGINE_RUNNING) {
-		TrainServer_SetTrainSpeed(server, 10, engine->train_num);
+		TrainServer_SetTrainSpeed(server, 3, engine->train_num);
 		engine->state = TRAIN_ENGINE_NEAR_DESTINATION;
-		//PrintMessage("Slowing down");
+		PrintMessage("Slowing down");
 	}
 }
