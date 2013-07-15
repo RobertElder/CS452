@@ -26,6 +26,7 @@ void Scheduler_Initialize(Scheduler * scheduler) {
 	scheduler->functions_registered = 0;
 	scheduler->watchdog_feed_counter = 0;
 	scheduler->scheduled_counter = 0;
+	scheduler->halt = 0;
 	
 	int i;
 	for (i = 0; i < MAX_TASKS + 1; i++) {
@@ -73,7 +74,7 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 	int times = 0;
 	int min_priority = 0;
 
-	while (min_priority < NUM_PRIORITIES) {
+	while (min_priority < NUM_PRIORITIES && !scheduler->halt) {
 		int i;
 		for (i = 0; i < MAX_TASKS + 2; i++) {
 			TD * td = PriorityQueue_GetLower(&(scheduler->task_queue), min_priority, (void*)&min_priority);
@@ -100,7 +101,7 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 		min_priority++;
 	}
 	
-	robprintfbusy((const unsigned char *)"\033[44;37mNo tasks in queue!\033[0m\n");
+	robprintfbusy((const unsigned char *)"\x1b[r\033[44;37mNo tasks in queue!\033[0m\n");
 	
 	if(TIMER_INTERRUPTS_ENABLED){
 		IRQ_ClearTimerInterrupt();
@@ -109,6 +110,10 @@ TD * Scheduler_ScheduleNextTask(Scheduler * scheduler, KernelState * k_state){
 	}
 	
 	Scheduler_PrintTDCounts(scheduler);
+	
+	if (scheduler->halt) {
+		return 0;
+	}
 
 // TODO: don't ignore this
 	assertf(scheduler->num_ready == 0,
@@ -410,4 +415,8 @@ void SchedulerWatchdogTask_Start() {
 	
 	robprintfbusy((const unsigned char *)"\033[0;1m * Watchdog exit *\033[0m\n");
 	Exit();
+}
+
+void Scheduler_Halt(Scheduler * scheduler) {
+	scheduler->halt = 1;
 }

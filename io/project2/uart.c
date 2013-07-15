@@ -134,9 +134,12 @@ void KeyboardInputServer_Start() {
 		case MESSAGE_TYPE_NOTIFIER:
 			// From notifier
 			data = *UART2DATA & DATA_MASK;
-			if(data == 'z'){
+			if(data == ('z' & 31)){
 				KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
 				Scheduler_PrintTDCounts(&k_state->scheduler);
+			} else if (data == ('c' & 31)) {
+				KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+				Scheduler_Halt(&k_state->scheduler);
 			}
 			
 			if (*UART2RXSts & OE_MASK) {

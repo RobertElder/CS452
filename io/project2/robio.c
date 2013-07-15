@@ -12,7 +12,7 @@ void assertf( int expr, const char * message, ...){
 	va_start(va,message);
 	if(!expr){
 		asm_AssertKernelEntry();
-		const char * title = (const char *)"\033[36m\
+		const char * title = (const char *)"\x1b[r\033[36m\
                                 ``,:::::``                                          \n\
                               .@@@@@@@@@@@#`                                        \n\
                              `#@@@@@@@@@@@@#`                                       \n\
