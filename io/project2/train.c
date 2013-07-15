@@ -174,15 +174,45 @@ void TrainServer_Initialize(TrainServer * server) {
 	assert(server->train_engines[0].tid, "TrainServer failed to create TrainEngineClient_Start");
 }
 
+int IsNodeReachableViaDirectedGraph(TrainServer * server, track_node * start_node, track_node * dest_node, int levels) {
+	//  Don't go too deep
+	if (levels > 20){
+		return 0;
+	}
+
+	if(start_node == dest_node){
+		return 1;
+	}else if(start_node->type == NODE_MERGE){
+		return IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
+	}else if(start_node->type == NODE_SENSOR){
+		return IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
+	}else if (start_node->type == NODE_EXIT){
+		return 0;
+	}else if (start_node->type == NODE_ENTER){
+		return 0;
+	}else if (start_node->type == NODE_BRANCH){
+		//  Don't try to go through broken switches.
+		if(is_switch_blacklisted(server, start_node->num))
+			return 0;
+		int rtn1 = IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1);
+		int rtn2 = IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1);
+		return rtn1 || rtn2;
+	}else{
+		assert(0,"Case should not happen");
+		return 0;
+	}
+}
+
 
 track_node * GetRandomSensorReachableViaDirectedGraph(TrainServer * server, track_node * start_node) {
 	int i = 0;
 	while(1){
 		track_node * random_sensor = GetRandomSensor(server);
-		if(random_sensor != start_node && IsNodeReachableViaDirectedGraph(server->current_track_nodes, start_node, random_sensor, 0)){
+		if(random_sensor != start_node && IsNodeReachableViaDirectedGraph(server, start_node, random_sensor, 0)){
 			int module_num = random_sensor->name[0] - 65;
 			assert(module_num >= 0 && module_num <= 4, "Module num is being calculated incorrectly.");
-			int sensor_num = random_sensor->num;
+			//  Parse the number out of the second part of the string
+			int sensor_num = robatoi(&(random_sensor->name[1])) -1;
 			if(!(is_sensor_blacklisted(module_num, sensor_num, server))){
 				return random_sensor;
 			}
@@ -206,8 +236,54 @@ track_node * GetRandomSensor(TrainServer * server) {
 }
 
 int is_sensor_blacklisted(int module_num, int sensor_num, TrainServer * server){
-	//  D9, D10
-	if(server->current_track_nodes == server->track_a_nodes && module_num == 3 && (sensor_num == 8 || sensor_num == 9)){
+	if(
+		server->current_track_nodes == server->track_a_nodes && (
+			//  These ones will stick
+			(module_num == 4 && (sensor_num == 15 || sensor_num == 16)) ||
+			(module_num == 3 && (sensor_num == 8 || sensor_num == 9)) ||
+			(module_num == 2 && (sensor_num == 8)) ||
+			//  These ones can't be reached because they are too close to the end of the track.
+			(
+			 	module_num == 1 && (
+					sensor_num == 6 ||
+					sensor_num == 7 ||
+					sensor_num == 8 ||
+					sensor_num == 9 ||
+					sensor_num == 10 ||
+					sensor_num == 11
+				)
+			)
+		)
+	){
+		return 1;
+	}else if(
+		server->current_track_nodes == server->track_b_nodes && (
+			(module_num == 0 && (sensor_num == 0 || sensor_num == 1)) ||
+			//  The ones are too close to the end of the track.
+			(module_num == 1 && (
+					sensor_num == 6 ||
+					sensor_num == 7 ||
+					sensor_num == 8 ||
+					sensor_num == 9 ||
+					sensor_num == 10 ||
+					sensor_num == 11
+				)
+			) ||
+			(module_num == 3 && (sensor_num == 7))
+		)
+	){
+		return 1;
+	}else{
+		return 0;
+	}
+}
+
+int is_switch_blacklisted(TrainServer * server, int switch_num){
+	if(
+		server->current_track_nodes == server->track_a_nodes && (
+			switch_num == 156
+		)
+	){
 		return 1;
 	}else{
 		return 0;
@@ -293,8 +369,10 @@ void TrainServer_HandleSelectTrack(TrainServer * server) {
 	
 	if (receive_message->int1 == 'A') {
 		server->current_track_nodes = server->track_a_nodes;
-	} else {
+	} else if (receive_message->int1 == 'B') {
 		server->current_track_nodes = server->track_b_nodes;
+	}else{
+		assert(0,"Invalid map name.");
 	}
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
@@ -361,7 +439,7 @@ void TrainServer_HandleTrainEngineClientCommandRequest(TrainServer * server) {
 		reply_message->c1 = train_speed;
 		reply_message->c2 = train_num;
 		if (train_speed != 0 && train_speed != 16) {
-			PrintMessage("Setting train %d to speed %d", train_num, train_speed);
+			//PrintMessage("Setting train %d to speed %d", train_num, train_speed);
 		}
 	} else {
 		reply_message->command = TRAIN_ENGINE_CLIENT_DO_NOTHING;
@@ -386,7 +464,7 @@ void TrainServer_HandleGetSwitchRequest(TrainServer * server) {
 		} else if(GetQueuedSwitchState(server, switch_num) == SWITCH_STRAIGHT) {
 			direction_code = SWITCH_STRAIGHT_CODE;
 		} else if(GetQueuedSwitchState(server, switch_num) == SWITCH_UNKNOWN) {
-			PrintMessage("\x1b[31;44mAttempting to tell switch master to set to switch %d unknown state.",switch_num);
+			//PrintMessage("\x1b[31;44mAttempting to tell switch master to set to switch %d unknown state.",switch_num);
 			while(Queue_CurrentCount((Queue*)&server->queued_switch_changes)){
 				int s = (int)Queue_PopStart((Queue *)&server->queued_switch_changes);
 				PrintMessage("\x1b[31;44mQueue contains %d.",s);
@@ -546,11 +624,6 @@ void TrainCommandServer_Start() {
 			PutcAtomic(COM1, 2, direction_code, switch_num);
 			DelaySeconds(0.15);
 			Putc(COM1, 32);
-
-			// Make sure the solenoid is really off
-			DelaySeconds(0.2);
-			Putc(COM1, 32);
-			
 			break;
 		case TRAIN_READ_SENSOR:
 			module_num = command_receive_message->c1;
@@ -753,7 +826,7 @@ void TrainSwitchMaster_Start() {
 			switch_num = command_reply_message->c2;
 			SendTrainCommand(TRAIN_SWITCH, direction_code, switch_num, 0, 0);
 		} else {
-			DelaySeconds(0.05);
+			DelaySeconds(0.01);
 		}
 	}
 	

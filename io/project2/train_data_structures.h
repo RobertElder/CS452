@@ -15,27 +15,35 @@ static const int const LIGHTS_MASK = 16;
 static const int const REVERSE_SPEED = 15;
 
 static const double const SPEED_ALPHA = 0.9;
-static const int const TARGET_SPEED = 500;  // mm
-static const int const STOPPING_DISTANCE[] = {
-	0, // 0
-	50, // 1
-	50, // 2
-	50, // 3
-	50, // 4
-	100, // 5
-	200, // 6
-	400, // 7
-	600, // 8
-	800, // 9
-	800, // 10
-	900, // 11
-	900, // 12
-	1000, // 13
-	1000, // 14
-	0, // 15
+static const int const TARGET_SPEED = 430;  // mm
+static const int const STOPPING_DISTANCE[52][16] = {
+	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 0-9
+	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 10-19
+	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 20-29
+	{0},{0},{0},{0},{0},
+		//  Train 35
+		{0, 50, 50, 50, 50, 100, 200, 400, 460, 520, 560, 600, 650, 700, 1000, 0},
+	{0},{0},{0},{0},{0},{0},{0},
+		//  Train 43
+		{0, 50, 50, 50, 50, 100, 200, 400, 460, 520, 560, 600, 650, 700, 1000, 0},
+	{0},
+		//  Train 45
+		{0, 50, 50, 50, 50, 100, 200, 400, 460, 520, 560, 600, 650, 700, 1000, 0},
+	{0},
+		//  Train 47
+		{0, 50, 50, 50, 50, 100, 200, 400, 460, 520, 560, 600, 650, 700, 1000, 0},
+		//  Train 48
+		{0, 50, 50, 50, 50, 100, 200, 400, 460, 520, 560, 600, 650, 700, 1000, 0},
+		//  Train 49
+		{0, 50, 50, 50, 50, 100, 200, 400, 460, 520, 560, 600, 650, 700, 1000, 0}, 
+		//  Train 50
+		{0, 50, 50, 50, 50, 100, 300, 450, 530, 620, 660, 700, 780, 820, 900, 0},
+		//  Train 51
+		{0, 50, 50, 50, 50, 100, 200, 400, 460, 520, 560, 600, 650, 700, 1000, 0}
 };
+
 static const double FEEDBACK_CONTROL_SPEED_INCREMENT = 0.75;
-static const int STARTUP_TRAIN_SPEED = 11;
+static const int STARTUP_TRAIN_SPEED = 14;
 static const double MAX_PHYSICAL_SPEED = 750; // mm/s
 
 typedef enum TrainEngineState {
@@ -154,6 +162,7 @@ typedef struct TrainEngine {
 	double expected_time_at_last_sensor;
 	double actual_time_at_last_sensor;
 	int distance_to_next_sensor;
+	int sample_distance_to_next_sensor;
 	int distance_to_destination;
 	double estimated_distance_after_node;
 	track_node * current_node;

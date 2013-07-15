@@ -34,31 +34,7 @@ track_node * NodeNameToTrackNode(track_node * track_nodes, char * name) {
 
 
 
-int IsNodeReachableViaDirectedGraph(track_node * track_nodes, track_node * start_node, track_node * dest_node, int levels) {
-	//  Don't go too deep
-	if (levels > 20){
-		return 0;
-	}
 
-	if(start_node == dest_node){
-		return 1;
-	}else if(start_node->type == NODE_MERGE){
-		return IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
-	}else if(start_node->type == NODE_SENSOR){
-		return IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
-	}else if (start_node->type == NODE_EXIT){
-		return 0;
-	}else if (start_node->type == NODE_ENTER){
-		return 0;
-	}else if (start_node->type == NODE_BRANCH){
-		int rtn1 = IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1);
-		int rtn2 = IsNodeReachableViaDirectedGraph(track_nodes, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1);
-		return rtn1 || rtn2;
-	}else{
-		assert(0,"Case should not happen");
-		return 0;
-	}
-}
 
 int QueueSwitchStatesForDirectedPath(SwitchState * switch_queue, track_node * track_nodes, track_node * start_node, track_node * dest_node, int levels) {
 	
@@ -70,28 +46,26 @@ int QueueSwitchStatesForDirectedPath(SwitchState * switch_queue, track_node * tr
 	if(start_node == dest_node){
 		return 1;
 	}else if(start_node->type == NODE_MERGE){
-		int r = QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
-		if(r){
-		}
-		return r;
+		return QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
 	}else if(start_node->type == NODE_SENSOR){
-		int r = QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
-		if(r){
-		}
-		return r;
+		return QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
 	}else if (start_node->type == NODE_EXIT){
 		return 0;
 	}else if (start_node->type == NODE_ENTER){
 		return 0;
 	}else if (start_node->type == NODE_BRANCH){
 		int rtn1 = QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1);
-		int rtn2 = QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1);
+		int rtn2 = 0;	
+		//  If we found a route with the first path, don't go the other route too
+		if(!rtn1){
+			rtn2 = QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1);
+		}
 		if(rtn1){
 			//  We need to switch this one to get to our destination
 			assertf((switch_queue[start_node->num] == SWITCH_UNKNOWN),"This path requires that switch %d be set twice.",start_node->num);
 			switch_queue[start_node->num] = SWITCH_STRAIGHT;
 		}else if (rtn2){
-//			assertf((switch_queue[start_node->num] == SWITCH_UNKNOWN),"This path requires that switch %d be set twice.",start_node->num);
+			assertf((switch_queue[start_node->num] == SWITCH_UNKNOWN),"This path requires that switch %d be set twice.",start_node->num);
 			switch_queue[start_node->num] = SWITCH_CURVED;
 		}
 		return rtn1 || rtn2;
@@ -147,8 +121,14 @@ int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, 
 		int rtn1 = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1, array_index + 1, route_nodes_length);
 		int route_length_1 = *route_nodes_length;
 		*route_nodes_length = current_route_length;
-		int rtn2 = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1, array_index + 1, route_nodes_length);
-		int route_length_2 = *route_nodes_length;
+		int rtn2 = 0;
+		int route_length_2 = 0;
+		//  Don't do crazy stuff and overwrite the path if we find 2 paths
+		if(!rtn1){
+			rtn2 = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1, array_index + 1, route_nodes_length);
+			route_length_2 = *route_nodes_length;
+		}
+
 		if(rtn1){
 			*route_nodes_length = route_length_1 + 1;
 			assert(*route_nodes_length <= MAX_ROUTE_NODE_INFO,"Too many route nodes.\n");
@@ -169,51 +149,6 @@ int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, 
 	}
 }
 
-int DistanceToNextSensor(RouteNodeInfo * info_array, int array_index) {
-	int distance = 0;
-	int i;
-	
-	for (i = array_index; i < MAX_ROUTE_NODE_INFO; i++) {
-		RouteNodeInfo info = info_array[i];
-		
-		if (info.node->type == NODE_SENSOR && i != array_index) {
-			break;
-		}
-		
-		distance += info.edge->dist;
-	}
-	
-	return distance;
-}
 
-int DistanceToDestination(RouteNodeInfo * info_array, int array_index, track_node * destination_node) {
-	int distance = 0;
-	int i;
-	
-	for (i = array_index; i < MAX_ROUTE_NODE_INFO; i++) {
-		RouteNodeInfo info = info_array[i];
-		
-		if (info.node == destination_node) {
-			break;
-		}
-		
-		distance += info.edge->dist;
-	}
-	
-	return distance;
-}
 
-track_node * GetNextSensor(RouteNodeInfo * info_array, int array_index) {
-	int i;
-	
-	for (i = array_index; i < MAX_ROUTE_NODE_INFO; i++) {
-		RouteNodeInfo info = info_array[i];
-		
-		if (info.node->type == NODE_SENSOR && i != array_index) {
-			return info.node;
-		}
-		
-	}
-	
-	return 0;
-}
+

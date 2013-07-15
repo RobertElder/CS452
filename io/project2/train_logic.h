@@ -34,4 +34,10 @@ void TrainServer_SetTrainSpeed(TrainServer * server, int speed, int train_num);
 
 void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine);
 
+int DistanceToNextSensor(TrainEngine * engine);
+
+int DistanceToDestination(TrainEngine * engine);
+
+track_node * GetNextSensor(TrainEngine * engine);
+
 #endif
