@@ -296,6 +296,8 @@ void TrainInputServer_Start() {
 	 */
 	server.seconds_timeout = 6;
 
+	// Read up any garbage
+	data = *UART1DATA & DATA_MASK;
 	//  Clear any errors
 	*UART1RXSts = 0;
 	
