@@ -13,6 +13,8 @@
 
 static const int const LIGHTS_MASK = 16;
 static const int const REVERSE_SPEED = 15;
+static const int const TRAIN_SYSTEM_GO = 96;
+static const int const TRAIN_SYSTEM_STOP = 97;
 
 static const double const SPEED_ALPHA = 0.9;
 static const int const TARGET_SPEED = 430;  // mm

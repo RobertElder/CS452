@@ -615,6 +615,8 @@ void TrainCommandServer_Start() {
 	int lower_buffer[5];
 	int upper_buffer[5];
 	
+	Putc(COM1, TRAIN_SYSTEM_GO);
+	
 	while (1) {
 		Receive(&source_tid, receive_buffer, MESSAGE_SIZE);
 		

@@ -65,7 +65,16 @@ void assertf( int expr, const char * message, ...){
 	"\n\033[1;4;7mASSERTION FAILURE!!!\033[0m\n";
 		robputstrbusy((const unsigned char *)title);
 		bwformatbusy( (const unsigned char *)message, va );
+		
+		int *flags, *data;
 		int i;
+
+		data = (int *)( UART1_BASE + UART_DATA_OFFSET );
+		flags = (int *)( UART1_BASE + UART_FLAG_OFFSET );
+
+		while ( (*flags & TXFF_MASK ));
+		*data = 97; // train system stop
+		
 		while(1){
 			for(i = 0; i < 100000; i++) {}
 			set_led(LED_BOTH);
