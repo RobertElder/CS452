@@ -307,13 +307,9 @@ void TrainServer_SetTrainSpeed(TrainServer * server, int speed, int train_num) {
 	int train_speed_settings = speed << 8 | train_num;
 	Queue_PushEnd((Queue*) &server->train_speed_queue, (QUEUE_ITEM_TYPE) train_speed_settings);
 	
-	int i;
-	for (i = 0; i < NUM_ENGINES; i++) {
-		if (server->train_engines[i].train_num == train_num) {
-			server->train_engines[i].speed_setting = speed & ~LIGHTS_MASK;
-			break;
-		}
-	}
+	int slot_num = TrainServer_EngineNumToArrayIndex(server, train_num);
+	
+	server->train_engines[slot_num].speed_setting = speed & ~LIGHTS_MASK;
 }
 
 void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {

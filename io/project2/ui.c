@@ -359,6 +359,13 @@ void UIServer_HandleTimeStopCommand(UIServer * server) {
 void UIServer_HandleSetTrainCommand(UIServer * server, short go_forever) {
 	int next_whitespace = rob_next_whitespace(server->command_buffer);
 	char train_num = robatoi(&server->command_buffer[next_whitespace]);
+	next_whitespace += rob_next_whitespace(&(server->command_buffer[next_whitespace]));
+	char slot_num = robatoi(&server->command_buffer[next_whitespace]);
+	
+	if (slot_num >= NUM_ENGINES) {
+		PutString(COM2, "Please enter a slot for the train within [0, %d]", (NUM_ENGINES - 1));
+		return;
+	}
 
 	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
 	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
@@ -370,20 +377,24 @@ void UIServer_HandleSetTrainCommand(UIServer * server, short go_forever) {
 	}
 	
 	send_message->int1 = train_num;
+	send_message->int2 = slot_num;
 	
 	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
 	
 	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_HandleMapCommand failed to get ack message");
 	
-	PutString(COM2, "Train set to %d.", train_num);
+	PutString(COM2, "Train set to %d at slot %d.", train_num, slot_num);
 }
 
 void UIServer_HandleSetDestinationCommand(UIServer * server) {
 	int next_whitespace = rob_next_whitespace(server->command_buffer);
 	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
 	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	char train_num = robatoi(&server->command_buffer[next_whitespace]);
+	next_whitespace += rob_next_whitespace(&(server->command_buffer[next_whitespace]));
 	
 	send_message->message_type = MESSAGE_TYPE_SET_DESTINATION;
+	send_message->int1 = train_num;
 	send_message->char1 = &server->command_buffer[next_whitespace];
 	
 	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);

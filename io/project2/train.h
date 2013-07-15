@@ -42,6 +42,8 @@ void TrainServer_HandleSetSwitch(TrainServer * server);
 
 void TrainServer_QueueSwitchStates(TrainServer *, TrainEngine * engine);
 
+int TrainServer_EngineNumToArrayIndex(TrainServer *, int train_num);
+
 void TrainServerTimer_Start();
 
 void TrainCommandServer_Start();

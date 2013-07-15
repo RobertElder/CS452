@@ -382,26 +382,35 @@ void TrainServer_HandleSelectTrack(TrainServer * server) {
 void TrainServer_HandleSetTrain(TrainServer * server, short go_forever) {
 	GenericTrainMessage  * receive_message = (GenericTrainMessage *) server->receive_buffer;
 	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	char train_num = receive_message->int1;
+	int slot_num = receive_message->int2;
 	
-	TrainEngine_Initialize(&(server->train_engines[0]), receive_message->int1);
-	server->train_engines[0].go_forever = go_forever;
+	assert(slot_num < NUM_ENGINES, "Slot number exceeded");
+	
+	TrainEngine_Initialize(&(server->train_engines[slot_num]), train_num);
+	server->train_engines[slot_num].go_forever = go_forever;
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 	
-	server->train_engines[0].state = TRAIN_ENGINE_IDLE;
+	server->train_engines[slot_num].state = TRAIN_ENGINE_IDLE;
 }
 
 void TrainServer_HandleSetDestination(TrainServer * server) {
 	GenericTrainMessage * receive_message = (GenericTrainMessage *) server->receive_buffer;
 	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	int train_num = receive_message->int1;
+	char * dest_name = receive_message->char1;
+	int slot_num = TrainServer_EngineNumToArrayIndex(server, train_num);
 	
-	server->train_engines[0].destination_node = NodeNameToTrackNode(server->current_track_nodes, receive_message->char1);
+	assert(slot_num < NUM_ENGINES, "Slot number exceeded");
+	
+	server->train_engines[slot_num].destination_node = NodeNameToTrackNode(server->current_track_nodes, dest_name);
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 	
-	server->train_engines[0].state = TRAIN_ENGINE_FINDING_POSITION;
+	server->train_engines[slot_num].state = TRAIN_ENGINE_GOT_DESTINATION;
 }
 
 void TrainServer_HandleQueryTrainEngine(TrainServer * server) {
@@ -545,6 +554,19 @@ void TrainServer_QueueSwitchStates(TrainServer * server, TrainEngine * engine ){
 		}
 		current_route_node_index++;
 	}
+}
+
+int TrainServer_EngineNumToArrayIndex(TrainServer * server, int train_num) {
+	int i;
+	for (i = 0; i < NUM_ENGINES; i++) {
+		if (server->train_engines[i].train_num == train_num) {
+			return i;
+			break;
+		}
+	}
+	
+	assertf(0, "TrainServer_EngineNumToArrayIndex: unknown train num %d", train_num);
+	return -1;
 }
 
 void TrainServerTimer_Start() {
