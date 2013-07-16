@@ -595,14 +595,18 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	
 		int state = engine->state;
 	
-		int new_hash = train_num ^ speed_setting ^ calculated_speed ^ (int) current_node_name ^ state ^ (int) next_node_name ^ (int) dest_node_name ^ (int) source_node_name ^ expected_time_at_next_sensor ^ expected_time_at_last_sensor ^ actual_time_at_last_sensor ^ estimated_distance_after_node ^ distance_to_next_sensor ^ distance_to_destination;
-		int differs = new_hash != server->train_engine_status_hashes[slot_num];
+		int new_hash_1 = train_num ^ speed_setting ^ calculated_speed ^ (int) current_node_name ^ state ^ (int) next_node_name ^ (int) dest_node_name ^ (int) source_node_name;
+		int new_hash_2 = expected_time_at_next_sensor ^ expected_time_at_last_sensor ^ actual_time_at_last_sensor ^ estimated_distance_after_node ^ distance_to_next_sensor ^ distance_to_destination;
+		int differs_1 = new_hash_1 != server->train_engine_status_hashes_1[slot_num];
+		int differs_2 = new_hash_2 != server->train_engine_status_hashes_2[slot_num];
 	
-		server->train_engine_status_hashes[slot_num] = new_hash;
+		server->train_engine_status_hashes_1[slot_num] = new_hash_1;
+		server->train_engine_status_hashes_2[slot_num] = new_hash_2;
 	
-		if (differs || server->dirty) {
+		if (differs_1 || server->dirty) {
 			ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET + 2 + slot_num, ENGINE_STATUS_COL_OFFSET);
-			ANSI_ClearLine(CLEAR_TO_END);
+			ANSI_CursorCol(51);
+			ANSI_ClearLine(CLEAR_TO_START);
 		
 			ANSI_CursorCol(1);
 			PutString(COM2, "%d", train_num);
@@ -621,8 +625,12 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		
 			ANSI_CursorCol(42);
 			PutString(COM2, "%d (%d)", calculated_speed, speed_setting);
-	
+		}
+		
+		if (differs_2 || server->dirty) {
+			ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET + 2 + slot_num, ENGINE_STATUS_COL_OFFSET);
 			ANSI_CursorCol(52);
+			ANSI_ClearLine(CLEAR_TO_END);
 			PutString(COM2, "%d", expected_time_at_next_sensor);
 		
 			ANSI_CursorCol(59);
