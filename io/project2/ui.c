@@ -647,6 +647,7 @@ void UIServer_PrintTrainMapPosition(UIServer * server) {
 	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
 	TrainEngineStatusMessage * reply_message = (TrainEngineStatusMessage *) server->reply_buffer;
 	
+	send_message->int1 = 0;
 	send_message->message_type = MESSAGE_TYPE_QUERY_TRAIN_ENGINE;
 	
 	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
