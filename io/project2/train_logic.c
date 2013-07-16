@@ -55,7 +55,7 @@ void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine) {
 }
 
 void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine * engine) {
-	track_node * node = TrainServer_GetEnginePosition(server);
+	track_node * node = TrainServer_GetEnginePosition(server, engine);
 	
 	if (node && engine->current_node != node) {
 		engine->state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
@@ -153,7 +153,7 @@ int DistanceToDestination(TrainEngine * engine) {
 }
 
 void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine) {
-	track_node * node = TrainServer_GetEnginePosition(server);
+	track_node * node = TrainServer_GetEnginePosition(server, engine);
 	
 	if (node && node != engine->current_node) {
 		engine->current_node = node;
@@ -259,15 +259,25 @@ void TrainServer_ProcessEngineReverseAndTryAgain(TrainServer * server, TrainEngi
 	TrainServer_ProcessEngineFindingPosition(server, engine);
 }
 
-track_node * TrainServer_GetEnginePosition(TrainServer * server) {
-	// TODO, need to sensor attribution better
+track_node * TrainServer_GetEnginePosition(TrainServer * server, TrainEngine * engine) {
 	int sensor_module;
 	int sensor_num;
 	
 	for (sensor_module = 0; sensor_module < NUM_SENSOR_MODULES; sensor_module++) {
 		for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
 			if ((server->sensor_bit_flags[sensor_module] >> sensor_num) & 0x01) {
-				return SensorToTrackNode(server->current_track_nodes, sensor_module, sensor_num);
+				track_node * candidate_node = SensorToTrackNode(server->current_track_nodes, sensor_module, sensor_num);
+				
+				if (!engine->route_nodes_length) {
+					return candidate_node;
+				} 
+				// TODO: need to sensor attribution better
+				// this only checks if the node is on the path
+				int i;
+				for (i = 0; i < engine->route_nodes_length; i++) {
+					engine->route_node_info[i].node = candidate_node;
+					return candidate_node;
+				}
 			}
 		}
 	}

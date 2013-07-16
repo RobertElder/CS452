@@ -28,7 +28,7 @@ void TrainServer_ProcessEngineWaitAndGoForever(TrainServer * server, TrainEngine
 
 void TrainServer_ProcessEngineReverseAndTryAgain(TrainServer * server, TrainEngine * engine);
 
-track_node * TrainServer_GetEnginePosition(TrainServer * server);
+track_node * TrainServer_GetEnginePosition(TrainServer * server, TrainEngine * engine);
 
 void TrainServer_SetTrainSpeed(TrainServer * server, int speed, int train_num);
 
