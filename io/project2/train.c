@@ -199,7 +199,19 @@ int IsNodeReachableViaDirectedGraph(TrainServer * server, track_node * start_nod
 		if(is_switch_blacklisted(server, start_node->num))
 			return 0;
 		int rtn1 = IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1);
-		int rtn2 = IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1);
+		int rtn2 = 0;
+		if(!rtn1){
+			rtn2 = IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1);
+		}
+		/*
+		if(rtn1 || rtn2){
+			//  Don't try to go through a path that requires the next switch to be changed.
+			int switch_state = rtn1 ? SWITCH_STRAIGHT : SWITCH_CURVED;
+			if(levels == 1 && (!(server->switch_states[start_node->num] == switch_state)))
+				return 0;
+		}
+		*/
+
 		return rtn1 || rtn2;
 	}else{
 		assert(0,"Case should not happen");

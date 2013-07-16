@@ -338,6 +338,10 @@ void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
 		//  These ones are close to switches so we need to slow down more.  We need to be at speed 8 for
 		//  the other ones, otherwise we stall.
 		if(
+			engine->destination_node == &(server->track_b_nodes[6]) || // A7
+			engine->destination_node == &(server->track_b_nodes[34]) || // C3
+			engine->destination_node == &(server->track_b_nodes[8]) || // A9
+			engine->destination_node == &(server->track_b_nodes[13]) || // A14
 			engine->destination_node == &(server->track_b_nodes[2]) || // A3
 			engine->destination_node == &(server->track_b_nodes[45]) || // C14
 			engine->destination_node == &(server->track_b_nodes[39]) || // C8
