@@ -428,8 +428,15 @@ void TrainOutputServer_Start() {
 			break;
 		case MESSAGE_TYPE_DATA:
 			// from the public_kernel_interface Putc()
-			for (i = 0; i < server.char_message->count; i++) {
-				CharBuffer_PutChar(&server.char_buffer, server.char_message->chars[i]);
+			// Make switch commands high priority
+			if (server.char_message->chars[0] == 32 || server.char_message->chars[0] == 33 || server.char_message->chars[0] == 34) {
+				for (i = 0; i < server.char_message->count; i++) {
+					CharBuffer_PutChar(&server.high_priority_char_buffer, server.char_message->chars[i]);
+				}
+			} else {
+				for (i = 0; i < server.char_message->count; i++) {
+					CharBuffer_PutChar(&server.char_buffer, server.char_message->chars[i]);
+				}
 			}
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			TrainOutputServer_SendData(&server);
@@ -451,6 +458,7 @@ void TrainOutputServer_Start() {
 
 void TrainOutputServer_Initialize(TrainOutputServer * server) {
 	CharBuffer_Initialize(&server->char_buffer);
+	CharBuffer_Initialize(&server->high_priority_char_buffer);
 	server->state = UARTSS_WAITING;
 	server->receive_message = (GenericMessage *) server->receive_buffer;
 	server->reply_message = (GenericMessage *) server->reply_buffer;
@@ -464,7 +472,25 @@ void TrainOutputServer_Initialize(TrainOutputServer * server) {
 }
 
 void TrainOutputServer_SendData(TrainOutputServer * server) {
-	if (!CharBuffer_IsEmpty(&server->char_buffer)) {
+	if (!CharBuffer_IsEmpty(&server->high_priority_char_buffer)) {
+		if(server->state == UARTSS_READY){
+			char data = CharBuffer_GetChar(&server->high_priority_char_buffer);
+			
+			assert(*UART1Flag & CTS_MASK, "TrainOutputServer: CTS not set");
+			assert(*UART1Flag & TXFE_MASK, "TrainOutputServer: TXFE not set");
+			//assert((*UART1Flag & TXBUSY_MASK) == 0, "TrainOutputServer: TXBusy!");
+			
+			*UART1DATA = data;
+			server->state = UARTSS_WAITING;
+			server->seconds_passed = 0;
+		}
+	
+		if(server->notifier_reply_blocked){
+			server->notifier_reply_blocked = 0;
+			// Restart the notifier
+			Reply(server->notifier_tid, server->reply_buffer, MESSAGE_SIZE);
+		}
+	} else if (!CharBuffer_IsEmpty(&server->char_buffer)) {
 		if(server->state == UARTSS_READY){
 			char data = CharBuffer_GetChar(&server->char_buffer);
 			

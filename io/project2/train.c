@@ -430,22 +430,12 @@ void TrainServer_HandleSetDestination(TrainServer * server) {
 }
 
 void TrainServer_HandleQueryTrainEngine(TrainServer * server) {
+	GenericTrainMessage * receive_message = (GenericTrainMessage *) server->receive_buffer;
 	TrainEngineStatusMessage * reply_message = (TrainEngineStatusMessage *) server->reply_buffer;
 	
 	assert(sizeof(TrainEngineStatusMessage) <= MESSAGE_SIZE, "TrainEngineStatusMessage too big");
 	
-	reply_message->message_type = MESSAGE_TYPE_ACK;
-/*	reply_message->train_num = server->train_engine.train_num;
-	reply_message->speed_setting = server->train_engine.speed_setting;
-	reply_message->state = server->train_engine.state;
-
-	if (server->train_engine.current_node) {
-		reply_message->current_node_name = server->train_engine.current_node->name;
-	} else {
-		reply_message->current_node_name = "?";
-	}
-*/
-	reply_message->train_engine = &server->train_engines[0];
+	reply_message->train_engine = &server->train_engines[receive_message->int1];
 
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 }
@@ -808,6 +798,7 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->estimated_distance_after_node = 0;
 	engine->go_forever = 0;
 	engine->wait_until = 0;
+	engine->source_node = 0;
 }
 
 void TrainEngineClient_Start(){

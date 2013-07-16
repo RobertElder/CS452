@@ -21,9 +21,6 @@ static const int const MAP_ROW_OFFSET = 5;
 static const int const MAP_COL_OFFSET = 20;
 static const int const ENGINE_STATUS_ROW_OFFSET = 23;
 static const int const ENGINE_STATUS_COL_OFFSET = 1;
-static const int const ENGINE_STATUS_COL_2_OFFSET = 40;
-static const int const ENGINE_DATA_COL_OFFSET = 19;
-static const int const ENGINE_DATA_COL_2_OFFSET = 40 + 30;
 static const int const PRINT_MESSAGE_OFFSET = 30;
 static const int const MAX_PRINT_MESSAGE = 25;
 
@@ -53,8 +50,7 @@ typedef struct UIServer {
 	SwitchState switch_states_cache[NUM_SWITCHES];
 	ANSIColor foreground_color;
 	ANSIColor background_color;
-	int train_engine_status_hash_1;
-	int train_engine_status_hash_2;
+	int train_engine_status_hashes[NUM_ENGINES];
 	int train_map_position_hash;
 } UIServer;
 

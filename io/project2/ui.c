@@ -530,168 +530,116 @@ void UIServer_PrintSwitches(UIServer * server) {
 void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	if (server->dirty) {
 		ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET, ENGINE_STATUS_COL_OFFSET);
-		PutString(COM2, "           TRAIN:");
-		ANSI_CursorNextLine(1);
-		PutString(COM2, "           State:");
-		ANSI_CursorNextLine(1);
-		PutString(COM2, "           Speed:");
-		ANSI_CursorNextLine(1);
-		PutString(COM2, "Current Waypoint:");
-		ANSI_CursorNextLine(1);
-		PutString(COM2, "   Next Waypoint:");
-		ANSI_CursorNextLine(1);
-		PutString(COM2, "     Destination:");
-		ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET, ENGINE_STATUS_COL_2_OFFSET);
-		PutString(COM2, "     Expected Time at Sensor:");
-		ANSI_CursorNextLine(1);
-		ANSI_CursorCol(ENGINE_STATUS_COL_2_OFFSET);
-		PutString(COM2, "Last Expected Time at Sensor:");
-		ANSI_CursorNextLine(1);
-		ANSI_CursorCol(ENGINE_STATUS_COL_2_OFFSET);
-		PutString(COM2, "  Last Actual Time at Sensor:");
-		ANSI_CursorNextLine(1);
-		ANSI_CursorCol(ENGINE_STATUS_COL_2_OFFSET);
-		PutString(COM2, "  Est. Distance after Sensor:");
-		ANSI_CursorNextLine(1);
-		ANSI_CursorCol(ENGINE_STATUS_COL_2_OFFSET);
-		PutString(COM2, "     Distance to Next Sensor:");
-		ANSI_CursorNextLine(1);
-		ANSI_CursorCol(ENGINE_STATUS_COL_2_OFFSET);
-		PutString(COM2, "     Distance to Destination:");
-	}
-	
-	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
-	TrainEngineStatusMessage * reply_message = (TrainEngineStatusMessage *) server->reply_buffer;
-	
-	send_message->message_type = MESSAGE_TYPE_QUERY_TRAIN_ENGINE;
-	
-	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
-	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_PrintTrainEngineStatus: did not get ack message");
-	
-	// TODO: don't use pointers in messages
-	TrainEngine * engine = reply_message->train_engine;
-	int train_num = engine->train_num; //reply_message->train_num;
-	int speed_setting = engine->speed_setting; //reply_message->speed_setting;
-	int calculated_speed = engine->calculated_speed;
-	const char * current_node_name; //reply_message->current_node_name;
-	const char * next_node_name;
-	const char * dest_node_name;
-	int expected_time_at_next_sensor = engine->expected_time_at_next_sensor;
-	int expected_time_at_last_sensor = engine->expected_time_at_last_sensor;
-	int actual_time_at_last_sensor = engine->actual_time_at_last_sensor;
-	int estimated_distance_after_node = engine->estimated_distance_after_node;
-	int distance_to_next_sensor = engine->distance_to_next_sensor;
-	int distance_to_destination = engine->distance_to_destination;
-	
-	if (engine->current_node) {
-		current_node_name = engine->current_node->name;
-	} else {
-		current_node_name = "???";
-	}
-	
-	if (engine->next_node) {
-		next_node_name = engine->next_node->name;
-	} else {
-		next_node_name = "-";
-	}
-	
-	if (engine->destination_node) {
-		dest_node_name = engine->destination_node->name;
-	} else {
-		dest_node_name = "-";
-	}
-	
-	int time_difference = expected_time_at_last_sensor - actual_time_at_last_sensor;
-	if (time_difference < 0) {
-		time_difference = -time_difference;
-	}
-	
-	int state = engine->state; //reply_message->state;
-	
-	int new_hash_1 = train_num ^ speed_setting ^ calculated_speed ^ (int) current_node_name ^ state ^ (int) next_node_name ^ (int) dest_node_name;
-	int new_hash_2 = expected_time_at_next_sensor ^ expected_time_at_last_sensor ^ actual_time_at_last_sensor ^ estimated_distance_after_node ^ distance_to_next_sensor ^ distance_to_destination;
-	int differs_1 = new_hash_1 != server->train_engine_status_hash_1;
-	int differs_2 = new_hash_2 != server->train_engine_status_hash_2;
-	
-	server->train_engine_status_hash_1 = new_hash_1;
-	server->train_engine_status_hash_2 = new_hash_2;
-	
-	if (differs_1 || server->dirty) {
-		ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET, ENGINE_STATUS_COL_OFFSET);
-	
-		ANSI_CursorCol(ENGINE_DATA_COL_OFFSET);
-		ANSI_ClearCell(10);
-		PutString(COM2, "%d", train_num);
-		ANSI_CursorNextLine(1);
-		
-		ANSI_CursorCol(ENGINE_DATA_COL_OFFSET);
-		ANSI_ClearCell(20);
-		PutString(COM2, "%s", TRAIN_ENGINE_STATE_NAMES[state]);
-		ANSI_CursorNextLine(1);
-	
-		ANSI_CursorCol(ENGINE_DATA_COL_OFFSET);
-		ANSI_ClearCell(20);
-		PutString(COM2, "%d mm/s (%d)", calculated_speed, speed_setting);
-		ANSI_CursorNextLine(1);
-	
-		ANSI_CursorCol(ENGINE_DATA_COL_OFFSET);
-		ANSI_ClearCell(10);
-		PutString(COM2, "%s", current_node_name);
-		ANSI_CursorNextLine(1);
-		
-		ANSI_CursorCol(ENGINE_DATA_COL_OFFSET);
-		ANSI_ClearCell(10);
-		PutString(COM2, "%s", next_node_name);
-		ANSI_CursorNextLine(1);
-	
-		ANSI_CursorCol(ENGINE_DATA_COL_OFFSET);
-		ANSI_ClearCell(10);
-		PutString(COM2, "%s", dest_node_name);
-		ANSI_CursorNextLine(1);
-	
-	}
-	
-	if (differs_2 || server->dirty) {
-		ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET, ENGINE_STATUS_COL_OFFSET);
-		
-		ANSI_CursorCol(ENGINE_DATA_COL_2_OFFSET);
-		ANSI_ClearLine(CLEAR_TO_END);
-		PutString(COM2, "%d", expected_time_at_next_sensor);
-		ANSI_CursorNextLine(1);
-		
-		ANSI_CursorCol(ENGINE_DATA_COL_2_OFFSET);
-		ANSI_ClearLine(CLEAR_TO_END);
-		PutString(COM2, "%d", expected_time_at_last_sensor);
-		ANSI_CursorNextLine(1);
-		
-		ANSI_CursorCol(ENGINE_DATA_COL_2_OFFSET);
-		ANSI_ClearLine(CLEAR_TO_END);
-		
-		if (time_difference > 2) {
-			ANSI_Color(WHITE, RED);
-			ANSI_Style(BOLD_STYLE);
-		}
-		
-		PutString(COM2, "%d", actual_time_at_last_sensor);
-		
+		ANSI_Style(BOLD_STYLE);
+		PutString(COM2, 
+"                                         Speed       Sensor Times (s)       Distance (mm)\n"
+"Train State               From Now To    mm/s      Expect Last   Actual   After Next  Dest");
 		ANSI_Style(NORMAL_STYLE);
-		ANSI_Color(server->foreground_color, server->background_color);
-		ANSI_CursorNextLine(1);
+	}
+	
+	int slot_num;
+	for (slot_num = 0; slot_num < NUM_ENGINES; slot_num++) {
+		GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
+		TrainEngineStatusMessage * reply_message = (TrainEngineStatusMessage *) server->reply_buffer;
+	
+		send_message->int1 = slot_num;
+		send_message->message_type = MESSAGE_TYPE_QUERY_TRAIN_ENGINE;
+	
+		Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+		assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_PrintTrainEngineStatus: did not get ack message");
+	
+		// TODO: don't use pointers in messages
+		TrainEngine * engine = reply_message->train_engine;
+		int train_num = engine->train_num; 
+		int speed_setting = engine->speed_setting;
+		int calculated_speed = engine->calculated_speed;
+		const char * source_node_name;
+		const char * current_node_name;
+		const char * next_node_name;
+		const char * dest_node_name;
+		int expected_time_at_next_sensor = engine->expected_time_at_next_sensor;
+		int expected_time_at_last_sensor = engine->expected_time_at_last_sensor;
+		int actual_time_at_last_sensor = engine->actual_time_at_last_sensor;
+		int estimated_distance_after_node = engine->estimated_distance_after_node;
+		int distance_to_next_sensor = engine->distance_to_next_sensor;
+		int distance_to_destination = engine->distance_to_destination;
+	
+		if (engine->source_node) {
+			source_node_name = engine->source_node->name;
+		} else {
+			source_node_name = "-";
+		}
+	
+		if (engine->current_node) {
+			current_node_name = engine->current_node->name;
+		} else {
+			current_node_name = "???";
+		}
+	
+		if (engine->next_node) {
+			next_node_name = engine->next_node->name;
+		} else {
+			next_node_name = "-";
+		}
+	
+		if (engine->destination_node) {
+			dest_node_name = engine->destination_node->name;
+		} else {
+			dest_node_name = "-";
+		}
+	
+		int time_difference = expected_time_at_last_sensor - actual_time_at_last_sensor;
+		if (time_difference < 0) {
+			time_difference = -time_difference;
+		}
+	
+		int state = engine->state;
+	
+		int new_hash = train_num ^ speed_setting ^ calculated_speed ^ (int) current_node_name ^ state ^ (int) next_node_name ^ (int) dest_node_name ^ (int) source_node_name ^ expected_time_at_next_sensor ^ expected_time_at_last_sensor ^ actual_time_at_last_sensor ^ estimated_distance_after_node ^ distance_to_next_sensor ^ distance_to_destination;
+		int differs = new_hash != server->train_engine_status_hashes[slot_num];
+	
+		server->train_engine_status_hashes[slot_num] = new_hash;
+	
+		if (differs || server->dirty) {
+			ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET + 2 + slot_num, ENGINE_STATUS_COL_OFFSET);
+			ANSI_ClearLine(CLEAR_TO_END);
 		
-		ANSI_CursorCol(ENGINE_DATA_COL_2_OFFSET);
-		ANSI_ClearLine(CLEAR_TO_END);
-		PutString(COM2, "%d mm", estimated_distance_after_node);
-		ANSI_CursorNextLine(1);
+			ANSI_CursorCol(1);
+			PutString(COM2, "%d", train_num);
 		
-		ANSI_CursorCol(ENGINE_DATA_COL_2_OFFSET);
-		ANSI_ClearLine(CLEAR_TO_END);
-		PutString(COM2, "%d mm", distance_to_next_sensor);
-		ANSI_CursorNextLine(1);
+			ANSI_CursorCol(7);
+			PutString(COM2, "%s", TRAIN_ENGINE_STATE_NAMES[state]);
 		
-		ANSI_CursorCol(ENGINE_DATA_COL_2_OFFSET);
-		ANSI_ClearLine(CLEAR_TO_END);
-		PutString(COM2, "%d mm", distance_to_destination);
-		ANSI_CursorNextLine(1);
+			ANSI_CursorCol(27);
+			PutString(COM2, "%s", source_node_name);
+		
+			ANSI_CursorCol(32);
+			PutString(COM2, "%s", current_node_name);
+		
+			ANSI_CursorCol(36);
+			PutString(COM2, "%s", dest_node_name);
+		
+			ANSI_CursorCol(42);
+			PutString(COM2, "%d (%d)", calculated_speed, speed_setting);
+	
+			ANSI_CursorCol(52);
+			PutString(COM2, "%d", expected_time_at_next_sensor);
+		
+			ANSI_CursorCol(59);
+			PutString(COM2, "%d", expected_time_at_last_sensor);
+		
+			ANSI_CursorCol(66);
+			PutString(COM2, "%d", actual_time_at_last_sensor);
+		
+			ANSI_CursorCol(75);
+			PutString(COM2, "%d", estimated_distance_after_node);
+		
+			ANSI_CursorCol(81);
+			PutString(COM2, "%d", distance_to_next_sensor);
+		
+			ANSI_CursorCol(87);
+			PutString(COM2, "%d", distance_to_destination);
+		}
 	}
 }
 
@@ -699,6 +647,7 @@ void UIServer_PrintTrainMapPosition(UIServer * server) {
 	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
 	TrainEngineStatusMessage * reply_message = (TrainEngineStatusMessage *) server->reply_buffer;
 	
+	send_message->int1 = 0;
 	send_message->message_type = MESSAGE_TYPE_QUERY_TRAIN_ENGINE;
 	
 	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
