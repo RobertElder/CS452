@@ -47,7 +47,6 @@ typedef struct ScreenOutputServer {
 
 typedef struct TrainOutputServer {
 	CharBuffer char_buffer;
-	CharBuffer high_priority_char_buffer;
 	int data;
 	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
