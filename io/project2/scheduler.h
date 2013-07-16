@@ -10,7 +10,7 @@
 #ifdef TEST
 	#define WATCHDOG_STARVATION_COUNT 4000000
 #else
-	#define WATCHDOG_STARVATION_COUNT 1000000
+	#define WATCHDOG_STARVATION_COUNT 500000
 #endif
 
 typedef struct FunctionMapping{
