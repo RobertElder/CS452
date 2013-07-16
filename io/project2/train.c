@@ -100,8 +100,11 @@ void TrainServer_Start() {
 			break;
 		}
 		int i;
-		for(i = 0; i < NUM_ENGINES; i++)
-			TrainServer_ProcessEngine(&server, &(server.train_engines[i]));
+		for(i = 0; i < NUM_ENGINES; i++) {
+			if (server.train_engines[i].train_num) {
+				TrainServer_ProcessEngine(&server, &(server.train_engines[i]));
+			}
+		}
 	}
 	
 	assert(admin_tid, "TrainServer: did not get admin tid");
@@ -164,8 +167,9 @@ void TrainServer_Initialize(TrainServer * server) {
 	Queue_Initialize((Queue*)&server->queued_switch_changes, SWITCH_QUEUE_SIZE);
 
 	int i;
-	for(i = 0; i < NUM_ENGINES; i++)
-		TrainEngine_Initialize(&(server->train_engines[i]), i);
+	for(i = 0; i < NUM_ENGINES; i++) {
+		TrainEngine_Initialize(&(server->train_engines[i]), 0);
+	}
 	
 	Queue_Initialize((Queue*) &server->train_speed_queue, TRAIN_SPEED_QUEUE_SIZE);
 
@@ -567,6 +571,18 @@ int TrainServer_EngineNumToArrayIndex(TrainServer * server, int train_num) {
 	
 	assertf(0, "TrainServer_EngineNumToArrayIndex: unknown train num %d", train_num);
 	return -1;
+}
+
+int TrainServer_NumActivatedEngines(TrainServer * server) {
+	int num = 0;
+	int i;
+	for (i = 0; i < NUM_ENGINES; i++) {
+		if (server->train_engines[i].train_num) {
+			num++;
+		}
+	}
+	
+	return num;
 }
 
 void TrainServerTimer_Start() {

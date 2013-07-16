@@ -26,6 +26,9 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 	case TRAIN_ENGINE_GOT_DESTINATION:
 		TrainServer_ProcessEngineGotDestination(server, engine);
 		break;
+	case TRAIN_ENGINE_WAIT_FOR_ALL_READY:
+		TrainServer_ProcessEngineWaitForAllReady(server, engine);
+		break;
 	case TRAIN_ENGINE_RUNNING:
 		TrainServer_ProcessEngineRunning(server, engine);
 		break;
@@ -100,11 +103,17 @@ void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine *
 		//PrintMessage("Route %d) %s.",i, engine->route_node_info[i].node->name);
 	}
 
-	TrainServer_QueueSwitchStates(server, engine);
-	engine->granular_speed_setting = STARTUP_TRAIN_SPEED;
-	TrainServer_SetTrainSpeed(server, STARTUP_TRAIN_SPEED | LIGHTS_MASK, engine->train_num);
-	
-	engine->state = TRAIN_ENGINE_RUNNING;
+	TrainServer_SetTrainSpeed(server, 0, engine->train_num);
+	engine->state = TRAIN_ENGINE_WAIT_FOR_ALL_READY;
+}
+
+void TrainServer_ProcessEngineWaitForAllReady(TrainServer * server, TrainEngine * engine) {
+	if (TrainServer_NumActivatedEngines(server) == NUM_ENGINES) {
+		TrainServer_QueueSwitchStates(server, engine);
+		engine->granular_speed_setting = STARTUP_TRAIN_SPEED;
+		TrainServer_SetTrainSpeed(server, STARTUP_TRAIN_SPEED | LIGHTS_MASK, engine->train_num);
+		engine->state = TRAIN_ENGINE_RUNNING;
+	}
 }
 
 int DistanceToNextSensor(TrainEngine * engine) {

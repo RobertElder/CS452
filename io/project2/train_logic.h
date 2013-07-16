@@ -14,6 +14,8 @@ void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngi
 
 void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine * engine);
 
+void TrainServer_ProcessEngineWaitForAllReady(TrainServer * server, TrainEngine * engine);
+
 void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine);
 
 void TrainServer_ProcessEngineNearDestination(TrainServer * server, TrainEngine * engine);
