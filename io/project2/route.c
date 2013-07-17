@@ -36,29 +36,33 @@ track_node * NodeNameToTrackNode(track_node * track_nodes, char * name) {
 
 
 
-int QueueSwitchStatesForDirectedPath(SwitchState * switch_queue, track_node * track_nodes, track_node * start_node, track_node * dest_node, int levels) {
-	
+int QueueSwitchStatesForDirectedPath(SwitchState * switch_queue, track_node * track_nodes, track_node * start_node, track_node * dest_node, int levels, int train_num) {
+	assert(0,"This function is not used anymore.");	
 	//  Don't go too deep
 	if (levels > 20){
+		return 0;
+	}
+
+	if (!(start_node->reserved == train_num)){
 		return 0;
 	}
 
 	if(start_node == dest_node){
 		return 1;
 	}else if(start_node->type == NODE_MERGE){
-		return QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
+		return QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1, train_num);
 	}else if(start_node->type == NODE_SENSOR){
-		return QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
+		return QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1, train_num);
 	}else if (start_node->type == NODE_EXIT){
 		return 0;
 	}else if (start_node->type == NODE_ENTER){
 		return 0;
 	}else if (start_node->type == NODE_BRANCH){
-		int rtn1 = QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1);
+		int rtn1 = QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1, train_num);
 		int rtn2 = 0;	
 		//  If we found a route with the first path, don't go the other route too
 		if(!rtn1){
-			rtn2 = QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1);
+			rtn2 = QueueSwitchStatesForDirectedPath(switch_queue, track_nodes, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1, train_num);
 		}
 		if(rtn1){
 			//  We need to switch this one to get to our destination
@@ -76,9 +80,13 @@ int QueueSwitchStatesForDirectedPath(SwitchState * switch_queue, track_node * tr
 
 }
 
-int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, track_node * start_node, track_node * dest_node, int levels, int array_index, int * route_nodes_length) {
+int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, track_node * start_node, track_node * dest_node, int levels, int array_index, int * route_nodes_length, int train_num) {
 	//  Don't go too deep
 	if (levels > 20){
+		return 0;
+	}
+
+	if (start_node->reserved){
 		return 0;
 	}
 
@@ -90,7 +98,7 @@ int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, 
 		info_array[array_index].edge = 0;
 		return 1;
 	}else if(start_node->type == NODE_MERGE){
-		int r = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1, array_index + 1, route_nodes_length);
+		int r = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1, array_index + 1, route_nodes_length, train_num);
 		
 		if (r) {
 			*route_nodes_length = (*route_nodes_length) + 1;
@@ -102,7 +110,7 @@ int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, 
 		
 		return r;
 	}else if(start_node->type == NODE_SENSOR){
-		int r = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1, array_index + 1, route_nodes_length);
+		int r = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1, array_index + 1, route_nodes_length, train_num);
 		if(r){
 			*route_nodes_length = (*route_nodes_length) + 1;
 			assert(*route_nodes_length <= MAX_ROUTE_NODE_INFO,"Too many route nodes.\n");
@@ -118,14 +126,14 @@ int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, 
 	}else if (start_node->type == NODE_BRANCH){
 		//  Save this for when we search the two possibilities
 		int current_route_length = *route_nodes_length;
-		int rtn1 = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1, array_index + 1, route_nodes_length);
+		int rtn1 = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1, array_index + 1, route_nodes_length, train_num);
 		int route_length_1 = *route_nodes_length;
 		*route_nodes_length = current_route_length;
 		int rtn2 = 0;
 		int route_length_2 = 0;
 		//  Don't do crazy stuff and overwrite the path if we find 2 paths
 		if(!rtn1){
-			rtn2 = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1, array_index + 1, route_nodes_length);
+			rtn2 = PopulateRouteNodeInfo(info_array, track_nodes, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1, array_index + 1, route_nodes_length, train_num);
 			route_length_2 = *route_nodes_length;
 		}
 
@@ -150,14 +158,25 @@ int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, 
 }
 
 void ReserveTrackNodes(TrainEngine * engine) {
+	//  Reserve the node(s) at the start of the path
+	//track_node * first_node = engine->route_node_info[0].node;
+	//first_node->reverse->reserved = engine->train_num;
+	//if(first_node->type == NODE_BRANCH){
+//		first_node->reverse->reserved = engine->train_num;
+//	}
+
 	int i;
 	for (i = 0; i < engine->route_nodes_length; i++) {
 		track_node * node = engine->route_node_info[i].node;
-		
-		if (node->type == NODE_SENSOR) {
-			node->reserved = engine->train_num;
-		}
+		node->reserved = engine->train_num;
 	}
+
+	//  Reserve the node(s) at the start of the path
+	//track_node * last_node = engine->route_node_info[engine->route_nodes_length -1].node;
+	//last_node->edge[DIR_AHEAD].dest->reserved = engine->train_num;
+	//if(last_node->type == NODE_BRANCH){
+	//	last_node->edge[DIR_CURVED].dest->reserved = engine->train_num;
+	//}
 }
 
 

@@ -93,11 +93,11 @@ void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngi
 void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine * engine) {
 	engine->source_node = engine->current_node;
 
-	PrintMessage("Travelling from %s to %s.",engine->current_node->name ,engine->destination_node->name);
+	PrintMessage("Engine %d travelling from %s to %s.",engine->train_num, engine->current_node->name ,engine->destination_node->name);
 
 	engine->route_nodes_length = 0;
 	engine->route_node_index = 0;
-	PopulateRouteNodeInfo(engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length));
+	PopulateRouteNodeInfo(engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length), engine->train_num);
 	ReserveTrackNodes(engine);
 	
 	int i = 0;

@@ -195,6 +195,10 @@ int IsNodeReachableViaDirectedGraph(TrainServer * server, track_node * start_nod
 		return 0;
 	}
 
+	if (start_node->reserved){
+		return 0;
+	}
+
 	if(start_node == dest_node){
 		return 1;
 	}else if(start_node->type == NODE_MERGE){
