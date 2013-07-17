@@ -1,6 +1,7 @@
 #include "route.h"
 #include "robio.h"
 #include "memory.h"
+#include "public_kernel_interface.h"
 
 track_node * SensorToTrackNode(track_node * track_nodes, int module_num, int sensor_num) {
 	int indexed_sensor_num = module_num * SENSORS_PER_MODULE + sensor_num;
@@ -30,53 +31,30 @@ track_node * NodeNameToTrackNode(track_node * track_nodes, char * name) {
 	return 0;
 }
 
-void ReserveTrackNodes(TrainEngine * engine) {
-	//  Reserve the node(s) at the start of the path
-	track_node * first_node = engine->route_node_info[0].node;
-	first_node->reverse->reserved = engine->train_num;
-	if(first_node->type == NODE_BRANCH){
-		first_node->reverse->reserved = engine->train_num;
-	}
+void ReserveTrackNode(track_node * node, int train_num){
+	assertf((node->reserved == 0 || node->reserved == train_num),"Attempting to reserve node %s that is reserved to %d.", node->name, train_num);
+	assertf((node->reverse->reserved == 0 || node->reverse->reserved == train_num),"Attempting to reserve node %s that is reserved to %d.", node->reverse->name, train_num);
+	node->reserved = train_num;
+	node->reverse->reserved = train_num;
+}
 
-	int i;
-	for (i = 0; i < engine->route_nodes_length; i++) {
-		track_node * node = engine->route_node_info[i].node;
-		node->reserved = engine->train_num;
-	}
-
-	//  Reserve the node(s) at the start of the path
-	track_node * last_node = engine->route_node_info[engine->route_nodes_length -1].node;
-	last_node->edge[DIR_AHEAD].dest->reserved = engine->train_num;
-	if(last_node->type == NODE_BRANCH){
-		last_node->edge[DIR_CURVED].dest->reserved = engine->train_num;
-	}
+void ReleaseTrackNode(track_node * node, int train_num){
+	assertf((node->reserved == train_num || node->reserved == 0),"Attempting to release node %s that is reserved to %d instead of %d.", node->name, node->reserved, train_num);
+	assertf((node->reverse->reserved == train_num || node->reverse->reserved == 0),"Attempting to release node %s that is reserved to %d instead of %d.", node->reverse->name,node->reverse->reserved, train_num);
+	node->reserved = 0;
+	node->reverse->reserved = 0;
 }
 
 void ReleaseTrackNodes(TrainEngine * engine) {
-	//  Reserve the node(s) at the start of the path
-	track_node * first_node = engine->route_node_info[0].node;
-	assert(first_node->reverse->reserved == engine->train_num,"Attempting to release a node that I don't own");
-	first_node->reverse->reserved = 0;
-	if(first_node->type == NODE_BRANCH){
-		assert(first_node->reverse->reserved == engine->train_num,"Attempting to release a node that I don't own");
-		first_node->reverse->reserved = 0;
-	}
-
 	int i;
 	for (i = 0; i < engine->route_nodes_length; i++) {
-		track_node * node = engine->route_node_info[i].node;
-		assert(node->reserved == engine->train_num,"Attempting to release a node that I don't own");
-		node->reserved = 0;
-	}
-
-	//  Reserve the node(s) at the start of the path
-	track_node * last_node = engine->route_node_info[engine->route_nodes_length -1].node;
-	assert(last_node->edge[DIR_AHEAD].dest->reserved == engine->train_num,"Attempting to release a node that I don't own");
-	last_node->edge[DIR_AHEAD].dest->reserved = 0;
-	if(last_node->type == NODE_BRANCH){
-		assert(last_node->edge[DIR_CURVED].dest->reserved == engine->train_num,"Attempting to release a node that I don't own");
-		last_node->edge[DIR_CURVED].dest->reserved = 0;
+		ReleaseTrackNode(engine->route_node_info[i].node, engine->train_num);
 	}
 }
 
-
+void ReserveTrackNodes(TrainEngine * engine) {
+	int i;
+	for (i = 0; i < engine->route_nodes_length; i++) {
+		ReserveTrackNode(engine->route_node_info[i].node, engine->train_num);
+	}
+}

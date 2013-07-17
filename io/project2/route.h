@@ -10,6 +10,10 @@ track_node * NodeNameToTrackNode(track_node * track_nodes, char * name);
 
 void ReleaseTrackNodes(TrainEngine * engine);
 
+void ReleaseTrackNode(track_node *, int);
+
 void ReserveTrackNodes(TrainEngine * engine);
+
+void ReserveTrackNode(track_node *, int);
 
 #endif

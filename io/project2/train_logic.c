@@ -98,7 +98,7 @@ void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine *
 	engine->route_nodes_length = 0;
 	engine->route_node_index = 0;
 	PopulateRouteNodeInfo(server, engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length), engine->train_num);
-	//ReserveTrackNodes(engine);
+	ReserveTrackNodes(engine);
 	
 	int i = 0;
 	for(i = 0; i < engine->route_nodes_length; i++){
@@ -216,7 +216,7 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 		engine->state = TRAIN_ENGINE_AT_DESTINATION;
 		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
 		//PrintMessage("At destination %s.", engine->current_node->name);
-		//ReleaseTrackNodes(engine);
+		ReleaseTrackNodes(engine);
 		return;
 	}
 	
