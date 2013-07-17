@@ -45,6 +45,7 @@ void TrainServer_Start() {
 		case MESSAGE_TYPE_SENSOR_DATA:
 			// from TrainSensorReader
 			TrainServer_HandleSensorReaderData(&server);
+			TrainServer_ProcessEngines(&server);
 			break;
 		case MESSAGE_TYPE_SWITCH_DATA:
 			// TODO:  I don't think this is used? ...delete later
@@ -62,23 +63,28 @@ void TrainServer_Start() {
 		case MESSAGE_TYPE_BLOCK_UNTIL_SENSOR:
 			server.state = TRAIN_SERVER_BLOCK_UNTIL_SENSOR;
 			server.blocked_tid = server.source_tid;
+			TrainServer_ProcessEngines(&server);
 			// See inside TrainServer_HandleSensorReaderData for unblocking logic
 			break;
 		case MESSAGE_TYPE_SELECT_TRACK:
 			// from ui server
 			TrainServer_HandleSelectTrack(&server);
+			TrainServer_ProcessEngines(&server);
 			break;
 		case MESSAGE_TYPE_SET_TRAIN:
 			// from ui server
 			TrainServer_HandleSetTrain(&server, 0);
+			TrainServer_ProcessEngines(&server);
 			break;
 		case MESSAGE_TYPE_GO_FOREVER:
 			// from ui server
 			TrainServer_HandleSetTrain(&server, 1);
+			TrainServer_ProcessEngines(&server);
 			break;
 		case MESSAGE_TYPE_SET_DESTINATION:
 			// from ui server
 			TrainServer_HandleSetDestination(&server);
+			TrainServer_ProcessEngines(&server);
 			break;
 		case MESSAGE_TYPE_QUERY_TRAIN_ENGINE:
 			// from ui server
@@ -87,6 +93,7 @@ void TrainServer_Start() {
 		case MESSAGE_TYPE_TRAIN_ENGINE_COMMAND_REQUEST:
 			// from TrainEngineClient
 			TrainServer_HandleTrainEngineClientCommandRequest(&server);
+			TrainServer_ProcessEngines(&server);
 			break;
 		case MESSAGE_TYPE_GET_SWITCH_REQUEST:
 			// TrainSwitchMaster
@@ -94,16 +101,11 @@ void TrainServer_Start() {
 			break;
 		case MESSAGE_TYPE_SET_SWITCH:
 			TrainServer_HandleSetSwitch(&server);
+			TrainServer_ProcessEngines(&server);
 			break;
 		default:
 			assert(0, "TrainServer: unknown message type");
 			break;
-		}
-		int i;
-		for(i = 0; i < NUM_ENGINES; i++) {
-			if (server.train_engines[i].train_num) {
-				TrainServer_ProcessEngine(&server, &(server.train_engines[i]));
-			}
 		}
 	}
 	
@@ -111,9 +113,18 @@ void TrainServer_Start() {
 	server.reply_message->message_type = MESSAGE_TYPE_ACK;
 	assert(server.reply_message->message_type == MESSAGE_TYPE_ACK, "TrainServer: failed to set ack message");
 	Reply(admin_tid, server.reply_buffer, MESSAGE_SIZE);
-	
 
 	Exit();
+}
+
+void TrainServer_ProcessEngines(TrainServer * server){
+	int i;
+	for(i = 0; i < NUM_ENGINES; i++) {
+		if (server->train_engines[i].train_num) {
+			TrainServer_ProcessEngine(server, &(server->train_engines[i]));
+		}
+	}
+
 }
 
 void TrainServer_Initialize(TrainServer * server) {

@@ -70,6 +70,7 @@ track_node * GetRandomSensor(TrainServer *);
 
 int IsNodeReachableViaDirectedGraph(TrainServer * , track_node * , track_node * , int );
 
+void TrainServer_ProcessEngines(TrainServer *);
 
 #endif
 
