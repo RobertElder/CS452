@@ -52,7 +52,10 @@ typedef struct UIServer {
 	ANSIColor background_color;
 	int train_engine_status_hashes_1[NUM_ENGINES];
 	int train_engine_status_hashes_2[NUM_ENGINES];
-	int train_map_position_hash;
+	int sensor_dirty[NUM_SENSOR_MODULES];
+	int switch_dirty[NUM_SWITCHES];
+	int sensor_background_color[NUM_SENSOR_MODULES * SENSORS_PER_MODULE];
+	int switch_background_color[NUM_SWITCHES];
 } UIServer;
 
 void UIServer_Start();

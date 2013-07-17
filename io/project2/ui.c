@@ -89,11 +89,18 @@ void UIServer_Start() {
 void UIServer_Initialize(UIServer * server) {
 	server->dirty = 1;
 	server->command_buffer_index = 0;
+	server->background_color = BLUE;
+	server->foreground_color = WHITE;
 	
 	int i;
 	
 	for (i = SENSOR_MODULE_A; i <= SENSOR_MODULE_E; i++) {
 		server->sensor_bit_flags_cache[i] = 0;
+	}
+	
+	for (i = 0; i < NUM_SENSOR_MODULES * SENSORS_PER_MODULE; i++) {
+		server->sensor_dirty[i] = 1;
+		server->sensor_background_color[i] = server->background_color;
 	}
 	
 	TrainMap_Initialize_A(&server->train_map_a);
@@ -113,10 +120,9 @@ void UIServer_Initialize(UIServer * server) {
 	
 	for (i = 0; i < NUM_SWITCHES; i++) {
 		server->switch_states_cache[i] = SWITCH_UNKNOWN;
+		server->switch_dirty[i] = 1;
+		server->switch_background_color[i] = server->background_color;
 	}
-	
-	server->background_color = BLUE;
-	server->foreground_color = WHITE;
 }
 
 void UIServer_Render(UIServer * server) {
@@ -433,10 +439,11 @@ void UIServer_PrintSensors(UIServer * server) {
 		// Print sensor values
 		int sensor_num;
 		for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
-			short differs = (sensor_bit_flag & 1 << sensor_num)
-				^ (sensor_bit_flag_cache & 1 << sensor_num);
+			int sensor_i = module_num * SENSORS_PER_MODULE + sensor_num;
 			
-			if (server->dirty || differs) {
+			server->sensor_dirty[sensor_i] |= (sensor_bit_flag & 1 << sensor_num) ^ (sensor_bit_flag_cache & 1 << sensor_num);
+			
+			if (server->dirty || server->sensor_dirty[sensor_i]) {
 				// Print onto table
 				ANSI_Cursor(SENSOR_TABLE_ROW_OFFSET + 1 + sensor_num, SENSOR_TABLE_COL_OFFSET + module_num * 3);
 
@@ -450,7 +457,6 @@ void UIServer_PrintSensors(UIServer * server) {
 				}
 				
 				// Print onto map
-				int sensor_i = module_num * SENSORS_PER_MODULE + sensor_num;
 				TrainMapLabelPosition * pos = &server->current_train_map->sensors[sensor_i];
 				
 				if (pos->ascii_offset == 0) {
@@ -459,6 +465,8 @@ void UIServer_PrintSensors(UIServer * server) {
 				
 				ANSI_Cursor(MAP_ROW_OFFSET + pos->row, MAP_COL_OFFSET + pos->col + 1);
 			
+				ANSI_Color(server->foreground_color, server->sensor_background_color[sensor_i]);
+				
 				if (sensor_bit_flag & 1 << sensor_num) {
 					ANSI_Style(BOLD_STYLE);
 					PutString(COM2, "%c", server->current_train_map->ascii[pos->ascii_offset]);
@@ -467,7 +475,11 @@ void UIServer_PrintSensors(UIServer * server) {
 					ANSI_Style(NORMAL_STYLE);
 					PutString(COM2, "%c", server->current_train_map->ascii[pos->ascii_offset]);
 				}
+				
+				ANSI_Color(server->foreground_color, server->background_color);
 			}
+			
+			server->sensor_dirty[sensor_i] = 0;
 		}
 		
 		server->sensor_bit_flags_cache[module_num] = sensor_bit_flag;
@@ -518,17 +530,18 @@ void UIServer_PrintSwitches(UIServer * server) {
 			Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
 			
 			int switch_state = reply_message->int1;
-			int differs = server->switch_states_cache[switch_num] != switch_state;
+			server->switch_dirty[switch_num] |= server->switch_states_cache[switch_num] != switch_state;
 			
-			if (switch_state && differs) {
+			if (switch_state && server->switch_dirty[switch_num]) {
 				ANSI_Cursor(MAP_ROW_OFFSET + label_pos->row, MAP_COL_OFFSET + 1 + label_pos->col);
 				if (switch_state == SWITCH_CURVED) {
-					ANSI_Color(RED, server->background_color);
+					ANSI_Color(RED, server->switch_background_color[switch_num]);
 					PutString(COM2, "C");
 				} else if (switch_state == SWITCH_STRAIGHT){
-					ANSI_Color(GREEN, server->background_color);
+					ANSI_Color(GREEN, server->switch_background_color[switch_num]);
 					PutString(COM2, "S");
 				} else if (switch_state == SWITCH_UNKNOWN){
+					ANSI_Color(server->foreground_color, server->switch_background_color[switch_num]);
 					PutString(COM2, "U");
 				} else {
 					assert(0,"UI got unknown switch state.");
@@ -537,6 +550,7 @@ void UIServer_PrintSwitches(UIServer * server) {
 			}
 			
 			server->switch_states_cache[switch_num] = switch_state;
+			server->switch_dirty[switch_num] = 0;
 		}
 	}
 }
@@ -676,25 +690,20 @@ void UIServer_PrintTrainMapPosition(UIServer * server) {
 	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_PrintTrainMapPosition: did not get ack message");
 	
 	TrainEngine * engine = reply_message->train_engine;
-	TrainMapLabelPosition * pos;
-	int new_hash = (int) engine->destination_node;
 	
-	if (new_hash != server->train_map_position_hash || server->dirty) {
-		server->train_map_position_hash = new_hash;
+	int i;
+	for (i = 0; i < NUM_SENSOR_MODULES * SENSORS_PER_MODULE; i++) {
+		int new_color = server->sensor_background_color[i];
 		
-		if (engine->destination_node) {
-			pos = &server->current_train_map->sensors[engine->destination_node->num];
-
-			ANSI_Cursor(MAP_ROW_OFFSET + pos->row, MAP_COL_OFFSET + pos->col + 1);
-			ANSI_Color(server->foreground_color, GREEN);
-			PutString(COM2, "%c", server->current_train_map->ascii[pos->ascii_offset]);
-			ANSI_Color(server->foreground_color, server->background_color);
+		if (engine->destination_node && engine->destination_node->num == i) {
+			new_color = GREEN;
 		} else {
-			// Invalid the sensors cache to cause the print sensors function to repaint
-			int i;
-			for (i = 0; i < NUM_SENSOR_MODULES; i++) {
-				server->sensor_bit_flags_cache[i] = ~server->sensor_bit_flags_cache[i];
-			}
+			new_color = server->background_color;
+		}
+		
+		if (new_color != server->sensor_background_color[i]) {
+			server->sensor_dirty[i] = 1;
+			server->sensor_background_color[i] = new_color;
 		}
 	}
 }
