@@ -775,12 +775,12 @@ void UIPrintTask_Start() {
 		
 		switch(receive_message->message_type) {
 		case MESSAGE_TYPE_UI_PRINT_MESSAGE:
-			Reply(source_tid, reply_buffer, MESSAGE_SIZE);
 			ANSI_SaveCursor();
 			ANSI_Cursor(PRINT_MESSAGE_OFFSET + MAX_PRINT_MESSAGE, 1);
 			ANSI_ClearLine(CLEAR_TO_END);
 			PutString(COM2, "%d: ", Time());
 			PutStringFormat(COM2, receive_message->message, receive_message->va);
+			Reply(source_tid, reply_buffer, MESSAGE_SIZE);
 			PutString(COM2, "\n");
 			ANSI_RestoreCursor();
 			break;
