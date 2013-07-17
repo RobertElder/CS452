@@ -249,7 +249,11 @@ void UIServer_ResetCommandBuffer(UIServer * server) {
 }
 
 void UIServer_PrintCommandHelp(UIServer * server) {
+	ANSI_Color(YELLOW, server->background_color);
+	ANSI_Style(BOLD_STYLE);
 	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, go, dest");
+	ANSI_Style(NORMAL_STYLE);
+	ANSI_Color(server->foreground_color, server->background_color);
 }
 
 void UIServer_HandleTrainCommand(UIServer * server) {
@@ -476,6 +480,16 @@ void UIServer_PrintMap(UIServer * server) {
 		int i = 0;
 		while (1) {
 			if (server->current_train_map->ascii[i] == 0) {
+				if (server->current_train_map == &server->train_map_a) {
+					ANSI_Color(BLACK, MAGENTA);
+					PutString(COM2, " Track A ");
+				} else {
+					ANSI_Color(BLACK, CYAN);
+					PutString(COM2, " Track B ");
+				}
+				
+				ANSI_Color(server->foreground_color, server->background_color);
+				
 				break;
 			} else if (server->current_train_map->ascii[i] == '\n') {
 				ANSI_CursorNextLine(1);
