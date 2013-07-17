@@ -98,6 +98,8 @@ void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine *
 	engine->route_nodes_length = 0;
 	engine->route_node_index = 0;
 	PopulateRouteNodeInfo(engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length));
+	ReserveTrackNodes(engine);
+	
 	int i = 0;
 	for(i = 0; i < engine->route_nodes_length; i++){
 		//PrintMessage("Route %d) %s.",i, engine->route_node_info[i].node->name);
@@ -167,6 +169,13 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	if (node && node != engine->current_node) {
 		engine->current_node = node;
 		TrainServer_ProcessSensorData(server, engine);
+		
+		if (node->reserved && node->reserved != engine->train_num) {
+			PrintMessage("!!! Train %d went into track %s reserved for train %d", engine->train_num, node->name, node->reserved);
+			node->reserved = 0;
+		} else if (!node->reserved) {
+			PrintMessage("!!! Train %d went into track %s that was not reserved", engine->train_num, node->name);
+		}
 	}
 	
 	double time = TimeSeconds() - engine->actual_time_at_last_sensor;

@@ -13,6 +13,6 @@ int QueueSwitchStatesForDirectedPath(SwitchState * , track_node * , track_node *
 
 int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, track_node * start_node, track_node * end_node, int levels, int array_index, int *);
 
-
+void ReserveTrackNodes(TrainEngine * engine);
 
 #endif
