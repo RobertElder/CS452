@@ -202,6 +202,9 @@ int IsNodeReachableViaDirectedGraph(TrainServer * server, track_node * start_nod
 	if(start_node == dest_node){
 		return 1;
 	}else if(start_node->type == NODE_MERGE){
+		//  Don't go through a broken switch this way or we might get stuck.
+		if(is_switch_blacklisted(server, start_node->num))
+			return 0;
 		return IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
 	}else if(start_node->type == NODE_SENSOR){
 		return IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
@@ -313,6 +316,12 @@ int is_switch_blacklisted(TrainServer * server, int switch_num){
 	if(
 		server->current_track_nodes == server->track_a_nodes && (
 			switch_num == 156
+		)
+	){
+		return 1;
+	}else if(
+		server->current_track_nodes == server->track_b_nodes && (
+			switch_num == 18
 		)
 	){
 		return 1;
@@ -509,7 +518,7 @@ void TrainServer_HandleGetSwitchRequest(TrainServer * server) {
 			//  Don't keep telling it to change if is already set.
 			reply_message->message_type = MESSAGE_TYPE_NEG_ACK;
 		}else{
-			PrintMessage("Telling switchmaster to set %d to be %c", switch_num, GetQueuedSwitchState(server, switch_num));
+			//PrintMessage("Telling switchmaster to set %d to be %c", switch_num, GetQueuedSwitchState(server, switch_num));
 			reply_message->c1 = direction_code;
 			reply_message->c2 = switch_num;
 			server->switch_states[switch_num] = GetQueuedSwitchState(server, switch_num);

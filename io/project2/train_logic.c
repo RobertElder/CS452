@@ -52,7 +52,7 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 
 void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine) {
 	int speed = 9;
-	PrintMessage("Engine %d is starting, setting speed to %d.", engine->train_num, speed);
+	//PrintMessage("Engine %d is starting, setting speed to %d.", engine->train_num, speed);
 	TrainServer_SetTrainSpeed(server, speed, engine->train_num);
 	engine->state = TRAIN_ENGINE_FINDING_POSITION;
 }
@@ -68,7 +68,7 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 }
 
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine) {
-	PrintMessage("Found starting position.");
+	//PrintMessage("Found starting position.");
 	
 	engine->state = TRAIN_ENGINE_WAIT_FOR_DESTINATION;
 }
@@ -79,7 +79,7 @@ void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngi
 		
 	if (!engine->destination_node) {
 		// Reverse and try again
-		PrintMessage("No destination in this direction! Reversing..");
+		//PrintMessage("No destination in this direction! Reversing..");
 		TrainServer_SetTrainSpeed(server, REVERSE_SPEED, engine->train_num);
 		DelaySeconds(1);
 		TrainServer_SetTrainSpeed(server, 9, engine->train_num);
@@ -93,12 +93,12 @@ void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngi
 void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine * engine) {
 	engine->source_node = engine->current_node;
 
-	PrintMessage("Engine %d travelling from %s to %s.",engine->train_num, engine->current_node->name ,engine->destination_node->name);
+	//PrintMessage("Engine %d travelling from %s to %s.",engine->train_num, engine->current_node->name ,engine->destination_node->name);
 
 	engine->route_nodes_length = 0;
 	engine->route_node_index = 0;
 	PopulateRouteNodeInfo(engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length), engine->train_num);
-	ReserveTrackNodes(engine);
+	//ReserveTrackNodes(engine);
 	
 	int i = 0;
 	for(i = 0; i < engine->route_nodes_length; i++){
@@ -171,10 +171,10 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 		TrainServer_ProcessSensorData(server, engine);
 		
 		if (node->reserved && node->reserved != engine->train_num) {
-			PrintMessage("!!! Train %d went into track %s reserved for train %d", engine->train_num, node->name, node->reserved);
+			//PrintMessage("!!! Train %d went into track %s reserved for train %d", engine->train_num, node->name, node->reserved);
 			node->reserved = 0;
 		} else if (!node->reserved) {
-			PrintMessage("!!! Train %d went into track %s that was not reserved", engine->train_num, node->name);
+			//PrintMessage("!!! Train %d went into track %s that was not reserved", engine->train_num, node->name);
 		}
 	}
 	
@@ -186,7 +186,7 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	int stopping_distance = STOPPING_DISTANCE[engine->train_num][engine->speed_setting];
 
 	if((!(engine->state == TRAIN_ENGINE_NEAR_DESTINATION)) && engine->distance_to_destination < stopping_distance) {
-		PrintMessage("Slowing down because distance (%d) less than stopping distance (%d).", engine->distance_to_destination, stopping_distance);
+		//PrintMessage("Slowing down because distance (%d) less than stopping distance (%d).", engine->distance_to_destination, stopping_distance);
 		TrainServer_SlowTrainDown(server, engine);
 		engine->sample_distance_to_next_sensor = engine->distance_to_destination;
 	}
@@ -215,7 +215,8 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	if (engine->current_node == engine->destination_node) {
 		engine->state = TRAIN_ENGINE_AT_DESTINATION;
 		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
-		PrintMessage("At destination %s.", engine->current_node->name);
+		//PrintMessage("At destination %s.", engine->current_node->name);
+		//ReleaseTrackNodes(engine);
 		return;
 	}
 	
@@ -368,6 +369,6 @@ void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
 
 		TrainServer_SetTrainSpeed(server, slow_speed, engine->train_num);
 		engine->state = TRAIN_ENGINE_NEAR_DESTINATION;
-		PrintMessage("Slowing down");
+		//PrintMessage("Slowing down");
 	}
 }
