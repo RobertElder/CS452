@@ -4,7 +4,7 @@
 
 #ifdef ANSI
 void ANSI_ResetColor() {
-	PutString(COM2, "\x1b[0m");
+	PutcAtomic(COM2, 4, '\x1b', '[', '0' , 'm');
 }
 
 void ANSI_Color(ANSIColor text, ANSIColor background) {
@@ -12,9 +12,9 @@ void ANSI_Color(ANSIColor text, ANSIColor background) {
 }
 
 void ANSI_Style(ANSIStyle style) {
-	PutString(COM2, "\x1b[");
 
 	if (style) {
+		PutString(COM2, "\x1b[");
 		int style2 = style;
 
 		while (1) {
@@ -45,7 +45,8 @@ void ANSI_Style(ANSIStyle style) {
 			}
 		}
 	} else {
-		PutString(COM2, "22;24;25;27m");
+		PutcAtomic(COM2, 8, '\x1b', '[', '2', '2', ';', '2', '4', 'm');
+		PutcAtomic(COM2, 8, '\x1b', '[', '2', '5', ';', '2', '7', 'm');
 	}
 }
 
@@ -90,15 +91,15 @@ void ANSI_CursorCol(int col) {
 }
 
 void ANSI_SaveCursor() {
-	PutString(COM2, "\x1b[s");
+	PutcAtomic(COM2, 3, '\x1b', '[', 's');
 }
 
 void ANSI_RestoreCursor() {
-	PutString(COM2, "\x1b[u");
+	PutcAtomic(COM2, 3, '\x1b', '[', 'u');
 }
 
 void ANSI_GetCursor() {
-	PutString(COM2, "\x1b[6n");
+	PutcAtomic(COM2, 4, '\x1b', '[', '6', 'n');
 }
 
 void ANSI_ClearCell(int cells) {
@@ -114,7 +115,7 @@ void ANSI_SetScrollRegion(int first_row, int last_row) {
 }
 
 void ANSI_SetScrollRegionAll() {
-	PutString(COM2, "\x1b[r");
+	PutcAtomic(COM2, 3, '\x1b', '[', 'r');
 }
 
 #else
