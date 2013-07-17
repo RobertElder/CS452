@@ -240,10 +240,10 @@ void ScreenOutputServer_Start() {
 			break;
 		case MESSAGE_TYPE_DATA:
 			// from public_kernel_interface Putc()
+			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			for (i = 0; i < server.char_message->count; i++) {
 				CharBuffer_PutChar(&server.char_buffer, server.char_message->chars[i]);
 			}
-			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			ScreenOutputServer_SendData(&server);
 			break;
 		default:
@@ -428,10 +428,10 @@ void TrainOutputServer_Start() {
 			break;
 		case MESSAGE_TYPE_DATA:
 			// from the public_kernel_interface Putc()
+			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			for (i = 0; i < server.char_message->count; i++) {
 				CharBuffer_PutChar(&server.char_buffer, server.char_message->chars[i]);
 			}
-			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			TrainOutputServer_SendData(&server);
 			break;
 		case MESSAGE_TYPE_HELLO:
