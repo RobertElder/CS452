@@ -149,6 +149,15 @@ int PopulateRouteNodeInfo(RouteNodeInfo * info_array, track_node * track_nodes, 
 	}
 }
 
-
+void ReserveTrackNodes(TrainEngine * engine) {
+	int i;
+	for (i = 0; i < engine->route_nodes_length; i++) {
+		track_node * node = engine->route_node_info[i].node;
+		
+		if (node->type == NODE_SENSOR) {
+			node->reserved = engine->train_num;
+		}
+	}
+}
 
 

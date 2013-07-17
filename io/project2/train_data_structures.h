@@ -7,7 +7,7 @@
 
 #define SENSORS_PER_MODULE 16
 #define NUM_SWITCHES 256
-#define NUM_ENGINES 2
+#define NUM_ENGINES 1
 
 #define MAX_ROUTE_NODE_INFO 100
 
