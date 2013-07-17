@@ -689,21 +689,41 @@ void UIServer_PrintTrainMapPosition(UIServer * server) {
 	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
 	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_PrintTrainMapPosition: did not get ack message");
 	
+	track_node * track_nodes = reply_message->track_nodes;
 	TrainEngine * engine = reply_message->train_engine;
 	
 	int i;
-	for (i = 0; i < NUM_SENSOR_MODULES * SENSORS_PER_MODULE; i++) {
-		int new_color = server->sensor_background_color[i];
+	
+	for (i = 0; i < TRACK_MAX; i++) {
+		track_node node = track_nodes[i];
+		int new_color;
 		
-		if (engine->destination_node && engine->destination_node->num == i) {
+		if (node.type == NODE_SENSOR) {
+			new_color = server->sensor_background_color[node.num];
+		} else if (node.type == NODE_BRANCH || node.type == NODE_MERGE) {
+			new_color = server->switch_background_color[node.num];
+		}
+		
+		if (node.type == NODE_SENSOR && node.num == engine->destination_node->num) {
+			// Highlight destination
 			new_color = GREEN;
+		} else if (node.reserved) {
+			// Highlight reservation
+			new_color = BLACK;
 		} else {
 			new_color = server->background_color;
 		}
 		
-		if (new_color != server->sensor_background_color[i]) {
-			server->sensor_dirty[i] = 1;
-			server->sensor_background_color[i] = new_color;
+		if (node.type == NODE_SENSOR) {
+			if (new_color != server->sensor_background_color[node.num]) {
+				server->sensor_dirty[node.num] = 1;
+				server->sensor_background_color[node.num] = new_color;
+			}
+		} else if (node.type == NODE_BRANCH || node.type == NODE_MERGE) {
+			if (new_color != server->switch_background_color[node.num]) {
+				server->switch_dirty[node.num] = 1;
+				server->switch_background_color[node.num] = new_color;
+			}
 		}
 	}
 }

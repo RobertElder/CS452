@@ -182,6 +182,7 @@ typedef struct TrainEngine {
 typedef struct TrainEngineStatusMessage {
 	MessageType message_type;
 	TrainEngine * train_engine;
+	track_node * track_nodes;
 } TrainEngineStatusMessage;
 
 typedef struct TrainServer {

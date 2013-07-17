@@ -541,6 +541,7 @@ void TrainServer_HandleQueryTrainEngine(TrainServer * server) {
 	assert(sizeof(TrainEngineStatusMessage) <= MESSAGE_SIZE, "TrainEngineStatusMessage too big");
 	
 	reply_message->train_engine = &server->train_engines[receive_message->int1];
+	reply_message->track_nodes = server->current_track_nodes;
 
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 }
