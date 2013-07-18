@@ -285,11 +285,22 @@ track_node * TrainServer_GetEnginePosition(TrainServer * server, TrainEngine * e
 		for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
 			if ((server->sensor_bit_flags[sensor_module] >> sensor_num) & 0x01) {
 				track_node * candidate_node = SensorToTrackNode(server->current_track_nodes, sensor_module, sensor_num);
-				
-				if (!engine->route_nodes_length) {
-					return candidate_node;
-				} 
 				// TODO: need to sensor attribution better
+				
+				if (candidate_node->reserved == engine->train_num) {
+					return candidate_node;
+				}
+				
+				if (engine->state == TRAIN_ENGINE_FINDING_POSITION && !candidate_node->reserved) {
+					return candidate_node;
+				}
+				
+				// TODO: Remove this case below once the engine is actually reserving tracks as it moves along
+				if (engine->state == TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN && !candidate_node->reserved) {
+					return candidate_node;
+				}
+				
+				// TODO: Remove this case below as trains should be on their reserved tracks anyway
 				// this only checks if the node is on the path
 				int i;
 				for (i = 0; i < engine->route_nodes_length; i++) {
