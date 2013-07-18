@@ -14,6 +14,9 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 	case TRAIN_ENGINE_FINDING_POSITION:
 		TrainServer_ProcessEngineFindingPosition(server, engine);
 		break;
+	case TRAIN_ENGINE_RESYNC_POSITION:
+		TrainServer_ProcessEngineResyncPosition(server, engine);
+		break;
 	case TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN:
 		TrainServer_ProcessEngineReverseAndTryAgain(server, engine);
 		break;
@@ -51,9 +54,8 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 }
 
 void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine) {
-	int speed = 9;
-	//PrintMessage("Engine %d is starting, setting speed to %d.", engine->train_num, speed);
-	TrainServer_SetTrainSpeed(server, speed, engine->train_num);
+	//PrintMessage("Engine %d is starting, setting speed to %d.", engine->train_num, FINDING_POSITION_SPEED);
+	TrainServer_SetTrainSpeed(server, FINDING_POSITION_SPEED, engine->train_num);
 	engine->state = TRAIN_ENGINE_FINDING_POSITION;
 }
 
@@ -65,6 +67,10 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 		engine->current_node = node;
 		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
 	}
+}
+
+void TrainServer_ProcessEngineResyncPosition(TrainServer * server, TrainEngine * engine) {
+	TrainServer_ProcessEngineFindingPosition(server, engine);
 }
 
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine) {
@@ -82,7 +88,7 @@ void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngi
 		//PrintMessage("No destination in this direction! Reversing..");
 		TrainServer_SetTrainSpeed(server, REVERSE_SPEED, engine->train_num);
 		DelaySeconds(1);
-		TrainServer_SetTrainSpeed(server, 9, engine->train_num);
+		TrainServer_SetTrainSpeed(server, FINDING_POSITION_SPEED, engine->train_num);
 		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
 		return;
 	}
@@ -277,7 +283,8 @@ void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * 
 }
 
 void TrainServer_ProcessEngineWaitAndGoForever(TrainServer * server, TrainEngine * engine) {
-	engine->state = TRAIN_ENGINE_WAIT_FOR_DESTINATION;
+	TrainServer_SetTrainSpeed(server, FINDING_POSITION_SPEED, engine->train_num);
+	engine->state = TRAIN_ENGINE_RESYNC_POSITION;
 }
 
 void TrainServer_ProcessEngineReverseAndTryAgain(TrainServer * server, TrainEngine * engine) {
@@ -303,7 +310,7 @@ track_node * TrainServer_GetEnginePosition(TrainServer * server, TrainEngine * e
 				}
 				
 				// TODO: Remove this case below once the engine is actually reserving tracks as it moves along
-				if (engine->state == TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN && !candidate_node->reserved) {
+				if ((engine->state == TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN || engine->state == TRAIN_ENGINE_RESYNC_POSITION) && !candidate_node->reserved) {
 					return candidate_node;
 				}
 				
@@ -361,7 +368,7 @@ void TrainServer_SetTrainSpeed(TrainServer * server, int speed, int train_num) {
 
 void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
 	if (engine->state == TRAIN_ENGINE_RUNNING) {
-		int slow_speed = 8;
+		int slow_speed = 7;
 
 		//  These ones are close to switches so we need to slow down more.  We need to be at speed 8 for
 		//  the other ones, otherwise we stall.
