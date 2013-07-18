@@ -136,9 +136,9 @@ void UIServer_Render(UIServer * server) {
 
 	UIServer_PrintTime(server);
 	UIServer_PrintMap(server);
+	UIServer_PrintTrainMapPosition(server);
 	UIServer_PrintSensors(server);
 	UIServer_PrintSwitches(server);
-	UIServer_PrintTrainMapPosition(server);
 	UIServer_PrintTrainEngineStatus(server);
 	UIServer_PrintCommandLine(server);
 	
