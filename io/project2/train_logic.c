@@ -97,6 +97,7 @@ void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngi
 }
 
 void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine * engine) {
+	TrainServer_SetTrainSpeed(server, 0, engine->train_num);
 	engine->source_node = engine->current_node;
 
 	//PrintMessage("Engine %d travelling from %s to %s.",engine->train_num, engine->current_node->name ,engine->destination_node->name);
@@ -111,7 +112,6 @@ void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine *
 		//PrintMessage("Route %d) %s.",i, engine->route_node_info[i].node->name);
 	}
 
-	TrainServer_SetTrainSpeed(server, 0, engine->train_num);
 	engine->state = TRAIN_ENGINE_WAIT_FOR_ALL_READY;
 }
 
