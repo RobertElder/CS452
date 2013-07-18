@@ -50,12 +50,13 @@ typedef struct UIServer {
 	SwitchState switch_states_cache[NUM_SWITCHES];
 	ANSIColor foreground_color;
 	ANSIColor background_color;
-	int train_engine_status_hashes_1[NUM_ENGINES];
-	int train_engine_status_hashes_2[NUM_ENGINES];
+	int train_engine_status_hashes_1[MAX_NUM_ENGINES];
+	int train_engine_status_hashes_2[MAX_NUM_ENGINES];
 	int sensor_dirty[NUM_SENSOR_MODULES * SENSORS_PER_MODULE];
 	int switch_dirty[NUM_SWITCHES];
 	int sensor_background_color[NUM_SENSOR_MODULES * SENSORS_PER_MODULE];
 	int switch_background_color[NUM_SWITCHES];
+	int num_engines;
 } UIServer;
 
 void UIServer_Start();
@@ -89,6 +90,8 @@ void UIServer_HandleTimeStopCommand(UIServer * server);
 void UIServer_HandleSetTrainCommand(UIServer * server, short go_forever);
 
 void UIServer_HandleSetDestinationCommand(UIServer * server);
+
+void UIServer_HandleSetNumEngines(UIServer * server);
 
 void UIServer_PrintSensors(UIServer * server);
 

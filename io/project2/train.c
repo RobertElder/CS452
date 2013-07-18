@@ -103,6 +103,10 @@ void TrainServer_Start() {
 			TrainServer_HandleSetSwitch(&server);
 			TrainServer_ProcessEngines(&server);
 			break;
+		case MESSAGE_TYPE_SET_NUM_ENGINES:
+			TrainServer_HandleSetNumEngines(&server);
+			TrainServer_ProcessEngines(&server);
+			break;
 		default:
 			assert(0, "TrainServer: unknown message type");
 			break;
@@ -119,7 +123,7 @@ void TrainServer_Start() {
 
 void TrainServer_ProcessEngines(TrainServer * server){
 	int i;
-	for(i = 0; i < NUM_ENGINES; i++) {
+	for(i = 0; i < server->num_engines; i++) {
 		if (server->train_engines[i].train_num) {
 			TrainServer_ProcessEngine(server, &(server->train_engines[i]));
 		}
@@ -131,6 +135,7 @@ void TrainServer_Initialize(TrainServer * server) {
 	int return_code = RegisterAs((char*) TRAIN_SERVER_NAME);
 	assert(return_code == 0, "TrainServer_Start failed to register name");
 	
+	server->num_engines = 1;
 	server->state = TRAIN_SERVER_IDLE;
 	server->receive_message = (GenericMessage *) server->receive_buffer;
 	server->reply_message = (GenericMessage *) server->reply_buffer;
@@ -178,7 +183,7 @@ void TrainServer_Initialize(TrainServer * server) {
 	Queue_Initialize((Queue*)&server->queued_switch_changes, SWITCH_QUEUE_SIZE);
 
 	int i;
-	for(i = 0; i < NUM_ENGINES; i++) {
+	for(i = 0; i < MAX_NUM_ENGINES; i++) {
 		TrainEngine_Initialize(&(server->train_engines[i]), 0);
 	}
 	
@@ -506,7 +511,7 @@ void TrainServer_HandleSetTrain(TrainServer * server, short go_forever) {
 	char train_num = receive_message->int1;
 	int slot_num = receive_message->int2;
 	
-	assert(slot_num < NUM_ENGINES, "Slot number exceeded");
+	assert(slot_num < server->num_engines, "Slot number exceeded");
 	
 	TrainEngine_Initialize(&(server->train_engines[slot_num]), train_num);
 	server->train_engines[slot_num].go_forever = go_forever;
@@ -524,7 +529,7 @@ void TrainServer_HandleSetDestination(TrainServer * server) {
 	char * dest_name = receive_message->char1;
 	int slot_num = TrainServer_EngineNumToArrayIndex(server, train_num);
 	
-	assert(slot_num < NUM_ENGINES, "Slot number exceeded");
+	assert(slot_num < server->num_engines, "Slot number exceeded");
 	
 	server->train_engines[slot_num].destination_node = NodeNameToTrackNode(server->current_track_nodes, dest_name);
 	
@@ -632,6 +637,19 @@ void TrainServer_HandleSetSwitch(TrainServer * server) {
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 }
 
+void TrainServer_HandleSetNumEngines(TrainServer * server) {
+	GenericTrainMessage * receive_message = (GenericTrainMessage *) server->receive_buffer;
+	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	int num_engines = receive_message->int1;
+	
+	assert(num_engines <= MAX_NUM_ENGINES, "TrainServer_HandleSetNumEngines max engines exceeded");
+	
+	server->num_engines = num_engines;
+	
+	reply_message->message_type = MESSAGE_TYPE_ACK;
+	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
+}
+
 SwitchState GetQueuedSwitchState(TrainServer * server, int switch_num){
 	return server->switches_to_change[switch_num];
 }
@@ -670,7 +688,7 @@ void TrainServer_QueueSwitchStates(TrainServer * server, TrainEngine * engine ){
 
 int TrainServer_EngineNumToArrayIndex(TrainServer * server, int train_num) {
 	int i;
-	for (i = 0; i < NUM_ENGINES; i++) {
+	for (i = 0; i < server->num_engines; i++) {
 		if (server->train_engines[i].train_num == train_num) {
 			return i;
 			break;
@@ -684,7 +702,7 @@ int TrainServer_EngineNumToArrayIndex(TrainServer * server, int train_num) {
 int TrainServer_NumActivatedEngines(TrainServer * server) {
 	int num = 0;
 	int i;
-	for (i = 0; i < NUM_ENGINES; i++) {
+	for (i = 0; i < server->num_engines; i++) {
 		if (server->train_engines[i].train_num) {
 			num++;
 		}

@@ -7,7 +7,7 @@
 
 #define SENSORS_PER_MODULE 16
 #define NUM_SWITCHES 256
-#define NUM_ENGINES 1
+#define MAX_NUM_ENGINES 10
 
 #define MAX_ROUTE_NODE_INFO 100
 
@@ -209,6 +209,7 @@ typedef struct TrainServer {
 	int blocked_tid;
 	int train_server_timer_tid;
 	int switch_master_tid;
+	int num_engines;
 	
 	track_node track_a_nodes[TRACK_MAX];
 	track_node track_b_nodes[TRACK_MAX];
@@ -218,7 +219,7 @@ typedef struct TrainServer {
 	SwitchState switches_to_change[NUM_SWITCHES];
 	SwitchQueue queued_switch_changes;
 	
-	TrainEngine train_engines[NUM_ENGINES];
+	TrainEngine train_engines[MAX_NUM_ENGINES];
 	TrainSpeedQueue train_speed_queue;
 } TrainServer;
 

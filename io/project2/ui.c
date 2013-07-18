@@ -91,6 +91,7 @@ void UIServer_Initialize(UIServer * server) {
 	server->command_buffer_index = 0;
 	server->background_color = BLUE;
 	server->foreground_color = WHITE;
+	server->num_engines = 1;
 	
 	int i;
 	
@@ -241,6 +242,8 @@ void UIServer_RunCommand(UIServer * server) {
 		UIServer_HandleSetTrainCommand(server, 1);
 	} else if (server->command_buffer[0] == 'd' && server->command_buffer[1] == 'e') {
 		UIServer_HandleSetDestinationCommand(server);
+	} else if (server->command_buffer[0] == 'n' && server->command_buffer[1] == 'u') {
+		UIServer_HandleSetNumEngines(server);
 	} else {
 		UIServer_PrintCommandHelp(server);
 	}
@@ -257,7 +260,7 @@ void UIServer_ResetCommandBuffer(UIServer * server) {
 void UIServer_PrintCommandHelp(UIServer * server) {
 	ANSI_Color(YELLOW, server->background_color);
 	ANSI_Style(BOLD_STYLE);
-	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, go, dest");
+	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, go, dest, num");
 	ANSI_Style(NORMAL_STYLE);
 	ANSI_Color(server->foreground_color, server->background_color);
 }
@@ -372,8 +375,8 @@ void UIServer_HandleSetTrainCommand(UIServer * server, short go_forever) {
 	next_whitespace += rob_next_whitespace(&(server->command_buffer[next_whitespace]));
 	char slot_num = robatoi(&server->command_buffer[next_whitespace]);
 	
-	if (slot_num >= NUM_ENGINES) {
-		PutString(COM2, "Please enter a slot for the train within [0, %d]", (NUM_ENGINES - 1));
+	if (slot_num >= server->num_engines) {
+		PutString(COM2, "Please enter a slot for the train within [0, %d]", (server->num_engines - 1));
 		return;
 	}
 
@@ -412,6 +415,29 @@ void UIServer_HandleSetDestinationCommand(UIServer * server) {
 	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_HandleSetDestinationCommand failed to get ack message");
 	
 	PutString(COM2, "Destination set to %s.", &server->command_buffer[next_whitespace]);
+}
+
+void UIServer_HandleSetNumEngines(UIServer * server) {
+	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
+	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	int next_whitespace = rob_next_whitespace(server->command_buffer);
+	int num_engines = robatoi(&server->command_buffer[next_whitespace]);
+	
+	if (num_engines > MAX_NUM_ENGINES || num_engines < 1) {
+		PutString(COM2, "Number of engines should be within [1, %d]", MAX_NUM_ENGINES);
+		return;
+	} 
+	
+	send_message->message_type = MESSAGE_TYPE_SET_NUM_ENGINES;
+	send_message->int1 = num_engines;
+	
+	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+	
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_HandleSetNumEngines failed to get ack message");
+	
+	server->num_engines = num_engines;
+	
+	PutString(COM2, "Number of engines set to %d", server->num_engines);
 }
 
 void UIServer_PrintSensors(UIServer * server) {
@@ -566,7 +592,7 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	}
 	
 	int slot_num;
-	for (slot_num = 0; slot_num < NUM_ENGINES; slot_num++) {
+	for (slot_num = 0; slot_num < server->num_engines; slot_num++) {
 		GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
 		TrainEngineStatusMessage * reply_message = (TrainEngineStatusMessage *) server->reply_buffer;
 	

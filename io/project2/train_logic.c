@@ -110,7 +110,7 @@ void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine *
 }
 
 void TrainServer_ProcessEngineWaitForAllReady(TrainServer * server, TrainEngine * engine) {
-	if (TrainServer_NumActivatedEngines(server) == NUM_ENGINES) {
+	if (TrainServer_NumActivatedEngines(server) == server->num_engines) {
 		TrainServer_QueueSwitchStates(server, engine);
 		engine->granular_speed_setting = STARTUP_TRAIN_SPEED;
 		TrainServer_SetTrainSpeed(server, STARTUP_TRAIN_SPEED | LIGHTS_MASK, engine->train_num);
