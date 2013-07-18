@@ -76,5 +76,7 @@ int PopulateRouteNodeInfo(TrainServer * server, RouteNodeInfo * info_array, trac
 
 void TrainServer_ProcessEngines(TrainServer *);
 
+void TrainServer_ConsiderReplyToTrainSensorReader(TrainServer * server);
+
 #endif
 

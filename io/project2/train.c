@@ -111,14 +111,34 @@ void TrainServer_Start() {
 			assert(0, "TrainServer: unknown message type");
 			break;
 		}
+		TrainServer_ConsiderReplyToTrainSensorReader(&server);
 	}
-	
+
 	assert(admin_tid, "TrainServer: did not get admin tid");
 	server.reply_message->message_type = MESSAGE_TYPE_ACK;
 	assert(server.reply_message->message_type == MESSAGE_TYPE_ACK, "TrainServer: failed to set ack message");
 	Reply(admin_tid, server.reply_buffer, MESSAGE_SIZE);
 
 	Exit();
+}
+
+void TrainServer_ConsiderReplyToTrainSensorReader(TrainServer * server){
+	//  Only unblock the sensor reader if there are no switches queued (to give them priority.)
+	if(!(Queue_CurrentCount((Queue*)&server->queued_switch_changes))){
+		if(server->sensor_reader_blocked){
+			if (server->state == TRAIN_SERVER_SHUTDOWN) {
+				server->reply_message->message_type = MESSAGE_TYPE_SHUTDOWN;
+			}else{
+				server->reply_message->message_type = MESSAGE_TYPE_ACK;
+			}
+			
+			if (server->state == TRAIN_SERVER_SHUTDOWN) {
+				server->num_child_task_running--;
+			}
+			Reply(server->train_sensor_reader_tid, server->reply_buffer, MESSAGE_SIZE);
+			server->sensor_reader_blocked = 0;
+		}
+	}
 }
 
 void TrainServer_ProcessEngines(TrainServer * server){
@@ -135,6 +155,7 @@ void TrainServer_Initialize(TrainServer * server) {
 	int return_code = RegisterAs((char*) TRAIN_SERVER_NAME);
 	assert(return_code == 0, "TrainServer_Start failed to register name");
 	
+	server->sensor_reader_blocked = 0;
 	server->num_engines = 1;
 	server->state = TRAIN_SERVER_IDLE;
 	server->receive_message = (GenericMessage *) server->receive_buffer;
@@ -419,15 +440,7 @@ int is_switch_blacklisted(TrainServer * server, int switch_num){
 void TrainServer_HandleSensorReaderData(TrainServer * server) {
 	TrainSensorMessage * recv_sensor_message = (TrainSensorMessage *) server->receive_buffer;
 
-	if (server->state == TRAIN_SERVER_SHUTDOWN) {
-		server->reply_message->message_type = MESSAGE_TYPE_SHUTDOWN;
-	}
-	
-	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
-	
-	if (server->state == TRAIN_SERVER_SHUTDOWN) {
-		server->num_child_task_running--;
-	}
+	server->sensor_reader_blocked = 1;
 
 	int module_num = recv_sensor_message->module_num;
 	int sensor_bit_flag = recv_sensor_message->sensor_bit_flag;

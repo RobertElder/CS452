@@ -210,6 +210,7 @@ typedef struct TrainServer {
 	int train_server_timer_tid;
 	int switch_master_tid;
 	int num_engines;
+	int sensor_reader_blocked;
 	
 	track_node track_a_nodes[TRACK_MAX];
 	track_node track_b_nodes[TRACK_MAX];
