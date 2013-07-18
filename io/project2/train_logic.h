@@ -8,6 +8,8 @@ void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine);
 
 void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine * engine);
 
+void TrainServer_ProcessEngineResyncPosition(TrainServer * server, TrainEngine * engine);
+
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine);
 
 void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngine * engine);

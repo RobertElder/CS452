@@ -47,11 +47,13 @@ static const int const STOPPING_DISTANCE[52][16] = {
 static const double FEEDBACK_CONTROL_SPEED_INCREMENT = 0.1;
 static const double FEEDBACK_CONTROL_SPEED_DECREMENT = -0.7;
 static const int STARTUP_TRAIN_SPEED = 14;
+static const int FINDING_POSITION_SPEED = 6;
 static const double MAX_PHYSICAL_SPEED = 750; // mm/s
 
 typedef enum TrainEngineState {
 	TRAIN_ENGINE_IDLE,
 	TRAIN_ENGINE_FINDING_POSITION,
+	TRAIN_ENGINE_RESYNC_POSITION,
 	TRAIN_ENGINE_FOUND_STARTING_POSITION,
 	TRAIN_ENGINE_WAIT_FOR_DESTINATION,
 	TRAIN_ENGINE_GOT_DESTINATION,
@@ -67,6 +69,7 @@ typedef enum TrainEngineState {
 static const char const TRAIN_ENGINE_STATE_NAMES[][20] = {
 	"Idle",
 	"Finding Position",
+	"Resync Position",
 	"Found Start Posn",
 	"Wait for Dest",
 	"Got Destination",

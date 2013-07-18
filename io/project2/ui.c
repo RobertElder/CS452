@@ -466,20 +466,21 @@ void UIServer_PrintSensors(UIServer * server) {
 		int sensor_num;
 		for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
 			int sensor_i = module_num * SENSORS_PER_MODULE + sensor_num;
+			int sensor_table_dirty = (sensor_bit_flag & 1 << sensor_num) ^ (sensor_bit_flag_cache & 1 << sensor_num);
 			
-			server->sensor_dirty[sensor_i] |= (sensor_bit_flag & 1 << sensor_num) ^ (sensor_bit_flag_cache & 1 << sensor_num);
-			
-			if (server->dirty || server->sensor_dirty[sensor_i]) {
-				// Print onto table
-				ANSI_Cursor(SENSOR_TABLE_ROW_OFFSET + 1 + sensor_num, SENSOR_TABLE_COL_OFFSET + module_num * 3);
+			if (server->dirty || server->sensor_dirty[sensor_i] || sensor_table_dirty) {
+				if (server->dirty || sensor_table_dirty) {
+					// Print onto table
+					ANSI_Cursor(SENSOR_TABLE_ROW_OFFSET + 1 + sensor_num, SENSOR_TABLE_COL_OFFSET + module_num * 3);
 
-				if (sensor_bit_flag & 1 << sensor_num) {
-					ANSI_Style(BOLD_STYLE);
-					PutString(COM2, "%d", sensor_num + 1);
-					ANSI_Style(NORMAL_STYLE);
-				} else {
-					ANSI_Style(NORMAL_STYLE);
-					PutString(COM2, "%d", sensor_num + 1);
+					if (sensor_bit_flag & 1 << sensor_num) {
+						ANSI_Style(BOLD_STYLE);
+						PutString(COM2, "%d", sensor_num + 1);
+						ANSI_Style(NORMAL_STYLE);
+					} else {
+						ANSI_Style(NORMAL_STYLE);
+						PutString(COM2, "%d", sensor_num + 1);
+					}
 				}
 				
 				// Print onto map
