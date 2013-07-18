@@ -172,7 +172,6 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 		
 		if (node->reserved && node->reserved != engine->train_num) {
 			//PrintMessage("!!! Train %d went into track %s reserved for train %d", engine->train_num, node->name, node->reserved);
-			node->reserved = 0;
 		} else if (!node->reserved) {
 			//PrintMessage("!!! Train %d went into track %s that was not reserved", engine->train_num, node->name);
 		}
