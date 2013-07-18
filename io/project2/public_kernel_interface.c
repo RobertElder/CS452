@@ -168,7 +168,7 @@ int DelaySeconds( float seconds ) {
 }
 
 float TimeSeconds() {
-	return Time() / 1000.0 * TICK_SIZE;
+	return (float)Time() / (float)1000.0 * TICK_SIZE;
 }
 
 int DelayUntilSeconds( float seconds ) {

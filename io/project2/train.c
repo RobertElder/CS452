@@ -1,5 +1,7 @@
 #include "train.h"
 #include "public_kernel_interface.h"
+#include "private_kernel_interface.h"
+#include "kernel_state.h"
 #include "robio.h"
 #include "memory.h"
 #include "priorities.h"
@@ -682,6 +684,7 @@ void QueueSwitchState(TrainServer * server, int switch_num, SwitchState new_stat
 }
 
 void TrainServer_QueueSwitchStates(TrainServer * server, TrainEngine * engine ){
+	(*((KernelState **) KERNEL_STACK_START))->last_switch_queuing = TimeSeconds();
 	int current_route_node_index = engine->route_node_index;
 	while(engine->route_node_info[current_route_node_index].node != engine->destination_node){
 		if(engine->route_node_info[current_route_node_index].node->type == NODE_BRANCH){
@@ -1002,6 +1005,8 @@ void TrainSwitchMaster_Start() {
 		Send(train_server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		
 		if (command_reply_message->message_type == MESSAGE_TYPE_ACK) {
+			float current_time = TimeSeconds();
+			float diff = current_time - (*((KernelState **) KERNEL_STACK_START))->last_switch_queuing;
 			direction_code = command_reply_message->c1;
 			switch_num = command_reply_message->c2;
 			SendTrainCommand(TRAIN_SWITCH, direction_code, switch_num, 0, 0);
