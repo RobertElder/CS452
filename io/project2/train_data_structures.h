@@ -44,7 +44,8 @@ static const int const STOPPING_DISTANCE[52][16] = {
 		{0, 50, 50, 50, 50, 100, 200, 400, 460, 520, 560, 600, 650, 700, 1000, 0}
 };
 
-static const double FEEDBACK_CONTROL_SPEED_INCREMENT = 0.75;
+static const double FEEDBACK_CONTROL_SPEED_INCREMENT = 0.1;
+static const double FEEDBACK_CONTROL_SPEED_DECREMENT = -0.7;
 static const int STARTUP_TRAIN_SPEED = 14;
 static const double MAX_PHYSICAL_SPEED = 750; // mm/s
 

@@ -192,6 +192,13 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 }
 
 void TrainServer_ProcessEngineNearDestination(TrainServer * server, TrainEngine * engine) {
+	int stopping_distance = STOPPING_DISTANCE[engine->train_num][engine->speed_setting];
+	
+	if (engine->distance_to_destination > stopping_distance * 2) {
+//		PrintMessage("Speeding back up because distance was great");
+		engine->state = TRAIN_ENGINE_RUNNING;
+	}
+
 	TrainServer_ProcessEngineRunning(server, engine);
 }
 
@@ -221,10 +228,10 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	
 	// Feedback control system
 	if (engine->state != TRAIN_ENGINE_NEAR_DESTINATION) {
-		if (engine->calculated_speed < TARGET_SPEED && engine->granular_speed_setting < 8) {
+		if (engine->calculated_speed < TARGET_SPEED && engine->granular_speed_setting < 11) {
 			engine->granular_speed_setting += FEEDBACK_CONTROL_SPEED_INCREMENT;
-		} else if (engine->calculated_speed > TARGET_SPEED && engine->granular_speed_setting > 11) {
-			engine->granular_speed_setting -= FEEDBACK_CONTROL_SPEED_INCREMENT;
+		} else if (engine->calculated_speed > TARGET_SPEED && engine->granular_speed_setting > 8) {
+			engine->granular_speed_setting += FEEDBACK_CONTROL_SPEED_DECREMENT;
 		}
 		
 		int new_speed_setting = (int) engine->granular_speed_setting;
