@@ -532,7 +532,7 @@ void UIServer_PrintSwitches(UIServer * server) {
 			int switch_state = reply_message->int1;
 			server->switch_dirty[switch_num] |= server->switch_states_cache[switch_num] != switch_state;
 			
-			if (switch_state && server->switch_dirty[switch_num]) {
+			if (server->switch_dirty[switch_num] || server->dirty) {
 				ANSI_Cursor(MAP_ROW_OFFSET + label_pos->row, MAP_COL_OFFSET + 1 + label_pos->col);
 				if (switch_state == SWITCH_CURVED) {
 					ANSI_Color(RED, server->switch_background_color[switch_num]);
@@ -695,34 +695,34 @@ void UIServer_PrintTrainMapPosition(UIServer * server) {
 	int i;
 	
 	for (i = 0; i < TRACK_MAX; i++) {
-		track_node node = track_nodes[i];
+		track_node * node = &track_nodes[i];
 		int new_color;
 		
-		if (node.type == NODE_SENSOR) {
-			new_color = server->sensor_background_color[node.num];
-		} else if (node.type == NODE_BRANCH || node.type == NODE_MERGE) {
-			new_color = server->switch_background_color[node.num];
+		if (node->type == NODE_SENSOR) {
+			new_color = server->sensor_background_color[node->num];
+		} else if (node->type == NODE_BRANCH || node->type == NODE_MERGE) {
+			new_color = server->switch_background_color[node->num];
 		}
 		
-		if (node.type == NODE_SENSOR && node.num == engine->destination_node->num) {
+		if (node == engine->destination_node || node->reverse == engine->destination_node) {
 			// Highlight destination
 			new_color = GREEN;
-		} else if (node.reserved) {
+		} else if (node->reserved || node->reverse->reserved) {
 			// Highlight reservation
 			new_color = BLACK;
 		} else {
 			new_color = server->background_color;
 		}
 		
-		if (node.type == NODE_SENSOR) {
-			if (new_color != server->sensor_background_color[node.num]) {
-				server->sensor_dirty[node.num] = 1;
-				server->sensor_background_color[node.num] = new_color;
+		if (node->type == NODE_SENSOR) {
+			if (new_color != server->sensor_background_color[node->num]) {
+				server->sensor_dirty[node->num] = 1;
+				server->sensor_background_color[node->num] = new_color;
 			}
-		} else if (node.type == NODE_BRANCH || node.type == NODE_MERGE) {
-			if (new_color != server->switch_background_color[node.num]) {
-				server->switch_dirty[node.num] = 1;
-				server->switch_background_color[node.num] = new_color;
+		} else if (node->type == NODE_BRANCH || node->type == NODE_MERGE) {
+			if (new_color != server->switch_background_color[node->num]) {
+				server->switch_dirty[node->num] = 1;
+				server->switch_background_color[node->num] = new_color;
 			}
 		}
 	}
