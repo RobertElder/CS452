@@ -293,8 +293,9 @@ track_node * TrainServer_GetEnginePosition(TrainServer * server, TrainEngine * e
 				// this only checks if the node is on the path
 				int i;
 				for (i = 0; i < engine->route_nodes_length; i++) {
-					engine->route_node_info[i].node = candidate_node;
-					return candidate_node;
+					if (engine->route_node_info[i].node == candidate_node) {
+						return candidate_node;
+					}
 				}
 			}
 		}

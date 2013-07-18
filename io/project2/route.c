@@ -36,6 +36,7 @@ void ReserveTrackNode(track_node * node, int train_num){
 	assertf((node->reverse->reserved == 0 || node->reverse->reserved == train_num),"Attempting to reserve node %s that is reserved to %d.", node->reverse->name, train_num);
 	node->reserved = train_num;
 	node->reverse->reserved = train_num;
+	//PrintMessage("Reserve %s %s by %d", node->name, node->reverse->name, train_num);
 }
 
 void ReleaseTrackNode(track_node * node, int train_num){
@@ -43,6 +44,7 @@ void ReleaseTrackNode(track_node * node, int train_num){
 	assertf((node->reverse->reserved == train_num || node->reverse->reserved == 0),"Attempting to release node %s that is reserved to %d instead of %d.", node->reverse->name,node->reverse->reserved, train_num);
 	node->reserved = 0;
 	node->reverse->reserved = 0;
+	//PrintMessage("Release %s %s by %d", node->name, node->reverse->name, train_num);
 }
 
 void ReleaseTrackNodes(TrainEngine * engine) {
