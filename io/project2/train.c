@@ -1005,8 +1005,8 @@ void TrainSwitchMaster_Start() {
 		Send(train_server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		
 		if (command_reply_message->message_type == MESSAGE_TYPE_ACK) {
-			float current_time = TimeSeconds();
-			float diff = current_time - (*((KernelState **) KERNEL_STACK_START))->last_switch_queuing;
+			//float current_time = TimeSeconds();
+			//float diff = current_time - (*((KernelState **) KERNEL_STACK_START))->last_switch_queuing;
 			direction_code = command_reply_message->c1;
 			switch_num = command_reply_message->c2;
 			SendTrainCommand(TRAIN_SWITCH, direction_code, switch_num, 0, 0);
