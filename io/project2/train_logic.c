@@ -288,6 +288,8 @@ void TrainServer_ProcessEngineWaitAndGoForever(TrainServer * server, TrainEngine
 	track_node * next_node = engine->current_node->edge[DIR_AHEAD].dest;
 	
 	if (next_node && next_node->type == NODE_EXIT) {
+		TrainServer_SetTrainSpeed(server, REVERSE_SPEED, engine->train_num);
+		TrainServer_SetTrainSpeed(server, FINDING_POSITION_SPEED, engine->train_num);
 		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
 	} else {
 		engine->state = TRAIN_ENGINE_RESYNC_POSITION;
