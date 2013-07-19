@@ -158,7 +158,6 @@ typedef struct RouteNodeInfo {
 } RouteNodeInfo;
 
 typedef struct TrainEngine {
-	int tid;
 	int train_num;
 	TrainEngineState state;
 	track_node * next_node;
@@ -213,6 +212,7 @@ typedef struct TrainServer {
 	int train_server_timer_tid;
 	int switch_master_tid;
 	int num_engines;
+	int train_engine_client_tid;
 	
 	track_node track_a_nodes[TRACK_MAX];
 	track_node track_b_nodes[TRACK_MAX];

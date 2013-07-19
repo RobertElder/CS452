@@ -190,8 +190,8 @@ void TrainServer_Initialize(TrainServer * server) {
 	Queue_Initialize((Queue*) &server->train_speed_queue, TRAIN_SPEED_QUEUE_SIZE);
 
 	//  The train engine relies on the server model being set up correctly first.
-	server->train_engines[0].tid = Create(TRAINENGINE_START_PRIORITY, TrainEngineClient_Start);
-	assert(server->train_engines[0].tid, "TrainServer failed to create TrainEngineClient_Start");
+	server->train_engine_client_tid = Create(TRAINENGINE_START_PRIORITY, TrainEngineClient_Start);
+	assert(server->train_engine_client_tid, "TrainServer failed to create TrainEngineClient_Start");
 }
 
 int IsNodeReachableViaDirectedGraph(TrainServer * server, track_node * start_node, track_node * dest_node, int levels) {
