@@ -29,6 +29,7 @@ struct KernelState {
 	void * redboot_sp_value;
 	void * redboot_lr_value;
 	int redboot_spsr_value;
+	float last_switch_queuing;
 };
 
 
