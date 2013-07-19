@@ -47,12 +47,15 @@ void UARTBootstrapTask_Initialize(UARTBootstrapTask * uart) {
 	uart->train_channel.channel = COM1;
 	uart->train_channel.speed = 2400;
 	Channel_SetSpeed( &uart->terminal_channel);
+	Channel_SetFifo( &uart->terminal_channel, ON);
 	Channel_SetSpeed( &uart->train_channel);
+	Channel_SetFifo( &uart->train_channel, OFF);
 }
 
 
 void Channel_SetFifo( Channel * channel, int state ) {
-	int *line, buf;
+	volatile int *line;
+	volatile int buf;
 	switch( channel->channel ) {
 	case COM1:
 		line = (int *)( UART1_BASE + UART_LCRH_OFFSET );
@@ -72,12 +75,15 @@ void Channel_SetFifo( Channel * channel, int state ) {
 	}
 
 	*line = buf;
-
-	assert((!(*line & FEN_MASK)),"The FIFO is enabled, and that is bad.\n");
+	
+	if (state == OFF) {
+		assert((!(*line & FEN_MASK)),"The FIFO is enabled, and that is bad.\n");
+	}
 }
 
 void Channel_SetSpeed( Channel * channel) {
-	int *mid, *low;
+	volatile int *mid;
+	volatile int *low;
 	switch( channel->channel ) {
 	case COM1:
 		mid = (int *)( UART1_BASE + UART_LCRM_OFFSET );
@@ -105,14 +111,14 @@ void Channel_SetSpeed( Channel * channel) {
 		return;
 	}
 	//  This will write to the high bytes and make the change apply.
-	Channel_SetFifo( channel, OFF);
+	//Channel_SetFifo( channel, OFF);
 }
 
 void KeyboardInputServer_Start() {
 	DebugRegisterFunction(&KeyboardInputServer_Start,__func__);
 	KeyboardInputServer server;
 	KeyboardInputServer_Initialize(&server);
-	int data;
+	volatile int data;
 
 	//  Clear any errors
 	*UART2RXSts = 0;
@@ -291,7 +297,7 @@ void TrainInputServer_Start() {
 	DebugRegisterFunction(&TrainInputServer_Start,__func__);
 	TrainInputServer server;
 	TrainInputServer_Initialize(&server);
-	char data;
+	volatile char data;
 	server.seconds_passed = 0;
 	/* 
 	 * Make the timeout for input larger than output so we know if
