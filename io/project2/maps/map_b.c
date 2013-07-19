@@ -5,7 +5,7 @@ void TrainMap_Initialize_B(TrainMap * map) {
 map->ascii = ""
 "----------X----O---------O----X-------O----X---------X--\n"
 "              /           \\            \\\n"
-"      ---X---O-------------O---X---     O----X-------X--\n"
+"      ---X---O---X-----X---O---X---     O----X-------X--\n"
 "     X                             \\     \\\n"
 "    O---X---X---O-X---X-O-----X-----O     O----X-----X--\n"
 "   /             X     X             \\     \\\n"
@@ -1031,6 +1031,22 @@ map->sensors[75].ascii_offset = 107;
 map->switches[7].row = 2;
 map->switches[7].col = 13;
 map->switches[7].ascii_offset = 111;
+/* Module=3 SensorI=11/10 SensorLabel=12/11 */
+map->sensors[59].row = 2;
+map->sensors[59].col = 17;
+map->sensors[59].ascii_offset = 115;
+/* Module=3 SensorI=11/10 SensorLabel=12/11 */
+map->sensors[58].row = 2;
+map->sensors[58].col = 17;
+map->sensors[58].ascii_offset = 115;
+/* Module=2 SensorI=14/15 SensorLabel=15/16 */
+map->sensors[46].row = 2;
+map->sensors[46].col = 23;
+map->sensors[46].ascii_offset = 121;
+/* Module=2 SensorI=14/15 SensorLabel=15/16 */
+map->sensors[47].row = 2;
+map->sensors[47].col = 23;
+map->sensors[47].ascii_offset = 121;
 map->switches[6].row = 2;
 map->switches[6].col = 27;
 map->switches[6].ascii_offset = 125;
