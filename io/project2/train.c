@@ -686,6 +686,10 @@ void QueueSwitchState(TrainServer * server, int switch_num, SwitchState new_stat
 void TrainServer_QueueSwitchStates(TrainServer * server, TrainEngine * engine ){
 	(*((KernelState **) KERNEL_STACK_START))->last_switch_queuing = TimeSeconds();
 	int current_route_node_index = engine->route_node_index;
+	
+	assert(engine->destination_node != 0, "TrainServer_QueueSwitchStates destination node not set");
+	assert(engine->route_nodes_length, "TrainServer_QueueSwitchStates route_nodes_length not positive");
+	
 	while(engine->route_node_info[current_route_node_index].node != engine->destination_node){
 		if(engine->route_node_info[current_route_node_index].node->type == NODE_BRANCH){
 			int switch_num = engine->route_node_info[current_route_node_index].node->num;
