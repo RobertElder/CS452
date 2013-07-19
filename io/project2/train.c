@@ -217,13 +217,13 @@ void TrainServer_Initialize(TrainServer * server) {
 	assert(server->train_engine_client_tid, "TrainServer failed to create TrainEngineClient_Start");
 }
 
-int IsNodeReachableViaDirectedGraph(TrainServer * server, track_node * start_node, track_node * dest_node, int levels) {
+int IsNodeReachableViaDirectedGraph(TrainServer * server, int train_num, track_node * start_node, track_node * dest_node, int levels) {
 	//  Don't go too deep
 	if (levels > 20){
 		return 0;
 	}
 
-	if (start_node->reserved){
+	if (start_node->reserved && start_node->reserved != train_num){
 		return 0;
 	}
 
@@ -233,9 +233,9 @@ int IsNodeReachableViaDirectedGraph(TrainServer * server, track_node * start_nod
 		//  Don't go through a broken switch this way or we might get stuck.
 		if(is_switch_blacklisted(server, start_node->num))
 			return 0;
-		return IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
+		return IsNodeReachableViaDirectedGraph(server, train_num, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
 	}else if(start_node->type == NODE_SENSOR){
-		return IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
+		return IsNodeReachableViaDirectedGraph(server, train_num, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
 	}else if (start_node->type == NODE_EXIT){
 		return 0;
 	}else if (start_node->type == NODE_ENTER){
@@ -244,10 +244,10 @@ int IsNodeReachableViaDirectedGraph(TrainServer * server, track_node * start_nod
 		//  Don't try to go through broken switches.
 		if(is_switch_blacklisted(server, start_node->num))
 			return 0;
-		int rtn1 = IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1);
+		int rtn1 = IsNodeReachableViaDirectedGraph(server, train_num, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1);
 		int rtn2 = 0;
 		if(!rtn1){
-			rtn2 = IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1);
+			rtn2 = IsNodeReachableViaDirectedGraph(server, train_num, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1);
 		}
 		/*
 		if(rtn1 || rtn2){
@@ -271,7 +271,7 @@ int PopulateRouteNodeInfo(TrainServer * server, RouteNodeInfo * info_array, trac
 		return 0;
 	}
 
-	if (start_node->reserved){
+	if (start_node->reserved && start_node->reserved != train_num){
 		return 0;
 	}
 
@@ -347,11 +347,11 @@ int PopulateRouteNodeInfo(TrainServer * server, RouteNodeInfo * info_array, trac
 }
 
 
-track_node * GetRandomSensorReachableViaDirectedGraph(TrainServer * server, track_node * start_node) {
+track_node * GetRandomSensorReachableViaDirectedGraph(TrainServer * server, int train_num, track_node * start_node) {
 	int i = 0;
 	while(1){
 		track_node * random_sensor = GetRandomSensor(server);
-		if(random_sensor != start_node && IsNodeReachableViaDirectedGraph(server, start_node, random_sensor, 0)){
+		if(random_sensor != start_node && IsNodeReachableViaDirectedGraph(server, train_num, start_node, random_sensor, 0)){
 			int module_num = random_sensor->name[0] - 65;
 			assert(module_num >= 0 && module_num <= 4, "Module num is being calculated incorrectly.");
 			//  Parse the number out of the second part of the string
@@ -723,7 +723,7 @@ int TrainServer_NumActivatedEngines(TrainServer * server) {
 	int num = 0;
 	int i;
 	for (i = 0; i < server->num_engines; i++) {
-		if (server->train_engines[i].train_num) {
+		if (server->train_engines[i].train_num && server->train_engines[i].current_node) {
 			num++;
 		}
 	}
@@ -943,6 +943,7 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->go_forever = 0;
 	engine->wait_until = 0;
 	engine->source_node = 0;
+	engine->previous_node = 0;
 }
 
 void TrainEngineClient_Start(){

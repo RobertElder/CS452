@@ -47,6 +47,12 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 	case TRAIN_ENGINE_CALIBRATING_SPEED:
 		TrainServer_ProcessEngineCalibratingSpeed(server, engine);
 		break;
+	case TRAIN_ENGINE_RESERVATION_COLLISION:
+		TrainServer_ProcessEngineReservationCollision(server, engine);
+		break;
+	case TRAIN_ENGINE_RESERVATION_MISSING:
+		TrainServer_ProcessEngineReservationMissing(server, engine);
+		break;
 	default:
 		assert(0, "Unknown Train Engine State");
 		break;
@@ -64,7 +70,7 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 	
 	if (node && engine->current_node != node) {
 		engine->state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
-		engine->current_node = node;
+		TrainEngine_SetNewNode(engine, node);
 		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
 	}
 }
@@ -76,18 +82,17 @@ void TrainServer_ProcessEngineResyncPosition(TrainServer * server, TrainEngine *
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine) {
 	//PrintMessage("Found starting position.");
 	
-	engine->state = TRAIN_ENGINE_WAIT_FOR_DESTINATION;
+	engine->state = TRAIN_ENGINE_WAIT_FOR_ALL_READY;
 }
 
 void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngine * engine) {
 	// TODO disambig whether the user should input the destination or random destination
-	engine->destination_node = GetRandomSensorReachableViaDirectedGraph(server, engine->current_node);
+	engine->destination_node = GetRandomSensorReachableViaDirectedGraph(server, engine->train_num, engine->current_node);
 		
 	if (!engine->destination_node) {
 		// Reverse and try again
 		//PrintMessage("No destination in this direction! Reversing..");
 		TrainServer_SetTrainSpeed(server, REVERSE_SPEED, engine->train_num);
-		DelaySeconds(1);
 		TrainServer_SetTrainSpeed(server, FINDING_POSITION_SPEED, engine->train_num);
 		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
 		return;
@@ -111,16 +116,16 @@ void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine *
 	for(i = 0; i < engine->route_nodes_length; i++){
 		//PrintMessage("Route %d) %s.",i, engine->route_node_info[i].node->name);
 	}
-
-	engine->state = TRAIN_ENGINE_WAIT_FOR_ALL_READY;
+	
+	TrainServer_QueueSwitchStates(server, engine);
+	engine->granular_speed_setting = STARTUP_TRAIN_SPEED;
+	TrainServer_SetTrainSpeed(server, STARTUP_TRAIN_SPEED | LIGHTS_MASK, engine->train_num);
+	engine->state = TRAIN_ENGINE_RUNNING;
 }
 
 void TrainServer_ProcessEngineWaitForAllReady(TrainServer * server, TrainEngine * engine) {
 	if (TrainServer_NumActivatedEngines(server) == server->num_engines) {
-		TrainServer_QueueSwitchStates(server, engine);
-		engine->granular_speed_setting = STARTUP_TRAIN_SPEED;
-		TrainServer_SetTrainSpeed(server, STARTUP_TRAIN_SPEED | LIGHTS_MASK, engine->train_num);
-		engine->state = TRAIN_ENGINE_RUNNING;
+		engine->state = TRAIN_ENGINE_WAIT_FOR_DESTINATION;
 	}
 }
 
@@ -170,17 +175,30 @@ int DistanceToDestination(TrainEngine * engine) {
 }
 
 void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine) {
-	track_node * node = TrainServer_GetEnginePosition(server, engine);
+	track_node * new_node = TrainServer_GetEnginePosition(server, engine);
 	
-	if (node && node != engine->current_node) {
-		engine->current_node = node;
-		TrainServer_ProcessSensorData(server, engine);
-		
-		if (node->reserved && node->reserved != engine->train_num) {
-			//PrintMessage("!!! Train %d went into track %s reserved for train %d", engine->train_num, node->name, node->reserved);
-		} else if (!node->reserved) {
-			//PrintMessage("!!! Train %d went into track %s that was not reserved", engine->train_num, node->name);
+	if (new_node && new_node != engine->current_node) {
+		if (new_node->reserved && new_node->reserved != engine->train_num) {
+			PrintMessage("!!! Train %d went into track %s reserved for train %d", engine->train_num, new_node->name, new_node->reserved);
+			
+			TrainServer_SetTrainSpeed(server, 0, engine->train_num);
+			ReleaseTrackNodes(engine);
+			TrainEngine_SetNewNode(engine, engine->current_node);
+			engine->next_node = new_node;
+			engine->state = TRAIN_ENGINE_RESERVATION_COLLISION;
+			return;
+		} else if (!new_node->reserved) {
+			PrintMessage("!!! Train %d went into track %s that was not reserved", engine->train_num, new_node->name);
+			
+			TrainServer_SetTrainSpeed(server, 0, engine->train_num);
+			ReleaseTrackNodes(engine);
+			TrainEngine_SetNewNode(engine, engine->current_node);
+			engine->state = TRAIN_ENGINE_RESERVATION_MISSING;
+			return;
 		}
+		
+		TrainEngine_SetNewNode(engine, new_node);
+		TrainServer_ProcessSensorData(server, engine);
 	}
 	
 	double time = TimeSeconds() - engine->actual_time_at_last_sensor;
@@ -201,7 +219,7 @@ void TrainServer_ProcessEngineNearDestination(TrainServer * server, TrainEngine 
 	int stopping_distance = STOPPING_DISTANCE[engine->train_num][engine->speed_setting];
 	
 	if (engine->distance_to_destination > stopping_distance * 2) {
-//		PrintMessage("Speeding back up because distance was great");
+		//PrintMessage("Speeding back up because distance was great");
 		engine->state = TRAIN_ENGINE_RUNNING;
 	}
 
@@ -222,13 +240,13 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	
 	engine->actual_time_at_last_sensor = time;
 	engine->expected_time_at_last_sensor = engine->expected_time_at_next_sensor;
-	engine->next_node = 0;
 	
 	if (engine->current_node == engine->destination_node) {
 		engine->state = TRAIN_ENGINE_AT_DESTINATION;
 		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
 		//PrintMessage("At destination %s.", engine->current_node->name);
 		ReleaseTrackNodes(engine);
+		ReserveTrackNode(engine->current_node, engine->train_num);
 		return;
 	}
 	
@@ -300,6 +318,20 @@ void TrainServer_ProcessEngineReverseAndTryAgain(TrainServer * server, TrainEngi
 	TrainServer_ProcessEngineFindingPosition(server, engine);
 }
 
+void TrainServer_ProcessEngineReservationCollision(TrainServer * server, TrainEngine * engine) {
+	if (engine->next_node && !engine->next_node->reserved) {
+		engine->state = TRAIN_ENGINE_RUNNING;
+		TrainEngine_SetNewNode(engine, engine->next_node);
+		engine->next_node = 0;
+	}
+}
+
+void TrainServer_ProcessEngineReservationMissing(TrainServer * server, TrainEngine * engine) {
+	TrainServer_SetTrainSpeed(server, REVERSE_SPEED, engine->train_num);
+	TrainServer_SetTrainSpeed(server, FINDING_POSITION_SPEED, engine->train_num);
+	engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
+}
+
 track_node * TrainServer_GetEnginePosition(TrainServer * server, TrainEngine * engine) {
 	int sensor_module;
 	int sensor_num;
@@ -319,9 +351,9 @@ track_node * TrainServer_GetEnginePosition(TrainServer * server, TrainEngine * e
 				}
 				
 				// TODO: Remove this case below once the engine is actually reserving tracks as it moves along
-				if ((engine->state == TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN || engine->state == TRAIN_ENGINE_RESYNC_POSITION) && !candidate_node->reserved) {
-					return candidate_node;
-				}
+//				if ((engine->state == TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN || engine->state == TRAIN_ENGINE_RESYNC_POSITION) && !candidate_node->reserved) {
+//					return candidate_node;
+//				}
 				
 				// TODO: Remove this case below as trains should be on their reserved tracks anyway
 				// this only checks if the node is on the path
@@ -405,4 +437,15 @@ void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
 		engine->state = TRAIN_ENGINE_NEAR_DESTINATION;
 		//PrintMessage("Slowing down");
 	}
+}
+
+void TrainEngine_SetNewNode(TrainEngine * engine, track_node * new_node) {
+	if (engine->previous_node) {
+		ReleaseTrackNode(engine->previous_node, engine->train_num);
+	}
+	
+	engine->previous_node = engine->current_node;
+	engine->current_node = new_node;
+	
+	ReserveTrackNode(engine->current_node, engine->train_num);
 }
