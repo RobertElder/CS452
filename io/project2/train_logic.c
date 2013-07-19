@@ -284,7 +284,14 @@ void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * 
 
 void TrainServer_ProcessEngineWaitAndGoForever(TrainServer * server, TrainEngine * engine) {
 	TrainServer_SetTrainSpeed(server, FINDING_POSITION_SPEED, engine->train_num);
-	engine->state = TRAIN_ENGINE_RESYNC_POSITION;
+	
+	track_node * next_node = engine->current_node->edge[DIR_AHEAD].dest;
+	
+	if (next_node && next_node->type == NODE_EXIT) {
+		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
+	} else {
+		engine->state = TRAIN_ENGINE_RESYNC_POSITION;
+	}
 }
 
 void TrainServer_ProcessEngineReverseAndTryAgain(TrainServer * server, TrainEngine * engine) {
