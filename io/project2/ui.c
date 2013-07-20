@@ -272,7 +272,7 @@ void UIServer_ResetCommandBuffer(UIServer * server) {
 void UIServer_PrintCommandHelp(UIServer * server) {
 	ANSI_Color(YELLOW, server->background_color);
 	ANSI_Style(BOLD_STYLE);
-	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, go, dest, num, paint, rt");
+	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, go, gf, dest, num, paint, rt, CTRL+Z, CTRL+C");
 	ANSI_Style(NORMAL_STYLE);
 	ANSI_Color(server->foreground_color, server->background_color);
 }
