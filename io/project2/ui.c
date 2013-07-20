@@ -92,6 +92,7 @@ void UIServer_Initialize(UIServer * server) {
 	server->background_color = BLUE;
 	server->foreground_color = WHITE;
 	server->num_engines = 1;
+	server->last_char = 0;
 	
 	int i;
 	
@@ -186,9 +187,14 @@ void UIServer_PrintCommandLine(UIServer * server) {
 }
 
 void UIServer_ProcessKeystroke(UIServer * server, char c) {
+	int entered = 0;
 	ANSI_Cursor(2, UI_COMMAND_START_POS + server->command_buffer_index);
 	
-	if (c == '\r') {
+	entered = (c == '\r') || (c == '\n' && server->last_char != '\r');
+	
+	if (c == '\x00') {
+		// Drop it
+	} else if (entered) {
 		UIServer_RunCommand(server);
 		UIServer_ResetCommandBuffer(server);
 	} else if (c == '\b') {
@@ -200,7 +206,7 @@ void UIServer_ProcessKeystroke(UIServer * server, char c) {
 			ANSI_CursorBackward(1);
 			PutString(COM2, " ");
 		}
-	} else if (server->command_buffer_index < UI_SERVER_COMMAND_BUFFER_SIZE - 1) {
+	} else if (server->command_buffer_index < UI_SERVER_COMMAND_BUFFER_SIZE - 1 && c != '\r' && c != '\n') {
 		server->command_buffer[server->command_buffer_index] = c;
 		
 		PutString(COM2, "%c", server->command_buffer[server->command_buffer_index]);
@@ -208,6 +214,8 @@ void UIServer_ProcessKeystroke(UIServer * server, char c) {
 		server->command_buffer_index++;
 		server->command_buffer[server->command_buffer_index] = 0;
 	}
+	
+	server->last_char = c;
 }
 
 void UIServer_RunCommand(UIServer * server) {
@@ -806,8 +814,6 @@ void UIKeyboardInput_Start() {
 	
 	while (1) {
 		data = Getc(COM2);
-
-		assert(data != 0, "UIKeyboardInput: got 0x00 from keyboard?");
 
 		char_message->message_type = MESSAGE_TYPE_DATA;
 		char_message->chars[0] = data;
