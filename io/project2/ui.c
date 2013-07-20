@@ -572,10 +572,10 @@ void UIServer_PrintSwitches(UIServer * server) {
 			if (server->switch_dirty[switch_num] || server->dirty) {
 				ANSI_Cursor(MAP_ROW_OFFSET + label_pos->row, MAP_COL_OFFSET + 1 + label_pos->col);
 				if (switch_state == SWITCH_CURVED) {
-					ANSI_Color(RED, server->switch_background_color[switch_num]);
+					ANSI_Color(MAGENTA, server->switch_background_color[switch_num]);
 					PutString(COM2, "C");
 				} else if (switch_state == SWITCH_STRAIGHT){
-					ANSI_Color(GREEN, server->switch_background_color[switch_num]);
+					ANSI_Color(CYAN, server->switch_background_color[switch_num]);
 					PutString(COM2, "S");
 				} else if (switch_state == SWITCH_UNKNOWN){
 					ANSI_Color(server->foreground_color, server->switch_background_color[switch_num]);
@@ -746,7 +746,11 @@ void UIServer_PrintTrainMapPosition(UIServer * server) {
 			new_color = GREEN;
 		} else if (node->reserved || node->reverse->reserved) {
 			// Highlight reservation
-			new_color = BLACK;
+			if (node->reserved != engine->train_num) {
+				new_color = RED;
+			} else {
+				new_color = BLACK;
+			}
 		} else {
 			new_color = server->background_color;
 		}

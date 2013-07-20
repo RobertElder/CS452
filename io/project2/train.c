@@ -723,7 +723,7 @@ int TrainServer_NumActivatedEngines(TrainServer * server) {
 	int num = 0;
 	int i;
 	for (i = 0; i < server->num_engines; i++) {
-		if (server->train_engines[i].train_num) {
+		if (server->train_engines[i].train_num && server->train_engines[i].current_node) {
 			num++;
 		}
 	}
