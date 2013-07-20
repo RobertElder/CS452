@@ -1,12 +1,15 @@
 /* THIS FILE IS GENERATED CODE -- DO NOT EDIT */
 
 #include "track_data.h"
-
+#ifdef TESTS
+#include <string.h>
+#else
 static void *memset(void *s, int c, unsigned int n) {
   unsigned char *p = s;
   while(n --> 0) { *p++ = (unsigned char)c; }
   return s;
 }
+#endif
 
 void init_tracka(track_node *track) {
   memset(track, 0, TRACK_MAX*sizeof(track_node));

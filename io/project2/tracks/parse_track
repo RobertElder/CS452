@@ -312,12 +312,15 @@ fh = open(options.c, 'w')
 fh.write('''/* THIS FILE IS GENERATED CODE -- DO NOT EDIT */
 
 #include "%s"
-
+#ifdef TESTS
+#include <string.h>
+#else
 static void *memset(void *s, int c, unsigned int n) {
   unsigned char *p = s;
   while(n --> 0) { *p++ = (unsigned char)c; }
   return s;
 }
+#endif
 ''' % options.h)
 for fun in tracks:
   fh.write('''
