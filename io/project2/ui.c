@@ -8,6 +8,7 @@
 #include "random.h"
 #include "tasks.h"
 #include "train.h"
+#include "rps.h"
 
 void UIServer_Start() {
 	DebugRegisterFunction(&UIServer_Start,__func__);
@@ -256,6 +257,8 @@ void UIServer_RunCommand(UIServer * server) {
 		UIServer_HandleResetTrack(server);
 	} else if (server->command_buffer[0] == 'p' && server->command_buffer[1] == 'a') {
 		server->dirty = 1;
+	} else if (server->command_buffer[0] == 'r' && server->command_buffer[1] == 'p') {
+		Create(RPSTESTSTART_PRIORITY, RPSLightTestStart);
 	} else {
 		UIServer_PrintCommandHelp(server);
 	}
@@ -272,7 +275,7 @@ void UIServer_ResetCommandBuffer(UIServer * server) {
 void UIServer_PrintCommandHelp(UIServer * server) {
 	ANSI_Color(YELLOW, server->background_color);
 	ANSI_Style(BOLD_STYLE);
-	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, go, gf, dest, num, paint, rt, CTRL+Z, CTRL+C");
+	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, go, gf, dest, num, paint, rt, rps, CTRL+Z, CTRL+C");
 	ANSI_Style(NORMAL_STYLE);
 	ANSI_Color(server->foreground_color, server->background_color);
 }
