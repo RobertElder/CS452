@@ -328,6 +328,7 @@ void TrainInputServer_Start() {
 			//  Reset the timeout
 			server.seconds_passed = 0;
 			// From notifier
+#ifdef TRAINS
 			assert((*UART1Flag & TXBUSY_MASK) == 0, "TrainOutputServer: TXBusy!");
 			assert((!(*UART1Flag & RXFE_MASK)), "TrainOutputServer: RXFE on read!");
 			data = *UART1DATA & DATA_MASK;
@@ -335,18 +336,28 @@ void TrainInputServer_Start() {
 			UARTErrorCheck(*UART1RXSts, "trains");
 			
 			CharBuffer_PutChar(&server.char_buffer, data);
+#endif
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			break;
 		case MESSAGE_TYPE_HELLO:
 			//  If there are things blocked on input, count seconds.
+#ifdef TRAINS
 			if(Queue_CurrentCount((Queue*)&server.task_queue) > 0)
 				server.seconds_passed++;
 			assert(server.seconds_passed < server.seconds_timeout, "Timeout receiving data from train.");
+#endif
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			break;
 		case MESSAGE_TYPE_DATA:
 			// From public_kernel_interface Getc()
+#ifdef TRAINS
 			Queue_PushEnd((Queue*) &server.task_queue, (QUEUE_ITEM_TYPE) server.source_tid);
+#else
+			DelaySeconds(0.1);
+			server.reply_message->message_type = MESSAGE_TYPE_ACK;
+			server.reply_message->chars[0] = 0;
+			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
+#endif
 			break;
 		default:
 			assert(0, "TrainInputServer unknown event type");
@@ -435,16 +446,22 @@ void TrainOutputServer_Start() {
 		case MESSAGE_TYPE_DATA:
 			// from the public_kernel_interface Putc()
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
+#ifdef TRAINS
 			for (i = 0; i < server.char_message->count; i++) {
 				CharBuffer_PutChar(&server.char_buffer, server.char_message->chars[i]);
 			}
 			TrainOutputServer_SendData(&server);
+#else
+			(void) i;
+#endif
 			break;
 		case MESSAGE_TYPE_HELLO:
 			//  If there are characters to send, increment count
+#ifdef TRAINS
 			if (!CharBuffer_IsEmpty(&server.char_buffer))
 				server.seconds_passed++;
 			assert(server.seconds_passed < server.seconds_timeout, "Timeout sending data to train.");
+#endif
 			Reply(server.source_tid, server.reply_buffer, MESSAGE_SIZE);
 			break;
 		default:
