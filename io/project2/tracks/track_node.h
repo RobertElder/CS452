@@ -8,6 +8,8 @@ typedef enum {
   NODE_MERGE,
   NODE_ENTER,
   NODE_EXIT,
+  NODE_END,
+  NODE_SWITCH,
 } node_type;
 
 #define DIR_AHEAD 0
