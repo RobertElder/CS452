@@ -65,6 +65,7 @@ typedef enum TrainEngineState {
 	TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN,
 	TRAIN_ENGINE_CALIBRATING_SPEED,
 	TRAIN_ENGINE_WAIT_FOR_RESERVATION,
+	TRAIN_ENGINE_WRONG_LOCATION,
 } TrainEngineState;
 
 static const char const TRAIN_ENGINE_STATE_NAMES[][20] = {
@@ -82,6 +83,7 @@ static const char const TRAIN_ENGINE_STATE_NAMES[][20] = {
 	"Reverse & Retry",
 	"Calibrate Speed",
 	"Wait 4 Reservtn",
+	"Wrong Location",
 };
 
 typedef enum TrainCommand {

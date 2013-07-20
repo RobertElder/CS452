@@ -50,6 +50,9 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 	case TRAIN_ENGINE_WAIT_FOR_RESERVATION:
 		TrainServer_ProcessEngineWaitForDestination(server, engine);
 		break;
+	case TRAIN_ENGINE_WRONG_LOCATION:
+		TrainServer_ProcessEngineWrongLocation(server, engine);
+		break;
 	default:
 		assert(0, "Unknown Train Engine State");
 		break;
@@ -66,6 +69,10 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 	track_node * node = TrainServer_GetEnginePosition(server, engine);
 	
 	if (node && engine->current_node != node) {
+		if (engine->current_node) {
+			ReleaseTrackNode(node, engine->train_num);
+		}
+
 		engine->state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
 		engine->current_node = node;
 		ReserveTrackNode(node, engine->train_num);
@@ -184,10 +191,18 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 		engine->current_node = node;
 		TrainServer_ProcessSensorData(server, engine);
 		
+		if (engine->state == TRAIN_ENGINE_AT_DESTINATION) {
+			return;
+		}
+		
 		if (node->reserved && node->reserved != engine->train_num) {
 			PrintMessage("!!! Train %d went into track %s reserved for train %d", engine->train_num, node->name, node->reserved);
+			TrainServer_SetTrainSpeed(server, 0, engine->train_num);
+			engine->state = TRAIN_ENGINE_WRONG_LOCATION;
 		} else if (!node->reserved) {
 			PrintMessage("!!! Train %d went into track %s that was not reserved", engine->train_num, node->name);
+			TrainServer_SetTrainSpeed(server, 0, engine->train_num);
+			engine->state = TRAIN_ENGINE_WRONG_LOCATION;
 		}
 	}
 	
@@ -314,6 +329,10 @@ void TrainServer_ProcessEngineWaitForReservation(TrainServer * server, TrainEngi
 	}
 }
 
+void TrainServer_ProcessEngineWrongLocation(TrainServer * server, TrainEngine * engine) {
+
+}
+
 track_node * TrainServer_GetEnginePosition(TrainServer * server, TrainEngine * engine) {
 	int sensor_module;
 	int sensor_num;
@@ -339,12 +358,12 @@ track_node * TrainServer_GetEnginePosition(TrainServer * server, TrainEngine * e
 				
 				// TODO: Remove this case below as trains should be on their reserved tracks anyway
 				// this only checks if the node is on the path
-				int i;
-				for (i = 0; i < engine->route_nodes_length; i++) {
-					if (engine->route_node_info[i].node == candidate_node) {
-						return candidate_node;
-					}
-				}
+//				int i;
+//				for (i = 0; i < engine->route_nodes_length; i++) {
+//					if (engine->route_node_info[i].node == candidate_node) {
+//						return candidate_node;
+//					}
+//				}
 			}
 		}
 	}
