@@ -109,6 +109,10 @@ void TrainServer_Start() {
 			TrainServer_HandleSetNumEngines(&server);
 			TrainServer_ProcessEngines(&server);
 			break;
+		case MESSAGE_TYPE_RESET_TRACK:
+			TrainServer_HandleResetTrack(&server);
+			TrainServer_ProcessEngines(&server);
+			break;
 		default:
 			assert(0, "TrainServer: unknown message type");
 			break;
@@ -660,6 +664,27 @@ void TrainServer_HandleSetNumEngines(TrainServer * server) {
 	assert(num_engines <= MAX_NUM_ENGINES, "TrainServer_HandleSetNumEngines max engines exceeded");
 	
 	server->num_engines = num_engines;
+	
+	reply_message->message_type = MESSAGE_TYPE_ACK;
+	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
+}
+
+void TrainServer_HandleResetTrack(TrainServer * server) {
+	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	int i;
+	
+	for (i = 0; i < MAX_NUM_ENGINES; i++) {
+		// Stop the trains before reset
+		if (server->train_engines[i].train_num) {
+			TrainServer_SetTrainSpeed(server, 0, server->train_engines[i].train_num);
+		}
+		
+		TrainEngine_Initialize(&server->train_engines[i], 0);
+	}
+	
+	// Release all reservations
+	init_tracka(server->track_a_nodes);
+	init_trackb(server->track_b_nodes);
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);

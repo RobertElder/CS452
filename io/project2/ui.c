@@ -252,6 +252,8 @@ void UIServer_RunCommand(UIServer * server) {
 		UIServer_HandleSetDestinationCommand(server);
 	} else if (server->command_buffer[0] == 'n' && server->command_buffer[1] == 'u') {
 		UIServer_HandleSetNumEngines(server);
+	} else if (server->command_buffer[0] == 'r' && server->command_buffer[1] == 't') {
+		UIServer_HandleResetTrack(server);
 	} else if (server->command_buffer[0] == 'p' && server->command_buffer[1] == 'a') {
 		server->dirty = 1;
 	} else {
@@ -270,7 +272,7 @@ void UIServer_ResetCommandBuffer(UIServer * server) {
 void UIServer_PrintCommandHelp(UIServer * server) {
 	ANSI_Color(YELLOW, server->background_color);
 	ANSI_Style(BOLD_STYLE);
-	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, go, dest, num, paint");
+	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, go, dest, num, paint, rt");
 	ANSI_Style(NORMAL_STYLE);
 	ANSI_Color(server->foreground_color, server->background_color);
 }
@@ -448,6 +450,19 @@ void UIServer_HandleSetNumEngines(UIServer * server) {
 	server->num_engines = num_engines;
 	
 	PutString(COM2, "Number of engines set to %d", server->num_engines);
+}
+
+void UIServer_HandleResetTrack(UIServer * server) {
+	GenericMessage  * send_message = (GenericMessage *) server->send_buffer;
+	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	
+	send_message->message_type = MESSAGE_TYPE_RESET_TRACK;
+	
+	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+	
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_HandleResetTrack failed to get ack message");
+	
+	PutString(COM2, "Track was reset.");
 }
 
 void UIServer_PrintSensors(UIServer * server) {

@@ -94,6 +94,8 @@ void UIServer_HandleSetDestinationCommand(UIServer * server);
 
 void UIServer_HandleSetNumEngines(UIServer * server);
 
+void UIServer_HandleResetTrack(UIServer * server);
+
 void UIServer_PrintSensors(UIServer * server);
 
 void UIServer_PrintMap(UIServer * server);
