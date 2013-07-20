@@ -350,5 +350,6 @@ void %s(track_node *track) {
         fh.write("  track[%d].edge[DIR_%s].dist = %s;\n" % \
           (idx, dir.upper(), dist))
         fh.write("  track[%d].reserved = 0;\n" % idx)
+        fh.write("  track[%d].undirected_node = 0;\n" % idx)
   fh.write("}\n")
 fh.close()
