@@ -47,6 +47,9 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 	case TRAIN_ENGINE_CALIBRATING_SPEED:
 		TrainServer_ProcessEngineCalibratingSpeed(server, engine);
 		break;
+	case TRAIN_ENGINE_WAIT_FOR_RESERVATION:
+		TrainServer_ProcessEngineWaitForDestination(server, engine);
+		break;
 	default:
 		assert(0, "Unknown Train Engine State");
 		break;
@@ -65,29 +68,34 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 	if (node && engine->current_node != node) {
 		engine->state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
 		engine->current_node = node;
+		ReserveTrackNode(node, engine->train_num);
 		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
 	}
 }
 
 void TrainServer_ProcessEngineResyncPosition(TrainServer * server, TrainEngine * engine) {
-	TrainServer_ProcessEngineFindingPosition(server, engine);
+	if (IsNextNodeAvailable(engine)) {
+		TrainServer_ProcessEngineFindingPosition(server, engine);
+	} else {
+		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
+		engine->state = TRAIN_ENGINE_WAIT_FOR_RESERVATION;
+	}
 }
 
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine) {
 	//PrintMessage("Found starting position.");
 	
-	engine->state = TRAIN_ENGINE_WAIT_FOR_DESTINATION;
+	engine->state = TRAIN_ENGINE_WAIT_FOR_ALL_READY;
 }
 
 void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngine * engine) {
 	// TODO disambig whether the user should input the destination or random destination
-	engine->destination_node = GetRandomSensorReachableViaDirectedGraph(server, engine->current_node);
+	engine->destination_node = GetRandomSensorReachableViaDirectedGraph(server, engine->current_node, engine->train_num);
 		
 	if (!engine->destination_node) {
 		// Reverse and try again
 		//PrintMessage("No destination in this direction! Reversing..");
 		TrainServer_SetTrainSpeed(server, REVERSE_SPEED, engine->train_num);
-		DelaySeconds(1);
 		TrainServer_SetTrainSpeed(server, FINDING_POSITION_SPEED, engine->train_num);
 		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
 		return;
@@ -106,21 +114,21 @@ void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine *
 	engine->route_node_index = 0;
 	PopulateRouteNodeInfo(server, engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length), engine->train_num);
 	ReserveTrackNodes(engine);
-	
+	TrainServer_QueueSwitchStates(server, engine);
+
 	int i = 0;
 	for(i = 0; i < engine->route_nodes_length; i++){
 		//PrintMessage("Route %d) %s.",i, engine->route_node_info[i].node->name);
 	}
 
-	engine->state = TRAIN_ENGINE_WAIT_FOR_ALL_READY;
+	engine->granular_speed_setting = STARTUP_TRAIN_SPEED;
+	TrainServer_SetTrainSpeed(server, STARTUP_TRAIN_SPEED | LIGHTS_MASK, engine->train_num);
+	engine->state = TRAIN_ENGINE_RUNNING;
 }
 
 void TrainServer_ProcessEngineWaitForAllReady(TrainServer * server, TrainEngine * engine) {
 	if (TrainServer_NumActivatedEngines(server) == server->num_engines) {
-		TrainServer_QueueSwitchStates(server, engine);
-		engine->granular_speed_setting = STARTUP_TRAIN_SPEED;
-		TrainServer_SetTrainSpeed(server, STARTUP_TRAIN_SPEED | LIGHTS_MASK, engine->train_num);
-		engine->state = TRAIN_ENGINE_RUNNING;
+		engine->state = TRAIN_ENGINE_WAIT_FOR_DESTINATION;
 	}
 }
 
@@ -177,9 +185,9 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 		TrainServer_ProcessSensorData(server, engine);
 		
 		if (node->reserved && node->reserved != engine->train_num) {
-			//PrintMessage("!!! Train %d went into track %s reserved for train %d", engine->train_num, node->name, node->reserved);
+			PrintMessage("!!! Train %d went into track %s reserved for train %d", engine->train_num, node->name, node->reserved);
 		} else if (!node->reserved) {
-			//PrintMessage("!!! Train %d went into track %s that was not reserved", engine->train_num, node->name);
+			PrintMessage("!!! Train %d went into track %s that was not reserved", engine->train_num, node->name);
 		}
 	}
 	
@@ -283,8 +291,6 @@ void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * 
 }
 
 void TrainServer_ProcessEngineWaitAndGoForever(TrainServer * server, TrainEngine * engine) {
-	TrainServer_SetTrainSpeed(server, FINDING_POSITION_SPEED, engine->train_num);
-	
 	track_node * next_node = engine->current_node->edge[DIR_AHEAD].dest;
 	
 	if (next_node && next_node->type == NODE_EXIT) {
@@ -292,12 +298,20 @@ void TrainServer_ProcessEngineWaitAndGoForever(TrainServer * server, TrainEngine
 		TrainServer_SetTrainSpeed(server, FINDING_POSITION_SPEED, engine->train_num);
 		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
 	} else {
+		TrainServer_SetTrainSpeed(server, FINDING_POSITION_SPEED, engine->train_num);
 		engine->state = TRAIN_ENGINE_RESYNC_POSITION;
 	}
 }
 
 void TrainServer_ProcessEngineReverseAndTryAgain(TrainServer * server, TrainEngine * engine) {
 	TrainServer_ProcessEngineFindingPosition(server, engine);
+}
+
+void TrainServer_ProcessEngineWaitForReservation(TrainServer * server, TrainEngine * engine) {
+	if (IsNextNodeAvailable(engine)) {
+		TrainServer_SetTrainSpeed(server, FINDING_POSITION_SPEED, engine->train_num);
+		engine->state = TRAIN_ENGINE_RESYNC_POSITION;
+	}
 }
 
 track_node * TrainServer_GetEnginePosition(TrainServer * server, TrainEngine * engine) {
@@ -404,5 +418,27 @@ void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
 		TrainServer_SetTrainSpeed(server, slow_speed, engine->train_num);
 		engine->state = TRAIN_ENGINE_NEAR_DESTINATION;
 		//PrintMessage("Slowing down");
+	}
+}
+
+int IsNextNodeAvailable(TrainEngine * engine) {
+	if (engine->current_node) {
+		track_node * next_node1 = engine->current_node->edge[DIR_STRAIGHT].dest;
+		track_node * next_node2 = engine->current_node->edge[DIR_CURVED].dest;
+		
+		int available1 = 1;
+		int available2 = 1;
+		
+		if (next_node1) {
+			available1 = (!next_node1->reserved || next_node1->reserved == engine->train_num);
+		}
+		
+		if (next_node2) {
+			available2 = (!next_node2->reserved || next_node2->reserved == engine->train_num);
+		}
+		
+		return (available1 && available2);
+	} else {
+		return 0;
 	}
 }

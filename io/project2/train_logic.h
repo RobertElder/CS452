@@ -32,6 +32,8 @@ void TrainServer_ProcessEngineWaitAndGoForever(TrainServer * server, TrainEngine
 
 void TrainServer_ProcessEngineReverseAndTryAgain(TrainServer * server, TrainEngine * engine);
 
+void TrainServer_ProcessEngineWaitForReservation(TrainServer * server, TrainEngine * engine);
+
 track_node * TrainServer_GetEnginePosition(TrainServer * server, TrainEngine * engine);
 
 void TrainServer_SetTrainSpeed(TrainServer * server, int speed, int train_num);
@@ -43,5 +45,7 @@ int DistanceToNextSensor(TrainEngine * engine);
 int DistanceToDestination(TrainEngine * engine);
 
 track_node * GetNextSensor(TrainEngine * engine);
+
+int IsNextNodeAvailable(TrainEngine * engine);
 
 #endif
