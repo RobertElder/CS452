@@ -6,6 +6,17 @@
 #include <time.h>
 #include <stdlib.h>
 
+int get_edge_index(undirected_node * src, undirected_node * target){
+	int i;
+	int edge_src_index = -1;
+	for(i = 0; i < src->adjacent_nodes.num_adjacent_nodes; i++){
+		if(src->adjacent_nodes.edge[i].next_node == target){
+			edge_src_index = i;
+		}
+	}
+	return edge_src_index;
+}
+
 void set_references(track_node * track_nodes, undirected_node * undirected_nodes, int * num_undirected_nodes){
 	/* This function will set all the references of undirected nodes to directed ones and vice versa */
   	memset(undirected_nodes, 0, TRACK_MAX*sizeof(undirected_node));
@@ -95,6 +106,20 @@ void add_adjacent_undirected_node(undirected_node * node, undirected_node * node
 	node->adjacent_nodes.num_adjacent_nodes = node->adjacent_nodes.num_adjacent_nodes +1;
 }
 
+void sanity_check_distances(undirected_node * undirected_nodes, int * num_undirected_nodes){
+	int i;
+	//  Make sure distances are commutative (sanity check)
+	for(i = 0; i < *num_undirected_nodes; i++){
+		int j;
+		for(j = 0; j < undirected_nodes[i].adjacent_nodes.num_adjacent_nodes; j++){
+			undirected_node * other_node = undirected_nodes[i].adjacent_nodes.edge[j].next_node;
+			//  Get the edge index that brings us back to this node in the other node
+			int index = get_edge_index(other_node, &undirected_nodes[i]);
+			assert(undirected_nodes[i].adjacent_nodes.edge[j].micrometers_distance == other_node->adjacent_nodes.edge[index].micrometers_distance);
+		}
+	}
+}
+
 void set_adjacency_lists(undirected_node * undirected_nodes, int * num_undirected_nodes){
 	int i;
 	for(i = 0; i < *num_undirected_nodes; i++){
@@ -126,6 +151,7 @@ void set_adjacency_lists(undirected_node * undirected_nodes, int * num_undirecte
 			}
 		}
 	}
+
 }
 
 void init_undirected_nodes(track_node * track_nodes, undirected_node * undirected_nodes, int * num_undirected_nodes){
@@ -151,24 +177,12 @@ void add_train_node(undirected_node * train, undirected_node * src, undirected_n
 	assert(train->type == NODE_TRAIN);
 	//  Will insert the train node into the graph at 'distance' after src on the way to dst.
 	int i;
-	int edge_src_index = -1;
-	for(i = 0; i < src->adjacent_nodes.num_adjacent_nodes; i++){
-		if(src->adjacent_nodes.edge[i].next_node == dst){
-			edge_src_index = i;
-		}
-	}
-	//  Should be found
+	int edge_src_index = get_edge_index(src, dst);
 	assert(edge_src_index != -1);
 
-	int edge_dst_index = -1;
-	for(i = 0; i < dst->adjacent_nodes.num_adjacent_nodes; i++){
-		if(dst->adjacent_nodes.edge[i].next_node == src){
-			edge_dst_index = i;
-		}
-	}
-
-	//  Should be found
+	int edge_dst_index = get_edge_index(dst, src);
 	assert(edge_dst_index != -1);
+
 	//  The distances should be the same either way, if not something broke
 	assert(src->adjacent_nodes.edge[edge_src_index].micrometers_distance == dst->adjacent_nodes.edge[edge_dst_index].micrometers_distance);
 
@@ -200,16 +214,7 @@ void add_train_node(undirected_node * train, undirected_node * src, undirected_n
 	//  We don't update anything in the underlying direced graph here because we don't care about trains there.
 }
 
-int get_edge_index(undirected_node * src, undirected_node * target){
-	int i;
-	int edge_src_index = -1;
-	for(i = 0; i < src->adjacent_nodes.num_adjacent_nodes; i++){
-		if(src->adjacent_nodes.edge[i].next_node == target){
-			edge_src_index = i;
-		}
-	}
-	return edge_src_index;
-}
+
 
 void remove_train_node(undirected_node * train, undirected_node * src, undirected_node * dst){
 	assert(train->type == NODE_TRAIN);
@@ -368,12 +373,16 @@ int main() {
 
 	undirected_node * src_node_t1;
 	undirected_node * dst_node_t1;
+	undirected_node * src_node_t2;
+	undirected_node * dst_node_t2;
 
 	//  0 = forwar, 1 = backward
 	int direction_t1 = 0;
+	int direction_t2 = 0;
 
 	int i;
-	for(i = 0; i < 10000000; i++){
+	for(i = 0; i < 100000000; i++){
+		sanity_check_distances(track_a_undirected_nodes, &num_track_a_undirected_nodes);
 		src_node_t1 = train_1_node.adjacent_nodes.edge[direction_t1].next_node;
 		dst_node_t1 = train_1_node.adjacent_nodes.edge[direction_t1 ? 0 : 1].next_node;
 
@@ -385,6 +394,19 @@ int main() {
 		
 		//  Move train 1 a distance of 1 micrometer on the path from src to dst , and if we go past node 2, 
 		//  go to the preferred_index edge of node_2
-		move_train_distance(&train_1_node, src_node_t1, dst_node_t1, dst_node_t1->adjacent_nodes.edge[preferred_index_t1].next_node, rand() % 10);
+		move_train_distance(&train_1_node, src_node_t1, dst_node_t1, dst_node_t1->adjacent_nodes.edge[preferred_index_t1].next_node, rand() % 5);
+		
+		src_node_t2 = train_1_node.adjacent_nodes.edge[direction_t2].next_node;
+		dst_node_t2 = train_1_node.adjacent_nodes.edge[direction_t2 ? 0 : 1].next_node;
+
+		//  Get an edge index that is not not pointing to the train
+		int preferred_index_t2 = get_random_other_edge_index(dst_node_t2, get_edge_index(dst_node_t2, &train_1_node));
+		if(preferred_index_t2 == -1){
+			direction_t2 = (direction_t2 ? 0 : 1);
+		}
+		
+		//  Move train 1 a distance of 1 micrometer on the path from src to dst , and if we go past node 2, 
+		//  go to the preferred_index edge of node_2
+		move_train_distance(&train_1_node, src_node_t2, dst_node_t2, dst_node_t2->adjacent_nodes.edge[preferred_index_t2].next_node, rand() % 3);
 	}
 }
