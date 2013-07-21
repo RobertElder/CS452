@@ -3,6 +3,8 @@
 #include "assert.h"
 #include "string.h"
 #include <stdio.h>
+#include <time.h>
+#include <stdlib.h>
 
 void set_references(track_node * track_nodes, undirected_node * undirected_nodes, int * num_undirected_nodes){
 	/* This function will set all the references of undirected nodes to directed ones and vice versa */
@@ -256,6 +258,7 @@ void move_train_distance(undirected_node * train, undirected_node * src, undirec
 	remove_train_node(train, src, dst);
 
 	if(new_position < 0){
+		printf("Train moving over %s/%s toward %s/%s\n", src->track_node1->name, src->track_node2->name, preferred->track_node1->name, preferred->track_node2->name);
 		//  This means we are going backward to a node before src
 		int edge_preferred_index = get_edge_index(src, preferred);
 		assert(edge_preferred_index != -1);
@@ -271,6 +274,7 @@ void move_train_distance(undirected_node * train, undirected_node * src, undirec
 	}else if(new_position > 0 && new_position < total_distance){
 		add_train_node(train, src, dst, new_position);
 	}else if(new_position >= total_distance){
+		printf("Train moving over %s/%s toward %s/%s\n", dst->track_node1->name, dst->track_node2->name, preferred->track_node1->name, preferred->track_node2->name);
 		//  This means we are going forward to a node after dst
 		int edge_preferred_index = get_edge_index(dst, preferred);
 		assert(edge_preferred_index != -1);
@@ -287,6 +291,17 @@ void move_train_distance(undirected_node * train, undirected_node * src, undirec
 	}else{
 		assert(0);
 	}
+}
+
+int get_random_other_edge_index(undirected_node * node, int index){
+	if(node->adjacent_nodes.num_adjacent_nodes < 2){
+		return -1;
+	}
+	int other_index = index;
+	while(other_index == index){
+		other_index = rand() % node->adjacent_nodes.num_adjacent_nodes;
+	}
+	return other_index;
 }
 
 int main() {
@@ -318,29 +333,28 @@ int main() {
 
 	add_train_node(&train_1_node, node_1, node_2, 10);
 
+	srand(time(NULL));
+
+	undirected_node * src_node;
+	undirected_node * dst_node;
+
+	//  0 = forwar, 1 = backward
+	int direction = 0;
+
 	int i;
-	for(i = 0; i < 100000000; i++){
-		node_1 = train_1_node.adjacent_nodes.edge[0].next_node;
-		node_2 = train_1_node.adjacent_nodes.edge[1].next_node;
+	for(i = 0; i < 1000000; i++){
+		src_node = train_1_node.adjacent_nodes.edge[direction].next_node;
+		dst_node = train_1_node.adjacent_nodes.edge[direction ? 0 : 1].next_node;
 
-		int first_edge_index = get_edge_index(node_2, &train_1_node);
-		assert(first_edge_index != -1);
-
-		//  Find the first index of a node that we could potentiall go to after
-		int preferred_index = -1;
-		int j;
-		for(j = 0; j < node_2->adjacent_nodes.num_adjacent_nodes; j++){
-			if(j != first_edge_index){
-				preferred_index = j;
-			}
-		}
-
+		//  Get an edge index that is not not pointing to the train
+		int preferred_index = get_random_other_edge_index(dst_node, get_edge_index(dst_node, &train_1_node));
 		if(preferred_index == -1){
-			printf("Node type was %d\n", node_2->type);
-			break;
+			direction = (direction ? 0 : 1);
+			//printf("Node type was %d\n", dst_node->type);
 		}
 		
-		move_train_distance(&train_1_node, node_1, node_2, node_2->adjacent_nodes.edge[preferred_index].next_node, 1);
-		//printf("Total distance in track a is %d\n", add_all_distances(track_a_undirected_nodes, num_track_a_undirected_nodes));
+		//  Move train 1 a distance of 1 micrometer on the path from node_1 to node_2, and if we go past node 2, 
+		//  go to the preferred_index edge of node_2
+		move_train_distance(&train_1_node, src_node, dst_node, dst_node->adjacent_nodes.edge[preferred_index].next_node, rand() % 10);
 	}
 }
