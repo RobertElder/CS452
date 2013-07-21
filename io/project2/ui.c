@@ -737,17 +737,23 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 void UIServer_PrintTrainMapPosition(UIServer * server) {
 	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
 	TrainEngineStatusMessage * reply_message = (TrainEngineStatusMessage *) server->reply_buffer;
-	
-	send_message->int1 = 0;
-	send_message->message_type = MESSAGE_TYPE_QUERY_TRAIN_ENGINE;
-	
-	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
-	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_PrintTrainMapPosition: did not get ack message");
-	
-	track_node * track_nodes = reply_message->track_nodes;
-	TrainEngine * engine = reply_message->train_engine;
+	TrainEngine * engines[MAX_NUM_ENGINES];
 	
 	int i;
+	
+	for (i = 0; i < server->num_engines; i++) {
+		send_message->int1 = i;
+		send_message->message_type = MESSAGE_TYPE_QUERY_TRAIN_ENGINE;
+	
+		Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+		assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_PrintTrainMapPosition: did not get ack message");
+		
+		engines[i] = reply_message->train_engine;
+	}
+	
+	assert(server->num_engines >= 1, "number of engines not positive");
+
+	track_node * track_nodes = reply_message->track_nodes;
 	
 	for (i = 0; i < TRACK_MAX; i++) {
 		track_node * node = &track_nodes[i];
@@ -759,12 +765,26 @@ void UIServer_PrintTrainMapPosition(UIServer * server) {
 			new_color = server->switch_background_color[node->num];
 		}
 		
-		if (node == engine->destination_node || node->reverse == engine->destination_node) {
+		int is_destination_node = 0;
+		int dest_train_i = 0;
+		
+		for (dest_train_i = 0; dest_train_i < server->num_engines; dest_train_i++) {
+			if (node == engines[dest_train_i]->destination_node || node->reverse == engines[dest_train_i]->destination_node) {
+				is_destination_node = 1;
+				break;
+			}
+		}
+		
+		if (is_destination_node) {
 			// Highlight destination
-			new_color = GREEN;
+			if (dest_train_i != 0) {
+				new_color = YELLOW;
+			} else {
+				new_color = GREEN;
+			}
 		} else if (node->reserved || node->reverse->reserved) {
 			// Highlight reservation
-			if (node->reserved != engine->train_num) {
+			if (node->reserved != engines[0]->train_num) {
 				new_color = RED;
 			} else {
 				new_color = BLACK;
