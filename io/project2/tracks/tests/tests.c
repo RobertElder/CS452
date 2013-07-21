@@ -2,6 +2,7 @@
 #include "../track_data.h"
 #include "assert.h"
 #include "string.h"
+#include <stdio.h>
 
 void set_references(track_node * track_nodes, undirected_node * undirected_nodes, int * num_undirected_nodes){
 	/* This function will set all the references of undirected nodes to directed ones and vice versa */
@@ -44,31 +45,52 @@ void set_references(track_node * track_nodes, undirected_node * undirected_nodes
 void add_adjacent_undirected_node(undirected_node * node, undirected_node * node_to_add){
 	
 	/* This function assumes that the node_to_add is in the directed graph and is connected to the node*/
-	/*
-	assert(node->adjacent_nodes.num_adjacent_nodes < 3);
 	//  These are the candidate directed nodes that are connected to this
-	track_node * n1 = 0;
-	track_node * n2 = 0;
-	track_node * n3 = 0;
+	track_edge * e1 = 0;
+	track_edge * e2 = 0;
+	track_edge * e3 = 0;
 
-	//  
+	//  The simple next and last nodes
+	e1 = &(node->track_node1->edge[DIR_AHEAD]);
+	e2 = &(node->track_node2->edge[DIR_AHEAD]);
+
+	//  The possible third one
 	if(node->type == NODE_SWITCH){
-		if(node->track_node1->type == BRANCH_NODE)
-			n3 = 
-		}else if(node->track_node1->type == BRANCH_NODE){
+		//  If this is a switch, one of the directions should have a curve
+		if(node->track_node1->type == NODE_BRANCH){
+			e3 = &(node->track_node1->edge[DIR_CURVED]);
+		}else if(node->track_node2->type == NODE_BRANCH){
+			e3 = &(node->track_node2->edge[DIR_CURVED]);
 		}else{
+			assert(0);
 		}
 	}
-	
+
+	int matching_nodes = 0;
+	int matching_distance = 0;
+	if(e1->dest && (e1->dest->undirected_node == node_to_add)){
+		matching_nodes++;
+		matching_distance = e1->dist;
+	}
+	if(e2->dest && (e2->dest->undirected_node == node_to_add)){
+		matching_nodes++;
+		matching_distance = e2->dist;
+	}
+	if(e3 && e3->dest && (e3->dest->undirected_node == node_to_add)){
+		matching_nodes++;
+		matching_distance = e3->dist;
+	}
+
+	assert(matching_nodes == 1);
+
+	assert(node->adjacent_nodes.num_adjacent_nodes < 3);
 	
 	undirected_edge edge_to_add;
-	edge_to_add->next_node = node_to_add;
-	edge_to_add->micrometers_distance = n1->undirected_node == node_to_add ? n1->:;
+	edge_to_add.next_node = node_to_add;
+	edge_to_add.micrometers_distance = matching_distance * 1000;
 	
-	node->adjacent_nodes.edge[node->adjacent_nodes.num_adjacent_nodes] = 
+	node->adjacent_nodes.edge[node->adjacent_nodes.num_adjacent_nodes] = edge_to_add;
 	node->adjacent_nodes.num_adjacent_nodes = node->adjacent_nodes.num_adjacent_nodes +1;
-	*/
-	
 }
 
 void set_adjacency_lists(undirected_node * undirected_nodes, int * num_undirected_nodes){
@@ -86,11 +108,21 @@ void set_adjacency_lists(undirected_node * undirected_nodes, int * num_undirecte
 			assert(0);
 		}
 
-		if(undirected_nodes[i].type == NODE_SWITCH){
-			
-		}else{
+		if(undirected_nodes[i].track_node1->edge[DIR_STRAIGHT].dest){
+			add_adjacent_undirected_node(&(undirected_nodes[i]), undirected_nodes[i].track_node1->edge[DIR_STRAIGHT].dest->undirected_node);
 		}
-		
+		if(undirected_nodes[i].track_node2->edge[DIR_STRAIGHT].dest){
+			add_adjacent_undirected_node(&(undirected_nodes[i]), undirected_nodes[i].track_node2->edge[DIR_STRAIGHT].dest->undirected_node);
+		}
+		if(undirected_nodes[i].type == NODE_SWITCH){
+			if(undirected_nodes[i].track_node1->type == NODE_BRANCH){
+				add_adjacent_undirected_node(&(undirected_nodes[i]), undirected_nodes[i].track_node1->edge[DIR_CURVED].dest->undirected_node);
+			}else if(undirected_nodes[i].track_node2->type == NODE_BRANCH){
+				add_adjacent_undirected_node(&(undirected_nodes[i]), undirected_nodes[i].track_node2->edge[DIR_CURVED].dest->undirected_node);
+			}else{
+				assert(0);
+			}
+		}
 	}
 }
 
