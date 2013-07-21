@@ -330,6 +330,96 @@ int get_random_other_edge_index(undirected_node * node, int index){
 	return other_index;
 }
 
+undirected_node * get_smallest_distance_node_in_Q(undirected_node ** nodes, int num_nodes){
+	/*  Returns node pointer, or 0 when no nodes left */
+	int smallest = 1000000000;
+	undirected_node * smallest_node = 0;
+	int i;
+	for(i = 0; i < num_nodes; i++){
+		if(nodes[i] && nodes[i]->dij_dist < smallest){
+			smallest_node = nodes[i];
+			smallest = smallest_node->dij_dist;
+			//  Remove it
+			nodes[i] = 0;
+		}
+	}
+	return smallest_node;
+}
+
+int is_node_in_Q(undirected_node ** nodes, int num_nodes, undirected_node * target){
+	int i;
+	for(i = 0; i < num_nodes; i++){
+		if(nodes[i] == target){
+			return 1;
+		}
+	}
+	return 0;
+}
+
+
+void dijkstra(undirected_node ** result_path, int max_result_path_length, int * result_path_length, undirected_node * undirected_track_nodes, int num_undirected_track_nodes, undirected_node * train_nodes, int num_train_nodes, undirected_node * src, undirected_node * dst){
+	//  Will expect a pointer to an array that it will populate with a set of undirected nodes
+	//  That will take you from src to dst
+	int infinity = 999999999;
+	int total_nodes = num_train_nodes + num_undirected_track_nodes;
+	undirected_node * node_set[total_nodes];
+	//  Make a set of the nodes we want to explore.
+	int i;
+	for(i = 0; i < num_undirected_track_nodes; i++){
+		node_set[i] = &(undirected_track_nodes[i]);
+	}
+	for(i = 0; i < num_undirected_track_nodes; i++){
+		node_set[i] = &(train_nodes[i + num_undirected_track_nodes]);
+	}
+	//  Initialize
+	for(i = 0; i < total_nodes; i++){
+		node_set[i]->dij_dist = infinity;
+		node_set[i]->dij_previous = 0;
+	}
+
+	*result_path_length = 0;
+
+	src->dij_dist = 0;
+
+	undirected_node * U;
+
+	while(U = get_smallest_distance_node_in_Q(node_set, total_nodes)){
+		//  It should always find some path
+		assert(U->dij_dist != infinity);
+		if(U == dst){
+			break;
+		}
+		int j;
+		for(j = 0; j < U->adjacent_nodes.num_adjacent_nodes; j++){
+			undirected_node * V = U->adjacent_nodes.edge[j].next_node;
+			if(is_node_in_Q(node_set, total_nodes, V)){
+				int alt = U->dij_dist + U->adjacent_nodes.edge[j].micrometers_distance;
+				if(alt < V->dij_dist){
+					V->dij_dist = alt;
+					V->dij_previous = U;
+				}
+			}
+		}
+	}
+	assert(U);
+	//  Gotta build the list backwards
+	undirected_node * U_temp = U;
+	//  Find out how many there are
+	while(U->dij_previous){
+		//  Don't overfill the buffer
+		assert(*result_path_length < max_result_path_length);
+		*result_path_length = *result_path_length + 1;
+		U = U->dij_previous;
+	}
+	int current_index = *result_path_length;
+	U = U_temp;
+	while(U->dij_previous){
+		current_index--;
+		result_path[current_index] = U;
+		U = U->dij_previous;
+	}
+}
+
 int main() {
 	track_node track_a_nodes[TRACK_MAX];
 	track_node track_b_nodes[TRACK_MAX];
@@ -350,24 +440,26 @@ int main() {
 	printf("Total distance in track a is %d\n", track_a_length);
 	printf("Total distance in track b is %d\n", track_b_length);
 
-	undirected_node train_1_node;
-  	memset(&train_1_node, 0, sizeof(undirected_node));
-	undirected_node train_2_node;
-  	memset(&train_2_node, 0, sizeof(undirected_node));
-	train_1_node.type = NODE_TRAIN;
-	train_2_node.type = NODE_TRAIN;
+	int num_trains = 2;
+	undirected_node train_nodes[num_trains];
+  	memset(train_nodes, 0, num_trains*sizeof(undirected_node));
+
+	int i;
+	for(i = 0; i < num_trains; i++){
+		train_nodes[i].type = NODE_TRAIN;
+	}
 	
 	undirected_node * node_1 = &(track_a_undirected_nodes[0]);
 	undirected_node * node_2 = node_1->adjacent_nodes.edge[0].next_node;
 	assert(node_1 != node_2);
 
 	//  Put the second train after it
-	undirected_node * node_3 = &train_1_node;
+	undirected_node * node_3 = &train_nodes[0];
 	undirected_node * node_4 = node_2;
 
-	add_train_node(&train_1_node, node_1, node_2, 10);
+	add_train_node(&train_nodes[0], node_1, node_2, 10);
 
-	add_train_node(&train_2_node, node_3, node_4, 10);
+	add_train_node(&train_nodes[1], node_3, node_4, 10);
 
 	srand(time(NULL));
 
@@ -380,33 +472,32 @@ int main() {
 	int direction_t1 = 0;
 	int direction_t2 = 0;
 
-	int i;
 	for(i = 0; i < 100000000; i++){
 		sanity_check_distances(track_a_undirected_nodes, &num_track_a_undirected_nodes);
-		src_node_t1 = train_1_node.adjacent_nodes.edge[direction_t1].next_node;
-		dst_node_t1 = train_1_node.adjacent_nodes.edge[direction_t1 ? 0 : 1].next_node;
+		src_node_t1 = train_nodes[0].adjacent_nodes.edge[direction_t1].next_node;
+		dst_node_t1 = train_nodes[0].adjacent_nodes.edge[direction_t1 ? 0 : 1].next_node;
 
 		//  Get an edge index that is not not pointing to the train
-		int preferred_index_t1 = get_random_other_edge_index(dst_node_t1, get_edge_index(dst_node_t1, &train_1_node));
+		int preferred_index_t1 = get_random_other_edge_index(dst_node_t1, get_edge_index(dst_node_t1, &train_nodes[0]));
 		if(preferred_index_t1 == -1){
 			direction_t1 = (direction_t1 ? 0 : 1);
 		}
 		
 		//  Move train 1 a distance of 1 micrometer on the path from src to dst , and if we go past node 2, 
 		//  go to the preferred_index edge of node_2
-		move_train_distance(&train_1_node, src_node_t1, dst_node_t1, dst_node_t1->adjacent_nodes.edge[preferred_index_t1].next_node, rand() % 5);
+		move_train_distance(&train_nodes[0], src_node_t1, dst_node_t1, dst_node_t1->adjacent_nodes.edge[preferred_index_t1].next_node, rand() % 5);
 		
-		src_node_t2 = train_1_node.adjacent_nodes.edge[direction_t2].next_node;
-		dst_node_t2 = train_1_node.adjacent_nodes.edge[direction_t2 ? 0 : 1].next_node;
+		src_node_t2 = train_nodes[1].adjacent_nodes.edge[direction_t2].next_node;
+		dst_node_t2 = train_nodes[1].adjacent_nodes.edge[direction_t2 ? 0 : 1].next_node;
 
 		//  Get an edge index that is not not pointing to the train
-		int preferred_index_t2 = get_random_other_edge_index(dst_node_t2, get_edge_index(dst_node_t2, &train_1_node));
+		int preferred_index_t2 = get_random_other_edge_index(dst_node_t2, get_edge_index(dst_node_t2, &train_nodes[1]));
 		if(preferred_index_t2 == -1){
 			direction_t2 = (direction_t2 ? 0 : 1);
 		}
 		
 		//  Move train 1 a distance of 1 micrometer on the path from src to dst , and if we go past node 2, 
 		//  go to the preferred_index edge of node_2
-		move_train_distance(&train_1_node, src_node_t2, dst_node_t2, dst_node_t2->adjacent_nodes.edge[preferred_index_t2].next_node, rand() % 3);
+		move_train_distance(&train_nodes[1], src_node_t2, dst_node_t2, dst_node_t2->adjacent_nodes.edge[preferred_index_t2].next_node, rand() % 5);
 	}
 }

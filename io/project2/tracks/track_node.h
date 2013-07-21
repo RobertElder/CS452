@@ -63,6 +63,9 @@ struct undirected_node {
 	track_node * track_node2;
 	adjacency_list adjacent_nodes;
 	node_type type;
+	//  Part of Dijkstra's algorithm
+	int dij_dist;
+	undirected_node * dij_previous;
 };
 
 #endif
