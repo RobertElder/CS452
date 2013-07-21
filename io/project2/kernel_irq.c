@@ -161,7 +161,11 @@ void IRQ_SetupUARTInterrupts() {
 }
 
 void IRQ_DisableUARTInterrupts() {
-	/*
+	IRQ_SetUART1Receive(0);
+	IRQ_SetUART1Transmit(0);
+	IRQ_SetUART2Receive(0);
+	IRQ_SetUART2Transmit(0);
+
 	*VIC1IntEnable &= (0xFFFFFFFF ^(1 << UART1RXINTR1));
 	*VIC1IntEnable &= (0xFFFFFFFF ^(1 << UART1TXINTR1));
 	*VIC1IntEnable &= (0xFFFFFFFF ^(1 << UART2RXINTR2));
@@ -171,7 +175,6 @@ void IRQ_DisableUARTInterrupts() {
 	*VIC1IntEnClear |= 1 << UART1TXINTR1;
 	*VIC1IntEnClear |= 1 << UART2RXINTR2;
 	*VIC1IntEnClear |= 1 << UART2TXINTR2;
-	*/
 }
 
 void IRQ_SetUART1Receive(short enable) {
