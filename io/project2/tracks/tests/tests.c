@@ -244,6 +244,7 @@ void remove_train_node(undirected_node * train, undirected_node * src, undirecte
 }
 
 void print_move_over_statement(undirected_node * n1, undirected_node * n2){
+	return;
 	printf("Train moving over ");
 
 	if(n1->track_node1 && n1->track_node1){
@@ -333,17 +334,19 @@ int get_random_other_edge_index(undirected_node * node, int index){
 undirected_node * get_smallest_distance_node_in_Q(undirected_node ** nodes, int num_nodes){
 	/*  Returns node pointer, or 0 when no nodes left */
 	int smallest = 1000000000;
+	int smallest_node_index = -1;
 	undirected_node * smallest_node = 0;
 	int i;
 	for(i = 0; i < num_nodes; i++){
-		if(nodes[i] && nodes[i]->dij_dist < smallest){
-			smallest_node = nodes[i];
-			smallest = smallest_node->dij_dist;
-			//  Remove it
-			nodes[i] = 0;
+		if(nodes[i] && (nodes[i]->dij_dist < smallest)){
+			smallest = nodes[i]->dij_dist;
+			smallest_node_index = i;
 		}
 	}
-	return smallest_node;
+	assert(smallest_node_index != -1);
+	undirected_node * rtn = nodes[smallest_node_index];
+	nodes[smallest_node_index] = 0;
+	return rtn;
 }
 
 int is_node_in_Q(undirected_node ** nodes, int num_nodes, undirected_node * target){
@@ -368,8 +371,8 @@ void dijkstra(undirected_node ** result_path, int max_result_path_length, int * 
 	for(i = 0; i < num_undirected_track_nodes; i++){
 		node_set[i] = &(undirected_track_nodes[i]);
 	}
-	for(i = 0; i < num_undirected_track_nodes; i++){
-		node_set[i] = &(train_nodes[i + num_undirected_track_nodes]);
+	for(i = 0; i < num_train_nodes; i++){
+		node_set[i + num_undirected_track_nodes] = &(train_nodes[i]);
 	}
 	//  Initialize
 	for(i = 0; i < total_nodes; i++){
@@ -405,7 +408,7 @@ void dijkstra(undirected_node ** result_path, int max_result_path_length, int * 
 	//  Gotta build the list backwards
 	undirected_node * U_temp = U;
 	//  Find out how many there are
-	while(U->dij_previous){
+	while(U){
 		//  Don't overfill the buffer
 		assert(*result_path_length < max_result_path_length);
 		*result_path_length = *result_path_length + 1;
@@ -413,11 +416,34 @@ void dijkstra(undirected_node ** result_path, int max_result_path_length, int * 
 	}
 	int current_index = *result_path_length;
 	U = U_temp;
-	while(U->dij_previous){
+	while(U){
 		current_index--;
 		result_path[current_index] = U;
 		U = U->dij_previous;
 	}
+}
+
+
+void print_undirected_path_info(undirected_node ** path, int actual_path_length){
+	printf("Length: %d. ", actual_path_length);
+	int i;
+	int total_cost = 0;
+	for(i = 0; i < actual_path_length; i++){
+		if(path[i]->track_node1 && path[i]->track_node2){
+			printf("%s/%s", path[i]->track_node1->name, path[i]->track_node2->name);
+		}else{
+			printf("train");
+		}
+		if(i != actual_path_length -1){
+			printf(" -> ");
+			undirected_node * current_node = path[i];
+			undirected_node * next_node = path[i+1];
+			int index = get_edge_index(current_node, next_node);
+			assert(index != -1);
+			total_cost += current_node->adjacent_nodes.edge[index].micrometers_distance;
+		}
+	}
+	printf(" Cost: %d.\n", total_cost);
 }
 
 int main() {
@@ -461,7 +487,9 @@ int main() {
 
 	add_train_node(&train_nodes[1], node_3, node_4, 10);
 
-	srand(time(NULL));
+	int seed = 1374438791;
+	srand(seed);
+	printf("Seeded with %d.\n",seed);
 
 	undirected_node * src_node_t1;
 	undirected_node * dst_node_t1;
@@ -499,5 +527,25 @@ int main() {
 		//  Move train 1 a distance of 1 micrometer on the path from src to dst , and if we go past node 2, 
 		//  go to the preferred_index edge of node_2
 		move_train_distance(&train_nodes[1], src_node_t2, dst_node_t2, dst_node_t2->adjacent_nodes.edge[preferred_index_t2].next_node, rand() % 5);
+	
+		int max_path_length = 20;
+		int actual_path_length = 0;
+		undirected_node * path[max_path_length];
+		//  Do dijkstra's on the two trains to tell how far they are appart
+		dijkstra(
+			path,
+			max_path_length,
+			&actual_path_length,
+			track_a_undirected_nodes,
+			num_track_a_undirected_nodes,
+			train_nodes,
+			num_trains,
+			&train_nodes[0],
+			&train_nodes[1]
+		);
+
+		if(rand() % 1000 == 0){
+			//print_undirected_path_info(path, actual_path_length);
+		}
 	}
 }
