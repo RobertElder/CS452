@@ -10,6 +10,7 @@ typedef enum {
   NODE_EXIT,
   NODE_END,
   NODE_SWITCH,
+  NODE_TRAIN,
 } node_type;
 
 #define DIR_AHEAD 0

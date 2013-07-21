@@ -131,6 +131,113 @@ void init_undirected_nodes(track_node * track_nodes, undirected_node * undirecte
 	set_adjacency_lists(undirected_nodes, num_undirected_nodes);
 }
 
+int add_all_distances(undirected_node * undirected_nodes, int num_undirected_nodes){
+	//  Use this as a kind of hashing function to make sure that preconditions and post-conditions are true.
+	//  The value this returns for a given map should never change.
+	int total = 0;
+	int i;
+	for(i = 0; i < num_undirected_nodes; i++){
+		int j;
+		for(j = 0; j < undirected_nodes[i].adjacent_nodes.num_adjacent_nodes; j++){
+			total += undirected_nodes[i].adjacent_nodes.edge[j].micrometers_distance;
+		}
+	}
+	return total;
+}
+
+void add_train_node(undirected_node * train, undirected_node * src, undirected_node * dst, int distance){
+	assert(train->type == NODE_TRAIN);
+	//  Will insert the train node into the graph at 'distance' after src on the way to dst.
+	int i;
+	int edge_src_index = -1;
+	for(i = 0; i < src->adjacent_nodes.num_adjacent_nodes; i++){
+		if(src->adjacent_nodes.edge[i].next_node == dst){
+			edge_src_index = i;
+		}
+	}
+	//  Should be found
+	assert(edge_src_index != -1);
+
+	int edge_dst_index = -1;
+	for(i = 0; i < dst->adjacent_nodes.num_adjacent_nodes; i++){
+		if(dst->adjacent_nodes.edge[i].next_node == src){
+			edge_dst_index = i;
+		}
+	}
+
+	//  Should be found
+	assert(edge_dst_index != -1);
+	//  The distances should be the same either way, if not something broke
+	assert(src->adjacent_nodes.edge[edge_src_index].micrometers_distance == dst->adjacent_nodes.edge[edge_dst_index].micrometers_distance);
+
+	int total_distance = src->adjacent_nodes.edge[edge_src_index].micrometers_distance;
+
+	assert(distance < total_distance);
+	assert(distance > 0);
+
+	int distance_src_to_train = distance;
+	int distance_train_to_dst = total_distance - distance;
+
+	//  Src points to train, not dst 
+	src->adjacent_nodes.edge[edge_src_index].micrometers_distance = distance_src_to_train;
+	src->adjacent_nodes.edge[edge_src_index].next_node = train;
+	//  Dst points to train, not src
+	dst->adjacent_nodes.edge[edge_dst_index].micrometers_distance = distance_train_to_dst;
+	dst->adjacent_nodes.edge[edge_dst_index].next_node = train;
+
+	train->track_node1 = 0;
+	train->track_node2 = 0;
+
+	//  The train is always adjacent to exactly 2 nodes at once.
+	train->adjacent_nodes.num_adjacent_nodes = 2;
+	train->adjacent_nodes.edge[0].next_node = src;
+	train->adjacent_nodes.edge[0].micrometers_distance = distance_src_to_train;
+	train->adjacent_nodes.edge[1].next_node = dst;
+	train->adjacent_nodes.edge[1].micrometers_distance = distance_train_to_dst;
+
+	//  We don't update anything in the underlying direced graph here because we don't care about trains there.
+}
+
+void remove_train_node(undirected_node * train, undirected_node * src, undirected_node * dst){
+	assert(train->type == NODE_TRAIN);
+	//  Will insert the train node into the graph at 'distance' after src on the way to dst.
+	int i;
+	int edge_src_index = -1;
+	for(i = 0; i < src->adjacent_nodes.num_adjacent_nodes; i++){
+		if(src->adjacent_nodes.edge[i].next_node == train){
+			edge_src_index = i;
+		}
+	}
+	//  Should be found
+	assert(edge_src_index != -1);
+
+	int edge_dst_index = -1;
+	for(i = 0; i < dst->adjacent_nodes.num_adjacent_nodes; i++){
+		if(dst->adjacent_nodes.edge[i].next_node == train){
+			edge_dst_index = i;
+		}
+	}
+
+	//  Should be found
+	assert(edge_dst_index != -1);
+
+	//  Recalculate the total distance.
+	int total_distance = dst->adjacent_nodes.edge[edge_dst_index].micrometers_distance + src->adjacent_nodes.edge[edge_src_index].micrometers_distance;
+	src->adjacent_nodes.edge[edge_src_index].micrometers_distance = total_distance;
+	src->adjacent_nodes.edge[edge_src_index].next_node = dst;
+	dst->adjacent_nodes.edge[edge_dst_index].micrometers_distance = total_distance;
+	dst->adjacent_nodes.edge[edge_dst_index].next_node = src;
+
+	train->track_node1 = 0;
+	train->track_node2 = 0;
+
+	train->adjacent_nodes.num_adjacent_nodes = 0;
+	train->adjacent_nodes.edge[0].next_node = 0;
+	train->adjacent_nodes.edge[0].micrometers_distance = 0;
+	train->adjacent_nodes.edge[1].next_node = 0;
+	train->adjacent_nodes.edge[1].micrometers_distance = 0;
+}
+
 int main() {
 	track_node track_a_nodes[TRACK_MAX];
 	track_node track_b_nodes[TRACK_MAX];
@@ -145,4 +252,19 @@ int main() {
 
 	init_undirected_nodes(track_a_nodes, track_a_undirected_nodes, &num_track_a_undirected_nodes);
 	init_undirected_nodes(track_b_nodes, track_b_undirected_nodes, &num_track_b_undirected_nodes);
+
+	int track_a_length = add_all_distances(track_a_undirected_nodes, num_track_a_undirected_nodes);
+	int track_b_length = add_all_distances(track_b_undirected_nodes, num_track_b_undirected_nodes);
+	printf("Total distance in track a is %d\n", track_a_length);
+	printf("Total distance in track b is %d\n", track_b_length);
+
+	undirected_node train_1_node;
+  	memset(&train_1_node, 0, sizeof(undirected_node));
+	train_1_node.type = NODE_TRAIN;
+	
+	undirected_node * node_1 = &track_a_undirected_nodes[0];
+	undirected_node * node_2 = node_1->adjacent_nodes.edge[0].next_node;
+
+	add_train_node(&train_1_node, node_1, node_2, 300);
+	remove_train_node(&train_1_node, node_1, node_2);
 }
