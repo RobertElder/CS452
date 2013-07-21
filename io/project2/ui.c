@@ -9,6 +9,7 @@
 #include "tasks.h"
 #include "train.h"
 #include "rps.h"
+#include "private_kernel_interface.h"
 
 void UIServer_Start() {
 	DebugRegisterFunction(&UIServer_Start,__func__);
@@ -165,14 +166,17 @@ void UIServer_PrintTime(UIServer * server) {
 	char min_str[5];
 	char hours_str[5];
 	char days_str[5];
-	rob_zero_pad(ms, ms_str);
-	rob_zero_pad(sec, sec_str);
-	rob_zero_pad(min, min_str);
-	rob_zero_pad(hours, hours_str);
-	rob_zero_pad(days, days_str);
+	rob_zero_pad(ms, ms_str, 3);
+	rob_zero_pad(sec, sec_str, 2);
+	rob_zero_pad(min, min_str, 2);
+	rob_zero_pad(hours, hours_str, 2);
+	rob_zero_pad(days, days_str, 2);
+	
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	int load = Scheduler_GetSystemLoad(&k_state->scheduler) * 100;
 	
 	ANSI_Cursor(1, sizeof(UI_SERVER_HEADER) + 1);
-	PutString(COM2, "{ SYSTIME = %s:%s:%s:%s,%s }", days_str, hours_str, min_str, sec_str, ms_str);
+	PutString(COM2, "{ SYSTIME = %s:%s:%s:%s,%s  IDLE = %d%% }", days_str, hours_str, min_str, sec_str, ms_str, load);
 	ANSI_ClearLine(CLEAR_TO_END);
 }
 

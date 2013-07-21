@@ -193,13 +193,20 @@ void IdleTask_Start(){
 		DelaySeconds(0.2);
 	}
 	
+	int i = 0;
+	
 	while(1){
-		Send(admin_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
-		assertf(reply_message->message_type == MESSAGE_TYPE_ACK || reply_message->message_type == MESSAGE_TYPE_SHUTDOWN, "fail\n");
+		if (i > 100000) {
+			Send(admin_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
+			assertf(reply_message->message_type == MESSAGE_TYPE_ACK || reply_message->message_type == MESSAGE_TYPE_SHUTDOWN, "fail\n");
+			i = 0;
+		}
 	
 		if(reply_message->message_type == MESSAGE_TYPE_SHUTDOWN){
 			break;
 		}
+		
+		i++;
 	}
 
 	Exit();

@@ -27,6 +27,8 @@ void Scheduler_Initialize(Scheduler * scheduler) {
 	scheduler->watchdog_feed_counter = 0;
 	scheduler->scheduled_counter = 0;
 	scheduler->halt = 0;
+	scheduler->sampled_scheduled_counter = 0;
+	scheduler->sampled_low_priority_counter = 0;
 	
 	int i;
 	for (i = 0; i < MAX_TASKS + 1; i++) {
@@ -176,6 +178,12 @@ void Scheduler_SaveCurrentTaskState(Scheduler * scheduler, KernelState * k_state
 
 void Scheduler_SetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
 	scheduler->scheduled_counter++;
+	scheduler->sampled_scheduled_counter++;
+	
+	if (scheduler->sampled_scheduled_counter > 1000000) {
+		scheduler->sampled_scheduled_counter = 0;
+		scheduler->sampled_low_priority_counter = 0;
+	}
 	
 	if (scheduler->current_task_descriptor == 0) {
 		/* Nothing to do, exit to redboot. */
@@ -192,6 +200,11 @@ void Scheduler_SetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
 		k_state->user_proc_entry_mode = scheduler->current_task_descriptor->entry_mode;
 		scheduler->current_task_descriptor->schedule_timestamp = scheduler->scheduled_counter;
 		scheduler->current_task_descriptor->scheduled_counter++;
+		scheduler->watchdog_feed_counter++;
+
+		if (scheduler->current_task_descriptor->priority == PRIORITY_31) {
+			scheduler->sampled_low_priority_counter++;
+		}
 		
 		if (scheduler->current_task_descriptor->entry_point == (int*) &SchedulerWatchdogTask_Start) {
 			scheduler->watchdog_feed_counter = 0;
@@ -200,8 +213,6 @@ void Scheduler_SetNextTaskState(Scheduler * scheduler, KernelState * k_state) {
 				SchedulerWatchdogEnabled = 0;
 			}
 		} else {
-			scheduler->watchdog_feed_counter++;
-			
 			if (scheduler->watchdog_feed_counter > WATCHDOG_STARVATION_COUNT) {
 				robprintfbusy((const unsigned char *)"\033[0;1m ***** WATCHDOG *****\033[0m\n");
 				Scheduler_PrintTDCounts(scheduler);
@@ -419,4 +430,8 @@ void SchedulerWatchdogTask_Start() {
 
 void Scheduler_Halt(Scheduler * scheduler) {
 	scheduler->halt = 1;
+}
+
+float Scheduler_GetSystemLoad(Scheduler * scheduler) {
+	return ((float) scheduler->sampled_low_priority_counter) / scheduler->sampled_scheduled_counter;
 }

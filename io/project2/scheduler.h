@@ -39,6 +39,8 @@ typedef struct Scheduler {
 	FunctionMapping function_mappings[MAX_FUNCTION_MAPPINGS];
 	unsigned int scheduled_counter;
 	unsigned int watchdog_feed_counter;
+	unsigned int sampled_scheduled_counter;
+	unsigned int sampled_low_priority_counter;
 	short halt;
 } Scheduler;
 
@@ -73,5 +75,7 @@ const char * GetRegisteredFunctionName(Scheduler * scheduler, void * entry);
 void SchedulerWatchdogTask_Start();
 
 void Scheduler_Halt(Scheduler * scheduler);
+
+float Scheduler_GetSystemLoad(Scheduler * scheduler);
 
 #endif

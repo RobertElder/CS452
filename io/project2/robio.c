@@ -613,11 +613,36 @@ int rob_next_whitespace(const char * str) {
 	}
 }
 
-void rob_zero_pad(int num, char * str) {
-	if (num < 10) {
-		str[0] = '0';
-		bwi2a(num, &str[1]);
-	} else {
-		bwi2a(num, str);
+void rob_zero_pad(int num, char * str, unsigned int digits) {
+	assert(rob_pow(10, 0) == 1, "math failed 1");
+	assert(rob_pow(10, 1) == 10, "math failed 2");
+	assert(rob_pow(10, 2) == 100, "math failed 3");
+	
+	int i;
+	int zeros = 0;
+	
+	for (i = digits - 1; i > 0; i--) {
+		if (num < rob_pow(10, i)) {
+			zeros++;
+		}
 	}
+	
+	for (i = 0; i < zeros; i++) {
+		str[i] = '0';
+	}
+	
+	bwi2a(num, &str[zeros]);
+}
+
+int rob_pow(int base, int exponent) {
+	if (exponent == 0) {
+		return 1;
+	}
+
+	int result = base;
+	int i;
+	for (i = 1; i < exponent; i++) {
+		result *= base;
+	}
+	return result;
 }
