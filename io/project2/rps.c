@@ -26,10 +26,32 @@ void RPSTestStart() {
 	assert(0, "Shouldn't see me\n");
 }
 
+void RPSLightTestStart() {
+	DebugRegisterFunction(&RPSTestStart,__func__);
+	int tid;
+	const int num_clients = 42;
+
+	tid = Create(RPSSERVER_START_PRIORITY, &RPSServer_Start);
+
+	int i;
+	for (i = 0; i < num_clients; i++) {
+		tid = Create(RPSCLIENT_START_PRIORITY, &RPSClient_Start);
+	}
+
+	Exit();
+
+	assert(0, "Shouldn't see me\n");
+}
+
 void RPSServer_Start() {
 	DebugRegisterFunction(&RPSServer_Start,__func__);
 	DebugRegisterFunction(&RPSClient_Start,"RPSClient_Start");
+
+#ifdef TEST
 	robprintfbusy((const unsigned char *)"RPSServer created tid=%d\n", MyTid());
+#else
+	PrintMessage("RPSServer created tid=%d", MyTid());
+#endif
 
 	int result = RegisterAs((char*) RPS_SERVER_NAME);
 
@@ -46,7 +68,9 @@ void RPSServer_Start() {
 		}
 	}
 
+#ifdef TEST
 	robprintfbusy((const unsigned char *)"About to call exit from rpsserver.\n");
+#endif
 	Exit();
 
 	assert(0, "Shouldn't see me\n");
@@ -244,11 +268,17 @@ void RPSServer_HandleQuit(RPSServer * server, RPSMessage * message, int source_t
 
 	reply_message = (RPSMessage *) server->reply_buffer;
 	reply_message->message_type = MESSAGE_TYPE_GOODBYE;
+
+#ifdef TEST
 	robprintfbusy((const unsigned char *)"Server: Telling %d goodbye message\n", source_tid);
+#endif
+
 	return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
 	assert(return_code == 0, "RPSServer couldn't send GOODBYE to client");
 
+#ifdef TEST
 	robprintfbusy((const unsigned char *)"Server: We are shutting down\n");
+#endif
 }
 
 void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_tid) {
@@ -259,7 +289,11 @@ void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_t
 		server->signed_in_players[source_tid] = 0;
 		server->num_signed_in -= 1;
 		reply_message->message_type = MESSAGE_TYPE_SHUTDOWN;
+
+#ifdef TEST
 		robprintfbusy((const unsigned char *)"Server: Telling %d that have shutdown\n", source_tid);
+#endif
+
 		return_code = Reply(source_tid, server->reply_buffer, MESSAGE_SIZE);
 		assert(return_code == 0, "RPSServer couldn't send SHUTDOWN to client");
 	} else if (server->state == WAITING_FOR_CHOICES) {
@@ -274,7 +308,11 @@ void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_t
 		if (server->player_1_choice != NO_CHOICE && server->player_2_choice != NO_CHOICE) {
 			server->state = GOT_CHOICES;
 			// We can play now!
+#ifdef TEST
 			robprintfbusy((const unsigned char *)"Server: We got players! P1=%d, P2=%d\n", server->player_1_tid, server->player_2_tid);
+#else
+			PrintMessage("Server: We got players! P1=%d, P2=%d", server->player_1_tid, server->player_2_tid);
+#endif
 			server->games_played += 1;
 			server->state = SENDING_RESULTS;
 		}
@@ -302,7 +340,12 @@ void RPSServer_HandlePlay(RPSServer * server, RPSMessage * message, int source_t
 
 
 void RPSClient_Start() {
+#ifdef TEST
 	robprintfbusy((const unsigned char *)"RPSClient created, tid=%d\n", MyTid());
+#else
+	PrintMessage("RPSClient created, tid=%d", MyTid());
+#endif
+
 	RPSClient client;
 	RPSClient_Initialize(&client);
 
@@ -324,7 +367,11 @@ void RPSClient_Start() {
 		RPSClient_PlayARound(&client);
 		Pass();
 		if (!client.running) {
+#ifdef TEST
 			robprintfbusy((const unsigned char *)"Client: %d - Quiting due to server shutdown\n", client.tid);
+#else
+			PrintMessage("Client: %d - Quiting due to server shutdown", client.tid);
+#endif
 			Exit();
 		}
 	}
@@ -338,7 +385,11 @@ void RPSClient_Initialize(RPSClient * client) {
 	client->tid = MyTid();
 	RNG_Initialize(&client->rng, client->tid);
 	client->server_id = WhoIs((char*) RPS_SERVER_NAME);
+#ifdef TEST
 	client->num_rounds_to_play = 7;
+#else
+	client->num_rounds_to_play = 123456789;
+#endif
 	client->running = 1;
 }
 
@@ -371,7 +422,7 @@ void RPSClient_PlayARound(RPSClient * client) {
 				"Client wasn't told to wait. Got=%d, TID=%d", reply_message->message_type, client->tid);
 				
 		if (reply_message->delay_time) {
-			Delay(reply_message->delay_time);
+			DelaySeconds(reply_message->delay_time * 0.1);
 		}
 
 		counter +=1;
@@ -398,19 +449,32 @@ void RPSClient_PlayARound(RPSClient * client) {
 
 	switch (outcome) {
 	case WIN:
+#ifdef TEST
 		robprintfbusy((const unsigned char *)"Client: %d - I won ", client->tid);
+#else
+		PrintMessage("Client: %d - I won ", client->tid);
+#endif
 		break;
 	case LOSE:
+#ifdef TEST
 		robprintfbusy((const unsigned char *)"Client: %d - I lost ", client->tid);
+#else
+		PrintMessage("Client: %d - I lost ", client->tid);
+#endif
 		break;
 	case TIE:
+#ifdef TEST
 		robprintfbusy((const unsigned char *)"Client: %d - It was a tie ", client->tid);
+#else
+		PrintMessage("Client: %d - It was a tie ", client->tid);
+#endif
 		break;
 	default:
 		assert(0, "Client not sure whether its win or lose");
 		break;
 	}
 
+#ifdef TEST
 	switch (reason) {
 	case ROCK:
 		robprintfbusy((const unsigned char *)" because opponent chose rock\n");
@@ -428,6 +492,9 @@ void RPSClient_PlayARound(RPSClient * client) {
 		assert(0, "Client unable to explain why it won/lost");
 		break;
 	}
+#else
+	(void) reason;
+#endif
 }
 
 
@@ -455,7 +522,11 @@ void RPSClient_Quit(RPSClient * client) {
 	Send(client->server_id, client->send_buffer, MESSAGE_SIZE, client->reply_buffer,MESSAGE_SIZE);
 	reply_message = (RPSMessage *) client->reply_buffer;
 	assert(reply_message->message_type == MESSAGE_TYPE_GOODBYE, "Client didn't get a goodbye from server");
+#ifdef TEST
 	robprintfbusy((const unsigned char *)"Client: %d - I decided to quit.\n", client->tid);
+#else
+	PrintMessage("Client: %d - I decided to quit.", client->tid);
+#endif
 }
 
 

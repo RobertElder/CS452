@@ -64,6 +64,8 @@ typedef enum TrainEngineState {
 	TRAIN_ENGINE_WAIT_AND_GO_FOREVER,
 	TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN,
 	TRAIN_ENGINE_CALIBRATING_SPEED,
+	TRAIN_ENGINE_WAIT_FOR_RESERVATION,
+	TRAIN_ENGINE_WRONG_LOCATION,
 } TrainEngineState;
 
 static const char const TRAIN_ENGINE_STATE_NAMES[][20] = {
@@ -80,6 +82,8 @@ static const char const TRAIN_ENGINE_STATE_NAMES[][20] = {
 	"Wait & Go 4evr",
 	"Reverse & Retry",
 	"Calibrate Speed",
+	"Wait 4 Reservtn",
+	"Wrong Location",
 };
 
 typedef enum TrainCommand {
@@ -158,7 +162,6 @@ typedef struct RouteNodeInfo {
 } RouteNodeInfo;
 
 typedef struct TrainEngine {
-	int tid;
 	int train_num;
 	TrainEngineState state;
 	track_node * next_node;
@@ -214,6 +217,7 @@ typedef struct TrainServer {
 	int switch_master_tid;
 	int num_engines;
 	int sensor_reader_blocked;
+	int train_engine_client_tid;
 	
 	track_node track_a_nodes[TRACK_MAX];
 	track_node track_b_nodes[TRACK_MAX];

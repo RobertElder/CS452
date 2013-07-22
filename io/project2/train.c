@@ -109,6 +109,10 @@ void TrainServer_Start() {
 			TrainServer_HandleSetNumEngines(&server);
 			TrainServer_ProcessEngines(&server);
 			break;
+		case MESSAGE_TYPE_RESET_TRACK:
+			TrainServer_HandleResetTrack(&server);
+			TrainServer_ProcessEngines(&server);
+			break;
 		default:
 			assert(0, "TrainServer: unknown message type");
 			break;
@@ -213,17 +217,17 @@ void TrainServer_Initialize(TrainServer * server) {
 	Queue_Initialize((Queue*) &server->train_speed_queue, TRAIN_SPEED_QUEUE_SIZE);
 
 	//  The train engine relies on the server model being set up correctly first.
-	server->train_engines[0].tid = Create(TRAINENGINE_START_PRIORITY, TrainEngineClient_Start);
-	assert(server->train_engines[0].tid, "TrainServer failed to create TrainEngineClient_Start");
+	server->train_engine_client_tid = Create(TRAINENGINE_START_PRIORITY, TrainEngineClient_Start);
+	assert(server->train_engine_client_tid, "TrainServer failed to create TrainEngineClient_Start");
 }
 
-int IsNodeReachableViaDirectedGraph(TrainServer * server, track_node * start_node, track_node * dest_node, int levels) {
+int IsNodeReachableViaDirectedGraph(TrainServer * server, int train_num, track_node * start_node, track_node * dest_node, int levels) {
 	//  Don't go too deep
 	if (levels > 20){
 		return 0;
 	}
 
-	if (start_node->reserved){
+	if (start_node->reserved && start_node->reserved != train_num){
 		return 0;
 	}
 
@@ -233,9 +237,9 @@ int IsNodeReachableViaDirectedGraph(TrainServer * server, track_node * start_nod
 		//  Don't go through a broken switch this way or we might get stuck.
 		if(is_switch_blacklisted(server, start_node->num))
 			return 0;
-		return IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
+		return IsNodeReachableViaDirectedGraph(server, train_num, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
 	}else if(start_node->type == NODE_SENSOR){
-		return IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
+		return IsNodeReachableViaDirectedGraph(server, train_num, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
 	}else if (start_node->type == NODE_EXIT){
 		return 0;
 	}else if (start_node->type == NODE_ENTER){
@@ -244,10 +248,10 @@ int IsNodeReachableViaDirectedGraph(TrainServer * server, track_node * start_nod
 		//  Don't try to go through broken switches.
 		if(is_switch_blacklisted(server, start_node->num))
 			return 0;
-		int rtn1 = IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1);
+		int rtn1 = IsNodeReachableViaDirectedGraph(server, train_num, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1);
 		int rtn2 = 0;
 		if(!rtn1){
-			rtn2 = IsNodeReachableViaDirectedGraph(server, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1);
+			rtn2 = IsNodeReachableViaDirectedGraph(server, train_num, start_node->edge[DIR_CURVED].dest, dest_node, levels + 1);
 		}
 		/*
 		if(rtn1 || rtn2){
@@ -271,7 +275,7 @@ int PopulateRouteNodeInfo(TrainServer * server, RouteNodeInfo * info_array, trac
 		return 0;
 	}
 
-	if (start_node->reserved){
+	if (start_node->reserved && start_node->reserved != train_num){
 		return 0;
 	}
 
@@ -347,11 +351,11 @@ int PopulateRouteNodeInfo(TrainServer * server, RouteNodeInfo * info_array, trac
 }
 
 
-track_node * GetRandomSensorReachableViaDirectedGraph(TrainServer * server, track_node * start_node) {
+track_node * GetRandomSensorReachableViaDirectedGraph(TrainServer * server, track_node * start_node, int train_num) {
 	int i = 0;
 	while(1){
 		track_node * random_sensor = GetRandomSensor(server);
-		if(random_sensor != start_node && IsNodeReachableViaDirectedGraph(server, start_node, random_sensor, 0)){
+		if(random_sensor != start_node && IsNodeReachableViaDirectedGraph(server, train_num, start_node, random_sensor, 0)){
 			int module_num = random_sensor->name[0] - 65;
 			assert(module_num >= 0 && module_num <= 4, "Module num is being calculated incorrectly.");
 			//  Parse the number out of the second part of the string
@@ -665,6 +669,27 @@ void TrainServer_HandleSetNumEngines(TrainServer * server) {
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 }
 
+void TrainServer_HandleResetTrack(TrainServer * server) {
+	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	int i;
+	
+	for (i = 0; i < MAX_NUM_ENGINES; i++) {
+		// Stop the trains before reset
+		if (server->train_engines[i].train_num) {
+			TrainServer_SetTrainSpeed(server, 0, server->train_engines[i].train_num);
+		}
+		
+		TrainEngine_Initialize(&server->train_engines[i], 0);
+	}
+	
+	// Release all reservations
+	init_tracka(server->track_a_nodes);
+	init_trackb(server->track_b_nodes);
+	
+	reply_message->message_type = MESSAGE_TYPE_ACK;
+	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
+}
+
 SwitchState GetQueuedSwitchState(TrainServer * server, int switch_num){
 	return server->switches_to_change[switch_num];
 }
@@ -686,6 +711,10 @@ void QueueSwitchState(TrainServer * server, int switch_num, SwitchState new_stat
 void TrainServer_QueueSwitchStates(TrainServer * server, TrainEngine * engine ){
 	(*((KernelState **) KERNEL_STACK_START))->last_switch_queuing = TimeSeconds();
 	int current_route_node_index = engine->route_node_index;
+	
+	assert(engine->destination_node != 0, "TrainServer_QueueSwitchStates destination node not set");
+	assert(engine->route_nodes_length, "TrainServer_QueueSwitchStates route_nodes_length not positive");
+	
 	while(engine->route_node_info[current_route_node_index].node != engine->destination_node){
 		if(engine->route_node_info[current_route_node_index].node->type == NODE_BRANCH){
 			int switch_num = engine->route_node_info[current_route_node_index].node->num;
@@ -719,7 +748,7 @@ int TrainServer_NumActivatedEngines(TrainServer * server) {
 	int num = 0;
 	int i;
 	for (i = 0; i < server->num_engines; i++) {
-		if (server->train_engines[i].train_num) {
+		if (server->train_engines[i].train_num && server->train_engines[i].current_node) {
 			num++;
 		}
 	}
@@ -982,6 +1011,12 @@ void TrainEngine_SetInitialSwitches() {
 	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 7);
 	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 8);
 	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 9);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 18);
+	SetTrainSwitch(SWITCH_CURVED_CODE, 5);
+	SetTrainSwitch(SWITCH_CURVED_CODE, 155);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 156);
+	SetTrainSwitch(SWITCH_CURVED_CODE, 153);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 154);
 }
 
 void TrainSwitchMaster_Start() {

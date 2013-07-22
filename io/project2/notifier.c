@@ -108,7 +108,11 @@ void TrainInputNotifier_Start() {
 	send_message->event_id = UART1_RX_EVENT;
 	
 	while (1) {
+#ifdef TRAINS
 		AwaitEvent(UART1_RX_EVENT);
+#else
+		DelaySeconds(0.5);
+#endif
 		Send(server_tid, send_buffer, MESSAGE_SIZE, reply_buffer, MESSAGE_SIZE);
 		assert(reply_message->message_type == MESSAGE_TYPE_ACK,
 			"TrainInputNotifier didn't get an ACK");
@@ -132,7 +136,11 @@ void TrainOutputNotifier_Start() {
 	int first = 1;
 	while (1) {
 		if(!first){
+#ifdef TRAINS
 			AwaitEvent(UART1_TX_EVENT);
+#else
+			DelaySeconds(0.5);
+#endif
 		}else{
 			first = 0;
 		}

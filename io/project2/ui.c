@@ -8,6 +8,8 @@
 #include "random.h"
 #include "tasks.h"
 #include "train.h"
+#include "rps.h"
+#include "private_kernel_interface.h"
 
 void UIServer_Start() {
 	DebugRegisterFunction(&UIServer_Start,__func__);
@@ -92,6 +94,7 @@ void UIServer_Initialize(UIServer * server) {
 	server->background_color = BLUE;
 	server->foreground_color = WHITE;
 	server->num_engines = 1;
+	server->last_char = 0;
 	
 	int i;
 	
@@ -163,14 +166,17 @@ void UIServer_PrintTime(UIServer * server) {
 	char min_str[5];
 	char hours_str[5];
 	char days_str[5];
-	rob_zero_pad(ms, ms_str);
-	rob_zero_pad(sec, sec_str);
-	rob_zero_pad(min, min_str);
-	rob_zero_pad(hours, hours_str);
-	rob_zero_pad(days, days_str);
+	rob_zero_pad(ms, ms_str, 3);
+	rob_zero_pad(sec, sec_str, 2);
+	rob_zero_pad(min, min_str, 2);
+	rob_zero_pad(hours, hours_str, 2);
+	rob_zero_pad(days, days_str, 2);
+	
+	KernelState * k_state = *((KernelState **) KERNEL_STACK_START);
+	int load = Scheduler_GetSystemLoad(&k_state->scheduler) * 100;
 	
 	ANSI_Cursor(1, sizeof(UI_SERVER_HEADER) + 1);
-	PutString(COM2, "{ SYSTIME = %s:%s:%s:%s,%s }", days_str, hours_str, min_str, sec_str, ms_str);
+	PutString(COM2, "{ SYSTIME = %s:%s:%s:%s,%s  IDLE = %d%% }", days_str, hours_str, min_str, sec_str, ms_str, load);
 	ANSI_ClearLine(CLEAR_TO_END);
 }
 
@@ -186,9 +192,14 @@ void UIServer_PrintCommandLine(UIServer * server) {
 }
 
 void UIServer_ProcessKeystroke(UIServer * server, char c) {
+	int entered = 0;
 	ANSI_Cursor(2, UI_COMMAND_START_POS + server->command_buffer_index);
 	
-	if (c == '\r') {
+	entered = (c == '\r') || (c == '\n' && server->last_char != '\r');
+	
+	if (c == '\x00') {
+		// Drop it
+	} else if (entered) {
 		UIServer_RunCommand(server);
 		UIServer_ResetCommandBuffer(server);
 	} else if (c == '\b') {
@@ -200,7 +211,7 @@ void UIServer_ProcessKeystroke(UIServer * server, char c) {
 			ANSI_CursorBackward(1);
 			PutString(COM2, " ");
 		}
-	} else if (server->command_buffer_index < UI_SERVER_COMMAND_BUFFER_SIZE - 1) {
+	} else if (server->command_buffer_index < UI_SERVER_COMMAND_BUFFER_SIZE - 1 && c != '\r' && c != '\n') {
 		server->command_buffer[server->command_buffer_index] = c;
 		
 		PutString(COM2, "%c", server->command_buffer[server->command_buffer_index]);
@@ -208,6 +219,8 @@ void UIServer_ProcessKeystroke(UIServer * server, char c) {
 		server->command_buffer_index++;
 		server->command_buffer[server->command_buffer_index] = 0;
 	}
+	
+	server->last_char = c;
 }
 
 void UIServer_RunCommand(UIServer * server) {
@@ -244,6 +257,12 @@ void UIServer_RunCommand(UIServer * server) {
 		UIServer_HandleSetDestinationCommand(server);
 	} else if (server->command_buffer[0] == 'n' && server->command_buffer[1] == 'u') {
 		UIServer_HandleSetNumEngines(server);
+	} else if (server->command_buffer[0] == 'r' && server->command_buffer[1] == 't') {
+		UIServer_HandleResetTrack(server);
+	} else if (server->command_buffer[0] == 'p' && server->command_buffer[1] == 'a') {
+		server->dirty = 1;
+	} else if (server->command_buffer[0] == 'r' && server->command_buffer[1] == 'p') {
+		Create(RPSTESTSTART_PRIORITY, RPSLightTestStart);
 	} else {
 		UIServer_PrintCommandHelp(server);
 	}
@@ -260,7 +279,7 @@ void UIServer_ResetCommandBuffer(UIServer * server) {
 void UIServer_PrintCommandHelp(UIServer * server) {
 	ANSI_Color(YELLOW, server->background_color);
 	ANSI_Style(BOLD_STYLE);
-	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, go, dest, num");
+	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, go, gf, dest, num, paint, rt, rps, CTRL+Z, CTRL+C");
 	ANSI_Style(NORMAL_STYLE);
 	ANSI_Color(server->foreground_color, server->background_color);
 }
@@ -440,6 +459,19 @@ void UIServer_HandleSetNumEngines(UIServer * server) {
 	PutString(COM2, "Number of engines set to %d", server->num_engines);
 }
 
+void UIServer_HandleResetTrack(UIServer * server) {
+	GenericMessage  * send_message = (GenericMessage *) server->send_buffer;
+	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	
+	send_message->message_type = MESSAGE_TYPE_RESET_TRACK;
+	
+	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+	
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_HandleResetTrack failed to get ack message");
+	
+	PutString(COM2, "Track was reset.");
+}
+
 void UIServer_PrintSensors(UIServer * server) {
 	TrainSensorMessage * send_message = (TrainSensorMessage *) server->send_buffer;
 	TrainSensorMessage * receive_message = (TrainSensorMessage *) server->receive_buffer;
@@ -562,10 +594,10 @@ void UIServer_PrintSwitches(UIServer * server) {
 			if (server->switch_dirty[switch_num] || server->dirty) {
 				ANSI_Cursor(MAP_ROW_OFFSET + label_pos->row, MAP_COL_OFFSET + 1 + label_pos->col);
 				if (switch_state == SWITCH_CURVED) {
-					ANSI_Color(RED, server->switch_background_color[switch_num]);
+					ANSI_Color(MAGENTA, server->switch_background_color[switch_num]);
 					PutString(COM2, "C");
 				} else if (switch_state == SWITCH_STRAIGHT){
-					ANSI_Color(GREEN, server->switch_background_color[switch_num]);
+					ANSI_Color(CYAN, server->switch_background_color[switch_num]);
 					PutString(COM2, "S");
 				} else if (switch_state == SWITCH_UNKNOWN){
 					ANSI_Color(server->foreground_color, server->switch_background_color[switch_num]);
@@ -709,17 +741,23 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 void UIServer_PrintTrainMapPosition(UIServer * server) {
 	GenericTrainMessage  * send_message = (GenericTrainMessage *) server->send_buffer;
 	TrainEngineStatusMessage * reply_message = (TrainEngineStatusMessage *) server->reply_buffer;
-	
-	send_message->int1 = 0;
-	send_message->message_type = MESSAGE_TYPE_QUERY_TRAIN_ENGINE;
-	
-	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
-	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_PrintTrainMapPosition: did not get ack message");
-	
-	track_node * track_nodes = reply_message->track_nodes;
-	TrainEngine * engine = reply_message->train_engine;
+	TrainEngine * engines[MAX_NUM_ENGINES];
 	
 	int i;
+	
+	for (i = 0; i < server->num_engines; i++) {
+		send_message->int1 = i;
+		send_message->message_type = MESSAGE_TYPE_QUERY_TRAIN_ENGINE;
+	
+		Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+		assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_PrintTrainMapPosition: did not get ack message");
+		
+		engines[i] = reply_message->train_engine;
+	}
+	
+	assert(server->num_engines >= 1, "number of engines not positive");
+
+	track_node * track_nodes = reply_message->track_nodes;
 	
 	for (i = 0; i < TRACK_MAX; i++) {
 		track_node * node = &track_nodes[i];
@@ -731,12 +769,30 @@ void UIServer_PrintTrainMapPosition(UIServer * server) {
 			new_color = server->switch_background_color[node->num];
 		}
 		
-		if (node == engine->destination_node || node->reverse == engine->destination_node) {
+		int is_destination_node = 0;
+		int dest_train_i = 0;
+		
+		for (dest_train_i = 0; dest_train_i < server->num_engines; dest_train_i++) {
+			if (node == engines[dest_train_i]->destination_node || node->reverse == engines[dest_train_i]->destination_node) {
+				is_destination_node = 1;
+				break;
+			}
+		}
+		
+		if (is_destination_node) {
 			// Highlight destination
-			new_color = GREEN;
+			if (dest_train_i != 0) {
+				new_color = YELLOW;
+			} else {
+				new_color = GREEN;
+			}
 		} else if (node->reserved || node->reverse->reserved) {
 			// Highlight reservation
-			new_color = BLACK;
+			if (node->reserved != engines[0]->train_num) {
+				new_color = RED;
+			} else {
+				new_color = BLACK;
+			}
 		} else {
 			new_color = server->background_color;
 		}
@@ -806,8 +862,6 @@ void UIKeyboardInput_Start() {
 	
 	while (1) {
 		data = Getc(COM2);
-
-		assert(data != 0, "UIKeyboardInput: got 0x00 from keyboard?");
 
 		char_message->message_type = MESSAGE_TYPE_DATA;
 		char_message->chars[0] = data;
