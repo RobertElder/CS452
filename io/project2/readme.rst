@@ -68,17 +68,25 @@ Pressing 'CTRL+Z' will cause the program to dump out a list of tasks information
 Pressing CTRL+C will cause the program to exit immediately without shutting down the tasks.
 
 
+Getting Started Quickly
+-----------------------
+
+To start up two trains
+
+1. Select the appropriate map using the ``map`` command.
+2. Set the number of trains to be used using ``num`` command.
+3. Enter the first train using ``go TRAINNUM1 0``
+4. Enter the second train using ``go TRAINNUM2 1``
+5. If things go wrong, use the ``rt`` command
+
+
 Description
 ===========
 
 Kernel
 ++++++
 
-* Caching improves the performance of the program and will be mandatory for this deliverable.  We have finely tuned the duration of a time slice to be no longer than 700 microseconds.  Running the program without caches would require re-tuning of the time slice to prevent all CPU cycles being burnt up doing context switching.  The extremely small time quantum of 700 microseconds ensures fast responsiveness to train input and with the user interface.
-
-* Interrupts have been completely refactored to increase stability with train communication.  This was done because we were previously attempting to send on the TXFE interrupt instead of waiting for CTS to be asserted.  We now listen for the modem status interrupt and correctly attempt to send information to the train only when CTS has been asserted after a de-assertion.
-
-*  Much investigation and refactoring was done to be sure that we will not miss any data when communication with the train.  A simple busy waiting test program was created to evaluate the timings and state transitions that happen when communicating with the train.  A diagram is shown in Figure 1 that presents the empirical timings of io flag assertions when communicating with the train.  One interesting finding is that the amount of time it takes for data to be returned from a specific sensor module can vary by about 5 milliseconds, however the time between bytes of data sent back from the train controller is very constant, at about 4.87ms.
+* No kernel changes since last deliverable.
 
 
 .. figure:: figure1.jpg
@@ -88,6 +96,7 @@ System Calls
 ------------
 
 * System calls support up to 5 arguments.
+* No changes since last deliverable.
 
 
 ``Create``
@@ -154,188 +163,76 @@ System Calls
     Similar to ``PrintMessage``, but this sends the string to the UI Print Server to be displayed on the lower half of the screen using a ``UI_PRINT_MESSAGE`` message type
 
 
-Memory model
-------------
-
-The memory model looks like this::
-
-    +----------------+ 0x0200_0000
-    | RedBoot Stack  |
-    +----------------+ 0x01fd_cfdc Starting value of redboot stack 
-    | Redboot Buffer*|             after box reset
-    +----------------+ 0x01FD_B09C 
-    | Kernel Stack   |
-    +----------------+ 0x01FD_B09C - sizeof(KernelState) - 400kb 
-    | IRQ Stack      |             = KernelEnd
-    +----------------+ KernelEnd - 500kb
-    | User Stacks    |
-    |                |
-    +----------------+ 0x0005_2804 (_EndOfProgram specified in orex.ld)
-    | Kernel         |
-    +----------------+ 0x0004_5000 (%{FREEMEMLO} RedBoot alias)
-    | RedBoot        |
-    +----------------+ 0x0000_0000
-
-
-``${FREEMEMLO}``
-----------------
-
-After consulting the RedBoot documentation, the entry point was moved to ``0x00045000`` to free up more memory for user stacks. We believe that this new memory location marks the start of safe memory that is not used as a guarantee from redboot and we have not found any reason we cannot move the entry point to this location.  This values comes from the a redboot alias %{FREEMEMLO} that can be used when loading the program instead of the literal address.
-
-As well, we are able to have assert checks on stack boundaries. Using the ``_EndOfProgram`` linker symbol, we can check if a user stack pointer overwrites the kernel. There are checks for each user stack as well.
-
-Stack values and sizes are configurable, and will generally give appropriate assertions if the memory model has conflicts that can cause corruption.
-
-
-Message Passing
----------------
-
-Messages are ``structs`` that are casted into ``char*``. This casting allows us to manipulate messages more easily with type safety rather than dealing with raw ``char``. Note we use GCC attribute syntax to word align the character array as the GCC compiler does not realize we are type punning.
-
-Kernel Messages, messages that are copied into the kernel, are now stored into an array, using Dynamic Memory Allocation (see below), instead of using a combination of ring buffers and queues. Refactoring to a simpler solution allows us to reduce the load on our brain while debugging the kernel. See Dynamic Memory Allocation for more information.
-
-The message size is fixed to 16 bytes. Using a fixed value allows for consistency. As well, this low value is meant to reduce the time spent on message copying.
-
-
-Priority Queue
---------------
-
-The Priority Queue uses 32 levels of priority by using 32 Queues.
-
-Note the highest priority is 0 and the lowest priority is 31. Named priority levels are removed as they were no longer used. Explicit values are now required to remove ambiguity.
-
-
-When retrieving an item, the Priority Queue uses an integer to track which priority level has items. When a bit is 1, it means there is at least one item in the queue. For example, ``00110000...`` means there is at least one item in priority 2 and 3 queues. The count leading zero instruction is used so that we avoid checking all 32 queues when getting an item. ``0`` is returned when there is no item.
-
-We have also centralized all of the priorities into one file called ``priorities.h`` for easy manipulation.
-
-
-Interrupt Handler
-+++++++++++++++++
-
-File: ``kernel_irq.c``
-
-Vectored interrupts are used.
-
-Timer3 is enabled and counts down from 5080 to give 10ms interrupt intervals. The kernel also sets the CPSR to allow interrupts.
-
-The interrupt handler will call the scheduler to unblock tasks and it also acknowledge Timer3.
-
-UART1RXINTR1, UART1TXINTR1, UART2RXINTR2, UART2TXINTR2, are enabled when there is a Task waiting for it. The IRQ handlers will disable the respective interrupt after it has fired. UART Clocking problems are avoided as our context switch is greater than 50 NOPs. 
-
 
 Watchdog
 --------
 
-A watchdog was added to the scheduler. It runs as the lowest priority task. If the watchdog is not scheduled within 1,000,000 rounds, the scheduler will dump out task statistics and hang. This watchdog will indicate if any tasks are starved. If this condition does occur, it will report within a minute.
+The watchdog has been changed to report starvation after 500,000 schedules to be more strict in detecting this problem.
+
+
+Scheduler
+---------
+
+The scheduler now calculates the system load by counting the number of low priority schedules per 1,000,000 schedules. This may not reflect the true load as the Idle Task may take a long time slice before rescheduling. In the future deliverable, we may implement counting the time each task is scheduled.
 
 
 Assert
 ++++++
 
-The assert statement has been enhanced to show Thomas The Tank Engine. Please do not be alarmed when you see it.
+The assert statement, as usual, is enhanced to show Thomas The Tank Engine. Please do not be alarmed when you see it.
 
-Bugs have been fixed related to entering assertion failure mode and it should not work properly from user mode, supervisor mode, irq mode, and in the presence of premption.
+When an assertion failure occurs, the Stop command will now be sent to avoid train collisions.
+
 
 Serial IO
 +++++++++
 
 File: ``uart.c``
 
-* FIFOs were not used for this deliverable.
-
-The following Serial IO notifiers call ``AwaitEvent``
-
-========================== ============== ==============================
-Task                       Event ID       Reports to
-========================== ============== ==============================
-Keyboard Input Notifier    UART2_RX_EVENT Keyboard Input Server
-Screen Output Notifier     UART2_TX_EVENT Screen Output Server
-Train Input Notifier       UART1_RX_EVENT Train Input Server
-Train Output Notifier      UART1_TX_EVENT Train Output Server
-========================== ============== ==============================
-
-
-UART Bootstrap Task
--------------------
-
-The UART Bootstrap Task is responsible for setting up the UART clock speeds and settings. It also starts up the servers.
-
-
-Keyboard Input Server, Train Input Server
------------------------------------------
-
-The Input Servers receive keyboard and train inputs. They have a Char Buffer and receive byte data as notified. ``Getc`` callers will have their task IDs queued. Once Char Buffer contains data, the ``Getc`` callers will be replied with the character.
-
-
-Screen Output Server, Train Output Server
------------------------------------------
-
-The Output Servers send screen and train outputs. They have a Char Buffer and send bytes as notified. ``Putc`` callers will send the character to the server and the character is queued onto the Char Buffer. Once it is OK to transmit by checking the CTS flag, the character is popped from the Char Buffer and transmitted.
-
-
-Train Servers
-+++++++++++++
-
-File: ``train.c``
-
-
-Train Server
-------------
-
-The Train Server is responsible for handling sensor data from the Train Sensor Reader and queries from the UI Server. It also starts the Train Sensor Reader and Train Command Server
-
-Data Structures
-'''''''''''''''
-
-The Train Server stores its sensor data into bit flags. The least significant bit represents the first sensor. This scheme allows easier masking:
-
-* ``flag & 1<<0`` is the first sensor
-* ``flag & 1<<1`` is the second sensor
-* ``flag & 1<<15`` is the 16th sensor
-
-As well, the Train Server stores the last Time the sensor was triggered.
-
-The data structure we use for train track navigation is the track graph provided on the course website.
-
-
-Train Sensor Reader
--------------------
-
-The Train Sensor Reader task is responsible for sending track sensor commands and reading them from the train controller. It calls the Train Command Server for the data and manipulates the bytes into a easier to handle form. It then sends the values to the Train Server.
-
-Train Command Server
---------------------
-
-The Train Command Server is responsible for receiving Train Command messages such as ``SPEED`` and ``READ_SENSOR``. It calls ``Putc`` and ``Getc`` as required. Passing all train commands through this server is a form of mutual exclusion. It ensures that commands are fully sent to the trains and commands are not mangled by different tasks.
+* FIFOs are now used for the terminal input/output.
 
 
 Train Navigation
 ++++++++++++++++
 
-File: ``route.c``, ``tracks/track_data.c``
+File: ``route.c``, ``tracks/track_data.c``, ``train_logic.c``, ``train_data_structures.h``
 
 Train navigation is currently accomplished using naive graph search algorithms, as well as a server called the SwitchMaster that is responsible for updating the positions of switches.
 
 We have broken down the problem of navigation to anywhere on the map into two basic problems: The first is navigation to a point while considering the map as a directed graph.  In this situation we only consider moving in the forward direction.  In this context, it is not possible to navigate to anywhere on the map from all nodes because the graph is considered to be a directed one.  In the second case, we consider the map as an undirected graph, where any shortest path can be found by finding the shortest route in the undirected graph.  We can then express the problem of navigation between two points in the undirected graph as multiple navigations in a directed graph, while adding direction reversals in the middle.
 
+To find a destination, a simple depth first recursive algorithm is used to build up a Route Info array. The Route Info array contains information about each track node and the switches it needs to switch. The algorithm avoids blacklisted switches.
+
+Undirected Nodes and Adjacency List
+-----------------------------------
+
+TODO
+
 
 Stopping
 --------
 
-For stopping we use a roughly approximated table that will tell us how many millimeters before a sensor we need to issue a command to slow down.  This table was derived from empirical measurements and still needs a bit of calibration.  This is especially true on a specific train level, since different trains require different stopping distances.
+For stopping we use a roughly approximated table for each train that will tell us how many millimeters before a sensor we need to issue a command to slow down.  This table was derived from empirical measurements and still needs a bit of calibration.  This is especially true on a specific train level, since different trains require different stopping distances.
+
+A list of speeds for each node during stopping has also been determined empirically. Nodes that are near switches have a lower speed to avoid stopping on top of a switch. We risk the trains getting stuck on curves because it is preferred that trains become stuck rather than derailed by an activating switch.
 
 
 Velocity
 --------
 
-Our trains move at a speed of 50 cm/s and we maintain this speed using a simple feedback control mechanism.  This is accomplished by a simple algorithm that increases the train speed when it arrives at a sensor too slowly, and decreases when it arrives too fast.
+Our trains move at a speed of 45 cm/s and we maintain this speed using a feedback control mechanism. The trains use a floating point speed setting to avoid sending too many train speed commands and to dampen noise. The floating point speed setting is casted to an int and the command is issued if needed. The algorithm slowly increases the train speed when it arrives at a sensor too slowly, and decreases the speed quickly when it arrives too fast.
 
 
 Sensor Malfunctions
 -------------------
 
 Sensor malfunctions are accounted for by maintaining a list of sensors that are known to malfunction on each track.  We use a blacklist of sensors to remember which sensors should not be navigated to, and which should be ignored when determining the train position.
+
+
+Reservations
+------------
+
+The provided track nodes have been modified with an extra field called ``reserved``. It holds the train number of the reservation. Once the destination and route is calculated, all the nodes in the route are reserved. Once the train reaches its destination, the nodes are released from reservation.
 
 
 Train Switch Master
@@ -358,12 +255,12 @@ Name                              Description
 ================================= =================================================================
 IDLE                              The engine is stopped and waiting.
 FINDING_POSITION                  The engine is moving slowly and waiting for a sensor
-TRAIN_ENGINE_RESYNC_POSITION      The engine has drifted from its calculated position and
+RESYNC_POSITION                   The engine has drifted from its calculated position and
                                   is attempting to find its location
 FOUND_STARTING_POSITION           The engine has found its location
-TRAIN_ENGINE_WAIT_FOR_DESTINATION The engine is waiting for a destination to be calculated
-TRAIN_ENGINE_GOT_DESTINATION      The engine has calculated its destination
-TRAIN_ENGINE_WAIT_FOR_ALL_READY   The engine is waiting for other engines to be found and ready
+WAIT_FOR_DESTINATION              The engine is waiting for a destination to be calculated
+GOT_DESTINATION                   The engine has calculated its destination
+WAIT_FOR_ALL_READY                The engine is waiting for other engines to be found and ready
 RUNNING                           The engine is running at high speeds to the destination
 AT_DESTINATION                    The engine is at the destination and stopped.
 NEAR_DESTINATION                  The engine has slowed down and is waiting for a
@@ -371,9 +268,9 @@ NEAR_DESTINATION                  The engine has slowed down and is waiting for 
 REVERSE_AND_TRY_AGAIN             The engine is in a direction that provides no
                                   destination and is reversing to find a new
                                   sensor.
-TRAIN_ENGINE_WAIT_FOR_RESERVATION The engine has stopped and is waiting for the track to become 
+WAIT_FOR_RESERVATION              The engine has stopped and is waiting for the track to become 
                                   unreserved
-TRAIN_ENGINE_WRONG_LOCATION       The engine has entered an unauthorized section of the track
+WRONG_LOCATION                    The engine has entered an unauthorized section of the track
 ================================= =================================================================
 
 
@@ -382,13 +279,14 @@ GO
 
 The go command operates as following:
 
-1. Set the train speed to 4.
+1. Set the train speed to 5.
 2. If a sensor is hit, pick a random destination.
 3. Calculate a route to the destination.
-4. Speed up the train to 11.
-5. Using feedback control system, adjust the speed to achieve a speed of 50 cm/s.
-6. If the distance to destination is within the stopping distance, slow the train down.
-7. Wait for a sensor and stop.
+4. If there are other trains that need to find their destination, wait for them.
+5. Speed up the train to 14.
+6. Using feedback control system, adjust the speed to achieve a speed of 45 cm/s.
+7. If the distance to destination is within the stopping distance, slow the train down.
+8. Wait for a sensor and stop.
 
 For an iterative version of the go command, see GF command which will iteratively use the go command after a train reaches its destination.
 
@@ -397,8 +295,9 @@ GF
 
 The gf command operates as following:
 
-1. Do steps 1-7 of the go command
-2. goto step 1
+1. Do steps 1-8 of the go command
+3. Wait for 4 seconds
+3. Goto step 1
 
 
 UI Servers
@@ -410,19 +309,21 @@ Files used by UI servers: ``ui.c``, ``ansi.c``, ``maps/map_gen.py``, ``maps/map_
 UI Server
 ---------
 
-* Backspace has been fixed.
+* CR LF is handled correctly now.
 * Minor bug: certain inputs will cause assertion failures.
 
 
-The UI Server is responsible for drawing the textual user interface. It draws a header, the time since start up, the command prompt, table of sensors readings, an ASCII diagram of the track layout, train status, and a scrolled area of train information.
+The UI Server is responsible for drawing the textual user interface. It draws a header, the time since start up, a system load indicator expressed in percentage, the command prompt, table of sensors readings, an ASCII diagram of the track layout, a table of train status, and a scrolled area of train information.
 
-The command prompt supports up to 80 characters. Once this limit is reached, no input will be accepted and displayed. It supports backspace. Pressing the Enter key will execute the command and a response will be displayed under the command prompt.
+The command prompt supports up to 80 characters. Once this limit is reached, no input will be accepted and displayed. It supports backspace. Pressing the Enter key will execute the command and a response will be displayed under the command prompt. If an error occurs, it will be shown in yellow.
 
 When a sensor is triggered, the UI Server will display an bold number on the table. Sensor data for the UI is cached by the Train Server so displayed sensor readings may not reflect actual state. Sensor states in the Train Server, however, reflect actual states.
 
 The ASCII map shows sensors as X and bold X. Switches are shown as U, C, or S which represent Unknown, Curved, or Straight. The ASCII map code was generated through a script from a text file.
 
-A green highlight shows the destination. Bug: the green highlight is not persistent if an updated sensor overwrites the cell.
+A green highlight shows the destination of the first train. A yellow highlight shows the destination for other trains.
+
+A black highlight shows the reservation of the first train. A red highlight shows the reservation for other trains.
 
 Some of the hilights of the UI are found in figure 4.
 
@@ -453,8 +354,14 @@ Performance
 
 In this deliverable we have several features that significantly improve the performance of our kernel:
 
-1)  Time slicing has been reduced to grant each task a maximum of 700 microseconds.  This significantly improves responsiveness.
-2)  Works with all gcc optimization levels.
+1)  The priorities were adjusted to achieve the following
+
+    * Notifiers have high priority
+    * The UI keyboard input no longer drops characters while the UI is redrawing.
+    * The Switch Master and Train Speed Client are at higher priorities than the Sensor Reader. This setup is necessary to avoid the trains getting caught on the switches.
+
+2)  FIFOs for the terminal were enabled. Without FIFOs, the UI task may be interrupted during sending ANSI sequences and leaving incomplete sequences on the screen. With FIFOs, the screen updates correctly without flickering.
+
 
 
 Source Code
