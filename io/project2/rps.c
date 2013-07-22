@@ -422,7 +422,7 @@ void RPSClient_PlayARound(RPSClient * client) {
 				"Client wasn't told to wait. Got=%d, TID=%d", reply_message->message_type, client->tid);
 				
 		if (reply_message->delay_time) {
-			Delay(reply_message->delay_time);
+			DelaySeconds(reply_message->delay_time * 0.1);
 		}
 
 		counter +=1;
