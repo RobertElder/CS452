@@ -107,7 +107,7 @@ int main() {
 		);
 
 		if(rand() % 1000 == 0){
-			//print_undirected_path_info(path, actual_path_length);
+			print_undirected_path_info(path, actual_path_length);
 		}
 	}
 }

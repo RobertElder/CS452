@@ -9,6 +9,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define assertf(a,b) assert(a)
+
+#else
+
+#define printf(format, args...) PrintMessage(format, args)
+
 #endif
 
 int get_edge_index(undirected_node * src, undirected_node * target){
@@ -36,7 +42,7 @@ void set_references(track_node * track_nodes, undirected_node * undirected_nodes
 
 			//  If there is no undirected node set for this pair, set one
 			if(!(directed_node1->undirected_node)){
-				assert(!(directed_node2->undirected_node));
+				assertf(!(directed_node2->undirected_node),"Overwriting the directed node for pair.");
 				undirected_node * undirected_node_ptr = &(undirected_nodes[*num_undirected_nodes]);
 				*num_undirected_nodes = *num_undirected_nodes + 1;
 
@@ -52,7 +58,7 @@ void set_references(track_node * track_nodes, undirected_node * undirected_nodes
 					undirected_node_ptr->track_node2 = directed_node1;
 					undirected_node_ptr->track_node1 = directed_node2;
 				}else{
-					assert(0);
+					assertf(0,"Should not reach this point.");
 				}
 				//  Undirected node now points to directed ones.
 			}
@@ -80,7 +86,7 @@ void add_adjacent_undirected_node(undirected_node * node, undirected_node * node
 		}else if(node->track_node2->type == NODE_BRANCH){
 			e3 = &(node->track_node2->edge[DIR_CURVED]);
 		}else{
-			assert(0);
+			assertf(0,"Impossible case.");
 		}
 	}
 
@@ -99,9 +105,9 @@ void add_adjacent_undirected_node(undirected_node * node, undirected_node * node
 		matching_distance = e3->dist;
 	}
 
-	assert(matching_nodes == 1);
+	assertf(matching_nodes == 1,"There is a number of matching nodes different than 1.");
 
-	assert(node->adjacent_nodes.num_adjacent_nodes < 3);
+	assertf(node->adjacent_nodes.num_adjacent_nodes < 3, "There should not be more than 3 adjacent nodes.");
 	
 	undirected_edge edge_to_add;
 	edge_to_add.next_node = node_to_add;
@@ -120,7 +126,7 @@ void sanity_check_distances(undirected_node * undirected_nodes, int * num_undire
 			undirected_node * other_node = undirected_nodes[i].adjacent_nodes.edge[j].next_node;
 			//  Get the edge index that brings us back to this node in the other node
 			int index = get_edge_index(other_node, &undirected_nodes[i]);
-			assert(undirected_nodes[i].adjacent_nodes.edge[j].micrometers_distance == other_node->adjacent_nodes.edge[index].micrometers_distance);
+			assertf(undirected_nodes[i].adjacent_nodes.edge[j].micrometers_distance == other_node->adjacent_nodes.edge[index].micrometers_distance, "Distances were different.");
 		}
 	}
 }
@@ -129,7 +135,7 @@ void set_adjacency_lists(undirected_node * undirected_nodes, int * num_undirecte
 	int i;
 	for(i = 0; i < *num_undirected_nodes; i++){
 		//  Figure out what node type the undirected node is.
-		assert(undirected_nodes[i].track_node1);
+		assertf(undirected_nodes[i].track_node1, "track node 1 not set.");
 		if(undirected_nodes[i].track_node1->type == NODE_SENSOR){
 			undirected_nodes[i].type = NODE_SENSOR;
 		}else if(undirected_nodes[i].track_node1->type == NODE_MERGE || undirected_nodes[i].track_node1->type == NODE_BRANCH){
@@ -137,7 +143,7 @@ void set_adjacency_lists(undirected_node * undirected_nodes, int * num_undirecte
 		}else if(undirected_nodes[i].track_node1->type == NODE_ENTER || undirected_nodes[i].track_node1->type == NODE_EXIT){
 			undirected_nodes[i].type = NODE_END;
 		}else{
-			assert(0);
+			assertf(0,"Impossible case.");
 		}
 
 		if(undirected_nodes[i].track_node1->edge[DIR_STRAIGHT].dest){
@@ -152,7 +158,7 @@ void set_adjacency_lists(undirected_node * undirected_nodes, int * num_undirecte
 			}else if(undirected_nodes[i].track_node2->type == NODE_BRANCH){
 				add_adjacent_undirected_node(&(undirected_nodes[i]), undirected_nodes[i].track_node2->edge[DIR_CURVED].dest->undirected_node);
 			}else{
-				assert(0);
+				assertf(0,"Impossible case.");
 			}
 		}
 	}
@@ -179,22 +185,22 @@ int add_all_distances(undirected_node * undirected_nodes, int num_undirected_nod
 }
 
 void add_train_node(undirected_node * train, undirected_node * src, undirected_node * dst, int distance){
-	assert(train->type == NODE_TRAIN);
+	assertf(train->type == NODE_TRAIN, "Not a train node.");
 	//  Will insert the train node into the graph at 'distance' after src on the way to dst.
 	int i;
 	int edge_src_index = get_edge_index(src, dst);
-	assert(edge_src_index != -1);
+	assertf(edge_src_index != -1, "src edge not found.");
 
 	int edge_dst_index = get_edge_index(dst, src);
-	assert(edge_dst_index != -1);
+	assertf(edge_dst_index != -1, "dst edge not found.");
 
 	//  The distances should be the same either way, if not something broke
-	assert(src->adjacent_nodes.edge[edge_src_index].micrometers_distance == dst->adjacent_nodes.edge[edge_dst_index].micrometers_distance);
+	assertf(src->adjacent_nodes.edge[edge_src_index].micrometers_distance == dst->adjacent_nodes.edge[edge_dst_index].micrometers_distance, "distance was different.");
 
 	int total_distance = src->adjacent_nodes.edge[edge_src_index].micrometers_distance;
 
-	assert(distance < total_distance);
-	assert(distance > 0);
+	assertf(distance < total_distance, "We don't support adding distances that are that large yet.");
+	assertf(distance > 0,"You shouldn't add a negative distance.");
 
 	int distance_src_to_train = distance;
 	int distance_train_to_dst = total_distance - distance;
@@ -222,14 +228,14 @@ void add_train_node(undirected_node * train, undirected_node * src, undirected_n
 
 
 void remove_train_node(undirected_node * train, undirected_node * src, undirected_node * dst){
-	assert(train->type == NODE_TRAIN);
+	assertf(train->type == NODE_TRAIN, "not a train node.");
 	//  Will insert the train node into the graph at 'distance' after src on the way to dst.
 	int i;
 	int edge_src_index = get_edge_index(src, train);
-	assert(edge_src_index != -1);
+	assertf(edge_src_index != -1, "src edge not found");
 
 	int edge_dst_index = get_edge_index(dst, train);
-	assert(edge_dst_index != -1);
+	assertf(edge_dst_index != -1, "dst edge not found");
 
 	//  Recalculate the total distance.
 	int total_distance = dst->adjacent_nodes.edge[edge_dst_index].micrometers_distance + src->adjacent_nodes.edge[edge_src_index].micrometers_distance;
@@ -249,7 +255,7 @@ void remove_train_node(undirected_node * train, undirected_node * src, undirecte
 }
 
 void print_move_over_statement(undirected_node * n1, undirected_node * n2){
-	return;
+#ifdef TESTS
 	printf("Train moving over ");
 
 	if(n1->track_node1 && n1->track_node1){
@@ -267,7 +273,7 @@ void print_move_over_statement(undirected_node * n1, undirected_node * n2){
 	}
 
 	printf(".\n");
-
+#endif
 }
 
 void move_train_distance(undirected_node * train, undirected_node * src, undirected_node * dst, undirected_node * preferred, int distance){
@@ -278,10 +284,10 @@ void move_train_distance(undirected_node * train, undirected_node * src, undirec
 		return;
 
 	int edge_src_index = get_edge_index(src, train);
-	assert(edge_src_index != -1);
+	assertf(edge_src_index != -1, "src edge not found");
 
 	int edge_dst_index = get_edge_index(dst, train);
-	assert(edge_dst_index != -1);
+	assertf(edge_dst_index != -1, "dst edge not fonund");
 
 	int total_distance = dst->adjacent_nodes.edge[edge_dst_index].micrometers_distance + src->adjacent_nodes.edge[edge_src_index].micrometers_distance;
 	//  If we moved it distance amount, where would it be in relation to src?
@@ -293,14 +299,14 @@ void move_train_distance(undirected_node * train, undirected_node * src, undirec
 		print_move_over_statement(src, preferred);
 		//  This means we are going backward to a node before src
 		int edge_preferred_index = get_edge_index(src, preferred);
-		assert(edge_preferred_index != -1);
+		assertf(edge_preferred_index != -1, "preferred edge not found");
 
 		int max_distance = src->adjacent_nodes.edge[edge_preferred_index].micrometers_distance;
 		int back_position = max_distance + new_position;
-		assert(back_position > 0 && back_position < max_distance);
+		assertf(back_position > 0 && back_position < max_distance, "bad back position");
 		add_train_node(train, preferred, src, back_position);
 	}else if(new_position == 0){
-		assert(src->adjacent_nodes.edge[edge_src_index].micrometers_distance != 1);
+		assertf(src->adjacent_nodes.edge[edge_src_index].micrometers_distance != 1, "Bad case not supported with 1");
 		//  Just push it forward 1 micrometer
 		add_train_node(train, src, dst, 1);
 	}else if(new_position > 0 && new_position < total_distance){
@@ -309,19 +315,19 @@ void move_train_distance(undirected_node * train, undirected_node * src, undirec
 		print_move_over_statement(dst, preferred);
 		//  This means we are going forward to a node after dst
 		int edge_preferred_index = get_edge_index(dst, preferred);
-		assert(edge_preferred_index != -1);
+		assertf(edge_preferred_index != -1, "preferred edge not found");
 
 		int max_distance = dst->adjacent_nodes.edge[edge_preferred_index].micrometers_distance;
 		int forward_position = new_position - total_distance;
-		assert(forward_position >= 0 && forward_position < max_distance);
+		assertf(forward_position >= 0 && forward_position < max_distance, "bad forward position.");
 		if(forward_position == 0){
 			//  Just bump it forward one position
-			assert(max_distance != 1);
+			assertf(max_distance != 1, "max distance is 1");
 			forward_position = 1;
 		}
 		add_train_node(train, dst, preferred, forward_position);
 	}else{
-		assert(0);
+		assertf(0,"Impossible case.");
 	}
 }
 
@@ -348,7 +354,7 @@ undirected_node * get_smallest_distance_node_in_Q(undirected_node ** nodes, int 
 			smallest_node_index = i;
 		}
 	}
-	assert(smallest_node_index != -1);
+	assertf(smallest_node_index != -1, "smallest node not found.");
 	undirected_node * rtn = nodes[smallest_node_index];
 	nodes[smallest_node_index] = 0;
 	return rtn;
@@ -393,7 +399,7 @@ void dijkstra(undirected_node ** result_path, int max_result_path_length, int * 
 
 	while(U = get_smallest_distance_node_in_Q(node_set, total_nodes)){
 		//  It should always find some path
-		assert(U->dij_dist != infinity);
+		assertf(U->dij_dist != infinity, "OH NOES INFINITY");
 		if(U == dst){
 			break;
 		}
@@ -409,13 +415,13 @@ void dijkstra(undirected_node ** result_path, int max_result_path_length, int * 
 			}
 		}
 	}
-	assert(U);
+	assertf(U, "U was not found.");
 	//  Gotta build the list backwards
 	undirected_node * U_temp = U;
 	//  Find out how many there are
 	while(U){
 		//  Don't overfill the buffer
-		assert(*result_path_length < max_result_path_length);
+		assertf(*result_path_length < max_result_path_length, "Result path was too small.");
 		*result_path_length = *result_path_length + 1;
 		U = U->dij_previous;
 	}
@@ -445,7 +451,7 @@ void print_undirected_path_info(undirected_node ** path, int actual_path_length)
 			undirected_node * current_node = path[i];
 			undirected_node * next_node = path[i+1];
 			int index = get_edge_index(current_node, next_node);
-			assert(index != -1);
+			assertf(index != -1, "Index not found.");
 			total_cost += current_node->adjacent_nodes.edge[index].micrometers_distance;
 		}
 	}
