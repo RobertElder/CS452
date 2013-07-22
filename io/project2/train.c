@@ -130,7 +130,7 @@ void TrainServer_Start() {
 
 void TrainServer_ConsiderReplyToTrainSensorReader(TrainServer * server){
 	//  Only unblock the sensor reader if there are no switches queued (to give them priority.)
-	if(!(Queue_CurrentCount((Queue*)&server->queued_switch_changes))){
+	if(!(Queue_CurrentCount((Queue*)&server->queued_switch_changes)) && !Queue_CurrentCount((Queue*) &server->train_speed_queue)){
 		if(server->sensor_reader_blocked){
 			if (server->state == TRAIN_SERVER_SHUTDOWN) {
 				server->reply_message->message_type = MESSAGE_TYPE_SHUTDOWN;

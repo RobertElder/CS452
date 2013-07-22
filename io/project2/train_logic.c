@@ -440,7 +440,8 @@ void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
 		){
 			slow_speed = 3;
 		}
-
+		
+		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
 		TrainServer_SetTrainSpeed(server, slow_speed, engine->train_num);
 		engine->state = TRAIN_ENGINE_NEAR_DESTINATION;
 		//PrintMessage("Slowing down");
