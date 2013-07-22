@@ -1,6 +1,6 @@
 #include "undirected_nodes.h"
-#include "../track_data.h"
-#include "../track_node.h"
+#include "track_data.h"
+#include "track_node.h"
 
 #ifdef TESTS
 

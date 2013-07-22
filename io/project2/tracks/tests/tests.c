@@ -1,6 +1,6 @@
 
 #include "../track_data.h"
-#include "undirected_nodes.h"
+#include "../undirected_nodes.h"
 
 #include "assert.h"
 #include "string.h"

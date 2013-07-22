@@ -1,7 +1,7 @@
 #ifndef _UNDIRECTED_NODES_H
 #define _UNDIRECTED_NODES_H
 
-#include "../track_node.h"
+#include "track_node.h"
 
 int get_edge_index(undirected_node * src, undirected_node * target);
 
