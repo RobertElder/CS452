@@ -532,13 +532,17 @@ void TrainServer_HandleSetTrain(TrainServer * server, short go_forever) {
 	
 	assert(slot_num < server->num_engines, "Slot number exceeded");
 	
-	TrainEngine_Initialize(&(server->train_engines[slot_num]), train_num);
+	if (server->train_engines[slot_num].train_num != train_num) {
+		TrainEngine_Initialize(&(server->train_engines[slot_num]), train_num);
+		server->train_engines[slot_num].state = TRAIN_ENGINE_IDLE;
+	} else {
+		server->train_engines[slot_num].state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
+	}
+	
 	server->train_engines[slot_num].go_forever = go_forever;
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
-	
-	server->train_engines[slot_num].state = TRAIN_ENGINE_IDLE;
 }
 
 void TrainServer_HandleSetDestination(TrainServer * server) {
