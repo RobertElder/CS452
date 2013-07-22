@@ -175,6 +175,45 @@ Scheduler
 
 The scheduler now calculates the system load by counting the number of low priority schedules per 1,000,000 schedules. This may not reflect the true load as the Idle Task may take a long time slice before rescheduling. In the future deliverable, we may implement counting the time each task is scheduled.
 
+Priorities
+----------
+
+For this deliverable, we have thought carefully about the priorities of each task.
+
+======================== ==========
+Task                     Priority
+======================== ==========
+Clock Notifier            0
+Clock Server              0
+First Task                0
+Name Server               1
+Administrator             2
+UART Bootstrap            3
+Train IO Notifier         4
+Train Input Notifier      4
+Train Output Notifier     4
+Keyboard Input Notifier   4
+Screen Output Notifier    4
+Train Input Server        5
+Train Output Server       5
+Screen Output Server      6
+Keyboard Input Server     6
+Train Server              7
+UI Print Task             7
+Train Command Server      8
+Train Switch Master       8
+UI Server                 8
+Train Sensor Reader       9
+Train Engine              9
+Train Server Timer       10
+UI Keyboard Input        12
+UI Timer                 13
+RPS Test Start           15
+RPS Server               16
+RPS Client               31
+Idle Task                31
+======================== ==========
+
 
 Assert
 ++++++
@@ -296,7 +335,7 @@ GF
 The gf command operates as following:
 
 1. Do steps 1-8 of the go command
-3. Wait for 4 seconds
+2. Wait for 4 seconds
 3. Goto step 1
 
 
