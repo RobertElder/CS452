@@ -6,7 +6,7 @@
 #define SWITCH_QUEUE_SIZE 256
 #define QUEUE_ITEM_TYPE void*
 #define NUM_PRIORITIES 32
-#define TRAIN_SPEED_QUEUE_SIZE 10
+#define TRAIN_SPEED_QUEUE_SIZE 50
 
 static const int ERR_QUEUE_FULL = -1;
 static const int ERR_QUEUE_PRIORITY = -2;
