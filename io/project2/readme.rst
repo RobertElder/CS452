@@ -1,22 +1,22 @@
 =========
-CS 452 P1
+CS 452 P2
 =========
 
 
 :Names: Robert Elder, Christopher Foo
 :ID #: 20335246, 20309244
 :Userids: relder, chfoo
-:Date due: July 9, 2013
+:Date due: July 23, 2013
 
 
 Running
 =======
 
-The executable is located at ``/u/cs452/tftp/ARM/relder-chfoo/p1-submit/kern.elf``.
+The executable is located at ``/u/cs452/tftp/ARM/relder-chfoo/p2-submit/kern.elf``.
 
-The entry point is located at ``0x00045000`` or ``%{FREEMEMLO}`` It *must* be executed with caching enabled::
+The entry point is located at ``0x00045000`` or ``%{FREEMEMLO}`` It *must* be executed with caching enabled. (Caches not enabled by the program itself due to time contraints)::
 
-    load -b %{FREEMEMLO} -h 10.15.167.4 ARM/relder-chfoo/p1-submit/kern.elf
+    load -b %{FREEMEMLO} -h 10.15.167.4 ARM/relder-chfoo/p2-submit/kern.elf
     go -c
 
 
@@ -51,8 +51,21 @@ go TRAIN
 gf TRAIN
     Like ``go``, however, this make the train go forever by running ``go`` in an continuous loop.
 
+num TRAINS
+    Set the number of trains to be used.
 
-Pressing 'z' will cause the program to dump out a list of tasks information and statistics.   This is considered a debug operation, and as such it can cause future instability in the program.
+paint
+    Causes the interface to redraw itself.
+
+rt
+    Resets the train system by stopping the trains, clearing reservations, and clearing train engine states.
+
+rps
+    Runs Rock Paper Scissors program.
+
+Pressing 'CTRL+Z' will cause the program to dump out a list of tasks information and statistics.   This is considered a debug operation, and as such it can cause future instability in the program.
+
+Pressing CTRL+C will cause the program to exit immediately without shutting down the tasks.
 
 
 Description
@@ -340,23 +353,28 @@ The Engine Client is responsible for picking up train speed commands from the Tr
 Train Engine States
 -------------------
 
-======================= =================================================
-Name                    Description
-======================= =================================================
-IDLE                    The engine is stopped and waiting.
-FINDING_POSITION        The engine is moving slowly and waiting for a
-                        sensor
-FOUND_STARTING_POSITION The engine has found its location and is
-                        calculating a path to the destination
-RUNNING                 The engine is running at high speeds to the 
-                        destination
-AT_DESTINATION          The engine is at the destination and stopped.
-NEAR_DESTINATION        The engine has slowed down and is waiting for a
-                        sensor report.
-REVERSE_AND_TRY_AGAIN   The engine is in a direction that provides no
-                        destination and is reversing to find a new
-                        sensor.
-======================= =================================================
+================================= =================================================================
+Name                              Description
+================================= =================================================================
+IDLE                              The engine is stopped and waiting.
+FINDING_POSITION                  The engine is moving slowly and waiting for a sensor
+TRAIN_ENGINE_RESYNC_POSITION      The engine has drifted from its calculated position and
+                                  is attempting to find its location
+FOUND_STARTING_POSITION           The engine has found its location
+TRAIN_ENGINE_WAIT_FOR_DESTINATION The engine is waiting for a destination to be calculated
+TRAIN_ENGINE_GOT_DESTINATION      The engine has calculated its destination
+TRAIN_ENGINE_WAIT_FOR_ALL_READY   The engine is waiting for other engines to be found and ready
+RUNNING                           The engine is running at high speeds to the destination
+AT_DESTINATION                    The engine is at the destination and stopped.
+NEAR_DESTINATION                  The engine has slowed down and is waiting for a
+                                  sensor report.
+REVERSE_AND_TRY_AGAIN             The engine is in a direction that provides no
+                                  destination and is reversing to find a new
+                                  sensor.
+TRAIN_ENGINE_WAIT_FOR_RESERVATION The engine has stopped and is waiting for the track to become 
+                                  unreserved
+TRAIN_ENGINE_WRONG_LOCATION       The engine has entered an unauthorized section of the track
+================================= =================================================================
 
 
 GO
@@ -442,96 +460,21 @@ In this deliverable we have several features that significantly improve the perf
 Source Code
 ===========
 
-The source code is located at ``/u4/chfoo/cs452/group/p1-submit/io/project1/``. It can be compiled by running ``make``.
+The source code is located at ``/u4/chfoo/cs452/group/p2-submit/io/project1/``. It can be compiled by running ``make``.
 
 Source code MD5 hashes::
 
-    chfoo@linux032:~/cs452/group/p1-submit/io/project1$ md5sum */* *.*
-    50ef0e1e3c71ab1e795fc3d39f75ef9d  include/bwio.h
-    9af226f127c1fd759530cd45236c37b8  include/ts7200.h
-    3dfa3ed141445a72c20840b384c1ebb9  maps/map_a.c
-    c6adb76c95a6ae7986d03cd416d5837e  maps/map_a.h
-    703f1eeadf245074517591baa0844a37  maps/map_a.txt
-    1bc708755da7c2295b062a14b0185558  maps/map_b.c
-    eba8710b29615da70e7165571efd99d8  maps/map_b.h
-    b1999e3d216a76638d8b74ad993082cf  maps/map_b.txt
-    ead84e8315fd7e45f0e8e631197b9150  maps/map_gen.py
-    94944e9febc4db1bb344fff990ed7e9e  maps/map.h
-    cc1cbe679f12e26e95e6580ca063ebe5  tracks/track_data.c
-    1352f3743944badbb8c2399e6fb2ccd4  tracks/track_data.h
-    597a69fd6868b990814a1c3a7dbdd9a3  tracks/track_node.h
-    0f9e8e1f2726f15e222795960bbbbf8c  ansi.c
-    cc47d9653ed272a2d23a743ab186914d  ansi.h
-    b8c8b5fafcd1fd43beaeee7da1e5550f  buffer.c
-    04c39523dd006155ba353fb3ba1dddfb  buffer.h
-    ad48b92a01b68f1b8e33f95a9590e7f9  clock.c
-    f798d08d32ce37146d8013b821f740f5  clock.h
-    d79855f9ffb6a0003409ebb81290b47f  figure1.jpg
-    ea9ed6320aea54e698752e9a9b94adc5  figure2.jpg
-    4bc0f85c30a9d3bfaf7d355123aadf58  figure3.jpg
-    9adce26681f68a082f5c45bf7833c0ed  figure4.jpg
-    796800c7dc1bbd2d2444ff3ad2046a51  ioflags.jpg
-    cac2aaebb371f2ab8150cdbe1e7f5528  kern.c
-    90a5077c8acbf20134123595fa4189eb  kern.elf
-    b05992a75764f4239db6b5f47e3a2b75  kernel_irq.c
-    db3b8b5c5eaa48d2e5bab408ffd172c2  kernel_irq.h
-    5313c05e6242631f379b5141ebca4f5f  kernel_state.h
-    d41d8cd98f00b204e9800998ecf8427e  kern.h
-    5439df921ac46fd07959e43125fefa91  memory.c
-    b16265e8b0bfe3a510b3a25e05b8674a  memory.h
-    adcff2244ac92050360eacd7ab4f5dd9  message.c
-    d6c6d5d6b12cfa2e26b60c7097190e35  message.h
-    615b2439e1f227fc8451bce70c045e11  nameserver.c
-    f9335969b8c71be878a915c26e7a606c  nameserver.h
-    781c959d1329e2f98aad3b782bea50f4  notifier.c
-    3fd892b4a7ec6c055cdad49ad7449b59  notifier.h
-    78a32a3a80cad8a4cc40de1ce18fbe29  orex.ld
-    ff0c679a0b4d9d358874bd98202942d2  priorities.h
-    cf633eed1c5eaa9cb54a2f74f1d34fa2  private_kernel_interface.c
-    837c722d6fe58cb4998e0745bdba768a  private_kernel_interface.h
-    2a63325e4fb036a5acf37c8bd63ee4ca  public_kernel_interface.c
-    93963b17c60bdd40b39629a70d43405b  public_kernel_interface.h
-    63c2ccbe48bb263149cfdc1d0cbe0370  queue.c
-    c205f1a754b08e3a6a236431e441e419  queue.h
-    cd7239008bf3fc8474819d9183b0cc0f  random.c
-    7b31c57ff692317d816c839156382596  random.h
-    3f36d9a8c9e773e144a3ff73951392c8  readme.pdf
-    e9fd61693ae1bb3b59b13de9076b87c6  readme.rst
-    2f81e678122b70367d3a08c645e2c53a  readme.tex
-    25161c0544bf9211c20b350d3fefcef0  robio.c
-    41eb1d6816c426b4e085e0d123ceb456  robio.h
-    03efe383d78a17931a84aeaa3c0473cd  route.c
-    9e6db63fecbd833ce0b6f29532a8e011  route.h
-    62ada229addeb4cac6200c1e2f0f5621  rps.c
-    222f8edffbfde11ee553b7561f4c10a8  rps.h
-    ffe74790069725c8cd0fc5d1d872a7d0  scheduler.c
-    aabd27e8d3fb723a02c437df334983fa  scheduler.h
-    25aa08b383825ef2ce548d255503f275  Screenshot-1.png
-    e613d497f4ddd240605c62968fcc8b98  Screenshot-2.png
-    529204cb3fa263a88c9e866fa0faac39  Screenshot.png
-    fba4eb1fd2006e2d70124be70af02282  swi_kernel_interface.s
-    00f9f65864243bdd18687e7a849c72a1  task_descriptor.c
-    34b26bd48a79c0a2572ca700e9ea4283  task_descriptor.h
-    c534daa815c3638a88cebc7caf8b9d6f  tasks.c
-    0d3699b1a8224eb6995bb042834f66b5  tasks.h
-    eaed4bd78a6fa73453c639c426fef6b6  test_uart.c
-    5b820ca4fce39820f678a6080fd594ef  test_uart.h
-    8e0691e496fc8e75b861f4fd94641239  train.c
-    6231509c4982641abf9fab9b2baed473  train.h
-    f9fed4dbdfd0559f58a03c8b3df8c216  uart.c
-    1a8185a782b5c582a6ba13127ae1a1e3  uart.h
-    bb50f6b51470e70c2c2826b0639456dc  ui.c
-    9a7bc0d6fbcbb469da6352129ba60b29  ui.h
-    5b609bdd0235c3858e16c053b8e53bfd  va_list_def.h
+    TODO
+    TODO
+    TODO
 
 
 Elf MD5 hash::
 
-    chfoo@linux032:/u/cs452/tftp/ARM/relder-chfoo/p1-submit$ md5sum kern.elf
-    90a5077c8acbf20134123595fa4189eb  kern.elf
+    TODO
 
 
-Git sha1 hash: ``3b087bd471f95d9ebfdb19129507cb1279b45fe7``
+Git sha1 hash: ``TODO``
 
 
 
