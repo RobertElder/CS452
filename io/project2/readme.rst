@@ -214,6 +214,8 @@ RPS Client               31
 Idle Task                31
 ======================== ==========
 
+For more info, see Performance.
+
 
 Assert
 ++++++
@@ -373,7 +375,7 @@ Some of the hilights of the UI are found in figure 4.
 UI Timer
 --------
 
-The UI Timer is responsible for sending a message to the UI Server. The timer tells the UI to update the clock on the screen.
+The UI Timer is responsible for sending a message to the UI Server. The timer tells the UI to update the clock and system load on the screen.
 
 
 UI Keyboard Input Task
@@ -386,6 +388,13 @@ UI Print Message Task
 ---------------------
 
 This task is responsible for printing messages into the scrolled area. It uses the ANSI feature to set scrolling areas. It is separate from the UI Server as messages may be from higher priority tasks like the Train Server. It is called via the ``PrintMessage`` call.  This method was implemented as a non busy-waiting alternative for debug messages.
+
+
+Rock Paper Scissors
+-------------------
+
+Rock Paper Scissors is now back and can be run using the ``rps`` command. It will display the results of each round in the scrolling area of the UI. The ``rps`` command should only be run once, however, the RPS games will last 12345689 rounds so there is no need to rerun the ``rps`` command the second time.
+
 
 
 Performance
@@ -406,7 +415,7 @@ In this deliverable we have several features that significantly improve the perf
 Source Code
 ===========
 
-The source code is located at ``/u4/chfoo/cs452/group/p2-submit/io/project1/``. It can be compiled by running ``make``.
+The source code is located at ``/u4/chfoo/cs452/group/p2-submit/io/project2/``. It can be compiled by running ``make``.
 
 Source code MD5 hashes::
 
