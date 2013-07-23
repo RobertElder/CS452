@@ -42,9 +42,8 @@ Figure 2 and Figure 3 show different map configurations.
 
 
 .. figure:: figure2.png
-    Figure 2
 
-.. figure:: figure3.jpg
+    Figure 2
 
 
 go TRAIN
@@ -378,6 +377,7 @@ Some of the hilights of the UI are found in figure 4.
 
 
 .. figure:: figure4.png
+
     Figure 4
 
 
