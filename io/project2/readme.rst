@@ -245,11 +245,28 @@ We have broken down the problem of navigation to anywhere on the map into two ba
 
 To find a destination, a simple depth first recursive algorithm is used to build up a Route Info array. The Route Info array contains information about each track node and the switches it needs to switch. The algorithm avoids blacklisted switches.
 
-Undirected Nodes and Adjacency List
------------------------------------
+Undirected Graph Model
+++++++++++++++++++++++
 
-TODO
+In order to accurately model the train and its motion around the track, as well as predicted future positions on the track, we required another representation of the track to complemented the directed model that was provided.  It is for this reason that we have created a undirected graph model of the track based on the directed graph model.  This model also includes the trains as nodes, which enables us to apply standard graph-based algorithms to any nodes on the track graph, including the trains themselves.  This has significant advantages for tasks such as sensor attribution, collision detection, and route planning.  The advantage of including the trains as nodes in this model means that in this representation, we do not need sensor data to make decisions about what actions to take, and can rely on the current state of the model that has been predicted based on last sensor observations.  The undirected graph model allows us to consider route planning, independant of the number of reversals that are required on the route.  The other advantage is that trains are included as nodes so that the shortest distance between two trains can be calculated down to the micrometer at any point in time, as long as their approximate speed is known.
 
+Sensor triggering can be used to infer observed train speeds, which can be used to simulate the motion of the train in a near continuous time manner.
+
+
+Undirected Graph Data Structure
++++++++++++++++++++++++++++++++
+
+The undirected graph model is built from the directed track node data.  Pointers are added to the directed nodes that point to the corresponding undirected graph nodes, and vice versa.  The undirected graph model is implemented as an adjacency list.  Since every node in this graph can have a maximum of 3 adjacent nodes, this significantly shortens the run time and memory requirements of many graph processing algorithms.
+
+Dijkstra's
+----------
+
+Dijkstra's algorithm has been implemented for the undirected graph nodes.  The implementataion of this algorithm is the standard one, with a run-time of :math:`O(|E| + |V|)`.  Testing has been done with a simulated track where multiple trains are sent on a random-walk around the track millions of times, calculating the shorest distance at each step.  Valgrind was also used to preclude the possibility of programming errors.
+
+Routing and Navigation
+----------------------
+
+Currently, we use a simple recursive graph search algorithm for calculating paths.  This will soon be replaced by the much more accurate Dijkstra's algorithm once the undirected graph model is incorporated into the routing.  Once we have determined a series of nodes that we need to navigate through, we determine the set of switches that need to be changed from their current state, up until we possibly end up changing that same switch again (for re-entrant paths that only involve moving forward).  The switches are queued in the order in which they need to be switched so that the closest switch will be the first one to change.  If the train triggers a sensor that is not on the path it was expected to take, a warning is printed for debugging purposes.
 
 Stopping
 --------
@@ -262,7 +279,7 @@ A list of speeds for each node during stopping has also been determined empirica
 Velocity
 --------
 
-Our trains move at a speed of 45 cm/s and we maintain this speed using a feedback control mechanism. The trains use a floating point speed setting to avoid sending too many train speed commands and to dampen noise. The floating point speed setting is casted to an int and the command is issued if needed. The algorithm slowly increases the train speed when it arrives at a sensor too slowly, and decreases the speed quickly when it arrives too fast.
+Our trains move at a speed of 45 cm/s and we maintain this speed using a feedback control mechanism. The observed train speed is calculated by divinding the known track length between two sensors, and dividing this by the observed time taken to travel between them.  The trains use a floating point speed setting to avoid sending too many train speed commands and to dampen noise. The floating point speed setting is casted to an int and the command is issued if needed. The algorithm slowly increases the train speed when it arrives at a sensor too slowly, and decreases the speed quickly when it arrives too fast.
 
 
 Sensor Malfunctions
@@ -274,13 +291,13 @@ Sensor malfunctions are accounted for by maintaining a list of sensors that are 
 Reservations
 ------------
 
-The provided track nodes have been modified with an extra field called ``reserved``. It holds the train number of the reservation. Once the destination and route is calculated, all the nodes in the route are reserved. Once the train reaches its destination, the nodes are released from reservation.
+The provided track nodes have been modified with an extra field called ``reserved``. It holds the train number of the reservation. Once the destination and route is calculated, all the nodes in the route are reserved. Once the train reaches its destination, the nodes are released from reservation.  The concept of switch reservations is taken care of, because while a train has reserved a switch, no other can attempt to queue a switch change.
 
 
 Train Switch Master
 -------------------
 
-The Switch Master is responsible for picking up switch commands from the Train Server and calling Train Command Server. This task is a worker that removes the burden of waiting for train commands to complete.
+The Switch Master is responsible for picking up switch commands from the Train Server and calling Train Command Server. This task is a worker that removes the burden of waiting for train commands to complete.  
 
 
 Train Engine Client
@@ -402,7 +419,7 @@ This task is responsible for printing messages into the scrolled area. It uses t
 Rock Paper Scissors
 -------------------
 
-Rock Paper Scissors is now back and can be run using the ``rps`` command. It will display the results of each round in the scrolling area of the UI. The ``rps`` command should only be run once, however, the RPS games will last 12345689 rounds so there is no need to rerun the ``rps`` command the second time.
+Rock Paper Scissors is now back and can be run using the ``rps`` command.  Since it still functions from our earlier deliverable, we have decided to use it for stress testing.  It currently runs with 42 clients players.  It will display the results of each round in the scrolling area of the UI. The ``rps`` command should only be run once, however, the RPS games will last 12345689 rounds so there is no need to rerun the ``rps`` command the second time.
 
 
 
