@@ -41,7 +41,9 @@ map NAME
 Figure 2 and Figure 3 show different map configurations.
 
 
-.. figure:: figure2.jpg
+.. figure:: figure2.png
+    Figure 2
+
 .. figure:: figure3.jpg
 
 
@@ -375,7 +377,8 @@ A black highlight shows the reservation of the first train. A red highlight show
 Some of the hilights of the UI are found in figure 4.
 
 
-.. figure:: figure4.jpg
+.. figure:: figure4.png
+    Figure 4
 
 
 UI Timer
