@@ -321,13 +321,19 @@ GO
 The go command operates as following:
 
 1. Set the train speed to 5.
-2. If a sensor is hit, pick a random destination.
-3. Calculate a route to the destination.
-4. If there are other trains that need to find their destination, wait for them.
-5. Speed up the train to 14.
-6. Using feedback control system, adjust the speed to achieve a speed of 45 cm/s.
-7. If the distance to destination is within the stopping distance, slow the train down.
-8. Wait for a sensor and stop.
+2. If a sensor is hit, the location of the train has been found.
+3. Reserve the current location in the reservation system.
+4. If there are other trains that need to find their location, wait for them.
+5. Pick a random destination.
+6. Calculate a route to the destination. 
+7. If there is no possible route to destination, reverse the direction and go to step 5.
+8. Activate the switches that do not overlap other routes or require switching multiple times.
+9. Speed up the train to 14.
+10. Read sensors and compute the speed, location, and distance to update the state of the train engine.
+11. Using the sensor data and  feedback control system, adjust the speed to achieve a speed of 45 cm/s.
+12. If the next node is a switch that needs to be activated, switch it.
+13. If the distance to destination is within the stopping distance, slow the train down.
+14. Wait for a sensor and stop.
 
 For an iterative version of the go command, see GF command which will iteratively use the go command after a train reaches its destination.
 
@@ -336,7 +342,7 @@ GF
 
 The gf command operates as following:
 
-1. Do steps 1-8 of the go command
+1. Do steps 1-14 of the go command
 2. Wait for 4 seconds
 3. Goto step 1
 
