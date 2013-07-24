@@ -1,0 +1,731 @@
+function init_trackb
+
+node A1:
+  sensor 0
+  reverse A2
+  ahead MR12
+node A2:
+  sensor 1
+  reverse A1
+  ahead EX5
+node A3:
+  sensor 2
+  reverse A4
+  ahead BR14
+node A4:
+  sensor 3
+  reverse A3
+  ahead B16
+node A5:
+  sensor 4
+  reverse A6
+  ahead MR3
+node A6:
+  sensor 5
+  reverse A5
+  ahead B10
+node A7:
+  sensor 6
+  reverse A8
+  ahead B12
+node A8:
+  sensor 7
+  reverse A7
+  ahead MR2
+node A9:
+  sensor 8
+  reverse A10
+  ahead B8
+node A10:
+  sensor 9
+  reverse A9
+  ahead MR1
+node A11:
+  sensor 10
+  reverse A12
+  ahead MR1
+node A12:
+  sensor 11
+  reverse A11
+  ahead A16
+node A13:
+  sensor 12
+  reverse A14
+  ahead MR4
+node A14:
+  sensor 13
+  reverse A13
+  ahead EX4
+node A15:
+  sensor 14
+  reverse A16
+  ahead A11
+node A16:
+  sensor 15
+  reverse A15
+  ahead MR4
+node B1:
+  sensor 16
+  reverse B2
+  ahead D14
+node B2:
+  sensor 17
+  reverse B1
+  ahead MR16
+node B3:
+  sensor 18
+  reverse B4
+  ahead C2
+node B4:
+  sensor 19
+  reverse B3
+  ahead MR16
+node B5:
+  sensor 20
+  reverse B6
+  ahead D3
+node B6:
+  sensor 21
+  reverse B5
+  ahead MR13
+node B7:
+  sensor 22
+  reverse B8
+  ahead A10
+node B8:
+  sensor 23
+  reverse B7
+  ahead EX7
+node B9:
+  sensor 24
+  reverse B10
+  ahead A5
+node B10:
+  sensor 25
+  reverse B9
+  ahead EX9
+node B11:
+  sensor 26
+  reverse B12
+  ahead A8
+node B12:
+  sensor 27
+  reverse B11
+  ahead EX10
+node B13:
+  sensor 28
+  reverse B14
+  ahead MR154
+node B14:
+  sensor 29
+  reverse B13
+  ahead D16
+node B15:
+  sensor 30
+  reverse B16
+  ahead A3
+node B16:
+  sensor 31
+  reverse B15
+  ahead BR15
+node C1:
+  sensor 32
+  reverse C2
+  ahead B4
+node C2:
+  sensor 33
+  reverse C1
+  ahead MR153
+node C3:
+  sensor 34
+  reverse C4
+  ahead EX3
+node C4:
+  sensor 35
+  reverse C3
+  ahead MR5
+node C5:
+  sensor 36
+  reverse C6
+  ahead BR6
+node C6:
+  sensor 37
+  reverse C5
+  ahead MR15
+node C7:
+  sensor 38
+  reverse C8
+  ahead MR18
+node C8:
+  sensor 39
+  reverse C7
+  ahead BR3
+node C9:
+  sensor 40
+  reverse C10
+  ahead MR15
+node C10:
+  sensor 41
+  reverse C9
+  ahead BR16
+node C11:
+  sensor 42
+  reverse C12
+  ahead BR13
+node C12:
+  sensor 43
+  reverse C11
+  ahead MR14
+node C13:
+  sensor 44
+  reverse C14
+  ahead E7
+node C14:
+  sensor 45
+  reverse C13
+  ahead BR11
+node C15:
+  sensor 46
+  reverse C16
+  ahead D12
+node C16:
+  sensor 47
+  reverse C15
+  ahead MR6
+node D1:
+  sensor 48
+  reverse D2
+  ahead MR155
+node D2:
+  sensor 49
+  reverse D1
+  ahead E4
+node D3:
+  sensor 50
+  reverse D4
+  ahead MR10
+node D4:
+  sensor 51
+  reverse D3
+  ahead B6
+node D5:
+  sensor 52
+  reverse D6
+  ahead E6
+node D6:
+  sensor 53
+  reverse D5
+  ahead MR9
+node D7:
+  sensor 54
+  reverse D8
+  ahead MR9
+node D8:
+  sensor 55
+  reverse D7
+  ahead E8
+node D9:
+  sensor 56
+  reverse D10
+  ahead E12
+node D10:
+  sensor 57
+  reverse D9
+  ahead MR8
+node D11:
+  sensor 58
+  reverse D12
+  ahead C16
+node D12:
+  sensor 59
+  reverse D11
+  ahead MR7
+node D13:
+  sensor 60
+  reverse D14
+  ahead B2
+node D14:
+  sensor 61
+  reverse D13
+  ahead MR17
+node D15:
+  sensor 62
+  reverse D16
+  ahead B13
+node D16:
+  sensor 63
+  reverse D15
+  ahead MR17
+node E1:
+  sensor 64
+  reverse E2
+  ahead MR156
+node E2:
+  sensor 65
+  reverse E1
+  ahead E15
+node E3:
+  sensor 66
+  reverse E4
+  ahead D1
+node E4:
+  sensor 67
+  reverse E3
+  ahead MR10
+node E5:
+  sensor 68
+  reverse E6
+  ahead D6
+node E6:
+  sensor 69
+  reverse E5
+  ahead BR10
+node E7:
+  sensor 70
+  reverse E8
+  ahead D7
+node E8:
+  sensor 71
+  reverse E7
+  ahead C14
+node E9:
+  sensor 72
+  reverse E10
+  ahead MR8
+node E10:
+  sensor 73
+  reverse E9
+  ahead E13
+node E11:
+  sensor 74
+  reverse E12
+  ahead D10
+node E12:
+  sensor 75
+  reverse E11
+  ahead BR7
+node E13:
+  sensor 76
+  reverse E14
+  ahead BR17
+node E14:
+  sensor 77
+  reverse E13
+  ahead E9
+node E15:
+  sensor 78
+  reverse E16
+  ahead MR13
+node E16:
+  sensor 79
+  reverse E15
+  ahead E1
+node BR1:
+  branch 1
+  reverse MR1
+  straight A12
+  curved A9
+node MR1:
+  merge 1
+  reverse BR1
+  ahead MR2
+node BR2:
+  branch 2
+  reverse MR2
+  straight BR1
+  curved A7
+node MR2:
+  merge 2
+  reverse BR2
+  ahead MR3
+node BR3:
+  branch 3
+  reverse MR3
+  straight A6
+  curved BR2
+node MR3:
+  merge 3
+  reverse BR3
+  ahead C7
+node BR4:
+  branch 4
+  reverse MR4
+  straight A15
+  curved A14
+node MR4:
+  merge 4
+  reverse BR4
+  ahead MR12
+node BR5:
+  branch 5
+  reverse MR5
+  straight C3
+  curved MR7
+node MR5:
+  merge 5
+  reverse BR5
+  ahead BR18
+node BR6:
+  branch 6
+  reverse MR6
+  straight C15
+  curved MR18
+node MR6:
+  merge 6
+  reverse BR6
+  ahead C6
+node BR7:
+  branch 7
+  reverse MR7
+  straight D11
+  curved MR5
+node MR7:
+  merge 7
+  reverse BR7
+  ahead E11
+node BR8:
+  branch 8
+  reverse MR8
+  straight D9
+  curved E10
+node MR8:
+  merge 8
+  reverse BR8
+  ahead BR9
+node BR9:
+  branch 9
+  reverse MR9
+  straight D8
+  curved D5
+node MR9:
+  merge 9
+  reverse BR9
+  ahead BR8
+node BR10:
+  branch 10
+  reverse MR10
+  straight D4
+  curved E3
+node MR10:
+  merge 10
+  reverse BR10
+  ahead E5
+node BR11:
+  branch 11
+  reverse MR11
+  straight BR12
+  curved MR14
+node MR11:
+  merge 11
+  reverse BR11
+  ahead C13
+node BR12:
+  branch 12
+  reverse MR12
+  straight A2
+  curved BR4
+node MR12:
+  merge 12
+  reverse BR12
+  ahead MR11
+node BR13:
+  branch 13
+  reverse MR13
+  straight B5
+  curved E16
+node MR13:
+  merge 13
+  reverse BR13
+  ahead C12
+node BR14:
+  branch 14
+  reverse MR14
+  straight MR11
+  curved C11
+node MR14:
+  merge 14
+  reverse BR14
+  ahead A4
+node BR15:
+  branch 15
+  reverse MR15
+  straight C5
+  curved C10
+node MR15:
+  merge 15
+  reverse BR15
+  ahead B15
+node BR16:
+  branch 16
+  reverse MR16
+  straight B1
+  curved B3
+node MR16:
+  merge 16
+  reverse BR16
+  ahead C9
+node BR17:
+  branch 17
+  reverse MR17
+  straight D13
+  curved D15
+node MR17:
+  merge 17
+  reverse BR17
+  ahead E14
+node BR18:
+  branch 18
+  reverse MR18
+  straight C8
+  curved MR6
+node MR18:
+  merge 18
+  reverse BR18
+  ahead BR5
+node BR153:
+  branch 153
+  reverse MR153
+  straight EX1
+  curved C1
+node MR153:
+  merge 153
+  reverse BR153
+  ahead MR154
+node BR154:
+  branch 154
+  reverse MR154
+  straight BR153
+  curved B14
+node MR154:
+  merge 154
+  reverse BR154
+  ahead BR156
+node BR155:
+  branch 155
+  reverse MR155
+  straight EX2
+  curved D2
+node MR155:
+  merge 155
+  reverse BR155
+  ahead MR156
+node BR156:
+  branch 156
+  reverse MR156
+  straight BR155
+  curved E2
+node MR156:
+  merge 156
+  reverse BR156
+  ahead BR154
+node EN1:
+  enter
+  reverse EX1
+  ahead MR153
+node EX1:
+  exit
+  reverse EN1
+node EN2:
+  enter
+  reverse EX2
+  ahead MR155
+node EX2:
+  exit
+  reverse EN2
+node EN3:
+  enter
+  reverse EX3
+  ahead C4
+node EX3:
+  exit
+  reverse EN3
+node EN4:
+  enter
+  reverse EX4
+  ahead A13
+node EX4:
+  exit
+  reverse EN4
+node EN5:
+  enter
+  reverse EX5
+  ahead A1
+node EX5:
+  exit
+  reverse EN5
+node EN7:
+  enter
+  reverse EX7
+  ahead B7
+node EX7:
+  exit
+  reverse EN7
+node EN9:
+  enter
+  reverse EX9
+  ahead B9
+node EX9:
+  exit
+  reverse EN9
+node EN10:
+  enter
+  reverse EX10
+  ahead B11
+node EX10:
+  exit
+  reverse EN10
+
+edge A1 MR12:
+  distance 218 mm
+edge A2 EX5:
+  distance 500 mm
+edge A3 BR14:
+  distance 62 mm
+edge A4 B16:
+  distance 440 mm
+edge A5 MR3:
+  distance 216 mm
+edge A6 B10:
+  distance 649 mm
+edge A7 B12:
+  distance 473 mm
+edge A8 MR2:
+  distance 211 mm
+edge A9 B8:
+  distance 289 mm
+edge A10 MR1:
+  distance 210 mm
+edge A11 MR1:
+  distance 265 mm
+edge A12 A16:
+  distance 774 mm
+edge A13 MR4:
+  distance 215 mm
+edge A14 EX4:
+  distance 320 mm
+edge A16 MR4:
+  distance 260 mm
+edge B1 D14:
+  distance 398 mm
+edge B2 MR16:
+  distance 225 mm
+edge B3 C2:
+  distance 230 mm
+edge B4 MR16:
+  distance 220 mm
+edge B5 D3:
+  distance 405 mm
+edge B6 MR13:
+  distance 214 mm
+edge B8 EX7:
+  distance 60 mm
+edge B10 EX9:
+  distance 70 mm
+edge B12 EX10:
+  distance 70 mm
+edge B13 MR154:
+  distance 224 mm
+edge B14 D16:
+  distance 202 mm
+edge B16 BR15:
+  distance 70 mm
+edge C2 MR153:
+  distance 228 mm
+edge C3 EX3:
+  distance 410 mm
+edge C4 MR5:
+  distance 226 mm
+edge C5 BR6:
+  distance 79 mm
+edge C6 MR15:
+  distance 411 mm
+edge C7 MR18:
+  distance 215 mm
+edge C8 BR3:
+  distance 145 mm
+edge C9 MR15:
+  distance 305 mm
+edge C10 BR16:
+  distance 146 mm
+edge C11 BR13:
+  distance 140 mm
+edge C12 MR14:
+  distance 314 mm
+edge C13 E7:
+  distance 785 mm
+edge C14 BR11:
+  distance 60 mm
+edge C15 D12:
+  distance 405 mm
+edge C16 MR6:
+  distance 223 mm
+edge D1 MR155:
+  distance 227 mm
+edge D2 E4:
+  distance 200 mm
+edge D3 MR10:
+  distance 223 mm
+edge D5 E6:
+  distance 275 mm
+edge D6 MR9:
+  distance 213 mm
+edge D7 MR9:
+  distance 290 mm
+edge D8 E8:
+  distance 375 mm
+edge D9 E12:
+  distance 284 mm
+edge D10 MR8:
+  distance 291 mm
+edge D12 MR7:
+  distance 220 mm
+edge D14 MR17:
+  distance 225 mm
+edge D16 MR17:
+  distance 230 mm
+edge E1 MR156:
+  distance 222 mm
+edge E2 E15:
+  distance 203 mm
+edge E4 MR10:
+  distance 220 mm
+edge E6 BR10:
+  distance 74 mm
+edge E9 MR8:
+  distance 215 mm
+edge E10 E13:
+  distance 275 mm
+edge E12 BR7:
+  distance 65 mm
+edge E13 BR17:
+  distance 62 mm
+edge E15 MR13:
+  distance 230 mm
+edge MR1 MR2:
+  distance 191 mm
+edge MR2 MR3:
+  distance 182 mm
+edge MR4 MR12:
+  distance 185 mm
+edge BR5 MR7:
+  distance 334 mm
+edge MR5 BR18:
+  distance 187 mm
+edge BR6 MR18:
+  distance 338 mm
+edge MR8 BR9:
+  distance 193 mm
+edge BR11 BR12:
+  distance 190 mm
+edge BR11 MR14:
+  distance 445 mm
+edge BR153 EX1:
+  distance 230 mm
+edge MR153 MR154:
+  distance 24 mm
+edge MR154 BR156:
+  distance 32 mm
+edge BR155 EX2:
+  distance 247 mm
+edge MR155 MR156:
+  distance 24 mm
