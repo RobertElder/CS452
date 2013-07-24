@@ -385,29 +385,7 @@ void TrainServer_SetTrainSpeed(TrainServer * server, int speed, int train_num) {
 
 void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
 	if (engine->state == TRAIN_ENGINE_RUNNING) {
-		int slow_speed = 3;
-
-		//  These ones are close to switches so we need to slow down more.  We need to be at speed 8 for
-		//  the other ones, otherwise we stall.
-		if(
-			engine->destination_node == &(server->track_b_nodes[6]) || // A7
-			engine->destination_node == &(server->track_b_nodes[34]) || // C3
-			engine->destination_node == &(server->track_b_nodes[8]) || // A9
-			engine->destination_node == &(server->track_b_nodes[13]) || // A14
-			engine->destination_node == &(server->track_b_nodes[2]) || // A3
-			engine->destination_node == &(server->track_b_nodes[45]) || // C14
-			engine->destination_node == &(server->track_b_nodes[39]) || // C8
-			engine->destination_node == &(server->track_b_nodes[36]) || // C5
-			engine->destination_node == &(server->track_b_nodes[75]) || // E12
-			engine->destination_node == &(server->track_b_nodes[31]) // B16
-		){
-			slow_speed = 1;
-		}else if(
-			engine->destination_node == &(server->track_b_nodes[76]) || // E13
-			engine->destination_node == &(server->track_b_nodes[69]) // E6
-		){
-			slow_speed = 2;
-		}
+		int slow_speed = TAL_GetSlowSpeedSetting(&server->tal, engine);
 		
 		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
 		TrainServer_SetTrainSpeed(server, slow_speed, engine->train_num);
