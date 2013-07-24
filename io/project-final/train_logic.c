@@ -1,6 +1,7 @@
 #include "train_logic.h"
 #include "public_kernel_interface.h"
 #include "robio.h"
+#include "tracks/undirected_nodes.h"
 
 void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 	if (!engine->train_num) {
@@ -74,8 +75,11 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 		}
 
 		engine->state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
+		engine->wait_until = TimeSeconds() + 4;
 		engine->current_node = node;
 		ReserveTrackNode(node, engine->train_num);
+		ReserveTrackNode(node->edge[DIR_AHEAD].dest, engine->train_num);
+		//add_train_node(&engine->train_node, node->undirected_node, node->edge[DIR_AHEAD].dest->undirected_node, 1);
 		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
 	}
 }
@@ -92,7 +96,9 @@ void TrainServer_ProcessEngineResyncPosition(TrainServer * server, TrainEngine *
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine) {
 	//PrintMessage("Found starting position.");
 	
-	engine->state = TRAIN_ENGINE_WAIT_FOR_ALL_READY;
+	if (engine->wait_until < TimeSeconds()) {
+		engine->state = TRAIN_ENGINE_WAIT_FOR_ALL_READY;
+	}
 }
 
 void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngine * engine) {
@@ -253,6 +259,7 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
 		//PrintMessage("At destination %s.", engine->current_node->name);
 		ReleaseTrackNodes(engine);
+		ReserveTrackNode(engine->current_node, engine->train_num);
 		return;
 	}
 	
@@ -296,7 +303,7 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 		
 	if (next_node && next_node == engine->destination_node) {
 		//PrintMessage("Slowing down because next node is destination node.");
-		TrainServer_SlowTrainDown(server, engine);
+		//TrainServer_SlowTrainDown(server, engine);
 	}
 }
 
@@ -417,7 +424,7 @@ void TrainServer_SetTrainSpeed(TrainServer * server, int speed, int train_num) {
 
 void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
 	if (engine->state == TRAIN_ENGINE_RUNNING) {
-		int slow_speed = 5;
+		int slow_speed = 3;
 
 		//  These ones are close to switches so we need to slow down more.  We need to be at speed 8 for
 		//  the other ones, otherwise we stall.
@@ -433,12 +440,12 @@ void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
 			engine->destination_node == &(server->track_b_nodes[75]) || // E12
 			engine->destination_node == &(server->track_b_nodes[31]) // B16
 		){
-			slow_speed = 2;
+			slow_speed = 1;
 		}else if(
 			engine->destination_node == &(server->track_b_nodes[76]) || // E13
 			engine->destination_node == &(server->track_b_nodes[69]) // E6
 		){
-			slow_speed = 3;
+			slow_speed = 2;
 		}
 		
 		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
