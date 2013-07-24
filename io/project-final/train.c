@@ -11,6 +11,12 @@
 #include "train_logic.h"
 #include "tracks/undirected_nodes.h"
 
+static void *memset(void *s, int c, unsigned int n) {
+  unsigned char *p = s;
+  while(n --> 0) { *p++ = (unsigned char)c; }
+  return s;
+}
+
 void TrainServer_Start() {
 	DebugRegisterFunction(&TrainServer_Start,__func__);
 	TrainServer server;
@@ -989,6 +995,9 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->go_forever = 0;
 	engine->wait_until = 0;
 	engine->source_node = 0;
+	
+	memset(&engine->train_node, 0, sizeof(undirected_node));
+	engine->train_node.type = NODE_TRAIN;
 }
 
 void TrainEngineClient_Start(){

@@ -184,6 +184,7 @@ typedef struct TrainEngine {
 	int route_nodes_length;
 	short go_forever;
 	double wait_until;
+	undirected_node train_node;
 } TrainEngine;
 
 typedef struct TrainEngineStatusMessage {
