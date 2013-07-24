@@ -9,6 +9,7 @@
 #include "random.h"
 #include "route.h"
 #include "train_logic.h"
+#include "tracks/undirected_nodes.h"
 
 void TrainServer_Start() {
 	DebugRegisterFunction(&TrainServer_Start,__func__);
@@ -199,6 +200,14 @@ void TrainServer_Initialize(TrainServer * server) {
 	init_tracka(server->track_a_nodes);
 	init_trackb(server->track_b_nodes);
 	server->current_track_nodes = server->track_a_nodes;
+	
+	server->num_track_a_undirected_nodes = 0;
+	server->num_track_b_undirected_nodes = 0;
+
+	init_undirected_nodes(server->track_a_nodes, server->track_a_undirected_nodes, &server->num_track_a_undirected_nodes);
+	init_undirected_nodes(server->track_b_nodes, server->track_b_undirected_nodes, &server->num_track_b_undirected_nodes);
+	
+	server->current_undirected_nodes = server->track_a_undirected_nodes;
 	
 	int switch_num;
 	for (switch_num = 0; switch_num < NUM_SWITCHES; switch_num++) {
@@ -689,6 +698,14 @@ void TrainServer_HandleResetTrack(TrainServer * server) {
 	// Release all reservations
 	init_tracka(server->track_a_nodes);
 	init_trackb(server->track_b_nodes);
+	
+	server->num_track_a_undirected_nodes = 0;
+	server->num_track_b_undirected_nodes = 0;
+
+	init_undirected_nodes(server->track_a_nodes, server->track_a_undirected_nodes, &server->num_track_a_undirected_nodes);
+	init_undirected_nodes(server->track_b_nodes, server->track_b_undirected_nodes, &server->num_track_b_undirected_nodes);
+	
+	server->current_undirected_nodes = server->track_a_undirected_nodes;
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);

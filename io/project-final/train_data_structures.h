@@ -223,6 +223,13 @@ typedef struct TrainServer {
 	track_node track_b_nodes[TRACK_MAX];
 	track_node * current_track_nodes;
 	
+	undirected_node track_a_undirected_nodes[TRACK_MAX];
+	undirected_node track_b_undirected_nodes[TRACK_MAX];
+	undirected_node * current_undirected_nodes;
+	
+	int num_track_a_undirected_nodes;
+	int num_track_b_undirected_nodes;
+	
 	SwitchState switch_states[NUM_SWITCHES];
 	SwitchState switches_to_change[NUM_SWITCHES];
 	SwitchQueue queued_switch_changes;

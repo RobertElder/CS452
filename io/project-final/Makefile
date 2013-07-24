@@ -19,7 +19,7 @@ ASFLAGS	= -mcpu=arm920t -mapcs-32
 LDFLAGS = -init main -Map kern.map -N  -T orex.ld -L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L../lib
 
 #  TODO: make things generic using the following method:
-SOURCES = test_uart.c kern.c public_kernel_interface.c private_kernel_interface.c swi_kernel_interface.c robio.c buffer.c queue.c task_descriptor.c tasks.c memory.c random.c nameserver.c rps.c message.c clock.c scheduler.c notifier.c kernel_irq.c ansi.c uart.c ui.c train.c train_logic.c maps/map_a.c route.c maps/map_b.c tracks/track_data.c
+SOURCES = test_uart.c kern.c public_kernel_interface.c private_kernel_interface.c swi_kernel_interface.c robio.c buffer.c queue.c task_descriptor.c tasks.c memory.c random.c nameserver.c rps.c message.c clock.c scheduler.c notifier.c kernel_irq.c ansi.c uart.c ui.c train.c train_logic.c maps/map_a.c route.c maps/map_b.c tracks/track_data.c tracks/undirected_nodes.c
 HEADERS = ${SOURCES:.c=.h}
 OBJECTS = ${SOURCES:.c=.o}
 
@@ -191,6 +191,12 @@ tracks/track_data.s: tracks/track_data.c tracks/track_data.h tracks/track_node.h
 
 tracks/track_data.o: tracks/track_data.s
 	$(AS) $(ASFLAGS) -o tracks/track_data.o tracks/track_data.s
+	
+tracks/undirected_nodes.s: tracks/undirected_nodes.c tracks/undirected_nodes.h
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) tracks/undirected_nodes.c -o tracks/undirected_nodes.s
+
+tracks/undirected_nodes.o: tracks/undirected_nodes.s
+	$(AS) $(ASFLAGS) -o tracks/undirected_nodes.o tracks/undirected_nodes.s
 
 kern.elf: $(OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ $(OBJECTS) -lgcc
