@@ -13,7 +13,21 @@
 
 #else
 
+#include "../public_kernel_interface.h"
+#include "../robio.h"
+#include "../random.h"
 #define printf(format, args...) PrintMessage(format, args)
+
+static void *memset(void *s, int c, unsigned int n) {
+  unsigned char *p = s;
+  while(n --> 0) { *p++ = (unsigned char)c; }
+  return s;
+}
+
+static RNG rng;
+static int rng_initialized = 0;
+
+#define rand() RNG_Get(&rng)
 
 #endif
 
@@ -135,7 +149,7 @@ void set_adjacency_lists(undirected_node * undirected_nodes, int * num_undirecte
 	int i;
 	for(i = 0; i < *num_undirected_nodes; i++){
 		//  Figure out what node type the undirected node is.
-		assertf(undirected_nodes[i].track_node1, "track node 1 not set.");
+		assertf(undirected_nodes[i].track_node1 != 0, "track node 1 not set.");
 		if(undirected_nodes[i].track_node1->type == NODE_SENSOR){
 			undirected_nodes[i].type = NODE_SENSOR;
 		}else if(undirected_nodes[i].track_node1->type == NODE_MERGE || undirected_nodes[i].track_node1->type == NODE_BRANCH){
@@ -187,7 +201,6 @@ int add_all_distances(undirected_node * undirected_nodes, int num_undirected_nod
 void add_train_node(undirected_node * train, undirected_node * src, undirected_node * dst, int distance){
 	assertf(train->type == NODE_TRAIN, "Not a train node.");
 	//  Will insert the train node into the graph at 'distance' after src on the way to dst.
-	int i;
 	int edge_src_index = get_edge_index(src, dst);
 	assertf(edge_src_index != -1, "src edge not found.");
 
@@ -230,7 +243,6 @@ void add_train_node(undirected_node * train, undirected_node * src, undirected_n
 void remove_train_node(undirected_node * train, undirected_node * src, undirected_node * dst){
 	assertf(train->type == NODE_TRAIN, "not a train node.");
 	//  Will insert the train node into the graph at 'distance' after src on the way to dst.
-	int i;
 	int edge_src_index = get_edge_index(src, train);
 	assertf(edge_src_index != -1, "src edge not found");
 
@@ -332,6 +344,13 @@ void move_train_distance(undirected_node * train, undirected_node * src, undirec
 }
 
 int get_random_other_edge_index(undirected_node * node, int index){
+#ifndef TESTS
+	if (!rng_initialized) {
+		rng_initialized = 1;
+		RNG_Initialize(&rng, 6511681);
+	}
+#endif
+
 	if(node->adjacent_nodes.num_adjacent_nodes < 2){
 		return -1;
 	}
@@ -346,7 +365,6 @@ undirected_node * get_smallest_distance_node_in_Q(undirected_node ** nodes, int 
 	/*  Returns node pointer, or 0 when no nodes left */
 	int smallest = 1000000000;
 	int smallest_node_index = -1;
-	undirected_node * smallest_node = 0;
 	int i;
 	for(i = 0; i < num_nodes; i++){
 		if(nodes[i] && (nodes[i]->dij_dist < smallest)){
@@ -397,7 +415,9 @@ void dijkstra(undirected_node ** result_path, int max_result_path_length, int * 
 
 	undirected_node * U;
 
-	while(U = get_smallest_distance_node_in_Q(node_set, total_nodes)){
+	while(1){
+		U = get_smallest_distance_node_in_Q(node_set, total_nodes);
+		
 		//  It should always find some path
 		assertf(U->dij_dist != infinity, "OH NOES INFINITY");
 		if(U == dst){
@@ -415,7 +435,7 @@ void dijkstra(undirected_node ** result_path, int max_result_path_length, int * 
 			}
 		}
 	}
-	assertf(U, "U was not found.");
+	assertf(U != 0, "U was not found.");
 	//  Gotta build the list backwards
 	undirected_node * U_temp = U;
 	//  Find out how many there are
@@ -444,10 +464,10 @@ void print_undirected_path_info(undirected_node ** path, int actual_path_length)
 		if(path[i]->track_node1 && path[i]->track_node2){
 			printf("%s/%s", path[i]->track_node1->name, path[i]->track_node2->name);
 		}else{
-			printf("train");
+			printf("train", "dummy");
 		}
 		if(i != actual_path_length -1){
-			printf(" -> ");
+			printf(" -> ", "dummy");
 			undirected_node * current_node = path[i];
 			undirected_node * next_node = path[i+1];
 			int index = get_edge_index(current_node, next_node);
