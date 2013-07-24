@@ -637,7 +637,7 @@ void TrainServer_HandleResetTrack(TrainServer * server) {
 	for (i = 0; i < MAX_NUM_ENGINES; i++) {
 		// Stop the trains before reset
 		if (server->train_engines[i].train_num) {
-			TrainServer_SetTrainSpeed(server, 0, server->train_engines[i].train_num);
+			TAL_SetTrainSpeed(&server->tal, 0, server->train_engines[i].train_num);
 		}
 		
 		TrainEngine_Initialize(&server->train_engines[i], 0);

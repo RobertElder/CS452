@@ -1,6 +1,7 @@
 #include "train_abstraction_layer.h"
 #include "route.h"
 #include "robio.h"
+#include "train.h"
 
 void TAL_Initialize(TAL * tal, TrainServer * server) {
 	tal->train_server = server;
@@ -180,3 +181,28 @@ int TAL_GetSlowSpeedSetting(TAL * tal, TrainEngine * engine) {
 	}
 }
 
+void TAL_FeedbackControlSystem(TAL * tal, TrainEngine * engine) {
+	if (engine->calculated_speed < TARGET_SPEED && engine->granular_speed_setting < STARTUP_TRAIN_SPEED) {
+		engine->granular_speed_setting = STARTUP_TRAIN_SPEED;
+	} else if (engine->calculated_speed < TARGET_SPEED && engine->granular_speed_setting < 11) {
+		engine->granular_speed_setting += FEEDBACK_CONTROL_SPEED_INCREMENT;
+	} else if (engine->calculated_speed > TARGET_SPEED && engine->granular_speed_setting > 8) {
+		engine->granular_speed_setting += FEEDBACK_CONTROL_SPEED_DECREMENT;
+	}
+	
+	int new_speed_setting = (int) engine->granular_speed_setting;
+	//PrintMessage("Feedback control setting speed to %d for train %d.", new_speed_setting, engine->train_num);
+	
+	if (new_speed_setting != engine->speed_setting) {
+		TAL_SetTrainSpeed(tal, new_speed_setting | LIGHTS_MASK, engine->train_num);
+	}
+}
+
+void TAL_SetTrainSpeed(TAL * tal, int speed, int train_num) {
+	int train_speed_settings = speed << 8 | train_num;
+	Queue_PushEnd((Queue*) &tal->train_server->train_speed_queue, (QUEUE_ITEM_TYPE) train_speed_settings);
+	
+	int slot_num = TrainServer_EngineNumToArrayIndex(tal->train_server, train_num);
+	
+	tal->train_server->train_engines[slot_num].speed_setting = speed & ~LIGHTS_MASK;
+}

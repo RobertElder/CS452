@@ -34,4 +34,8 @@ SwitchState TAL_GetSwitchState(TAL * tal, int switch_num);
 
 int TAL_GetSlowSpeedSetting(TAL * tal, TrainEngine * engine);
 
+void TAL_FeedbackControlSystem(TAL * tal, TrainEngine * engine);
+
+void TAL_SetTrainSpeed(TAL * tal, int speed, int train_num);
+
 #endif

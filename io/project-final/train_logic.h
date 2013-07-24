@@ -36,8 +36,6 @@ void TrainServer_ProcessEngineWaitForReservation(TrainServer * server, TrainEngi
 
 void TrainServer_ProcessEngineWrongLocation(TrainServer * server, TrainEngine * engine);
 
-void TrainServer_SetTrainSpeed(TrainServer * server, int speed, int train_num);
-
 void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine);
 
 int DistanceToNextSensor(TrainEngine * engine);

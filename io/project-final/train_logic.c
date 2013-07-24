@@ -63,7 +63,7 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 
 void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine) {
 	//PrintMessage("Engine %d is starting, setting speed to %d.", engine->train_num, FINDING_POSITION_SPEED);
-	TrainServer_SetTrainSpeed(server, FINDING_POSITION_SPEED, engine->train_num);
+	TAL_SetTrainSpeed(&server->tal, FINDING_POSITION_SPEED, engine->train_num);
 	engine->state = TRAIN_ENGINE_FINDING_POSITION;
 }
 
@@ -81,7 +81,7 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 		ReserveTrackNode(node, engine->train_num);
 		ReserveTrackNode(node->edge[DIR_AHEAD].dest, engine->train_num);
 		//add_train_node(&engine->train_node, node->undirected_node, node->edge[DIR_AHEAD].dest->undirected_node, 1);
-		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
+		TAL_SetTrainSpeed(&server->tal, 0, engine->train_num);
 	}
 }
 
@@ -89,7 +89,7 @@ void TrainServer_ProcessEngineResyncPosition(TrainServer * server, TrainEngine *
 	if (TAL_IsNextNodeAvailable(&server->tal, engine)) {
 		TrainServer_ProcessEngineFindingPosition(server, engine);
 	} else {
-		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
+		TAL_SetTrainSpeed(&server->tal, 0, engine->train_num);
 		engine->state = TRAIN_ENGINE_WAIT_FOR_RESERVATION;
 	}
 }
@@ -109,8 +109,8 @@ void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngi
 	if (!engine->destination_node) {
 		// Reverse and try again
 		//PrintMessage("No destination in this direction! Reversing..");
-		TrainServer_SetTrainSpeed(server, REVERSE_SPEED, engine->train_num);
-		TrainServer_SetTrainSpeed(server, FINDING_POSITION_SPEED, engine->train_num);
+		TAL_SetTrainSpeed(&server->tal, REVERSE_SPEED, engine->train_num);
+		TAL_SetTrainSpeed(&server->tal, FINDING_POSITION_SPEED, engine->train_num);
 		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
 		return;
 	}
@@ -119,7 +119,7 @@ void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngi
 }
 
 void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine * engine) {
-	TrainServer_SetTrainSpeed(server, 0, engine->train_num);
+	TAL_SetTrainSpeed(&server->tal, 0, engine->train_num);
 	engine->source_node = engine->current_node;
 
 	//PrintMessage("Engine %d travelling from %s to %s.",engine->train_num, engine->current_node->name ,engine->destination_node->name);
@@ -136,7 +136,7 @@ void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine *
 	}
 
 	engine->granular_speed_setting = STARTUP_TRAIN_SPEED;
-	TrainServer_SetTrainSpeed(server, STARTUP_TRAIN_SPEED | LIGHTS_MASK, engine->train_num);
+	TAL_SetTrainSpeed(&server->tal, STARTUP_TRAIN_SPEED | LIGHTS_MASK, engine->train_num);
 	engine->state = TRAIN_ENGINE_RUNNING;
 }
 
@@ -204,11 +204,11 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 		
 		if (node->reserved && node->reserved != engine->train_num) {
 			PrintMessage("!!! Train %d went into track %s reserved for train %d", engine->train_num, node->name, node->reserved);
-			TrainServer_SetTrainSpeed(server, 0, engine->train_num);
+			TAL_SetTrainSpeed(&server->tal, 0, engine->train_num);
 			engine->state = TRAIN_ENGINE_WRONG_LOCATION;
 		} else if (!node->reserved) {
 			PrintMessage("!!! Train %d went into track %s that was not reserved", engine->train_num, node->name);
-			TrainServer_SetTrainSpeed(server, 0, engine->train_num);
+			TAL_SetTrainSpeed(&server->tal, 0, engine->train_num);
 			engine->state = TRAIN_ENGINE_WRONG_LOCATION;
 		}
 	}
@@ -257,27 +257,15 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	if (engine->current_node == engine->destination_node) {
 		engine->state = TRAIN_ENGINE_AT_DESTINATION;
 		TAL_SetTrainWait(&server->tal, engine, 4);
-		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
+		TAL_SetTrainSpeed(&server->tal, 0, engine->train_num);
 		//PrintMessage("At destination %s.", engine->current_node->name);
 		ReleaseTrackNodes(engine);
 		ReserveTrackNode(engine->current_node, engine->train_num);
 		return;
 	}
 	
-	// Feedback control system
 	if (engine->state != TRAIN_ENGINE_NEAR_DESTINATION) {
-		if (engine->calculated_speed < TARGET_SPEED && engine->granular_speed_setting < 11) {
-			engine->granular_speed_setting += FEEDBACK_CONTROL_SPEED_INCREMENT;
-		} else if (engine->calculated_speed > TARGET_SPEED && engine->granular_speed_setting > 8) {
-			engine->granular_speed_setting += FEEDBACK_CONTROL_SPEED_DECREMENT;
-		}
-		
-		int new_speed_setting = (int) engine->granular_speed_setting;
-		//PrintMessage("Feedback control setting speed to %d for train %d.", new_speed_setting, engine->train_num);
-		
-		if (new_speed_setting != engine->speed_setting) {
-			TrainServer_SetTrainSpeed(server, new_speed_setting | LIGHTS_MASK, engine->train_num);
-		}
+		TAL_FeedbackControlSystem(&server->tal, engine);
 	}
 	
 	
@@ -321,11 +309,11 @@ void TrainServer_ProcessEngineWaitAndGoForever(TrainServer * server, TrainEngine
 	track_node * next_node = engine->current_node->edge[DIR_AHEAD].dest;
 	
 	if (next_node && next_node->type == NODE_EXIT) {
-		TrainServer_SetTrainSpeed(server, REVERSE_SPEED, engine->train_num);
-		TrainServer_SetTrainSpeed(server, FINDING_POSITION_SPEED, engine->train_num);
+		TAL_SetTrainSpeed(&server->tal, REVERSE_SPEED, engine->train_num);
+		TAL_SetTrainSpeed(&server->tal, FINDING_POSITION_SPEED, engine->train_num);
 		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
 	} else {
-		TrainServer_SetTrainSpeed(server, FINDING_POSITION_SPEED, engine->train_num);
+		TAL_SetTrainSpeed(&server->tal, FINDING_POSITION_SPEED, engine->train_num);
 		engine->state = TRAIN_ENGINE_RESYNC_POSITION;
 	}
 */
@@ -337,7 +325,7 @@ void TrainServer_ProcessEngineReverseAndTryAgain(TrainServer * server, TrainEngi
 
 void TrainServer_ProcessEngineWaitForReservation(TrainServer * server, TrainEngine * engine) {
 	if (TAL_IsNextNodeAvailable(&server->tal, engine)) {
-		TrainServer_SetTrainSpeed(server, FINDING_POSITION_SPEED, engine->train_num);
+		TAL_SetTrainSpeed(&server->tal, FINDING_POSITION_SPEED, engine->train_num);
 		engine->state = TRAIN_ENGINE_RESYNC_POSITION;
 	}
 }
@@ -369,26 +357,17 @@ void TrainServer_ProcessEngineCalibratingSpeed(TrainServer * server, TrainEngine
 	}
 	
 	engine->calculated_speed = 45.0 / difference; // 45mm over time
-	TrainServer_SetTrainSpeed(server, 0, engine->train_num);
-	TrainServer_SetTrainSpeed(server, 5, engine->train_num);
+	TAL_SetTrainSpeed(&server->tal, 0, engine->train_num);
+	TAL_SetTrainSpeed(&server->tal, 5, engine->train_num);
 	engine->state = TRAIN_ENGINE_FINDING_POSITION;
-}
-
-void TrainServer_SetTrainSpeed(TrainServer * server, int speed, int train_num) {
-	int train_speed_settings = speed << 8 | train_num;
-	Queue_PushEnd((Queue*) &server->train_speed_queue, (QUEUE_ITEM_TYPE) train_speed_settings);
-	
-	int slot_num = TrainServer_EngineNumToArrayIndex(server, train_num);
-	
-	server->train_engines[slot_num].speed_setting = speed & ~LIGHTS_MASK;
 }
 
 void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
 	if (engine->state == TRAIN_ENGINE_RUNNING) {
 		int slow_speed = TAL_GetSlowSpeedSetting(&server->tal, engine);
 		
-		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
-		TrainServer_SetTrainSpeed(server, slow_speed, engine->train_num);
+		TAL_SetTrainSpeed(&server->tal, 0, engine->train_num);
+		TAL_SetTrainSpeed(&server->tal, slow_speed, engine->train_num);
 		engine->state = TRAIN_ENGINE_NEAR_DESTINATION;
 		//PrintMessage("Slowing down");
 	}
