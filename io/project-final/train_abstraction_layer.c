@@ -109,7 +109,24 @@ track_node * TAL_GetUnreservedSensor(TAL * tal) {
 	return 0;
 }
 
-undirected_node * TAL_GetLikelyTrainSensor(TAL * tal, int train_num) {return 0;}
+track_node * TAL_GetTrainReservedSensor(TAL * tal, int train_num) {
+	int sensor_module;
+	int sensor_num;
+	
+	for (sensor_module = 0; sensor_module < NUM_SENSOR_MODULES; sensor_module++) {
+		for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
+			if ((tal->train_server->sensor_bit_flags[sensor_module] >> sensor_num) & 0x01) {
+				track_node * candidate_node = SensorToTrackNode(tal->train_server->current_track_nodes, sensor_module, sensor_num);
+				
+				if (candidate_node->reserved == train_num) {
+					return candidate_node;
+				}
+			}
+		}
+	}
+
+	return 0;
+}
 
 track_node * TAL_GetNextNode(TAL * tal, TrainEngine * engine) {
 	assert(engine->current_node != 0, "TAL_GetNextNode: engine has no current node");

@@ -28,7 +28,7 @@ void TAL_SetInitialTrainLocation(TAL * tal, int train_num);
 
 track_node * TAL_GetUnreservedSensor(TAL * tal);
 
-undirected_node * TAL_GetLikelyTrainSensor(TAL * tal, int train_num);
+track_node * TAL_GetTrainReservedSensor(TAL * tal, int train_num);
 
 track_node * TAL_GetNextNode(TAL * tal, TrainEngine * engine);
 
