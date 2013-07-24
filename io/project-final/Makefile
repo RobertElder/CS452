@@ -197,6 +197,12 @@ tracks/undirected_nodes.s: tracks/undirected_nodes.c tracks/undirected_nodes.h
 
 tracks/undirected_nodes.o: tracks/undirected_nodes.s
 	$(AS) $(ASFLAGS) -o tracks/undirected_nodes.o tracks/undirected_nodes.s
+	
+train_abstraction_layer.s: train_abstraction_layer.c train_abstraction_layer.h
+	$(XCC) -S $(CFLAGS) $(C_OPTIMIZATION_FLAGS) train_abstraction_layer.c
+
+train_abstraction_layer.o: train_abstraction_layer.s
+	$(AS) $(ASFLAGS) -o train_abstraction_layer.o train_abstraction_layer.s
 
 kern.elf: $(OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ $(OBJECTS) -lgcc

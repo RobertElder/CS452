@@ -397,67 +397,6 @@ track_node * GetRandomSensor(TrainServer * server) {
 	}
 }
 
-int is_sensor_blacklisted(int module_num, int sensor_num, TrainServer * server){
-	if(
-		server->current_track_nodes == server->track_a_nodes && (
-			//  These ones will stick
-			(module_num == 4 && (sensor_num == 15 || sensor_num == 16)) ||
-			(module_num == 3 && (sensor_num == 8 || sensor_num == 9)) ||
-			(module_num == 2 && (sensor_num == 8)) ||
-			//  These ones can't be reached because they are too close to the end of the track.
-			(
-			 	module_num == 1 && (
-					sensor_num == 6 ||
-					sensor_num == 7 ||
-					sensor_num == 8 ||
-					sensor_num == 9 ||
-					sensor_num == 10 ||
-					sensor_num == 11
-				)
-			)
-		)
-	){
-		return 1;
-	}else if(
-		server->current_track_nodes == server->track_b_nodes && (
-			(module_num == 0 && (sensor_num == 0 || sensor_num == 1)) ||
-			//  The ones are too close to the end of the track.
-			(module_num == 1 && (
-					sensor_num == 6 ||
-					sensor_num == 7 ||
-					sensor_num == 8 ||
-					sensor_num == 9 ||
-					sensor_num == 10 ||
-					sensor_num == 11
-				)
-			) ||
-			(module_num == 3 && (sensor_num == 7))
-		)
-	){
-		return 1;
-	}else{
-		return 0;
-	}
-}
-
-int is_switch_blacklisted(TrainServer * server, int switch_num){
-	if(
-		server->current_track_nodes == server->track_a_nodes && (
-			switch_num == 156
-		)
-	){
-		return 1;
-	}else if(
-		server->current_track_nodes == server->track_b_nodes && (
-			switch_num == 18
-		)
-	){
-		return 1;
-	}else{
-		return 0;
-	}
-}
-
 void TrainServer_HandleSensorReaderData(TrainServer * server) {
 	TrainSensorMessage * recv_sensor_message = (TrainSensorMessage *) server->receive_buffer;
 
