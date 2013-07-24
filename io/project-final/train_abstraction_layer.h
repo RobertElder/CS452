@@ -3,10 +3,6 @@
 #include "train_data_structures.h"
 #include "tracks/track_node.h"
 
-typedef struct TrainAbstractionLayer {
-	TrainServer * train_server;
-} TAL;
-
 void TAL_Initialize(TAL * tal, TrainServer * server);
 
 void TAL_SetTrack(TAL * tal, char name);
@@ -23,7 +19,7 @@ int TAL_IsSensorFaulty(TAL * tal, int module_num, int sensor_num);
 
 int TAL_IsSwitchFaulty(TAL * tal, int switch_num);
 
-int TAL_IsDestinationNodeBad(TAL * tal, undirected_node * node);
+int TAL_IsDestinationSensorBad(TAL * tal, int module_num, int sensor_num);
 
 void TAL_CalculateTrainLocation(TAL * tal, int train_num);
 

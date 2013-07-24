@@ -193,7 +193,13 @@ typedef struct TrainEngineStatusMessage {
 	track_node * track_nodes;
 } TrainEngineStatusMessage;
 
-typedef struct TrainServer {
+typedef struct TrainServer TrainServer;
+
+typedef struct TrainAbstractionLayer {
+	TrainServer * train_server;
+} TAL;
+
+struct TrainServer {
 	char receive_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	char reply_buffer[MESSAGE_SIZE] __attribute__ ((aligned (4)));
 	GenericMessage * receive_message;
@@ -237,6 +243,8 @@ typedef struct TrainServer {
 	
 	TrainEngine train_engines[MAX_NUM_ENGINES];
 	TrainSpeedQueue train_speed_queue;
-} TrainServer;
+	
+	TAL tal;
+};
 
 #endif

@@ -10,6 +10,7 @@
 #include "route.h"
 #include "train_logic.h"
 #include "tracks/undirected_nodes.h"
+#include "train_abstraction_layer.h"
 
 static void *memset(void *s, int c, unsigned int n) {
   unsigned char *p = s;
@@ -168,6 +169,8 @@ void TrainServer_Initialize(TrainServer * server) {
 	int return_code = RegisterAs((char*) TRAIN_SERVER_NAME);
 	assert(return_code == 0, "TrainServer_Start failed to register name");
 	
+	TAL_Initialize(&server->tal, server);
+	
 	server->sensor_reader_blocked = 0;
 	server->num_engines = 1;
 	server->state = TRAIN_SERVER_IDLE;
@@ -250,7 +253,7 @@ int IsNodeReachableViaDirectedGraph(TrainServer * server, int train_num, track_n
 		return 1;
 	}else if(start_node->type == NODE_MERGE){
 		//  Don't go through a broken switch this way or we might get stuck.
-		if(is_switch_blacklisted(server, start_node->num))
+		if(TAL_IsSwitchFaulty(&server->tal, start_node->num))
 			return 0;
 		return IsNodeReachableViaDirectedGraph(server, train_num, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1);
 	}else if(start_node->type == NODE_SENSOR){
@@ -261,7 +264,7 @@ int IsNodeReachableViaDirectedGraph(TrainServer * server, int train_num, track_n
 		return 0;
 	}else if (start_node->type == NODE_BRANCH){
 		//  Don't try to go through broken switches.
-		if(is_switch_blacklisted(server, start_node->num))
+		if(TAL_IsSwitchFaulty(&server->tal, start_node->num))
 			return 0;
 		int rtn1 = IsNodeReachableViaDirectedGraph(server, train_num, start_node->edge[DIR_STRAIGHT].dest, dest_node, levels + 1);
 		int rtn2 = 0;
@@ -302,7 +305,7 @@ int PopulateRouteNodeInfo(TrainServer * server, RouteNodeInfo * info_array, trac
 		info_array[array_index].edge = 0;
 		return 1;
 	}else if(start_node->type == NODE_MERGE){
-		if(is_switch_blacklisted(server, start_node->num))
+		if(TAL_IsSwitchFaulty(&server->tal, start_node->num))
 			return 0;
 		int r = PopulateRouteNodeInfo(server, info_array, track_nodes, start_node->edge[DIR_AHEAD].dest, dest_node, levels + 1, array_index + 1, route_nodes_length, train_num);
 		
@@ -330,7 +333,7 @@ int PopulateRouteNodeInfo(TrainServer * server, RouteNodeInfo * info_array, trac
 	}else if (start_node->type == NODE_ENTER){
 		return 0;
 	}else if (start_node->type == NODE_BRANCH){
-		if(is_switch_blacklisted(server, start_node->num))
+		if(TAL_IsSwitchFaulty(&server->tal, start_node->num))
 			return 0;
 		//  Save this for when we search the two possibilities
 		int current_route_length = *route_nodes_length;
@@ -375,7 +378,7 @@ track_node * GetRandomSensorReachableViaDirectedGraph(TrainServer * server, trac
 			assert(module_num >= 0 && module_num <= 4, "Module num is being calculated incorrectly.");
 			//  Parse the number out of the second part of the string
 			int sensor_num = robatoi(&(random_sensor->name[1])) -1;
-			if(!(is_sensor_blacklisted(module_num, sensor_num, server))){
+			if(!(TAL_IsDestinationSensorBad(&server->tal, module_num, sensor_num))){
 				return random_sensor;
 			}
 		}
@@ -411,7 +414,7 @@ void TrainServer_HandleSensorReaderData(TrainServer * server) {
 
 	server->sensor_bit_flags[module_num] = 0;
 	for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
-		if(!(is_sensor_blacklisted(module_num, sensor_num, server))){
+		if(!(TAL_IsSensorFaulty(&server->tal, module_num, sensor_num))){
 			if (sensor_bit_flag & 1 << sensor_num) {
 				server->sensor_time_log[module_num][sensor_num] = current_time;
 				server->sensor_bit_flags[module_num] |= (sensor_bit_flag & 1 << sensor_num);
