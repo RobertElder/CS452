@@ -1,5 +1,5 @@
 #include "train_abstraction_layer.h"
-
+#include "route.h"
 
 void TAL_Initialize(TAL * tal, TrainServer * server) {
 	tal->train_server = server;
@@ -90,8 +90,35 @@ void TAL_CalculateTrainLocation(TAL * tal, int train_num) {}
 
 void TAL_SetInitialTrainLocation(TAL * tal, int train_num) {}
 
+track_node * TAL_GetUnreservedSensor(TAL * tal) {
+	int sensor_module;
+	int sensor_num;
+	
+	for (sensor_module = 0; sensor_module < NUM_SENSOR_MODULES; sensor_module++) {
+		for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
+			if ((tal->train_server->sensor_bit_flags[sensor_module] >> sensor_num) & 0x01) {
+				track_node * candidate_node = SensorToTrackNode(tal->train_server->current_track_nodes, sensor_module, sensor_num);
+				if (!candidate_node->reserved) {
+					return candidate_node;
+				}
+			}
+		}
+	}
+	
+	return 0;
+}
+
 undirected_node * TAL_GetLikelyTrainSensor(TAL * tal, int train_num) {return 0;}
 
 undirected_node * TAL_GetNextNode(TAL * tal, int train_num) {return 0;}
 
 void TAL_SetTrainLocation(TAL * tal, int train_num) {}
+
+void TAL_SetTrainWait(TAL * tal, TrainEngine * engine, int seconds) {
+	engine->wait_until = TimeSeconds() + seconds;
+}
+
+int TAL_IsTrainWaiting(TAL * tal, TrainEngine * engine) {
+	return (engine->wait_until > TimeSeconds());
+}
+

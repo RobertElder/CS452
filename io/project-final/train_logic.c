@@ -2,6 +2,7 @@
 #include "public_kernel_interface.h"
 #include "robio.h"
 #include "tracks/undirected_nodes.h"
+#include "train_abstraction_layer.h"
 
 void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 	if (!engine->train_num) {
@@ -67,7 +68,7 @@ void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine) {
 }
 
 void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine * engine) {
-	track_node * node = TrainServer_GetEnginePosition(server, engine);
+	track_node * node = TAL_GetUnreservedSensor(&server->tal);
 	
 	if (node && engine->current_node != node) {
 		if (engine->current_node) {
@@ -75,7 +76,7 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 		}
 
 		engine->state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
-		engine->wait_until = TimeSeconds() + 4;
+		TAL_SetTrainWait(&server->tal, engine, 4);
 		engine->current_node = node;
 		ReserveTrackNode(node, engine->train_num);
 		ReserveTrackNode(node->edge[DIR_AHEAD].dest, engine->train_num);
@@ -96,7 +97,7 @@ void TrainServer_ProcessEngineResyncPosition(TrainServer * server, TrainEngine *
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine) {
 	//PrintMessage("Found starting position.");
 	
-	if (engine->wait_until < TimeSeconds()) {
+	if (!TAL_IsTrainWaiting(&server->tal, engine)) {
 		engine->state = TRAIN_ENGINE_WAIT_FOR_ALL_READY;
 	}
 }
@@ -255,7 +256,7 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	
 	if (engine->current_node == engine->destination_node) {
 		engine->state = TRAIN_ENGINE_AT_DESTINATION;
-		engine->wait_until = TimeSeconds() + 4;
+		TAL_SetTrainWait(&server->tal, engine, 4);
 		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
 		//PrintMessage("At destination %s.", engine->current_node->name);
 		ReleaseTrackNodes(engine);
@@ -308,9 +309,7 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 }
 
 void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * engine) {
-	float time_now = TimeSeconds();
-	
-	if (engine->go_forever && engine->wait_until < time_now) {
+	if (engine->go_forever && !TAL_IsTrainWaiting(&server->tal, engine)) {
 		engine->state = TRAIN_ENGINE_WAIT_AND_GO_FOREVER;
 	}
 }
