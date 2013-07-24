@@ -86,7 +86,7 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 }
 
 void TrainServer_ProcessEngineResyncPosition(TrainServer * server, TrainEngine * engine) {
-	if (IsNextNodeAvailable(engine)) {
+	if (TAL_IsNextNodeAvailable(&server->tal, engine)) {
 		TrainServer_ProcessEngineFindingPosition(server, engine);
 	} else {
 		TrainServer_SetTrainSpeed(server, 0, engine->train_num);
@@ -336,7 +336,7 @@ void TrainServer_ProcessEngineReverseAndTryAgain(TrainServer * server, TrainEngi
 }
 
 void TrainServer_ProcessEngineWaitForReservation(TrainServer * server, TrainEngine * engine) {
-	if (IsNextNodeAvailable(engine)) {
+	if (TAL_IsNextNodeAvailable(&server->tal, engine)) {
 		TrainServer_SetTrainSpeed(server, FINDING_POSITION_SPEED, engine->train_num);
 		engine->state = TRAIN_ENGINE_RESYNC_POSITION;
 	}
@@ -454,24 +454,4 @@ void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
 	}
 }
 
-int IsNextNodeAvailable(TrainEngine * engine) {
-	if (engine->current_node) {
-		track_node * next_node1 = engine->current_node->edge[DIR_STRAIGHT].dest;
-		track_node * next_node2 = engine->current_node->edge[DIR_CURVED].dest;
-		
-		int available1 = 1;
-		int available2 = 1;
-		
-		if (next_node1) {
-			available1 = (!next_node1->reserved || next_node1->reserved == engine->train_num);
-		}
-		
-		if (next_node2) {
-			available2 = (!next_node2->reserved || next_node2->reserved == engine->train_num);
-		}
-		
-		return (available1 && available2);
-	} else {
-		return 0;
-	}
-}
+

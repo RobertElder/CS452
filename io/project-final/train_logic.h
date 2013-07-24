@@ -48,6 +48,4 @@ int DistanceToDestination(TrainEngine * engine);
 
 track_node * GetNextSensor(TrainEngine * engine);
 
-int IsNextNodeAvailable(TrainEngine * engine);
-
 #endif

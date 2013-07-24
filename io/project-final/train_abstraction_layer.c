@@ -1,5 +1,6 @@
 #include "train_abstraction_layer.h"
 #include "route.h"
+#include "robio.h"
 
 void TAL_Initialize(TAL * tal, TrainServer * server) {
 	tal->train_server = server;
@@ -110,7 +111,22 @@ track_node * TAL_GetUnreservedSensor(TAL * tal) {
 
 undirected_node * TAL_GetLikelyTrainSensor(TAL * tal, int train_num) {return 0;}
 
-undirected_node * TAL_GetNextNode(TAL * tal, int train_num) {return 0;}
+track_node * TAL_GetNextNode(TAL * tal, TrainEngine * engine) {
+	assert(engine->current_node != 0, "TAL_GetNextNode: engine has no current node");
+	
+	if (engine->current_node->type == NODE_BRANCH) {
+		if (TAL_GetSwitchState(tal, engine->current_node->num) == SWITCH_CURVED) {
+			return engine->current_node->edge[DIR_CURVED].dest;
+		} else if (TAL_GetSwitchState(tal, engine->current_node->num) == SWITCH_STRAIGHT) {
+			return engine->current_node->edge[DIR_STRAIGHT].dest;
+		} else {
+			assertf(0, "TAL_GetNextNode: unable to determine next node from branch %d because it is unknown state", engine->current_node->num);
+			return 0;
+		}
+	} else {
+		return engine->current_node->edge[DIR_AHEAD].dest;
+	}
+}
 
 void TAL_SetTrainLocation(TAL * tal, int train_num) {}
 
@@ -120,5 +136,14 @@ void TAL_SetTrainWait(TAL * tal, TrainEngine * engine, int seconds) {
 
 int TAL_IsTrainWaiting(TAL * tal, TrainEngine * engine) {
 	return (engine->wait_until > TimeSeconds());
+}
+
+int TAL_IsNextNodeAvailable(TAL * tal, TrainEngine * engine) {
+	return !(TAL_GetNextNode(tal, engine)->reserved);
+}
+
+SwitchState TAL_GetSwitchState(TAL * tal, int switch_num) {
+	assert(switch_num <= NUM_SWITCHES, "TAL_GetSwitchState: invalid switch num");
+	return tal->train_server->switch_states[switch_num];
 }
 

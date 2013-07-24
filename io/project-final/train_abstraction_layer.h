@@ -30,12 +30,16 @@ track_node * TAL_GetUnreservedSensor(TAL * tal);
 
 undirected_node * TAL_GetLikelyTrainSensor(TAL * tal, int train_num);
 
-undirected_node * TAL_GetNextNode(TAL * tal, int train_num);
+track_node * TAL_GetNextNode(TAL * tal, TrainEngine * engine);
 
 void TAL_SetTrainLocation(TAL * tal, int train_num);
 
 void TAL_SetTrainWait(TAL * tal, TrainEngine * engine, int seconds);
 
 int TAL_IsTrainWaiting(TAL * tal, TrainEngine * engine);
+
+int TAL_IsNextNodeAvailable(TAL * tal, TrainEngine * engine);
+
+SwitchState TAL_GetSwitchState(TAL * tal, int switch_num);
 
 #endif
