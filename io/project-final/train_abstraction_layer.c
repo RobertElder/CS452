@@ -2,6 +2,7 @@
 #include "route.h"
 #include "robio.h"
 #include "train.h"
+#include "train_logic.h"
 
 void TAL_Initialize(TAL * tal, TrainServer * server) {
 	tal->train_server = server;
@@ -75,11 +76,50 @@ int TAL_IsDestinationSensorBad(TAL * tal, int module_num, int sensor_num) {
 		}
 	}
 	
+	if (TAL_IsSensorFaulty(tal, module_num, sensor_num)) {
+		return 1;
+	}
+	
 	return 0;
 }
 
+void TAL_CalculateTrainSpeedBySensor(TAL * tal, TrainEngine * engine) {
+	double time = TimeSeconds();
+	double time_difference = time - engine->actual_time_at_last_sensor;
+	double new_speed = (double) engine->distance_to_next_sensor / time_difference;
+	engine->last_calculated_speed = engine->calculated_speed;
+	engine->calculated_speed = SPEED_ALPHA * new_speed + (1 - SPEED_ALPHA) * engine->last_calculated_speed;
+	
+	if (engine->calculated_speed > MAX_PHYSICAL_SPEED) {
+		//PrintMessage("Train speed calculation too fast (%d mm/s). Capping.", (int) engine->calculated_speed);
+		engine->calculated_speed = MAX_PHYSICAL_SPEED;
+	}
+	
+	engine->actual_time_at_last_sensor = time;
+	engine->expected_time_at_last_sensor = engine->expected_time_at_next_sensor;
+	engine->last_time_speed_update = time;
+	engine->distance_to_next_sensor = DistanceToNextSensor(engine);
+	engine->expected_time_at_next_sensor = (double) engine->distance_to_next_sensor / engine->calculated_speed + time;
+}
+
+void TAL_CalculateTrainSpeedByGuessing(TAL * tal, TrainEngine * engine) {
+	double time = TimeSeconds();
+	
+	if (time < engine->last_time_speed_update + 0.1) {
+		return;
+	}
+	
+	double new_speed = engine->granular_speed_setting / 14.0 * TARGET_SPEED;
+	engine->last_calculated_speed = engine->calculated_speed;
+	engine->calculated_speed = GUESSING_SPEED_ALPHA * new_speed + (1 - GUESSING_SPEED_ALPHA) * engine->last_calculated_speed;
+	
+	engine->last_time_speed_update = time;
+}
+
 void TAL_CalculateTrainLocation(TAL * tal, TrainEngine * engine) {
-	// TODO
+	double time = TimeSeconds() - engine->actual_time_at_last_sensor;
+	engine->estimated_distance_after_node = engine->calculated_speed * time;
+	engine->distance_to_destination = DistanceToDestination(engine) - engine->estimated_distance_after_node;
 }
 
 void TAL_SetInitialTrainLocation(TAL * tal, TrainEngine * engine, track_node * node) {

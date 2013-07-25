@@ -76,6 +76,9 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 		TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 0);
 		engine->state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
 	}
+	
+	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
+	TAL_CalculateTrainLocation(&server->tal, engine);
 }
 
 void TrainServer_ProcessEngineResyncPosition(TrainServer * server, TrainEngine * engine) {
@@ -85,6 +88,9 @@ void TrainServer_ProcessEngineResyncPosition(TrainServer * server, TrainEngine *
 		TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 1);
 		engine->state = TRAIN_ENGINE_WAIT_FOR_RESERVATION;
 	}
+	
+	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
+	TAL_CalculateTrainLocation(&server->tal, engine);
 }
 
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine) {
@@ -93,6 +99,9 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 	if (!TAL_IsTrainWaiting(&server->tal, engine)) {
 		engine->state = TRAIN_ENGINE_WAIT_FOR_ALL_READY;
 	}
+	
+	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
+	TAL_CalculateTrainLocation(&server->tal, engine);
 }
 
 void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngine * engine) {
@@ -139,6 +148,9 @@ void TrainServer_ProcessEngineWaitForAllReady(TrainServer * server, TrainEngine 
 	if (TrainServer_NumActivatedEngines(server) == server->num_engines) {
 		engine->state = TRAIN_ENGINE_WAIT_FOR_DESTINATION;
 	}
+	
+	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
+	TAL_CalculateTrainLocation(&server->tal, engine);
 }
 
 int DistanceToNextSensor(TrainEngine * engine) {
@@ -190,10 +202,12 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	track_node * node = TAL_GetTrainReservedSensor(&server->tal, engine->train_num);
 	
 	if (node && node != engine->current_node) {
+		engine->use_sensor_for_speed_calculation = 1;
 		TAL_TransitionToNextNode(&server->tal, engine, node);
 		TrainServer_ProcessSensorData(server, engine);
 		
 		if (engine->state == TRAIN_ENGINE_AT_DESTINATION) {
+			engine->use_sensor_for_speed_calculation = 0;
 			return;
 		}
 		
@@ -208,9 +222,10 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 		}
 	}
 	
-	double time = TimeSeconds() - engine->actual_time_at_last_sensor;
-	engine->estimated_distance_after_node = engine->calculated_speed * time;
-	engine->distance_to_destination = DistanceToDestination(engine) - engine->estimated_distance_after_node;
+	if (!engine->use_sensor_for_speed_calculation) {
+		TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
+	}
+	TAL_CalculateTrainLocation(&server->tal, engine);
 	
 	assert(engine->speed_setting < 16, "Train Speed Setting is set wrong");
 	int stopping_distance = STOPPING_DISTANCE[engine->train_num][engine->speed_setting];
@@ -231,23 +246,12 @@ void TrainServer_ProcessEngineNearDestination(TrainServer * server, TrainEngine 
 	}
 
 	TrainServer_ProcessEngineRunning(server, engine);
+	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
+	TAL_CalculateTrainLocation(&server->tal, engine);
 }
 
 void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
-	double time = TimeSeconds();
-	double time_difference = time - engine->actual_time_at_last_sensor;
-	double new_speed = (double) engine->distance_to_next_sensor / time_difference;
-	engine->last_calculated_speed = engine->calculated_speed;
-	engine->calculated_speed = SPEED_ALPHA * new_speed + (1 - SPEED_ALPHA) * engine->last_calculated_speed;
-	
-	if (engine->calculated_speed > MAX_PHYSICAL_SPEED) {
-		//PrintMessage("Train speed calculation too fast (%d mm/s). Capping.", (int) engine->calculated_speed);
-		engine->calculated_speed = MAX_PHYSICAL_SPEED;
-	}
-	
-	engine->actual_time_at_last_sensor = time;
-	engine->expected_time_at_last_sensor = engine->expected_time_at_next_sensor;
-	engine->next_node = 0;
+	TAL_CalculateTrainSpeedBySensor(&server->tal, engine);
 	
 	if (engine->current_node == engine->destination_node) {
 		engine->state = TRAIN_ENGINE_AT_DESTINATION;
@@ -278,9 +282,6 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 		//PrintMessage("\x1b[31;44mUnable to find current sensor (%s) in route list from %s to %s.", engine->current_node->name, engine->source_node->name, engine->destination_node->name);
 	}
 
-	engine->distance_to_next_sensor = DistanceToNextSensor(engine);
-	engine->expected_time_at_next_sensor = (double) engine->distance_to_next_sensor / engine->calculated_speed + time;
-
 	// TODO queuing switch states like this not good, should use distance to next switch
 	TrainServer_QueueSwitchStates(server, engine);
 }
@@ -289,6 +290,8 @@ void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * 
 	if (engine->go_forever && !TAL_IsTrainWaiting(&server->tal, engine)) {
 		engine->state = TRAIN_ENGINE_WAIT_AND_GO_FOREVER;
 	}
+	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
+	TAL_CalculateTrainLocation(&server->tal, engine);
 }
 
 void TrainServer_ProcessEngineWaitAndGoForever(TrainServer * server, TrainEngine * engine) {
@@ -317,10 +320,12 @@ void TrainServer_ProcessEngineWaitForReservation(TrainServer * server, TrainEngi
 		TAL_SetTrainSpeed(&server->tal, FINDING_POSITION_SPEED, engine->train_num, 0);
 		engine->state = TRAIN_ENGINE_RESYNC_POSITION;
 	}
+	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
 }
 
 void TrainServer_ProcessEngineWrongLocation(TrainServer * server, TrainEngine * engine) {
-
+	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
+	TAL_CalculateTrainLocation(&server->tal, engine);
 }
 
 void TrainServer_ProcessEngineCalibratingSpeed(TrainServer * server, TrainEngine * engine) {

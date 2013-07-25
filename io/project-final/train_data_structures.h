@@ -17,6 +17,7 @@ static const int const TRAIN_SYSTEM_GO = 96;
 static const int const TRAIN_SYSTEM_STOP = 97;
 
 static const double const SPEED_ALPHA = 0.9;
+static const double const GUESSING_SPEED_ALPHA = 0.2;
 static const int const TARGET_SPEED = 430;  // mm
 static const int const STOPPING_DISTANCE[52][16] = {
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 0-9
@@ -166,6 +167,7 @@ typedef struct TrainEngine {
 	TrainEngineState state;
 	int speed_setting;
 	int raw_speed_setting;
+	double last_time_speed_update;
 	double granular_speed_setting; 
 	double calculated_speed;
 	double last_calculated_speed;
@@ -187,6 +189,7 @@ typedef struct TrainEngine {
 	short go_forever;
 	double wait_until;
 	undirected_node train_node;
+	short use_sensor_for_speed_calculation;
 } TrainEngine;
 
 typedef struct TrainEngineStatusMessage {
