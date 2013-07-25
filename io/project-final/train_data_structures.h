@@ -164,8 +164,8 @@ typedef struct RouteNodeInfo {
 typedef struct TrainEngine {
 	int train_num;
 	TrainEngineState state;
-	track_node * next_node;
 	int speed_setting;
+	int raw_speed_setting;
 	double granular_speed_setting; 
 	double calculated_speed;
 	double last_calculated_speed;
@@ -176,7 +176,9 @@ typedef struct TrainEngine {
 	int sample_distance_to_next_sensor;
 	int distance_to_destination;
 	double estimated_distance_after_node;
+	track_node * previous_node;
 	track_node * current_node;
+	track_node * next_node;
 	track_node * source_node;
 	track_node * destination_node;
 	RouteNodeInfo route_node_info[MAX_ROUTE_NODE_INFO];

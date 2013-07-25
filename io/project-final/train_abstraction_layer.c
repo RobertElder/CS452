@@ -78,9 +78,30 @@ int TAL_IsDestinationSensorBad(TAL * tal, int module_num, int sensor_num) {
 	return 0;
 }
 
-void TAL_CalculateTrainLocation(TAL * tal, int train_num) {}
+void TAL_CalculateTrainLocation(TAL * tal, TrainEngine * engine) {
+	// TODO
+}
 
-void TAL_SetInitialTrainLocation(TAL * tal, int train_num) {}
+void TAL_SetInitialTrainLocation(TAL * tal, TrainEngine * engine, track_node * node) {
+	// TODO use the new undirected node thingy
+	//add_train_node(&engine->train_node, node->undirected_node, node->edge[DIR_AHEAD].dest->undirected_node, 1);
+	
+	TAL_TransitionToNextNode(tal, engine, node);
+}
+
+void TAL_TransitionToNextNode(TAL * tal, TrainEngine * engine, track_node * node) {
+	// TODO update the new undirected node thingy
+	
+	if (engine->previous_node) {
+		ReleaseTrackNode(engine->previous_node, engine->train_num);
+	}
+	
+	engine->previous_node = engine->current_node;
+	engine->current_node = node;
+	engine->next_node = TAL_GetNextNode(tal, engine);
+	
+	ReserveTrackNode(engine->current_node, engine->train_num);
+}
 
 track_node * TAL_GetUnreservedSensor(TAL * tal) {
 	int sensor_module;
@@ -136,8 +157,6 @@ track_node * TAL_GetNextNode(TAL * tal, TrainEngine * engine) {
 	}
 }
 
-void TAL_SetTrainLocation(TAL * tal, int train_num) {}
-
 void TAL_SetTrainWait(TAL * tal, TrainEngine * engine, int seconds) {
 	engine->wait_until = TimeSeconds() + seconds;
 }
@@ -182,27 +201,38 @@ int TAL_GetSlowSpeedSetting(TAL * tal, TrainEngine * engine) {
 }
 
 void TAL_FeedbackControlSystem(TAL * tal, TrainEngine * engine) {
+	double new_speed_setting = engine->granular_speed_setting;
+
 	if (engine->calculated_speed < TARGET_SPEED && engine->granular_speed_setting < STARTUP_TRAIN_SPEED) {
-		engine->granular_speed_setting = STARTUP_TRAIN_SPEED;
+		new_speed_setting = STARTUP_TRAIN_SPEED;
 	} else if (engine->calculated_speed < TARGET_SPEED && engine->granular_speed_setting < 11) {
-		engine->granular_speed_setting += FEEDBACK_CONTROL_SPEED_INCREMENT;
+		new_speed_setting += FEEDBACK_CONTROL_SPEED_INCREMENT;
 	} else if (engine->calculated_speed > TARGET_SPEED && engine->granular_speed_setting > 8) {
-		engine->granular_speed_setting += FEEDBACK_CONTROL_SPEED_DECREMENT;
+		new_speed_setting += FEEDBACK_CONTROL_SPEED_DECREMENT;
 	}
 	
-	int new_speed_setting = (int) engine->granular_speed_setting;
 	//PrintMessage("Feedback control setting speed to %d for train %d.", new_speed_setting, engine->train_num);
 	
-	if (new_speed_setting != engine->speed_setting) {
-		TAL_SetTrainSpeed(tal, new_speed_setting | LIGHTS_MASK, engine->train_num);
-	}
+	TAL_SetTrainSpeed(tal, new_speed_setting, engine->train_num, 1);
 }
 
-void TAL_SetTrainSpeed(TAL * tal, int speed, int train_num) {
-	int train_speed_settings = speed << 8 | train_num;
-	Queue_PushEnd((Queue*) &tal->train_server->train_speed_queue, (QUEUE_ITEM_TYPE) train_speed_settings);
-	
+void TAL_SetTrainSpeed(TAL * tal, double speed, int train_num, int lights) {
 	int slot_num = TrainServer_EngineNumToArrayIndex(tal->train_server, train_num);
+	TrainEngine * engine = &tal->train_server->train_engines[slot_num];
 	
-	tal->train_server->train_engines[slot_num].speed_setting = speed & ~LIGHTS_MASK;
+	engine->granular_speed_setting = speed;
+	
+	int new_speed_setting = speed;
+	
+	if (lights) {
+		new_speed_setting |= LIGHTS_MASK;
+	}
+	
+	if (tal->train_server->train_engines[slot_num].raw_speed_setting != new_speed_setting) {
+		int speed_command = new_speed_setting << 8 | train_num;
+		Queue_PushEnd((Queue*) &tal->train_server->train_speed_queue, (QUEUE_ITEM_TYPE) speed_command);
+	
+		engine->speed_setting = speed;
+		engine->raw_speed_setting = new_speed_setting;
+	}
 }

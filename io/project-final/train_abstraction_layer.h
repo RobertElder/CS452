@@ -12,17 +12,17 @@ int TAL_IsSwitchFaulty(TAL * tal, int switch_num);
 
 int TAL_IsDestinationSensorBad(TAL * tal, int module_num, int sensor_num);
 
-void TAL_CalculateTrainLocation(TAL * tal, int train_num);
+void TAL_CalculateTrainLocation(TAL * tal, TrainEngine * engine);
 
-void TAL_SetInitialTrainLocation(TAL * tal, int train_num);
+void TAL_SetInitialTrainLocation(TAL * tal, TrainEngine * engine, track_node * node);
+
+void TAL_TransitionToNextNode(TAL * tal, TrainEngine * engine, track_node * node);
 
 track_node * TAL_GetUnreservedSensor(TAL * tal);
 
 track_node * TAL_GetTrainReservedSensor(TAL * tal, int train_num);
 
 track_node * TAL_GetNextNode(TAL * tal, TrainEngine * engine);
-
-void TAL_SetTrainLocation(TAL * tal, int train_num);
 
 void TAL_SetTrainWait(TAL * tal, TrainEngine * engine, int seconds);
 
@@ -36,6 +36,6 @@ int TAL_GetSlowSpeedSetting(TAL * tal, TrainEngine * engine);
 
 void TAL_FeedbackControlSystem(TAL * tal, TrainEngine * engine);
 
-void TAL_SetTrainSpeed(TAL * tal, int speed, int train_num);
+void TAL_SetTrainSpeed(TAL * tal, double speed, int train_num, int lights);
 
 #endif
