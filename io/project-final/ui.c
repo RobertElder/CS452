@@ -620,7 +620,7 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		ANSI_Style(BOLD_STYLE);
 		PutString(COM2, 
 "                                         Speed       Sensor Times (s)       Distance (mm)\n"
-"Train State               From Now To    mm/s      Expect Last   Actual   After Next  Dest");
+"Train State               From Now To    mm/s      Expect Last   Actual   After Next NSens Dest");
 		ANSI_Style(NORMAL_STYLE);
 	}
 	
@@ -650,6 +650,7 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		int estimated_distance_after_node = engine->estimated_distance_after_node;
 		int distance_to_next_sensor = engine->distance_to_next_sensor;
 		int distance_to_destination = engine->distance_to_destination;
+		int distance_to_next_node = engine->distance_to_next_node;
 	
 		if (engine->source_node) {
 			source_node_name = engine->source_node->name;
@@ -683,7 +684,7 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		int state = engine->state;
 	
 		int new_hash_1 = train_num ^ speed_setting ^ calculated_speed ^ (int) current_node_name ^ state ^ (int) next_node_name ^ (int) dest_node_name ^ (int) source_node_name;
-		int new_hash_2 = expected_time_at_next_sensor ^ expected_time_at_last_sensor ^ actual_time_at_last_sensor ^ estimated_distance_after_node ^ distance_to_next_sensor ^ distance_to_destination;
+		int new_hash_2 = expected_time_at_next_sensor ^ expected_time_at_last_sensor ^ actual_time_at_last_sensor ^ estimated_distance_after_node ^ distance_to_next_node ^ distance_to_next_sensor ^ distance_to_destination;
 		int differs_1 = new_hash_1 != server->train_engine_status_hashes_1[slot_num];
 		int differs_2 = new_hash_2 != server->train_engine_status_hashes_2[slot_num];
 	
@@ -728,11 +729,14 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		
 			ANSI_CursorCol(75);
 			PutString(COM2, "%d", estimated_distance_after_node);
-		
+			
 			ANSI_CursorCol(81);
+			PutString(COM2, "%d", distance_to_next_node);
+		
+			ANSI_CursorCol(86);
 			PutString(COM2, "%d", distance_to_next_sensor);
 		
-			ANSI_CursorCol(87);
+			ANSI_CursorCol(92);
 			PutString(COM2, "%d", distance_to_destination);
 		}
 	}

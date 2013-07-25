@@ -941,6 +941,8 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->source_node = 0;
 	engine->last_time_speed_update = 0;
 	engine->use_sensor_for_speed_calculation = 0;
+	engine->distance_to_next_node = 0;
+	engine->time_at_last_node = 0;
 	
 	memset(&engine->train_node, 0, sizeof(undirected_node));
 	engine->train_node.type = NODE_TRAIN;

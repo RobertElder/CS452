@@ -28,6 +28,8 @@ track_node * TAL_GetTrainReservedSensor(TAL * tal, int train_num);
 
 track_node * TAL_GetNextNode(TAL * tal, TrainEngine * engine);
 
+int TAL_DistanceToNextNode(TAL * tal, TrainEngine * engine);
+
 void TAL_SetTrainWait(TAL * tal, TrainEngine * engine, int seconds);
 
 int TAL_IsTrainWaiting(TAL * tal, TrainEngine * engine);

@@ -49,7 +49,7 @@ static const double FEEDBACK_CONTROL_SPEED_INCREMENT = 0.3;
 static const double FEEDBACK_CONTROL_SPEED_DECREMENT = -0.7;
 static const int STARTUP_TRAIN_SPEED = 8;
 static const int FINDING_POSITION_SPEED = 4;
-static const double MAX_PHYSICAL_SPEED = 750; // mm/s
+static const double MAX_PHYSICAL_SPEED = 550; // mm/s
 
 typedef enum TrainEngineState {
 	TRAIN_ENGINE_IDLE,
@@ -174,7 +174,9 @@ typedef struct TrainEngine {
 	double expected_time_at_next_sensor;
 	double expected_time_at_last_sensor;
 	double actual_time_at_last_sensor;
+	double time_at_last_node;
 	int distance_to_next_sensor;
+	int distance_to_next_node;
 	int sample_distance_to_next_sensor;
 	int distance_to_destination;
 	double estimated_distance_after_node;
