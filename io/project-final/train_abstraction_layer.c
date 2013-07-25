@@ -101,6 +101,7 @@ void TAL_TransitionToNextNode(TAL * tal, TrainEngine * engine, track_node * node
 	engine->next_node = TAL_GetNextNode(tal, engine);
 	
 	ReserveTrackNode(engine->current_node, engine->train_num);
+	ReserveTrackNode(engine->next_node, engine->train_num);
 }
 
 track_node * TAL_GetUnreservedSensor(TAL * tal) {

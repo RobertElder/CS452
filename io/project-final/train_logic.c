@@ -70,9 +70,7 @@ void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine) {
 void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine * engine) {
 	track_node * node = TAL_GetUnreservedSensor(&server->tal);
 	
-	assert(engine->current_node == 0, "TrainServer_ProcessEngineFindingPosition: this function expects that the engine has not been found yet");
-	
-	if (node) {
+	if (node && engine->current_node != node) {
 		TAL_SetInitialTrainLocation(&server->tal, engine, node);
 		TAL_SetTrainWait(&server->tal, engine, 4);
 		TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 0);
@@ -192,7 +190,7 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	track_node * node = TAL_GetTrainReservedSensor(&server->tal, engine->train_num);
 	
 	if (node && node != engine->current_node) {
-		engine->current_node = node;
+		TAL_TransitionToNextNode(&server->tal, engine, node);
 		TrainServer_ProcessSensorData(server, engine);
 		
 		if (engine->state == TRAIN_ENGINE_AT_DESTINATION) {
