@@ -5,34 +5,39 @@
 #define FIN_SEND -1
 #define FIN_TAKE -2
 
+typedef struct timestamp{
+	unsigned int ticks;
+	unsigned int timer;
+} timestamp;
 
-void print_flags(volatile int flags, int time){
-	if(flags == FIN_SEND){
-		robprintfbusy((const unsigned char *)"Finished sending byte.\n");
-		return;
-	}
 
-	if(flags == FIN_TAKE){
-		robprintfbusy((const unsigned char *)"Finished taking byte.\n");
-		return;
-	}
-
-	robprintfbusy((const unsigned char *)"CTS: %d, DCD: %d, DSR: %d, TXBUSY: %d, RXFE: %d, TXFF: %d, RXFF: %d, TXFE: %d.  T=%d\n",
-		flags & CTS_MASK,
-		flags & DCD_MASK,
-		flags & DSR_MASK,
-		flags & TXBUSY_MASK,
-		flags & RXFE_MASK,
-		flags & TXFF_MASK,
-		flags & RXFF_MASK,
-		flags & TXFE_MASK,
-		time
+void print_flags(volatile int flags, timestamp time){
+	robprintfbusy((const unsigned char *)"%d.  T=%d\n",
+		flags,
+		(time.ticks * 508000 + (508000 - time.timer))
 	);
+}
+
+unsigned int diff(timestamp current, timestamp last){
+	return (current.ticks * 508000 + (508000 - current.timer)) - (last.ticks * 508000 + (508000 - last.timer));
+}
+
+void print_flags1(timestamp time2, timestamp time1){
+	robprintfbusy((const unsigned char *)"delta is %d\n",
+		diff(time2, time1)
+	);
+}
+
+
+void service_timer(unsigned int current, unsigned int last, unsigned int * ticks){
+	if(current > last){
+		*ticks = *ticks + 1;
+	}
 }
 
 void TEST_UART(){
 	volatile int states[MAX_STATES];
-	volatile int times[MAX_STATES];
+	volatile timestamp times[MAX_STATES];
 
 	volatile int state_number = 0;
 
@@ -73,7 +78,6 @@ void TEST_UART(){
 	state_number++;
 
 
-
 	unsigned int cycles_per_tick = 508000;
 	int * timer_ldr = (int*)(TIMER3_BASE + LDR_OFFSET);
 	int * timer_val = (int*)(TIMER3_BASE + VAL_OFFSET);
@@ -85,211 +89,107 @@ void TEST_UART(){
 	*timer_ctrl = ENABLE_MASK | CLKSEL_MASK | MODE_MASK;
 
 	int i = 0;
-	int j = 0;
 
-	volatile int in_data;
+	volatile int in_data = 0;
 
-	for(j = 0; j < 1; j++){
+	timestamp last_ten;
+	last_ten.ticks = 0;
+	last_ten.timer = 508000;
+	timestamp last_thirteen;
+	last_thirteen.ticks = 0;
+	last_thirteen.timer = 508000;
+
+	unsigned int last_timer = 508000;
+
+	unsigned int ticks = 0;
+
+	while(state_number < 20){
 		while(!(CTS_MASK & flags)){
 			flags = *UART1Flag;
-			if(flags != states[state_number - 1]){
-				states[state_number] = flags;
-				times[state_number] = *timer_val;
-				state_number++;
-			}
+			unsigned int sample = *timer_val;
+			service_timer(sample, last_timer, &ticks);
+			last_timer = sample;
 		}
-		i = 0;
+
 		/* Request some sensor data and look a the results */
-		*UART1DATA = 133;
+		*UART1DATA = 197;
 		while(1){
 			flags = *UART1Flag;
-			if(flags != states[state_number - 1]){
-				states[state_number] = flags;
-				times[state_number] = *timer_val;
-				state_number++;
-			}
-			i++;
 			if(!(RXFE_MASK & flags)){
-				states[state_number] = FIN_SEND;
-				times[state_number] = *timer_val;
-				state_number++;
 				break;
 			}
+			unsigned int sample = *timer_val;
+			service_timer(sample, last_timer, &ticks);
+			last_timer = sample;
 		}
-		i = 0;
+
 		in_data = *UART1DATA;
+
+		if(in_data){
+			/*
+			states[state_number] = in_data;
+			times[state_number] = *timer_val;
+			state_number++;
+			*/
+		}
+
 		while(1){
 			flags = *UART1Flag;
-			if(flags != states[state_number - 1]){
-				states[state_number] = flags;
-				times[state_number] = *timer_val;
-				state_number++;
-			}
-			i++;
 			if(!(RXFE_MASK & flags)){
-				states[state_number] = FIN_TAKE;
-				times[state_number] = *timer_val;
-				state_number++;
 				break;
 			}
+			unsigned int sample = *timer_val;
+			service_timer(sample, last_timer, &ticks);
+			last_timer = sample;
 		}
-		i = 0;
+
 		in_data = *UART1DATA;
-		while(1){
-			flags = *UART1Flag;
-			if(flags != states[state_number - 1]){
-				states[state_number] = flags;
-				times[state_number] = *timer_val;
-				state_number++;
+
+		if(in_data){
+			//  64 is 10
+			if(in_data & 64){
+				unsigned int sample = *timer_val;
+				service_timer(sample, last_timer, &ticks);
+				last_timer = sample;
+
+				timestamp now;
+				now.ticks = ticks;
+				now.timer = sample;
+
+				if(diff(now, last_ten) > 17000){
+					states[state_number] = in_data;
+					times[state_number] = now;
+					state_number++;
+				}
+
+				last_ten = now;
 			}
-			i++;
-			if(!(RXFE_MASK & flags)){
-				states[state_number] = FIN_TAKE;
-				times[state_number] = *timer_val;
-				state_number++;
-				break;
-			}
-		}
-		i = 0;
-		in_data = *UART1DATA;
-		while(1){
-			flags = *UART1Flag;
-			if(flags != states[state_number - 1]){
-				states[state_number] = flags;
-				times[state_number] = *timer_val;
-				state_number++;
-			}
-			i++;
-			if(!(RXFE_MASK & flags)){
-				states[state_number] = FIN_TAKE;
-				times[state_number] = *timer_val;
-				state_number++;
-				break;
-			}
-		}
-		i = 0;
-		in_data = *UART1DATA;
-		while(1){
-			flags = *UART1Flag;
-			if(flags != states[state_number - 1]){
-				states[state_number] = flags;
-				times[state_number] = *timer_val;
-				state_number++;
-			}
-			i++;
-			if(!(RXFE_MASK & flags)){
-				states[state_number] = FIN_TAKE;
-				times[state_number] = *timer_val;
-				state_number++;
-				break;
-			}
-		}
-		i = 0;
-		in_data = *UART1DATA;
-		while(1){
-			flags = *UART1Flag;
-			if(flags != states[state_number - 1]){
-				states[state_number] = flags;
-				times[state_number] = *timer_val;
-				state_number++;
-			}
-			i++;
-			if(!(RXFE_MASK & flags)){
-				states[state_number] = FIN_TAKE;
-				times[state_number] = *timer_val;
-				state_number++;
-				break;
-			}
-		}
-		i = 0;
-		in_data = *UART1DATA;
-		while(1){
-			flags = *UART1Flag;
-			if(flags != states[state_number - 1]){
-				states[state_number] = flags;
-				times[state_number] = *timer_val;
-				state_number++;
-			}
-			i++;
-			if(!(RXFE_MASK & flags)){
-				states[state_number] = FIN_TAKE;
-				times[state_number] = *timer_val;
-				state_number++;
-				break;
-			}
-		}
-		i = 0;
-		in_data = *UART1DATA;
-		while(1){
-			flags = *UART1Flag;
-			if(flags != states[state_number - 1]){
-				states[state_number] = flags;
-				times[state_number] = *timer_val;
-				state_number++;
-			}
-			i++;
-			if(!(RXFE_MASK & flags)){
-				states[state_number] = FIN_TAKE;
-				times[state_number] = *timer_val;
-				state_number++;
-				break;
-			}
-		}
-		i = 0;
-		in_data = *UART1DATA;
-		while(1){
-			flags = *UART1Flag;
-			if(flags != states[state_number - 1]){
-				states[state_number] = flags;
-				times[state_number] = *timer_val;
-				state_number++;
-			}
-			i++;
-			if(!(RXFE_MASK & flags)){
-				states[state_number] = FIN_TAKE;
-				times[state_number] = *timer_val;
-				state_number++;
-				break;
-			}
-		}
-		i = 0;
-		in_data = *UART1DATA;
-		while(1){
-			flags = *UART1Flag;
-			if(flags != states[state_number - 1]){
-				states[state_number] = flags;
-				times[state_number] = *timer_val;
-				state_number++;
-			}
-			i++;
-			if(!(RXFE_MASK & flags)){
-				states[state_number] = FIN_TAKE;
-				times[state_number] = *timer_val;
-				state_number++;
-				break;
-			}
-		}
-		i = 0;
-		in_data = *UART1DATA;
-		while(1){
-			flags = *UART1Flag;
-			if(flags != states[state_number - 1]){
-				states[state_number] = flags;
-				times[state_number] = *timer_val;
-				state_number++;
-			}
-			i++;
-			if((RXFE_MASK & flags)){
-				states[state_number] = FIN_TAKE;
-				times[state_number] = *timer_val;
-				state_number++;
-				break;
+			// 8 is 13
+			if(in_data & 8){
+				unsigned int sample = *timer_val;
+				service_timer(sample, last_timer, &ticks);
+				last_timer = sample;
+
+				timestamp now;
+				now.ticks = ticks;
+				now.timer = sample;
+
+				if(diff(now, last_thirteen) > 17000){
+					states[state_number] = in_data;
+					times[state_number] = now;
+					state_number++;
+				}
+
+				last_thirteen = now;
 			}
 		}
 	}
 
-	for(i = 0; i < state_number; i++){
-		print_flags(states[i], times[i]);
+	for(i = 0; i < state_number -1; i++){
+		//print_flags(states[i], times[i]);
+		if(states[i] == 64 && states[i+1] == 8){
+			print_flags1(times[i+1],times[i]);
+		}
 	}
 
 	while(1){};
