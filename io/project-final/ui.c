@@ -532,12 +532,12 @@ void UIServer_PrintSensors(UIServer * server) {
 				ANSIStyle style = NORMAL_STYLE;
 				
 				if (server->sensor_train_location[sensor_i] != -1) {
-					style |= BOLD_STYLE | UNDERLINE_STYLE;
+					style |= BOLD_STYLE;
 					c = '0' + server->sensor_train_location[sensor_i];
 				}
 				
 				if (sensor_bit_flag & 1 << sensor_num) {
-					style |= BOLD_STYLE;
+					style |= BOLD_STYLE | UNDERLINE_STYLE;
 					ANSI_Style(style);
 					PutString(COM2, "%c", c);
 				} else {
@@ -625,7 +625,7 @@ void UIServer_PrintSwitches(UIServer * server) {
 				}
 				
 				if (server->switch_train_location[switch_num] != -1) {
-					style |= BOLD_STYLE | UNDERLINE_STYLE;
+					style |= BOLD_STYLE;
 					c = '0' + server->switch_train_location[switch_num];
 				}
 				

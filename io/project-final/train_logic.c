@@ -113,6 +113,7 @@ void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngi
 		//PrintMessage("No destination in this direction! Reversing..");
 		TAL_SetTrainSpeed(&server->tal, REVERSE_SPEED, engine->train_num, 0);
 		TAL_SetTrainSpeed(&server->tal, FINDING_POSITION_SPEED, engine->train_num, 0);
+		engine->current_node = engine->current_node->reverse;
 		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
 		return;
 	}
