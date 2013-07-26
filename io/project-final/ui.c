@@ -100,11 +100,13 @@ void UIServer_Initialize(UIServer * server) {
 	
 	for (i = SENSOR_MODULE_A; i <= SENSOR_MODULE_E; i++) {
 		server->sensor_bit_flags_cache[i] = 0;
+		server->sensor_train_location[i] = -1;
 	}
 	
 	for (i = 0; i < NUM_SENSOR_MODULES * SENSORS_PER_MODULE; i++) {
 		server->sensor_dirty[i] = 1;
 		server->sensor_background_color[i] = server->background_color;
+		server->switch_train_location[i] = -1;
 	}
 	
 	TrainMap_Initialize_A(&server->train_map_a);
@@ -526,14 +528,23 @@ void UIServer_PrintSensors(UIServer * server) {
 			
 				ANSI_Color(server->foreground_color, server->sensor_background_color[sensor_i]);
 				
-				if (sensor_bit_flag & 1 << sensor_num) {
-					ANSI_Style(BOLD_STYLE);
-					PutString(COM2, "%c", server->current_train_map->ascii[pos->ascii_offset]);
-					ANSI_Style(NORMAL_STYLE);
-				} else {
-					ANSI_Style(NORMAL_STYLE);
-					PutString(COM2, "%c", server->current_train_map->ascii[pos->ascii_offset]);
+				char c = server->current_train_map->ascii[pos->ascii_offset];
+				ANSIStyle style = NORMAL_STYLE;
+				
+				if (server->sensor_train_location[sensor_i] != -1) {
+					style |= BOLD_STYLE | UNDERLINE_STYLE;
+					c = '0' + server->sensor_train_location[sensor_i];
 				}
+				
+				if (sensor_bit_flag & 1 << sensor_num) {
+					style |= BOLD_STYLE;
+					ANSI_Style(style);
+					PutString(COM2, "%c", c);
+				} else {
+					ANSI_Style(style);
+					PutString(COM2, "%c", c);
+				}
+				ANSI_Style(NORMAL_STYLE);
 				
 				ANSI_Color(server->foreground_color, server->background_color);
 			}
@@ -590,22 +601,40 @@ void UIServer_PrintSwitches(UIServer * server) {
 			
 			int switch_state = reply_message->int1;
 			server->switch_dirty[switch_num] |= server->switch_states_cache[switch_num] != switch_state;
+			char c = 'E';
+			ANSIColor foreground = server->foreground_color;
+			ANSIColor background = server->background_color;
+			ANSIStyle style = NORMAL_STYLE;
 			
 			if (server->switch_dirty[switch_num] || server->dirty) {
 				ANSI_Cursor(MAP_ROW_OFFSET + label_pos->row, MAP_COL_OFFSET + 1 + label_pos->col);
 				if (switch_state == SWITCH_CURVED) {
-					ANSI_Color(MAGENTA, server->switch_background_color[switch_num]);
-					PutString(COM2, "C");
+					foreground = MAGENTA;
+					background = server->switch_background_color[switch_num];
+					c = 'C';
 				} else if (switch_state == SWITCH_STRAIGHT){
-					ANSI_Color(CYAN, server->switch_background_color[switch_num]);
-					PutString(COM2, "S");
+					foreground = CYAN;
+					background = server->switch_background_color[switch_num];
+					c = 'S';
 				} else if (switch_state == SWITCH_UNKNOWN){
-					ANSI_Color(server->foreground_color, server->switch_background_color[switch_num]);
-					PutString(COM2, "U");
+					foreground = server->foreground_color;
+					background = server->switch_background_color[switch_num];
+					c = 'U';
 				} else {
 					assert(0,"UI got unknown switch state.");
 				}
+				
+				if (server->switch_train_location[switch_num] != -1) {
+					style |= BOLD_STYLE | UNDERLINE_STYLE;
+					c = '0' + server->switch_train_location[switch_num];
+				}
+				
+				ANSI_Style(style);
+				ANSI_Color(foreground, background);
+				PutString(COM2, "%c", c);
+				
 				ANSI_Color(server->foreground_color, server->background_color);
+				ANSI_Style(NORMAL_STYLE);
 			}
 			
 			server->switch_states_cache[switch_num] = switch_state;
@@ -766,6 +795,7 @@ void UIServer_PrintTrainMapPosition(UIServer * server) {
 	for (i = 0; i < TRACK_MAX; i++) {
 		track_node * node = &track_nodes[i];
 		int new_color;
+		int train_location_display = -1;
 		
 		if (node->type == NODE_SENSOR) {
 			new_color = server->sensor_background_color[node->num];
@@ -775,10 +805,18 @@ void UIServer_PrintTrainMapPosition(UIServer * server) {
 		
 		int is_destination_node = 0;
 		int dest_train_i = 0;
+		int train_location_i = 0;
 		
 		for (dest_train_i = 0; dest_train_i < server->num_engines; dest_train_i++) {
 			if (node == engines[dest_train_i]->destination_node || node->reverse == engines[dest_train_i]->destination_node) {
 				is_destination_node = 1;
+				break;
+			}
+		}
+		
+		for (train_location_i = 0; train_location_i < server->num_engines; train_location_i++) {
+			if (node == engines[train_location_i]->current_node || node->reverse == engines[train_location_i]->current_node) {
+				train_location_display = train_location_i;
 				break;
 			}
 		}
@@ -806,10 +844,18 @@ void UIServer_PrintTrainMapPosition(UIServer * server) {
 				server->sensor_dirty[node->num] = 1;
 				server->sensor_background_color[node->num] = new_color;
 			}
+			if (train_location_display != server->sensor_train_location[node->num]) {
+				server->sensor_dirty[node->num] = 1;
+				server->sensor_train_location[node->num] = train_location_display;
+			}
 		} else if (node->type == NODE_BRANCH || node->type == NODE_MERGE) {
 			if (new_color != server->switch_background_color[node->num]) {
 				server->switch_dirty[node->num] = 1;
 				server->switch_background_color[node->num] = new_color;
+			}
+			if (train_location_display != server->switch_train_location[node->num]) {
+				server->switch_dirty[node->num] = 1;
+				server->switch_train_location[node->num] = train_location_display;
 			}
 		}
 	}
