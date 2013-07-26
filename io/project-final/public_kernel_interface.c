@@ -163,15 +163,15 @@ int Time( ) {
 }
 
 
-int DelaySeconds( float seconds ) {
+int DelaySeconds( double seconds ) {
 	return Delay(seconds * 1000.0 / TICK_SIZE);
 }
 
-float TimeSeconds() {
-	return (float)Time() / (float)1000.0 * TICK_SIZE;
+double TimeSeconds() {
+	return (double)Time() / (double)1000.0 * TICK_SIZE;
 }
 
-int DelayUntilSeconds( float seconds ) {
+int DelayUntilSeconds( double seconds ) {
 	return DelayUntil( seconds * 1000.0 / TICK_SIZE);
 }
 
