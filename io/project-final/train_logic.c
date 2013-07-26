@@ -78,7 +78,6 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 	}
 	
 	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
-	TAL_CalculateTrainLocation(&server->tal, engine);
 }
 
 void TrainServer_ProcessEngineResyncPosition(TrainServer * server, TrainEngine * engine) {
@@ -114,7 +113,7 @@ void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngi
 		TAL_SetTrainSpeed(&server->tal, REVERSE_SPEED, engine->train_num, 0);
 		TAL_SetTrainSpeed(&server->tal, FINDING_POSITION_SPEED, engine->train_num, 0);
 		engine->current_node = engine->current_node->reverse;
-		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
+		engine->state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
 		return;
 	}
 

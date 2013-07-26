@@ -3,6 +3,7 @@
 #include "robio.h"
 #include "train.h"
 #include "train_logic.h"
+#include "tracks/undirected_nodes.h"
 
 void TAL_Initialize(TAL * tal, TrainServer * server) {
 	tal->train_server = server;
@@ -117,41 +118,42 @@ void TAL_CalculateTrainSpeedByGuessing(TAL * tal, TrainEngine * engine) {
 }
 
 void TAL_CalculateTrainLocation(TAL * tal, TrainEngine * engine) {
+	assert(engine->current_node != 0, "TAL_CalculateTrainLocation: no current node");
+
 	double time = TimeSeconds();
 	double delta_time = time - engine->last_time_location_update;
-	engine->estimated_distance_after_node += engine->calculated_speed * delta_time;
+	double distance_traveled = engine->calculated_speed * delta_time;
+	engine->estimated_distance_after_node += distance_traveled;
 	engine->distance_to_destination = DistanceToDestination(engine) - engine->estimated_distance_after_node;
 	engine->last_time_location_update = time;
+	
+	move_train_distance(&engine->train_node, engine->current_node->undirected_node, engine->next_node->undirected_node, TAL_GetNextNode(tal, engine->next_node)->undirected_node, distance_traveled / 1000.0);
 
-	if (engine->current_node) {
-		if (engine->estimated_distance_after_node > engine->distance_to_next_node && engine->next_node) {
-			assertf(engine->next_node != 0, "Next node of %s is 0", engine->current_node->name);
-			PrintMessage("Guessing train is at %s (%d > %d)", engine->next_node->name, (int) engine->estimated_distance_after_node, (int) engine->distance_to_next_node);
-			TAL_TransitionToNextNode(tal, engine, engine->next_node);
-		}
+	if (engine->estimated_distance_after_node > engine->distance_to_next_node && engine->next_node) {
+		assertf(engine->next_node != 0, "Next node of %s is 0", engine->current_node->name);
+		PrintMessage("Guessing train is at %s (%d > %d)", engine->next_node->name, (int) engine->estimated_distance_after_node, (int) engine->distance_to_next_node);
+		TAL_TransitionToNextNode(tal, engine, engine->next_node);
 	}
 }
 
 void TAL_SetInitialTrainLocation(TAL * tal, TrainEngine * engine, track_node * node) {
-	// TODO use the new undirected node thingy
-	//add_train_node(&engine->train_node, node->undirected_node, node->edge[DIR_AHEAD].dest->undirected_node, 1);
-	
 	TAL_TransitionToNextNode(tal, engine, node);
 }
 
 void TAL_TransitionToNextNode(TAL * tal, TrainEngine * engine, track_node * node) {
-	// TODO update the new undirected node thingy
-	
 	if (engine->previous_node) {
 //		ReleaseTrackNode(engine->previous_node, engine->train_num);
+		remove_train_node(&engine->train_node, engine->current_node->undirected_node, engine->next_node->undirected_node);
 	}
 	
 	engine->previous_node = engine->current_node;
 	engine->current_node = node;
-	engine->next_node = TAL_GetNextNode(tal, engine);
+	engine->next_node = TAL_GetNextNode(tal, engine->current_node);
 	engine->estimated_distance_after_node = 0;
 	engine->distance_to_next_node = TAL_DistanceToNextNode(tal, engine);
 	engine->time_at_last_node = TimeSeconds();
+	
+	add_train_node(&engine->train_node, node->undirected_node, engine->next_node->undirected_node, 1);
 	
 	ReserveTrackNode(engine->current_node, engine->train_num);
 //	ReserveTrackNode(engine->next_node, engine->train_num);
@@ -194,20 +196,20 @@ track_node * TAL_GetTrainReservedSensor(TAL * tal, int train_num) {
 	return 0;
 }
 
-track_node * TAL_GetNextNode(TAL * tal, TrainEngine * engine) {
-	assert(engine->current_node != 0, "TAL_GetNextNode: engine has no current node");
+track_node * TAL_GetNextNode(TAL * tal, track_node * node) {
+	assert(node != 0, "TAL_GetNextNode: no node");
 	
-	if (engine->current_node->type == NODE_BRANCH) {
-		if (TAL_GetSwitchState(tal, engine->current_node->num) == SWITCH_CURVED) {
-			return engine->current_node->edge[DIR_CURVED].dest;
-		} else if (TAL_GetSwitchState(tal, engine->current_node->num) == SWITCH_STRAIGHT) {
-			return engine->current_node->edge[DIR_STRAIGHT].dest;
+	if (node->type == NODE_BRANCH) {
+		if (TAL_GetSwitchState(tal, node->num) == SWITCH_CURVED) {
+			return node->edge[DIR_CURVED].dest;
+		} else if (TAL_GetSwitchState(tal, node->num) == SWITCH_STRAIGHT) {
+			return node->edge[DIR_STRAIGHT].dest;
 		} else {
-			assertf(0, "TAL_GetNextNode: unable to determine next node from branch %d because it is unknown state", engine->current_node->num);
+			assertf(0, "TAL_GetNextNode: unable to determine next node from branch %d because it is unknown state", node->num);
 			return 0;
 		}
 	} else {
-		return engine->current_node->edge[DIR_AHEAD].dest;
+		return node->edge[DIR_AHEAD].dest;
 	}
 }
 
@@ -237,7 +239,7 @@ int TAL_IsTrainWaiting(TAL * tal, TrainEngine * engine) {
 }
 
 int TAL_IsNextNodeAvailable(TAL * tal, TrainEngine * engine) {
-	return !(TAL_GetNextNode(tal, engine)->reserved);
+	return !(TAL_GetNextNode(tal, engine->current_node)->reserved);
 }
 
 SwitchState TAL_GetSwitchState(TAL * tal, int switch_num) {
