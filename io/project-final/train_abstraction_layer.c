@@ -309,3 +309,31 @@ void TAL_SetTrainSpeed(TAL * tal, double speed, int train_num, int lights) {
 		engine->raw_speed_setting = new_speed_setting;
 	}
 }
+
+void TAL_PopulatePath(TAL * tal, TrainEngine * engine, track_node * destination_node) {
+	int num_undirected_nodes;
+	undirected_node * train_nodes[MAX_NUM_ENGINES];
+	
+	int i;
+	for (i = 0; i < tal->train_server->num_engines; i++) {
+		train_nodes[i] = &tal->train_server->train_engines[i].train_node;
+	}
+	
+	if (tal->train_server->current_undirected_nodes == tal->train_server->track_a_undirected_nodes) {
+		num_undirected_nodes = tal->train_server->num_track_a_undirected_nodes;
+	} else {
+		num_undirected_nodes = tal->train_server->num_track_b_undirected_nodes;
+	}
+
+	dijkstra(
+		engine->undirected_node_path,
+		MAX_UNDIRECTED_NODE_PATH,
+		&engine->undirected_node_path_length,
+		tal->train_server->current_undirected_nodes,
+		num_undirected_nodes,
+		train_nodes,
+		tal->train_server->num_engines,
+		&engine->train_node,
+		destination_node->undirected_node
+	);
+}

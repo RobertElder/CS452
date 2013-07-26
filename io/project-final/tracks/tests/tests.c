@@ -100,7 +100,7 @@ int main() {
 			&actual_path_length,
 			track_a_undirected_nodes,
 			num_track_a_undirected_nodes,
-			train_nodes,
+			&train_nodes,
 			num_trains,
 			&train_nodes[0],
 			&train_nodes[1]

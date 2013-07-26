@@ -27,7 +27,7 @@ void move_train_distance(undirected_node * train, undirected_node * src, undirec
 
 int get_random_other_edge_index(undirected_node * node, int index);
 
-void dijkstra(undirected_node ** result_path, int max_result_path_length, int * result_path_length, undirected_node * undirected_track_nodes, int num_undirected_track_nodes, undirected_node * train_nodes, int num_train_nodes, undirected_node * src, undirected_node * dst);
+void dijkstra(undirected_node ** result_path, int max_result_path_length, int * result_path_length, undirected_node * undirected_track_nodes, int num_undirected_track_nodes, undirected_node ** train_nodes, int num_train_nodes, undirected_node * src, undirected_node * dst);
 
 
 void print_undirected_path_info(undirected_node ** path, int actual_path_length);

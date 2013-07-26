@@ -944,6 +944,7 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->distance_to_next_node = 0;
 	engine->time_at_last_node = 0;
 	engine->last_time_location_update = 0;
+	engine->undirected_node_path_length = 0;
 	
 	memset(&engine->train_node, 0, sizeof(undirected_node));
 	engine->train_node.type = NODE_TRAIN;
