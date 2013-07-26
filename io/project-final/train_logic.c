@@ -206,13 +206,21 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 		engine->use_sensor_for_speed_calculation = 1;
 		TAL_TransitionToNextNode(&server->tal, engine, node);
 		TrainServer_ProcessSensorData(server, engine);
-		
-		if (engine->state == TRAIN_ENGINE_AT_DESTINATION) {
-			engine->use_sensor_for_speed_calculation = 0;
-			return;
-		}
-		
-		if (node->reserved && node->reserved != engine->train_num) {
+	}
+	
+	if (engine->current_node == engine->destination_node) {
+		engine->use_sensor_for_speed_calculation = 0;
+		engine->state = TRAIN_ENGINE_AT_DESTINATION;
+		TAL_SetTrainWait(&server->tal, engine, 4);
+		TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 0);
+		//PrintMessage("At destination %s.", engine->current_node->name);
+		ReleaseTrackNodes(engine);
+		ReserveTrackNode(engine->current_node, engine->train_num);
+		return;
+	}
+	
+	
+	/*	if (node->reserved && node->reserved != engine->train_num) {
 			PrintMessage("!!! Train %d went into track %s reserved for train %d", engine->train_num, node->name, node->reserved);
 			TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 0);
 			engine->state = TRAIN_ENGINE_WRONG_LOCATION;
@@ -221,7 +229,7 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 			TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 0);
 			engine->state = TRAIN_ENGINE_WRONG_LOCATION;
 		}
-	}
+	}*/
 	
 	if (!engine->use_sensor_for_speed_calculation) {
 		TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
@@ -253,16 +261,6 @@ void TrainServer_ProcessEngineNearDestination(TrainServer * server, TrainEngine 
 
 void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	TAL_CalculateTrainSpeedBySensor(&server->tal, engine);
-	
-	if (engine->current_node == engine->destination_node) {
-		engine->state = TRAIN_ENGINE_AT_DESTINATION;
-		TAL_SetTrainWait(&server->tal, engine, 4);
-		TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 0);
-		//PrintMessage("At destination %s.", engine->current_node->name);
-		ReleaseTrackNodes(engine);
-		ReserveTrackNode(engine->current_node, engine->train_num);
-		return;
-	}
 	
 	if (engine->state != TRAIN_ENGINE_NEAR_DESTINATION) {
 		TAL_FeedbackControlSystem(&server->tal, engine);
