@@ -118,12 +118,14 @@ void TAL_CalculateTrainSpeedByGuessing(TAL * tal, TrainEngine * engine) {
 
 void TAL_CalculateTrainLocation(TAL * tal, TrainEngine * engine) {
 	double time = TimeSeconds();
-	double delta_time = time - engine->time_at_last_node;
-	engine->estimated_distance_after_node = engine->calculated_speed * delta_time;
+	double delta_time = time - engine->last_time_location_update;
+	engine->estimated_distance_after_node += engine->calculated_speed * delta_time;
 	engine->distance_to_destination = DistanceToDestination(engine) - engine->estimated_distance_after_node;
+	engine->last_time_location_update = time;
 
 	if (engine->current_node) {
 		if (engine->estimated_distance_after_node > engine->distance_to_next_node) {
+			assertf(engine->next_node != 0, "Next node of %s is 0", engine->current_node->name);
 			PrintMessage("Guessing train is at %s (%d > %d)", engine->next_node->name, (int) engine->estimated_distance_after_node, (int) engine->distance_to_next_node);
 			TAL_TransitionToNextNode(tal, engine, engine->next_node);
 		}

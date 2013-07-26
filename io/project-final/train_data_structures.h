@@ -180,6 +180,7 @@ typedef struct TrainEngine {
 	int sample_distance_to_next_sensor;
 	int distance_to_destination;
 	double estimated_distance_after_node;
+	double last_time_location_update;
 	track_node * previous_node;
 	track_node * current_node;
 	track_node * next_node;
