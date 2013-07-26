@@ -112,7 +112,7 @@ void TEST_UART(){
 		}
 
 		/* Request some sensor data and look a the results */
-		*UART1DATA = 197;
+		*UART1DATA = 194;
 		while(1){
 			flags = *UART1Flag;
 			if(!(RXFE_MASK & flags)){
@@ -126,46 +126,8 @@ void TEST_UART(){
 		in_data = *UART1DATA;
 
 		if(in_data){
-			/*
-			states[state_number] = in_data;
-			times[state_number] = *timer_val;
-			state_number++;
-			*/
-		}
-
-		while(1){
-			flags = *UART1Flag;
-			if(!(RXFE_MASK & flags)){
-				break;
-			}
-			unsigned int sample = *timer_val;
-			service_timer(sample, last_timer, &ticks);
-			last_timer = sample;
-		}
-
-		in_data = *UART1DATA;
-
-		if(in_data){
-			//  64 is 10
-			if(in_data & 64){
-				unsigned int sample = *timer_val;
-				service_timer(sample, last_timer, &ticks);
-				last_timer = sample;
-
-				timestamp now;
-				now.ticks = ticks;
-				now.timer = sample;
-
-				if(diff(now, last_ten) > 17000){
-					states[state_number] = in_data;
-					times[state_number] = now;
-					state_number++;
-				}
-
-				last_ten = now;
-			}
-			// 8 is 13
-			if(in_data & 8){
+			//32 is B
+			if(in_data & 16){
 				unsigned int sample = *timer_val;
 				service_timer(sample, last_timer, &ticks);
 				last_timer = sample;
@@ -178,19 +140,63 @@ void TEST_UART(){
 					states[state_number] = in_data;
 					times[state_number] = now;
 					state_number++;
+				}else{
+					//robprintfbusy((const unsigned char *)"%d.\n",diff(now, last_thirteen));
 				}
 
 				last_thirteen = now;
 			}
 		}
-	}
 
-	for(i = 0; i < state_number -1; i++){
-		//print_flags(states[i], times[i]);
-		if(states[i] == 64 && states[i+1] == 8){
-			print_flags1(times[i+1],times[i]);
+		while(1){
+			flags = *UART1Flag;
+			if(!(RXFE_MASK & flags)){
+				break;
+			}
+			unsigned int sample = *timer_val;
+			service_timer(sample, last_timer, &ticks);
+			last_timer = sample;
+		}
+
+		in_data = *UART1DATA;
+
+		if(in_data){
+			// B 15 
+			if(in_data & 2){
+				unsigned int sample = *timer_val;
+				service_timer(sample, last_timer, &ticks);
+				last_timer = sample;
+
+				timestamp now;
+				now.ticks = ticks;
+				now.timer = sample;
+
+				if(diff(now, last_ten) > 17000){
+					states[state_number] = in_data;
+					times[state_number] = now;
+					state_number++;
+				}else{
+					//robprintfbusy((const unsigned char *)"%d.\n",diff(now, last_ten));
+				}
+
+				last_ten = now;
+			}
+
 		}
 	}
+
+	int num = 0;
+	int sum = 0;
+	for(i = 0; i < state_number -1; i++){
+		//print_flags(states[i], times[i]);
+		if(states[i] == 16 && states[i+1] == 2){
+			print_flags1(times[i+1],times[i]);
+			sum += diff(times[i+1],times[i]);
+			num++;
+		}
+
+	}
+	robprintfbusy((const unsigned char *)"%d.\n", (sum / num));
 
 	while(1){};
 
