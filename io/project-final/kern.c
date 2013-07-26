@@ -48,9 +48,9 @@ int main(){
 
 	asm_SetUpIRQStack();
 
-	//TEST_UART();
+	TEST_UART();
 	
-	InitKernel();
+	//InitKernel();
 	
 	return 0;
 }
