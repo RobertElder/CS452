@@ -136,7 +136,54 @@ void do_setup(){
 	*timer_ctrl = ENABLE_MASK | CLKSEL_MASK | MODE_MASK;
 }
 
+void dummy_query(){
+	volatile int flags;
+
+	volatile int in_data = 0;
+
+	if(!(RXFE_MASK & flags)){
+		in_data = *UART1DATA;
+	}
+
+	int i = 0;
+	while(i < 1){
+		while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags))){
+			flags = *UART1Flag;
+		}
+
+		/* Request some sensor data and look a the results */
+		*UART1DATA = 194;
+		while(1){
+			flags = *UART1Flag;
+			if(!(RXFE_MASK & flags)){
+				break;
+			}
+		}
+
+		in_data = *UART1DATA;
+
+		while(1){
+			flags = *UART1Flag;
+			if(!(RXFE_MASK & flags)){
+				break;
+			}
+		}
+
+		in_data = *UART1DATA;
+		i++;
+	}
+}
+
 int test_orientation(){
+
+	unsigned int cycles_per_tick = 508000;
+	int * timer_ldr = (int*)(TIMER3_BASE + LDR_OFFSET);
+	int * timer_ctrl = (int*)(TIMER3_BASE + CRTL_OFFSET);
+	//  Disable the timer before we set the load value
+	*timer_ctrl = (*timer_ctrl) ^ ENABLE_MASK;
+	*timer_ldr = cycles_per_tick;
+	//  Turn the timer on enabled, with clock 508khz and periodic mode
+	*timer_ctrl = ENABLE_MASK | CLKSEL_MASK | MODE_MASK;
 	volatile int states[MAX_STATES];
 	volatile timestamp times[MAX_STATES];
 
@@ -147,8 +194,6 @@ int test_orientation(){
 	int i = 0;
 
 	volatile int in_data = 0;
-	states[0] = flags;
-	state_number++;
 
 	timestamp last_ten;
 	last_ten.ticks = 0;
@@ -162,7 +207,9 @@ int test_orientation(){
 
 	unsigned int ticks = 0;
 
-	while(state_number < 6){
+	int samples = 6;
+
+	while(state_number < (samples * 2)){
 		while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags))){
 			flags = *UART1Flag;
 			unsigned int sample = *timer_val;
@@ -195,7 +242,7 @@ int test_orientation(){
 				now.ticks = ticks;
 				now.timer = sample;
 
-				if(diff(now, last_thirteen) > 17000){
+				if(diff(now, last_thirteen) > 50000){
 					states[state_number] = in_data;
 					times[state_number] = now;
 					state_number++;
@@ -230,7 +277,7 @@ int test_orientation(){
 				now.ticks = ticks;
 				now.timer = sample;
 
-				if(diff(now, last_ten) > 17000){
+				if(diff(now, last_ten) > 50000){
 					states[state_number] = in_data;
 					times[state_number] = now;
 					state_number++;
@@ -249,23 +296,42 @@ int test_orientation(){
 	for(i = 0; i < state_number -1; i++){
 		//print_flags(states[i], times[i]);
 		if(states[i] == 16 && states[i+1] == 2){
-			print_flags1(times[i+1],times[i]);
+			//print_flags1(times[i+1],times[i]);
 			sum += diff(times[i+1],times[i]);
 			num++;
 		}
 
 	}
+
+	int first_average = sum/num;
+
+	num = 0;
+	sum = 0;
+	for(i = 0; i < state_number -1; i++){
+		if(states[i] == 16 && states[i+1] == 2){
+			print_flags1(times[i+1],times[i]);
+			int difference = diff(times[i+1],times[i]);
+			if((first_average - difference) < 100000){
+				sum += difference;
+				num++;
+			}
+		}
+	}
+
 	return (sum / num);
 }
 
 void TEST_UART(){
+
+	int train_num  = 47;
 	do_setup();
 	set_switch(9,'C');
 	set_switch(14,'C');
 	set_switch(13,'C');
 	set_switch(154,'S');
 	set_switch(153,'C');
-	move_train(14,45);
+	move_train(14,train_num);
+	//  Get rid of bogus sensor data
 	int rtn1 = test_orientation();
 	robprintfbusy((const unsigned char *)"average was %d.\n", rtn1);
 	set_switch(13,'S');
@@ -274,15 +340,16 @@ void TEST_UART(){
 	stall(500000);
 	stall(500000);
 	stall(100000);
-	move_train(0,45);
+	move_train(0,train_num);
 	stall(500000);
 	set_switch(10,'C');
 	set_switch(13,'C');
-	move_train(15,45);
+	move_train(15,train_num);
 	stall(300000);
-	move_train(14,45);
+	move_train(14,train_num);
+	//  Get rid of bogus sensor data
 	int rtn2 = test_orientation();
 	robprintfbusy((const unsigned char *)"average was %d.\n", rtn2);
-	move_train(0,45);
+	move_train(0,train_num);
 	while(1){};
 }
