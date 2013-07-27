@@ -38,6 +38,8 @@ void TrainServer_ProcessEngineWrongLocation(TrainServer * server, TrainEngine * 
 
 void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine);
 
+void TrainServer_TrainProceedOrWait(TrainServer * server, TrainEngine * engine);
+
 int DistanceToNextSensor(TrainEngine * engine);
 
 int DistanceToDestination(TrainEngine * engine);

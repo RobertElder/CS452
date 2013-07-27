@@ -50,7 +50,7 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 		TrainServer_ProcessEngineCalibratingSpeed(server, engine);
 		break;
 	case TRAIN_ENGINE_WAIT_FOR_RESERVATION:
-		TrainServer_ProcessEngineWaitForDestination(server, engine);
+		TrainServer_ProcessEngineWaitForReservation(server, engine);
 		break;
 	case TRAIN_ENGINE_WRONG_LOCATION:
 		TrainServer_ProcessEngineWrongLocation(server, engine);
@@ -238,11 +238,12 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 		TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
 	}
 	TAL_CalculateTrainLocation(&server->tal, engine);
+	TrainServer_TrainProceedOrWait(server, engine);
 	
 	assert(engine->speed_setting < 16, "Train Speed Setting is set wrong");
 	int stopping_distance = STOPPING_DISTANCE[engine->train_num][engine->speed_setting];
 
-	if((!(engine->state == TRAIN_ENGINE_NEAR_DESTINATION)) && engine->distance_to_destination < stopping_distance) {
+	if(engine->state == TRAIN_ENGINE_RUNNING && engine->distance_to_destination < stopping_distance) {
 		//PrintMessage("Slowing down because distance (%d) less than stopping distance (%d).", engine->distance_to_destination, stopping_distance);
 		TrainServer_SlowTrainDown(server, engine);
 		engine->sample_distance_to_next_sensor = engine->distance_to_destination;
@@ -260,6 +261,7 @@ void TrainServer_ProcessEngineNearDestination(TrainServer * server, TrainEngine 
 	TrainServer_ProcessEngineRunning(server, engine);
 	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
 	TAL_CalculateTrainLocation(&server->tal, engine);
+	TrainServer_TrainProceedOrWait(server, engine);
 }
 
 void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
@@ -294,6 +296,7 @@ void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * 
 	}
 	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
 	TAL_CalculateTrainLocation(&server->tal, engine);
+	TrainServer_TrainProceedOrWait(server, engine);
 }
 
 void TrainServer_ProcessEngineWaitAndGoForever(TrainServer * server, TrainEngine * engine) {
@@ -369,4 +372,12 @@ void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
 	}
 }
 
+void TrainServer_TrainProceedOrWait(TrainServer * server, TrainEngine * engine) {
+	if (!TAL_IsNextNodeAvailable(&server->tal, engine)) {
+		TAL_SetTrainSpeed(&server->tal, REVERSE_SPEED, engine->train_num, 1);
+		engine->state = TRAIN_ENGINE_WAIT_FOR_RESERVATION;
+		PrintMessage("Train %d avoiding collision on %s", engine->train_num, engine->current_node->name);
+		TAL_TransitionToNextNode(&server->tal, engine, engine->current_node->reverse);
+	}
+}
 

@@ -246,7 +246,13 @@ int TAL_IsTrainWaiting(TAL * tal, TrainEngine * engine) {
 }
 
 int TAL_IsNextNodeAvailable(TAL * tal, TrainEngine * engine) {
-	return !(TAL_GetNextNode(tal, engine->current_node)->reserved);
+	if (TAL_GetNextNode(tal, engine->current_node)->reserved && TAL_GetNextNode(tal, engine->current_node)->reserved == engine->train_num) {
+		return 1;
+	} else if (!TAL_GetNextNode(tal, engine->current_node)->reserved) {
+		return 1;
+	}
+	
+	return 0;
 }
 
 SwitchState TAL_GetSwitchState(TAL * tal, int switch_num) {
