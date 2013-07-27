@@ -35,12 +35,63 @@ void service_timer(unsigned int current, unsigned int last, unsigned int * ticks
 	}
 }
 
-void TEST_UART(){
-	volatile int states[MAX_STATES];
-	volatile timestamp times[MAX_STATES];
+void stall(int ticks){
+	unsigned int cycles_per_tick = 508000;
+	int * timer_ldr = (int*)(TIMER3_BASE + LDR_OFFSET);
+	int * timer_ctrl = (int*)(TIMER3_BASE + CRTL_OFFSET);
+	//  Disable the timer before we set the load value
+	*timer_ctrl = (*timer_ctrl) ^ ENABLE_MASK;
+	*timer_ldr = cycles_per_tick;
+	//  Turn the timer on enabled, with clock 508khz and periodic mode
+	*timer_ctrl = ENABLE_MASK | CLKSEL_MASK | MODE_MASK;
+	volatile int * timer_val = (int*)(TIMER3_BASE + VAL_OFFSET);
+	//  Stall for a bit
+	while(*timer_val > (cycles_per_tick - ticks)){};
+}
 
-	volatile int state_number = 0;
+void set_switch(int switch_number, char code){
+	char switch_code = (code == 'S') ? 33 : 34;
 
+	volatile int flags;
+	while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags))){
+		flags = *UART1Flag;
+	}
+
+	*UART1DATA = switch_code;
+
+	while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags))){
+		flags = *UART1Flag;
+	}
+
+	*UART1DATA = switch_number;
+
+	stall(100000);
+
+	while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags))){
+		flags = *UART1Flag;
+	}
+	//  Turn off
+	*UART1DATA = 32;
+	stall(100000);
+}
+
+
+void move_train(int speed, int train){
+	volatile int flags;
+	while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags))){
+		flags = *UART1Flag;
+	}
+
+	*UART1DATA = speed;
+
+	while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags))){
+		flags = *UART1Flag;
+	}
+
+	*UART1DATA = train;
+}
+
+void do_setup(){
 	volatile int *mid1, *mid2, *low1, *low2;
 	mid1 = (int *)( UART1_BASE + UART_LCRM_OFFSET );
 	low1 = (int *)( UART1_BASE + UART_LCRL_OFFSET );
@@ -74,23 +125,30 @@ void TEST_UART(){
 
 	volatile int flags;
 	flags = *UART1Flag;
-	states[0] = flags;
-	state_number++;
-
 
 	unsigned int cycles_per_tick = 508000;
 	int * timer_ldr = (int*)(TIMER3_BASE + LDR_OFFSET);
-	int * timer_val = (int*)(TIMER3_BASE + VAL_OFFSET);
 	int * timer_ctrl = (int*)(TIMER3_BASE + CRTL_OFFSET);
 	//  Disable the timer before we set the load value
 	*timer_ctrl = (*timer_ctrl) ^ ENABLE_MASK;
 	*timer_ldr = cycles_per_tick;
 	//  Turn the timer on enabled, with clock 508khz and periodic mode
 	*timer_ctrl = ENABLE_MASK | CLKSEL_MASK | MODE_MASK;
+}
+
+int test_orientation(){
+	volatile int states[MAX_STATES];
+	volatile timestamp times[MAX_STATES];
+
+	volatile int state_number = 0;
+
+	volatile int flags;
 
 	int i = 0;
 
 	volatile int in_data = 0;
+	states[0] = flags;
+	state_number++;
 
 	timestamp last_ten;
 	last_ten.ticks = 0;
@@ -99,12 +157,13 @@ void TEST_UART(){
 	last_thirteen.ticks = 0;
 	last_thirteen.timer = 508000;
 
+	int * timer_val = (int*)(TIMER3_BASE + VAL_OFFSET);
 	unsigned int last_timer = 508000;
 
 	unsigned int ticks = 0;
 
-	while(state_number < 20){
-		while(!(CTS_MASK & flags)){
+	while(state_number < 6){
+		while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags))){
 			flags = *UART1Flag;
 			unsigned int sample = *timer_val;
 			service_timer(sample, last_timer, &ticks);
@@ -196,8 +255,34 @@ void TEST_UART(){
 		}
 
 	}
-	robprintfbusy((const unsigned char *)"%d.\n", (sum / num));
+	return (sum / num);
+}
 
+void TEST_UART(){
+	do_setup();
+	set_switch(9,'C');
+	set_switch(14,'C');
+	set_switch(13,'C');
+	set_switch(154,'S');
+	set_switch(153,'C');
+	move_train(14,45);
+	int rtn1 = test_orientation();
+	robprintfbusy((const unsigned char *)"average was %d.\n", rtn1);
+	set_switch(13,'S');
+	stall(500000);
+	stall(500000);
+	stall(500000);
+	stall(500000);
+	stall(100000);
+	move_train(0,45);
+	stall(500000);
+	set_switch(10,'C');
+	set_switch(13,'C');
+	move_train(15,45);
+	stall(300000);
+	move_train(14,45);
+	int rtn2 = test_orientation();
+	robprintfbusy((const unsigned char *)"average was %d.\n", rtn2);
+	move_train(0,45);
 	while(1){};
-
 }
