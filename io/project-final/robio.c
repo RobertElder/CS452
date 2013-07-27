@@ -589,7 +589,10 @@ int robatoi(const char * str) {
 		}
 		i++;
 		
-		assert(i < 100, "robatoi running too long");
+		//assert(i < 100, "robatoi running too long");
+		if (i > 100) {
+			return -1;
+		}
 	}
 }
 

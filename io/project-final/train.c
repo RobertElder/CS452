@@ -121,6 +121,10 @@ void TrainServer_Start() {
 			TrainServer_HandleResetTrack(&server);
 			TrainServer_ProcessEngines(&server);
 			break;
+		case MESSAGE_TYPE_SET_DIJKSTRAS:
+			TrainServer_HandleSetDijkstras(&server);
+			TrainServer_ProcessEngines(&server);
+			break;
 		default:
 			assert(0, "TrainServer: unknown message type");
 			break;
@@ -171,6 +175,7 @@ void TrainServer_Initialize(TrainServer * server) {
 	
 	TAL_Initialize(&server->tal, server);
 	
+	server->dijkstras_enabled = 0;
 	server->sensor_reader_blocked = 0;
 	server->num_engines = 1;
 	server->state = TRAIN_SERVER_IDLE;
@@ -471,8 +476,10 @@ void TrainServer_HandleSelectTrack(TrainServer * server) {
 	
 	if (receive_message->int1 == 'A') {
 		server->current_track_nodes = server->track_a_nodes;
+		server->current_undirected_nodes = server->track_a_undirected_nodes;
 	} else if (receive_message->int1 == 'B') {
 		server->current_track_nodes = server->track_b_nodes;
+		server->current_undirected_nodes = server->track_b_undirected_nodes;
 	}else{
 		assert(0,"Invalid map name.");
 	}
@@ -659,6 +666,16 @@ void TrainServer_HandleResetTrack(TrainServer * server) {
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
 }
 
+void TrainServer_HandleSetDijkstras(TrainServer * server) {
+	GenericTrainMessage * receive_message = (GenericTrainMessage *) server->receive_buffer;
+	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	
+	server->dijkstras_enabled = receive_message->int1;
+	
+	reply_message->message_type = MESSAGE_TYPE_ACK;
+	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
+}
+
 SwitchState GetQueuedSwitchState(TrainServer * server, int switch_num){
 	return server->switches_to_change[switch_num];
 }
@@ -684,7 +701,9 @@ void TrainServer_QueueSwitchStates(TrainServer * server, TrainEngine * engine ){
 	assert(engine->destination_node != 0, "TrainServer_QueueSwitchStates destination node not set");
 	assert(engine->route_nodes_length, "TrainServer_QueueSwitchStates route_nodes_length not positive");
 	
-	while(engine->route_node_info[current_route_node_index].node != engine->destination_node){
+	while(current_route_node_index < engine->route_nodes_length){
+		assert(engine->route_node_info[current_route_node_index].node != 0, "TrainServer_QueueSwitchStates: node not set");
+	
 		if(engine->route_node_info[current_route_node_index].node->type == NODE_BRANCH){
 			int switch_num = engine->route_node_info[current_route_node_index].node->num;
 			int next_switch_state = engine->route_node_info[current_route_node_index].switch_state;
@@ -697,6 +716,8 @@ void TrainServer_QueueSwitchStates(TrainServer * server, TrainEngine * engine ){
 			}
 		}
 		current_route_node_index++;
+		
+		assert(current_route_node_index < MAX_ROUTE_NODE_INFO, "TrainServer_QueueSwitchStates: something went wrong");
 	}
 }
 
@@ -944,6 +965,7 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->distance_to_next_node = 0;
 	engine->time_at_last_node = 0;
 	engine->last_time_location_update = 0;
+	engine->undirected_node_path_length = 0;
 	
 	memset(&engine->train_node, 0, sizeof(undirected_node));
 	engine->train_node.type = NODE_TRAIN;

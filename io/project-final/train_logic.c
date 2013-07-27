@@ -50,7 +50,7 @@ void TrainServer_ProcessEngine(TrainServer * server, TrainEngine * engine) {
 		TrainServer_ProcessEngineCalibratingSpeed(server, engine);
 		break;
 	case TRAIN_ENGINE_WAIT_FOR_RESERVATION:
-		TrainServer_ProcessEngineWaitForDestination(server, engine);
+		TrainServer_ProcessEngineWaitForReservation(server, engine);
 		break;
 	case TRAIN_ENGINE_WRONG_LOCATION:
 		TrainServer_ProcessEngineWrongLocation(server, engine);
@@ -78,7 +78,6 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 	}
 	
 	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
-	TAL_CalculateTrainLocation(&server->tal, engine);
 }
 
 void TrainServer_ProcessEngineResyncPosition(TrainServer * server, TrainEngine * engine) {
@@ -114,7 +113,7 @@ void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngi
 		TAL_SetTrainSpeed(&server->tal, REVERSE_SPEED, engine->train_num, 0);
 		TAL_SetTrainSpeed(&server->tal, FINDING_POSITION_SPEED, engine->train_num, 0);
 		engine->current_node = engine->current_node->reverse;
-		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
+		engine->state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
 		return;
 	}
 
@@ -129,7 +128,11 @@ void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine *
 
 	engine->route_nodes_length = 0;
 	engine->route_node_index = 0;
-	PopulateRouteNodeInfo(server, engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length), engine->train_num);
+	if (server->dijkstras_enabled) {
+		TAL_PopulatePath(&server->tal, engine);
+	} else {
+		PopulateRouteNodeInfo(server, engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length), engine->train_num);
+	}
 	ReserveTrackNodes(engine);
 	
 	// TODO: not good, may trip up other trains
@@ -235,11 +238,12 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 		TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
 	}
 	TAL_CalculateTrainLocation(&server->tal, engine);
+	TrainServer_TrainProceedOrWait(server, engine);
 	
 	assert(engine->speed_setting < 16, "Train Speed Setting is set wrong");
 	int stopping_distance = STOPPING_DISTANCE[engine->train_num][engine->speed_setting];
 
-	if((!(engine->state == TRAIN_ENGINE_NEAR_DESTINATION)) && engine->distance_to_destination < stopping_distance) {
+	if(engine->state == TRAIN_ENGINE_RUNNING && engine->distance_to_destination < stopping_distance) {
 		//PrintMessage("Slowing down because distance (%d) less than stopping distance (%d).", engine->distance_to_destination, stopping_distance);
 		TrainServer_SlowTrainDown(server, engine);
 		engine->sample_distance_to_next_sensor = engine->distance_to_destination;
@@ -257,6 +261,7 @@ void TrainServer_ProcessEngineNearDestination(TrainServer * server, TrainEngine 
 	TrainServer_ProcessEngineRunning(server, engine);
 	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
 	TAL_CalculateTrainLocation(&server->tal, engine);
+	TrainServer_TrainProceedOrWait(server, engine);
 }
 
 void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
@@ -291,6 +296,7 @@ void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * 
 	}
 	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
 	TAL_CalculateTrainLocation(&server->tal, engine);
+	TrainServer_TrainProceedOrWait(server, engine);
 }
 
 void TrainServer_ProcessEngineWaitAndGoForever(TrainServer * server, TrainEngine * engine) {
@@ -366,4 +372,12 @@ void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
 	}
 }
 
+void TrainServer_TrainProceedOrWait(TrainServer * server, TrainEngine * engine) {
+	if (!TAL_IsNextNodeAvailable(&server->tal, engine)) {
+		TAL_SetTrainSpeed(&server->tal, REVERSE_SPEED, engine->train_num, 1);
+		engine->state = TRAIN_ENGINE_WAIT_FOR_RESERVATION;
+		PrintMessage("Train %d avoiding collision on %s", engine->train_num, engine->current_node->name);
+		TAL_TransitionToNextNode(&server->tal, engine, engine->current_node->reverse);
+	}
+}
 

@@ -389,7 +389,7 @@ int is_node_in_Q(undirected_node ** nodes, int num_nodes, undirected_node * targ
 }
 
 
-void dijkstra(undirected_node ** result_path, int max_result_path_length, int * result_path_length, undirected_node * undirected_track_nodes, int num_undirected_track_nodes, undirected_node * train_nodes, int num_train_nodes, undirected_node * src, undirected_node * dst){
+void dijkstra(undirected_node ** result_path, int max_result_path_length, int * result_path_length, undirected_node * undirected_track_nodes, int num_undirected_track_nodes, undirected_node ** train_nodes, int num_train_nodes, undirected_node * src, undirected_node * dst){
 	//  Will expect a pointer to an array that it will populate with a set of undirected nodes
 	//  That will take you from src to dst
 	int infinity = 999999999;
@@ -401,7 +401,7 @@ void dijkstra(undirected_node ** result_path, int max_result_path_length, int * 
 		node_set[i] = &(undirected_track_nodes[i]);
 	}
 	for(i = 0; i < num_train_nodes; i++){
-		node_set[i + num_undirected_track_nodes] = &(train_nodes[i]);
+		node_set[i + num_undirected_track_nodes] = train_nodes[i];
 	}
 	//  Initialize
 	for(i = 0; i < total_nodes; i++){

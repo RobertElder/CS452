@@ -3,6 +3,7 @@
 #include "robio.h"
 #include "train.h"
 #include "train_logic.h"
+#include "tracks/undirected_nodes.h"
 
 void TAL_Initialize(TAL * tal, TrainServer * server) {
 	tal->train_server = server;
@@ -117,41 +118,49 @@ void TAL_CalculateTrainSpeedByGuessing(TAL * tal, TrainEngine * engine) {
 }
 
 void TAL_CalculateTrainLocation(TAL * tal, TrainEngine * engine) {
+	assert(engine->current_node != 0, "TAL_CalculateTrainLocation: no current node");
+
 	double time = TimeSeconds();
 	double delta_time = time - engine->last_time_location_update;
-	engine->estimated_distance_after_node += engine->calculated_speed * delta_time;
+	double distance_traveled = engine->calculated_speed * delta_time;
+	engine->estimated_distance_after_node += distance_traveled;
 	engine->distance_to_destination = DistanceToDestination(engine) - engine->estimated_distance_after_node;
 	engine->last_time_location_update = time;
+	
+	if (tal->train_server->dijkstras_enabled) {
+		move_train_distance(&engine->train_node, engine->current_node->undirected_node, engine->next_node->undirected_node, TAL_GetNextNode(tal, engine->next_node)->undirected_node, distance_traveled / 1000.0);
+	}
 
-	if (engine->current_node) {
-		if (engine->estimated_distance_after_node > engine->distance_to_next_node && engine->next_node) {
-			assertf(engine->next_node != 0, "Next node of %s is 0", engine->current_node->name);
-			PrintMessage("Guessing train is at %s (%d > %d)", engine->next_node->name, (int) engine->estimated_distance_after_node, (int) engine->distance_to_next_node);
-			TAL_TransitionToNextNode(tal, engine, engine->next_node);
-		}
+	if (engine->estimated_distance_after_node > engine->distance_to_next_node && engine->next_node) {
+		assertf(engine->next_node != 0, "Next node of %s is 0", engine->current_node->name);
+		PrintMessage("Guessing train is at %s (%d > %d)", engine->next_node->name, (int) engine->estimated_distance_after_node, (int) engine->distance_to_next_node);
+		TAL_TransitionToNextNode(tal, engine, engine->next_node);
 	}
 }
 
 void TAL_SetInitialTrainLocation(TAL * tal, TrainEngine * engine, track_node * node) {
-	// TODO use the new undirected node thingy
-	//add_train_node(&engine->train_node, node->undirected_node, node->edge[DIR_AHEAD].dest->undirected_node, 1);
-	
 	TAL_TransitionToNextNode(tal, engine, node);
 }
 
 void TAL_TransitionToNextNode(TAL * tal, TrainEngine * engine, track_node * node) {
-	// TODO update the new undirected node thingy
-	
 	if (engine->previous_node) {
 //		ReleaseTrackNode(engine->previous_node, engine->train_num);
+
+		if (tal->train_server->dijkstras_enabled) {
+			remove_train_node(&engine->train_node, engine->current_node->undirected_node, engine->next_node->undirected_node);
+		}
 	}
 	
 	engine->previous_node = engine->current_node;
 	engine->current_node = node;
-	engine->next_node = TAL_GetNextNode(tal, engine);
+	engine->next_node = TAL_GetNextNode(tal, engine->current_node);
 	engine->estimated_distance_after_node = 0;
 	engine->distance_to_next_node = TAL_DistanceToNextNode(tal, engine);
 	engine->time_at_last_node = TimeSeconds();
+	
+	if (tal->train_server->dijkstras_enabled) {
+		add_train_node(&engine->train_node, node->undirected_node, engine->next_node->undirected_node, 1);
+	}
 	
 	ReserveTrackNode(engine->current_node, engine->train_num);
 //	ReserveTrackNode(engine->next_node, engine->train_num);
@@ -194,20 +203,20 @@ track_node * TAL_GetTrainReservedSensor(TAL * tal, int train_num) {
 	return 0;
 }
 
-track_node * TAL_GetNextNode(TAL * tal, TrainEngine * engine) {
-	assert(engine->current_node != 0, "TAL_GetNextNode: engine has no current node");
+track_node * TAL_GetNextNode(TAL * tal, track_node * node) {
+	assert(node != 0, "TAL_GetNextNode: no node");
 	
-	if (engine->current_node->type == NODE_BRANCH) {
-		if (TAL_GetSwitchState(tal, engine->current_node->num) == SWITCH_CURVED) {
-			return engine->current_node->edge[DIR_CURVED].dest;
-		} else if (TAL_GetSwitchState(tal, engine->current_node->num) == SWITCH_STRAIGHT) {
-			return engine->current_node->edge[DIR_STRAIGHT].dest;
+	if (node->type == NODE_BRANCH) {
+		if (TAL_GetSwitchState(tal, node->num) == SWITCH_CURVED) {
+			return node->edge[DIR_CURVED].dest;
+		} else if (TAL_GetSwitchState(tal, node->num) == SWITCH_STRAIGHT) {
+			return node->edge[DIR_STRAIGHT].dest;
 		} else {
-			assertf(0, "TAL_GetNextNode: unable to determine next node from branch %d because it is unknown state", engine->current_node->num);
+			assertf(0, "TAL_GetNextNode: unable to determine next node from branch %d because it is unknown state", node->num);
 			return 0;
 		}
 	} else {
-		return engine->current_node->edge[DIR_AHEAD].dest;
+		return node->edge[DIR_AHEAD].dest;
 	}
 }
 
@@ -237,7 +246,13 @@ int TAL_IsTrainWaiting(TAL * tal, TrainEngine * engine) {
 }
 
 int TAL_IsNextNodeAvailable(TAL * tal, TrainEngine * engine) {
-	return !(TAL_GetNextNode(tal, engine)->reserved);
+	if (TAL_GetNextNode(tal, engine->current_node)->reserved && TAL_GetNextNode(tal, engine->current_node)->reserved == engine->train_num) {
+		return 1;
+	} else if (!TAL_GetNextNode(tal, engine->current_node)->reserved) {
+		return 1;
+	}
+	
+	return 0;
 }
 
 SwitchState TAL_GetSwitchState(TAL * tal, int switch_num) {
@@ -307,3 +322,96 @@ void TAL_SetTrainSpeed(TAL * tal, double speed, int train_num, int lights) {
 		engine->raw_speed_setting = new_speed_setting;
 	}
 }
+
+void TAL_PopulatePath(TAL * tal, TrainEngine * engine) {
+	track_node * destination_node = engine->destination_node;
+	int num_undirected_nodes;
+	undirected_node * train_nodes[MAX_NUM_ENGINES];
+	
+	int i;
+	for (i = 0; i < tal->train_server->num_engines; i++) {
+		train_nodes[i] = &tal->train_server->train_engines[i].train_node;
+	}
+	
+	if (tal->train_server->current_undirected_nodes == tal->train_server->track_a_undirected_nodes) {
+		num_undirected_nodes = tal->train_server->num_track_a_undirected_nodes;
+	} else {
+		num_undirected_nodes = tal->train_server->num_track_b_undirected_nodes;
+	}
+	
+	assert(engine->train_node.adjacent_nodes.num_adjacent_nodes, "TAL_PopulatePath: no adjacent_nodes");
+
+	dijkstra(
+		engine->undirected_node_path,
+		MAX_UNDIRECTED_NODE_PATH,
+		&engine->undirected_node_path_length,
+		tal->train_server->current_undirected_nodes,
+		num_undirected_nodes,
+		train_nodes,
+		tal->train_server->num_engines,
+		&engine->train_node,
+		destination_node->undirected_node
+	);
+	
+	// This attempts to populate the route_node_info array using undirected graph to directed graph
+	int route_i = 0;
+	for (i = 0; i < engine->undirected_node_path_length; i++) {
+		undirected_node * undirected_node_ = engine->undirected_node_path[i];
+		undirected_node * next_undirected_node = 0;
+		
+		if (i + 1 < engine->undirected_node_path_length) {
+			next_undirected_node = engine->undirected_node_path[i + 1];
+		}
+		
+		if (undirected_node_->type == NODE_TRAIN) {
+			continue;
+		}
+		
+		engine->route_node_info[route_i].node = undirected_node_->track_node1;
+		engine->route_node_info[route_i].edge = undirected_node_->track_node1->edge;
+		engine->route_node_info[route_i].switch_state = SWITCH_UNKNOWN;
+		
+		if (next_undirected_node) {
+			engine->route_node_info[route_i].node = TAL_UndirectedNodeToTrackNode(tal, undirected_node_, next_undirected_node);
+			
+			track_node * current_track_node = engine->route_node_info[route_i].node;
+			
+			if (current_track_node->type == NODE_BRANCH) {
+				if (current_track_node->edge[DIR_CURVED].dest->undirected_node == next_undirected_node) {
+					engine->route_node_info[route_i].edge = &current_track_node->edge[DIR_CURVED];
+					engine->route_node_info[route_i].switch_state = SWITCH_CURVED;
+				} else {
+					engine->route_node_info[route_i].edge = &current_track_node->edge[DIR_STRAIGHT];
+					engine->route_node_info[route_i].switch_state = SWITCH_STRAIGHT;
+				}
+			} else {
+				engine->route_node_info[route_i].edge = &current_track_node->edge[DIR_AHEAD];
+			}
+		}
+		
+		route_i++;
+	}
+	
+	engine->route_nodes_length = route_i;
+}
+
+track_node * TAL_UndirectedNodeToTrackNode(TAL * tal, undirected_node * node, undirected_node * next) {
+	if (node->track_node1->edge[DIR_AHEAD].dest &&
+		node->track_node1->edge[DIR_AHEAD].dest->undirected_node == next) {
+		return node->track_node1;
+	} else if (node->track_node1->edge[DIR_CURVED].dest &&
+	node->track_node1->edge[DIR_CURVED].dest->undirected_node == next) {
+		return node->track_node1;
+	} else if (node->track_node2->edge[DIR_AHEAD].dest &&
+		node->track_node2->edge[DIR_AHEAD].dest->undirected_node == next) {
+		return node->track_node2;
+	} else if (node->track_node2->edge[DIR_CURVED].dest &&
+	node->track_node2->edge[DIR_CURVED].dest->undirected_node == next) {
+		return node->track_node2;
+	}
+	
+	assert(0, "TAL_UndirectedNodeToTrackNode: no edge to next node");
+	
+	return 0;
+}
+

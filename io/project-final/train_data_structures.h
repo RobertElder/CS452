@@ -10,6 +10,7 @@
 #define MAX_NUM_ENGINES 10
 
 #define MAX_ROUTE_NODE_INFO 100
+#define MAX_UNDIRECTED_NODE_PATH 100
 
 static const int const LIGHTS_MASK = 16;
 static const int const REVERSE_SPEED = 15;
@@ -193,6 +194,8 @@ typedef struct TrainEngine {
 	double wait_until;
 	undirected_node train_node;
 	short use_sensor_for_speed_calculation;
+	undirected_node * undirected_node_path[MAX_UNDIRECTED_NODE_PATH];
+	int undirected_node_path_length;
 } TrainEngine;
 
 typedef struct TrainEngineStatusMessage {
@@ -253,6 +256,8 @@ struct TrainServer {
 	TrainSpeedQueue train_speed_queue;
 	
 	TAL tal;
+	
+	int dijkstras_enabled;
 };
 
 #endif

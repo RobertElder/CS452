@@ -265,6 +265,8 @@ void UIServer_RunCommand(UIServer * server) {
 		server->dirty = 1;
 	} else if (server->command_buffer[0] == 'r' && server->command_buffer[1] == 'p') {
 		Create(RPSTESTSTART_PRIORITY, RPSLightTestStart);
+	} else if (server->command_buffer[0] == 'd' && server->command_buffer[1] == 'i') {
+		UIServer_HandleSetDijkstras(server);
 	} else {
 		UIServer_PrintCommandHelp(server);
 	}
@@ -281,7 +283,7 @@ void UIServer_ResetCommandBuffer(UIServer * server) {
 void UIServer_PrintCommandHelp(UIServer * server) {
 	ANSI_Color(YELLOW, server->background_color);
 	ANSI_Style(BOLD_STYLE);
-	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, go, gf, dest, num, paint, rt, rps, CTRL+Z, CTRL+C");
+	PutString(COM2, "Unknown command. Use: tr, rv, sw, q, map, go, gf, dest, num, paint, rt, rps, di, CTRL+Z, CTRL+C");
 	ANSI_Style(NORMAL_STYLE);
 	ANSI_Color(server->foreground_color, server->background_color);
 }
@@ -472,6 +474,27 @@ void UIServer_HandleResetTrack(UIServer * server) {
 	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_HandleResetTrack failed to get ack message");
 	
 	PutString(COM2, "Track was reset.");
+}
+
+void UIServer_HandleSetDijkstras(UIServer * server) {
+	GenericTrainMessage * send_message = (GenericTrainMessage *) server->send_buffer;
+	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	
+	int next_whitespace = rob_next_whitespace(server->command_buffer);
+	int enabled = (robatoi(&server->command_buffer[next_whitespace]) > 0);
+	
+	send_message->message_type = MESSAGE_TYPE_SET_DIJKSTRAS;
+	send_message->int1 = enabled;
+	
+	Send(server->train_server_tid, server->send_buffer, MESSAGE_SIZE, server->reply_buffer, MESSAGE_SIZE);
+	
+	assert(reply_message->message_type == MESSAGE_TYPE_ACK, "UIServer_HandleSetDijkstras failed to get ack message");
+	
+	if (enabled) {
+		PutString(COM2, "Djkstras path finding algorithm enabled!");
+	} else {
+		PutString(COM2, "Djkstras path finding algorithm disabled.");
+	}
 }
 
 void UIServer_PrintSensors(UIServer * server) {
