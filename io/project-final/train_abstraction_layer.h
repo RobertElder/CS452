@@ -44,6 +44,8 @@ void TAL_FeedbackControlSystem(TAL * tal, TrainEngine * engine);
 
 void TAL_SetTrainSpeed(TAL * tal, double speed, int train_num, int lights);
 
-void TAL_PopulatePath(TAL * tal, TrainEngine * engine, track_node * destination_node);
+void TAL_PopulatePath(TAL * tal, TrainEngine * engine);
+
+track_node * TAL_UndirectedNodeToTrackNode(TAL * tal, undirected_node * node, undirected_node * next);
 
 #endif

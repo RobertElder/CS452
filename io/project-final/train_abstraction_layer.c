@@ -310,7 +310,8 @@ void TAL_SetTrainSpeed(TAL * tal, double speed, int train_num, int lights) {
 	}
 }
 
-void TAL_PopulatePath(TAL * tal, TrainEngine * engine, track_node * destination_node) {
+void TAL_PopulatePath(TAL * tal, TrainEngine * engine) {
+	track_node * destination_node = engine->destination_node;
 	int num_undirected_nodes;
 	undirected_node * train_nodes[MAX_NUM_ENGINES];
 	
@@ -324,6 +325,8 @@ void TAL_PopulatePath(TAL * tal, TrainEngine * engine, track_node * destination_
 	} else {
 		num_undirected_nodes = tal->train_server->num_track_b_undirected_nodes;
 	}
+	
+	assert(engine->train_node.adjacent_nodes.num_adjacent_nodes, "TAL_PopulatePath: no adjacent_nodes");
 
 	dijkstra(
 		engine->undirected_node_path,
@@ -336,4 +339,66 @@ void TAL_PopulatePath(TAL * tal, TrainEngine * engine, track_node * destination_
 		&engine->train_node,
 		destination_node->undirected_node
 	);
+	
+	// This attempts to populate the route_node_info array using undirected graph to directed graph
+	int route_i = 0;
+	for (i = 0; i < engine->undirected_node_path_length; i++) {
+		undirected_node * undirected_node_ = engine->undirected_node_path[i];
+		undirected_node * next_undirected_node = 0;
+		
+		if (i + 1 < engine->undirected_node_path_length) {
+			next_undirected_node = engine->undirected_node_path[i + 1];
+		}
+		
+		if (undirected_node_->type == NODE_TRAIN) {
+			continue;
+		}
+		
+		engine->route_node_info[route_i].node = undirected_node_->track_node1;
+		engine->route_node_info[route_i].edge = undirected_node_->track_node1->edge;
+		engine->route_node_info[route_i].switch_state = SWITCH_UNKNOWN;
+		
+		if (next_undirected_node) {
+			engine->route_node_info[route_i].node = TAL_UndirectedNodeToTrackNode(tal, undirected_node_, next_undirected_node);
+			
+			track_node * current_track_node = engine->route_node_info[route_i].node;
+			
+			if (current_track_node->type == NODE_BRANCH) {
+				if (current_track_node->edge[DIR_CURVED].dest->undirected_node == next_undirected_node) {
+					engine->route_node_info[route_i].edge = &current_track_node->edge[DIR_CURVED];
+					engine->route_node_info[route_i].switch_state = SWITCH_CURVED;
+				} else {
+					engine->route_node_info[route_i].edge = &current_track_node->edge[DIR_STRAIGHT];
+					engine->route_node_info[route_i].switch_state = SWITCH_STRAIGHT;
+				}
+			} else {
+				engine->route_node_info[route_i].edge = &current_track_node->edge[DIR_AHEAD];
+			}
+		}
+		
+		route_i++;
+	}
+	
+	engine->route_nodes_length = route_i;
 }
+
+track_node * TAL_UndirectedNodeToTrackNode(TAL * tal, undirected_node * node, undirected_node * next) {
+	if (node->track_node1->edge[DIR_AHEAD].dest &&
+		node->track_node1->edge[DIR_AHEAD].dest->undirected_node == next) {
+		return node->track_node1;
+	} else if (node->track_node1->edge[DIR_CURVED].dest &&
+	node->track_node1->edge[DIR_CURVED].dest->undirected_node == next) {
+		return node->track_node1;
+	} else if (node->track_node2->edge[DIR_AHEAD].dest &&
+		node->track_node2->edge[DIR_AHEAD].dest->undirected_node == next) {
+		return node->track_node2;
+	} else if (node->track_node2->edge[DIR_CURVED].dest &&
+	node->track_node2->edge[DIR_CURVED].dest->undirected_node == next) {
+		return node->track_node2;
+	}
+	
+	assert(0, "TAL_UndirectedNodeToTrackNode: no edge to next node");
+	
+	return 0;
+}
+

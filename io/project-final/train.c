@@ -471,8 +471,10 @@ void TrainServer_HandleSelectTrack(TrainServer * server) {
 	
 	if (receive_message->int1 == 'A') {
 		server->current_track_nodes = server->track_a_nodes;
+		server->current_undirected_nodes = server->track_a_undirected_nodes;
 	} else if (receive_message->int1 == 'B') {
 		server->current_track_nodes = server->track_b_nodes;
+		server->current_undirected_nodes = server->track_b_undirected_nodes;
 	}else{
 		assert(0,"Invalid map name.");
 	}
@@ -684,7 +686,9 @@ void TrainServer_QueueSwitchStates(TrainServer * server, TrainEngine * engine ){
 	assert(engine->destination_node != 0, "TrainServer_QueueSwitchStates destination node not set");
 	assert(engine->route_nodes_length, "TrainServer_QueueSwitchStates route_nodes_length not positive");
 	
-	while(engine->route_node_info[current_route_node_index].node != engine->destination_node){
+	while(current_route_node_index < engine->route_nodes_length){
+		assert(engine->route_node_info[current_route_node_index].node != 0, "TrainServer_QueueSwitchStates: node not set");
+	
 		if(engine->route_node_info[current_route_node_index].node->type == NODE_BRANCH){
 			int switch_num = engine->route_node_info[current_route_node_index].node->num;
 			int next_switch_state = engine->route_node_info[current_route_node_index].switch_state;
@@ -697,6 +701,8 @@ void TrainServer_QueueSwitchStates(TrainServer * server, TrainEngine * engine ){
 			}
 		}
 		current_route_node_index++;
+		
+		assert(current_route_node_index < MAX_ROUTE_NODE_INFO, "TrainServer_QueueSwitchStates: something went wrong");
 	}
 }
 
