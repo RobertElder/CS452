@@ -127,7 +127,9 @@ void TAL_CalculateTrainLocation(TAL * tal, TrainEngine * engine) {
 	engine->distance_to_destination = DistanceToDestination(engine) - engine->estimated_distance_after_node;
 	engine->last_time_location_update = time;
 	
-	move_train_distance(&engine->train_node, engine->current_node->undirected_node, engine->next_node->undirected_node, TAL_GetNextNode(tal, engine->next_node)->undirected_node, distance_traveled / 1000.0);
+	if (tal->train_server->dijkstras_enabled) {
+		move_train_distance(&engine->train_node, engine->current_node->undirected_node, engine->next_node->undirected_node, TAL_GetNextNode(tal, engine->next_node)->undirected_node, distance_traveled / 1000.0);
+	}
 
 	if (engine->estimated_distance_after_node > engine->distance_to_next_node && engine->next_node) {
 		assertf(engine->next_node != 0, "Next node of %s is 0", engine->current_node->name);
