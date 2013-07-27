@@ -285,6 +285,7 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	
 	// TODO queuing switch states like this not good, should use distance to next switch
 	//TrainServer_QueueSwitchStates(server, engine);
+	TrainServer_UpdateRouteIndex(server, engine);
 	TAL_PrepareNextSwitch(&server->tal, engine);
 	
 	assert(engine->speed_setting < 16, "Train Speed Setting is set wrong");
@@ -317,8 +318,6 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 	if (engine->state != TRAIN_ENGINE_NEAR_DESTINATION) {
 		TAL_FeedbackControlSystem(&server->tal, engine);
 	}
-	
-	TrainServer_UpdateRouteIndex(server, engine);
 }
 
 void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * engine) {

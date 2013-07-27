@@ -419,8 +419,9 @@ void TAL_PrepareNextSwitch(TAL * tal, TrainEngine * engine) {
 	track_node * next_switch = GetNextSwitch(engine);
 	if (next_switch) {
 		int distance_to_switch = DistanceToNextSwitch(engine);
+		engine->distance_to_next_switch = distance_to_switch;
 		
-		if (distance_to_switch < 500) {
+		if (distance_to_switch < SWITCH_DISTANCE) {
 			SwitchState next_switch_state = GetNextSwitchState(engine);
 			int actual_switch_state = tal->train_server->switch_states[next_switch->num];
 			
