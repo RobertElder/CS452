@@ -207,7 +207,7 @@ int test_orientation(){
 
 	unsigned int ticks = 0;
 
-	int samples = 6;
+	int samples = 10;
 
 	while(state_number < (samples * 2)){
 		while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags))){
@@ -282,18 +282,17 @@ int test_orientation(){
 					times[state_number] = now;
 					state_number++;
 				}else{
-					//robprintfbusy((const unsigned char *)"%d.\n",diff(now, last_ten));
+					robprintfbusy((const unsigned char *)"%d.\n",diff(now, last_ten));
 				}
 
 				last_ten = now;
 			}
-
 		}
 	}
 
 	int num = 0;
 	int sum = 0;
-	for(i = 0; i < state_number -1; i++){
+	for(i = 0; i < state_number -2; i++){
 		//print_flags(states[i], times[i]);
 		if(states[i] == 16 && states[i+1] == 2){
 			//print_flags1(times[i+1],times[i]);
@@ -307,7 +306,8 @@ int test_orientation(){
 
 	num = 0;
 	sum = 0;
-	for(i = 0; i < state_number -1; i++){
+
+	for(i = 0; i < state_number -2; i++){
 		if(states[i] == 16 && states[i+1] == 2){
 			print_flags1(times[i+1],times[i]);
 			int difference = diff(times[i+1],times[i]);
@@ -345,7 +345,7 @@ void TEST_UART(){
 	set_switch(10,'C');
 	set_switch(13,'C');
 	move_train(15,train_num);
-	stall(300000);
+	stall(500000);
 	move_train(14,train_num);
 	//  Get rid of bogus sensor data
 	int rtn2 = test_orientation();
