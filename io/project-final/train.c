@@ -1005,19 +1005,28 @@ void TrainEngineClient_Start(){
 }
 
 void TrainEngine_SetInitialSwitches() {
-	SetTrainSwitch(SWITCH_CURVED_CODE, 11);
-	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 14);
-	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 15);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 1);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 2);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 3);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 4);
+	SetTrainSwitch(SWITCH_CURVED_CODE, 5);
 	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 6);
 	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 7);
 	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 8);
 	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 9);
-	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 18);
-	SetTrainSwitch(SWITCH_CURVED_CODE, 5);
-	SetTrainSwitch(SWITCH_CURVED_CODE, 155);
-	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 156);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 10);
+	SetTrainSwitch(SWITCH_CURVED_CODE, 11);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 12);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 13);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 14);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 15);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 16);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 17);
+	SetTrainSwitch(SWITCH_CURVED_CODE, 18);
 	SetTrainSwitch(SWITCH_CURVED_CODE, 153);
 	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 154);
+	SetTrainSwitch(SWITCH_CURVED_CODE, 155);
+	SetTrainSwitch(SWITCH_STRAIGHT_CODE, 156);
 }
 
 void TrainSwitchMaster_Start() {

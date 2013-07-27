@@ -48,4 +48,6 @@ void TAL_PopulatePath(TAL * tal, TrainEngine * engine);
 
 track_node * TAL_UndirectedNodeToTrackNode(TAL * tal, undirected_node * node, undirected_node * next);
 
+void TAL_PrepareNextSwitch(TAL * tal, TrainEngine * engine);
+
 #endif

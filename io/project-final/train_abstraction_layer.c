@@ -415,3 +415,19 @@ track_node * TAL_UndirectedNodeToTrackNode(TAL * tal, undirected_node * node, un
 	return 0;
 }
 
+void TAL_PrepareNextSwitch(TAL * tal, TrainEngine * engine) {
+	track_node * next_switch = GetNextSwitch(engine);
+	if (next_switch) {
+		int distance_to_switch = DistanceToNextSwitch(engine);
+		
+		if (distance_to_switch < 500) {
+			SwitchState next_switch_state = GetNextSwitchState(engine);
+			int actual_switch_state = tal->train_server->switch_states[next_switch->num];
+			
+			if (next_switch_state != SWITCH_UNKNOWN && next_switch_state != actual_switch_state) {
+				QueueSwitchState(tal->train_server, next_switch->num, next_switch_state);
+			}
+		}
+	}
+}
+

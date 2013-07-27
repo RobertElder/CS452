@@ -136,7 +136,7 @@ void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine *
 	ReserveTrackNodes(engine);
 	
 	// TODO: not good, may trip up other trains
-	TrainServer_QueueSwitchStates(server, engine);
+	//TrainServer_QueueSwitchStates(server, engine);
 
 	int i = 0;
 	for(i = 0; i < engine->route_nodes_length; i++){
@@ -172,6 +172,21 @@ int DistanceToNextSensor(TrainEngine * engine) {
 	return distance;
 }
 
+int DistanceToNextSwitch(TrainEngine * engine) {
+	int distance = 0;
+	int i;
+	
+	for (i = engine->route_node_index; i < engine->route_nodes_length; i++) {
+		if (engine->route_node_info[i].node->type == NODE_BRANCH && i != engine->route_node_index) {
+			break;
+		}
+		
+		distance += engine->route_node_info[i].edge->dist;
+	}
+	
+	return distance;
+}
+
 track_node * GetNextSensor(TrainEngine * engine) {
 	int i;
 	
@@ -184,6 +199,34 @@ track_node * GetNextSensor(TrainEngine * engine) {
 	}
 	
 	return 0;
+}
+
+track_node * GetNextSwitch(TrainEngine * engine) {
+	int i;
+	
+	for (i = engine->route_node_index; i < engine->route_nodes_length; i++) {
+		
+		if (engine->route_node_info[i].node->type == NODE_BRANCH && i != engine->route_node_index) {
+			return engine->route_node_info[i].node;
+		}
+		
+	}
+	
+	return 0;
+}
+
+SwitchState GetNextSwitchState(TrainEngine * engine) {
+	int i;
+	
+	for (i = engine->route_node_index; i < engine->route_nodes_length; i++) {
+		
+		if (engine->route_node_info[i].node->type == NODE_BRANCH && i != engine->route_node_index) {
+			return engine->route_node_info[i].switch_state;
+		}
+		
+	}
+	
+	return SWITCH_UNKNOWN;
 }
 
 int DistanceToDestination(TrainEngine * engine) {
@@ -240,6 +283,10 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	TAL_CalculateTrainLocation(&server->tal, engine);
 	TrainServer_TrainProceedOrWait(server, engine);
 	
+	// TODO queuing switch states like this not good, should use distance to next switch
+	//TrainServer_QueueSwitchStates(server, engine);
+	TAL_PrepareNextSwitch(&server->tal, engine);
+	
 	assert(engine->speed_setting < 16, "Train Speed Setting is set wrong");
 	int stopping_distance = STOPPING_DISTANCE[engine->train_num][engine->speed_setting];
 
@@ -271,23 +318,7 @@ void TrainServer_ProcessSensorData(TrainServer * server, TrainEngine * engine) {
 		TAL_FeedbackControlSystem(&server->tal, engine);
 	}
 	
-	
-	int i = 0;
-	int found = 0;
-	for (i = engine->route_node_index; i < engine->route_nodes_length; i++) {
-		if (engine->route_node_info[i].node == engine->current_node) {
-			found = 1;
-			engine->route_node_index = i;
-			break;
-		}
-	}
-
-	if(!(found)){
-		//PrintMessage("\x1b[31;44mUnable to find current sensor (%s) in route list from %s to %s.", engine->current_node->name, engine->source_node->name, engine->destination_node->name);
-	}
-
-	// TODO queuing switch states like this not good, should use distance to next switch
-	TrainServer_QueueSwitchStates(server, engine);
+	TrainServer_UpdateRouteIndex(server, engine);
 }
 
 void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * engine) {
@@ -378,6 +409,22 @@ void TrainServer_TrainProceedOrWait(TrainServer * server, TrainEngine * engine) 
 		engine->state = TRAIN_ENGINE_WAIT_FOR_RESERVATION;
 		PrintMessage("Train %d avoiding collision on %s", engine->train_num, engine->current_node->name);
 		TAL_TransitionToNextNode(&server->tal, engine, engine->current_node->reverse);
+	}
+}
+
+void TrainServer_UpdateRouteIndex(TrainServer * server, TrainEngine * engine) {
+	int i = 0;
+	int found = 0;
+	for (i = engine->route_node_index; i < engine->route_nodes_length; i++) {
+		if (engine->route_node_info[i].node == engine->current_node) {
+			found = 1;
+			engine->route_node_index = i;
+			break;
+		}
+	}
+	
+	if(!(found)){
+		PrintMessage("!!! Unable to find current node %s in route list", engine->current_node->name);
 	}
 }
 
