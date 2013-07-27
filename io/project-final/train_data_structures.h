@@ -256,6 +256,8 @@ struct TrainServer {
 	TrainSpeedQueue train_speed_queue;
 	
 	TAL tal;
+	
+	int dijkstras_enabled;
 };
 
 #endif

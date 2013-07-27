@@ -128,8 +128,11 @@ void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine *
 
 	engine->route_nodes_length = 0;
 	engine->route_node_index = 0;
-	//PopulateRouteNodeInfo(server, engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length), engine->train_num);
-	TAL_PopulatePath(&server->tal, engine);
+	if (server->dijkstras_enabled) {
+		TAL_PopulatePath(&server->tal, engine);
+	} else {
+		PopulateRouteNodeInfo(server, engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length), engine->train_num);
+	}
 	ReserveTrackNodes(engine);
 	
 	// TODO: not good, may trip up other trains

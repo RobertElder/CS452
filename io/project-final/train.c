@@ -121,6 +121,10 @@ void TrainServer_Start() {
 			TrainServer_HandleResetTrack(&server);
 			TrainServer_ProcessEngines(&server);
 			break;
+		case MESSAGE_TYPE_SET_DIJKSTRAS:
+			TrainServer_HandleSetDijkstras(&server);
+			TrainServer_ProcessEngines(&server);
+			break;
 		default:
 			assert(0, "TrainServer: unknown message type");
 			break;
@@ -171,6 +175,7 @@ void TrainServer_Initialize(TrainServer * server) {
 	
 	TAL_Initialize(&server->tal, server);
 	
+	server->dijkstras_enabled = 0;
 	server->sensor_reader_blocked = 0;
 	server->num_engines = 1;
 	server->state = TRAIN_SERVER_IDLE;
@@ -656,6 +661,16 @@ void TrainServer_HandleResetTrack(TrainServer * server) {
 	init_undirected_nodes(server->track_b_nodes, server->track_b_undirected_nodes, &server->num_track_b_undirected_nodes);
 	
 	server->current_undirected_nodes = server->track_a_undirected_nodes;
+	
+	reply_message->message_type = MESSAGE_TYPE_ACK;
+	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);
+}
+
+void TrainServer_HandleSetDijkstras(TrainServer * server) {
+	GenericTrainMessage * receive_message = (GenericTrainMessage *) server->receive_buffer;
+	GenericMessage * reply_message = (GenericMessage *) server->reply_buffer;
+	
+	server->dijkstras_enabled = receive_message->int1;
 	
 	reply_message->message_type = MESSAGE_TYPE_ACK;
 	Reply(server->source_tid, server->reply_buffer, MESSAGE_SIZE);

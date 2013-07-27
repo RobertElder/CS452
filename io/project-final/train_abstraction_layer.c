@@ -143,7 +143,10 @@ void TAL_SetInitialTrainLocation(TAL * tal, TrainEngine * engine, track_node * n
 void TAL_TransitionToNextNode(TAL * tal, TrainEngine * engine, track_node * node) {
 	if (engine->previous_node) {
 //		ReleaseTrackNode(engine->previous_node, engine->train_num);
-		remove_train_node(&engine->train_node, engine->current_node->undirected_node, engine->next_node->undirected_node);
+
+		if (tal->train_server->dijkstras_enabled) {
+			remove_train_node(&engine->train_node, engine->current_node->undirected_node, engine->next_node->undirected_node);
+		}
 	}
 	
 	engine->previous_node = engine->current_node;
@@ -153,7 +156,9 @@ void TAL_TransitionToNextNode(TAL * tal, TrainEngine * engine, track_node * node
 	engine->distance_to_next_node = TAL_DistanceToNextNode(tal, engine);
 	engine->time_at_last_node = TimeSeconds();
 	
-	add_train_node(&engine->train_node, node->undirected_node, engine->next_node->undirected_node, 1);
+	if (tal->train_server->dijkstras_enabled) {
+		add_train_node(&engine->train_node, node->undirected_node, engine->next_node->undirected_node, 1);
+	}
 	
 	ReserveTrackNode(engine->current_node, engine->train_num);
 //	ReserveTrackNode(engine->next_node, engine->train_num);
