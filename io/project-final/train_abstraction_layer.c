@@ -133,7 +133,7 @@ void TAL_CalculateTrainLocation(TAL * tal, TrainEngine * engine) {
 
 	if (engine->estimated_distance_after_node > engine->distance_to_next_node && engine->next_node) {
 		assertf(engine->next_node != 0, "Next node of %s is 0", engine->current_node->name);
-		PrintMessage("Guessing train is at %s (%d > %d)", engine->next_node->name, (int) engine->estimated_distance_after_node, (int) engine->distance_to_next_node);
+		//PrintMessage("Guessing train is at %s (%d > %d)", engine->next_node->name, (int) engine->estimated_distance_after_node, (int) engine->distance_to_next_node);
 		assertf(TAL_IsNextNodeAvailable(tal, engine), "TAL_CalculateTrainLocation: Train %d drifted into node %s reserved for %d", engine->train_num, engine->next_node->name, engine->next_node->reserved);
 		TAL_TransitionToNextNode(tal, engine, engine->next_node);
 	}
@@ -306,11 +306,14 @@ void TAL_FeedbackControlSystem(TAL * tal, TrainEngine * engine) {
 void TAL_SetTrainSpeed(TAL * tal, double speed, int train_num, int lights) {
 	int slot_num = TrainServer_EngineNumToArrayIndex(tal->train_server, train_num);
 	TrainEngine * engine = &tal->train_server->train_engines[slot_num];
+	int new_speed_setting = speed;
+
+	if (speed == REVERSE_SPEED) {
+		speed = 0;
+	}
 	
 	engine->granular_speed_setting = speed;
-	
-	int new_speed_setting = speed;
-	
+
 	if (lights) {
 		new_speed_setting |= LIGHTS_MASK;
 	}
