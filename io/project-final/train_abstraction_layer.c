@@ -134,6 +134,7 @@ void TAL_CalculateTrainLocation(TAL * tal, TrainEngine * engine) {
 	if (engine->estimated_distance_after_node > engine->distance_to_next_node && engine->next_node) {
 		assertf(engine->next_node != 0, "Next node of %s is 0", engine->current_node->name);
 		PrintMessage("Guessing train is at %s (%d > %d)", engine->next_node->name, (int) engine->estimated_distance_after_node, (int) engine->distance_to_next_node);
+		assertf(TAL_IsNextNodeAvailable(tal, engine), "TAL_CalculateTrainLocation: Train %d drifted into node %s reserved for %d", engine->train_num, engine->next_node->name, engine->next_node->reserved);
 		TAL_TransitionToNextNode(tal, engine, engine->next_node);
 	}
 }

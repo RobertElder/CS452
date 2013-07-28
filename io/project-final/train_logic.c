@@ -351,8 +351,7 @@ void TrainServer_ProcessEngineReverseAndTryAgain(TrainServer * server, TrainEngi
 
 void TrainServer_ProcessEngineWaitForReservation(TrainServer * server, TrainEngine * engine) {
 	if (TAL_IsNextNodeAvailable(&server->tal, engine)) {
-		TAL_SetTrainSpeed(&server->tal, FINDING_POSITION_SPEED, engine->train_num, 0);
-		engine->state = TRAIN_ENGINE_RESYNC_POSITION;
+		engine->state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
 	}
 	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
 }
