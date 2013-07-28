@@ -968,6 +968,7 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->undirected_node_path_length = 0;
 	engine->distance_to_next_switch = 0;
 	engine->print_message_hash = 0;
+	engine->lost_count = 0;
 	
 	memset(&engine->train_node, 0, sizeof(undirected_node));
 	engine->train_node.type = NODE_TRAIN;

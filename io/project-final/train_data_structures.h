@@ -200,6 +200,7 @@ typedef struct TrainEngine {
 	int undirected_node_path_length;
 	TrainEngineReservationQueue reservation_queue;
 	int print_message_hash;
+	int lost_count;
 } TrainEngine;
 
 typedef struct TrainEngineStatusMessage {

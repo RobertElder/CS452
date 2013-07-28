@@ -52,6 +52,6 @@ track_node * GetNextSwitch(TrainEngine * engine);
 
 SwitchState GetNextSwitchState(TrainEngine * engine);
 
-void TrainServer_UpdateRouteIndex(TrainServer * server, TrainEngine * engine);
+int TrainServer_UpdateRouteIndex(TrainServer * server, TrainEngine * engine);
 
 #endif

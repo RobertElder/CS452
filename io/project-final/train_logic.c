@@ -286,7 +286,19 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	TAL_CalculateTrainLocation(&server->tal, engine);
 	TrainServer_TrainProceedOrWait(server, engine);
 	
-	TrainServer_UpdateRouteIndex(server, engine);
+	int found = TrainServer_UpdateRouteIndex(server, engine);
+	if (found == 0 || found == -1) {
+		engine->lost_count += 1;
+		
+		if (engine->lost_count > 10) {
+			engine->lost_count = 0;
+			TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 1);
+			engine->state = TRAIN_ENGINE_WRONG_LOCATION;
+			PrintMessage("*** Train %d is lost. ***", engine->train_num);
+			return;
+		}
+	}
+	
 	TAL_PrepareNextSwitch(&server->tal, engine);
 	
 	assert(engine->speed_setting < 16, "Train Speed Setting is set wrong");
@@ -413,7 +425,7 @@ void TrainServer_TrainProceedOrWait(TrainServer * server, TrainEngine * engine) 
 	}
 }
 
-void TrainServer_UpdateRouteIndex(TrainServer * server, TrainEngine * engine) {
+int TrainServer_UpdateRouteIndex(TrainServer * server, TrainEngine * engine) {
 	int i = 0;
 	int found = 0;
 	for (i = 0; i < engine->route_nodes_length; i++) {
@@ -422,10 +434,15 @@ void TrainServer_UpdateRouteIndex(TrainServer * server, TrainEngine * engine) {
 			engine->route_node_index = i;
 			break;
 		} else if (engine->route_node_info[i].node->reverse == engine->current_node) {
-			found = 2;
+			found = -1;
 			engine->route_node_index = i;
 			break;
 		}
+	}
+	
+	// This special case is used when we use the recursive algorithm, but we skip the branch because it can't handle starting on a switch
+	if (found != 0 && engine->source_node->type == NODE_BRANCH && engine->source_node == engine->current_node) {
+		found = 2;
 	}
 	
 	int new_print_message_hash = found ^ engine->route_node_index ^ (int) engine->current_node;
@@ -433,11 +450,15 @@ void TrainServer_UpdateRouteIndex(TrainServer * server, TrainEngine * engine) {
 	if (new_print_message_hash != engine->print_message_hash) {
 		engine->print_message_hash = new_print_message_hash;
 	
-		if (found == 2) {
+		if (found == -1) {
 			PrintMessage("!!! Train %d: Reversed? Current node=%s but route=%s", engine->train_num, engine->current_node->name, engine->route_node_info[engine->route_node_index].node->name);
-		} else if(!(found)){
+		} else if(found != 1){
 			PrintMessage("!!! Train %d: Unable to find current node %s in route list", engine->train_num, engine->current_node->name);
+		} else if (found == 2) {
+			PrintMessage("Train %d: %s not in route list, but considered special case.", engine->train_num, engine->current_node->name);
 		}
 	}
+	
+	return found;
 }
 
