@@ -53,13 +53,13 @@ void set_switch(int switch_number, char code){
 	char switch_code = (code == 'S') ? 33 : 34;
 
 	volatile int flags;
-	while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags))){
+	while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags) && !(TXFF_MASK & flags))){
 		flags = *UART1Flag;
 	}
 
 	*UART1DATA = switch_code;
 
-	while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags))){
+	while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags) && !(TXFF_MASK & flags))){
 		flags = *UART1Flag;
 	}
 
@@ -67,7 +67,7 @@ void set_switch(int switch_number, char code){
 
 	stall(100000);
 
-	while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags))){
+	while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags) && !(TXFF_MASK & flags))){
 		flags = *UART1Flag;
 	}
 	//  Turn off
@@ -78,13 +78,13 @@ void set_switch(int switch_number, char code){
 
 void move_train(int speed, int train){
 	volatile int flags;
-	while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags))){
+	while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags) && !(TXFF_MASK & flags))){
 		flags = *UART1Flag;
 	}
 
 	*UART1DATA = speed;
 
-	while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags))){
+	while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags) && !(TXFF_MASK & flags))){
 		flags = *UART1Flag;
 	}
 
@@ -147,7 +147,7 @@ void dummy_query(){
 
 	int i = 0;
 	while(i < 1){
-		while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags))){
+		while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags) && !(TXFF_MASK & flags))){
 			flags = *UART1Flag;
 		}
 
@@ -175,6 +175,8 @@ void dummy_query(){
 }
 
 int test_orientation(){
+	volatile int * status = (int *)( UART1_BASE + UART_RSR_OFFSET );
+	*status =  0;
 
 	unsigned int cycles_per_tick = 508000;
 	int * timer_ldr = (int*)(TIMER3_BASE + LDR_OFFSET);
@@ -207,10 +209,23 @@ int test_orientation(){
 
 	unsigned int ticks = 0;
 
-	int samples = 10;
+	int samples = 3;
 
+	int k  = 0;
+
+	robprintfbusy((const unsigned char *)"asdfasdfasdf\n");
 	while(state_number < (samples * 2)){
-		while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags))){
+		*status =  0;
+
+		flags = *UART1Flag;
+		while(!(RXFE_MASK & flags)){
+			in_data = *UART1DATA;
+			flags = *UART1Flag;
+		}
+		assert((RXFE_MASK & flags),"not RXFE");
+
+		k = 0;
+		while(!(CTS_MASK & flags && !(TXBUSY_MASK & flags) && !(TXFF_MASK & flags))){
 			flags = *UART1Flag;
 			unsigned int sample = *timer_val;
 			service_timer(sample, last_timer, &ticks);
@@ -218,6 +233,7 @@ int test_orientation(){
 		}
 
 		/* Request some sensor data and look a the results */
+		k = 0;
 		*UART1DATA = 194;
 		while(1){
 			flags = *UART1Flag;
@@ -254,6 +270,8 @@ int test_orientation(){
 			}
 		}
 
+		k = 0;
+
 		while(1){
 			flags = *UART1Flag;
 			if(!(RXFE_MASK & flags)){
@@ -282,7 +300,7 @@ int test_orientation(){
 					times[state_number] = now;
 					state_number++;
 				}else{
-					robprintfbusy((const unsigned char *)"%d.\n",diff(now, last_ten));
+					//robprintfbusy((const unsigned char *)"%d.\n",diff(now, last_ten));
 				}
 
 				last_ten = now;
@@ -323,7 +341,7 @@ int test_orientation(){
 
 void TEST_UART(){
 
-	int train_num  = 47;
+	int train_num  = 43;
 	do_setup();
 	set_switch(9,'C');
 	set_switch(14,'C');
