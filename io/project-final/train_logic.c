@@ -81,15 +81,7 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 }
 
 void TrainServer_ProcessEngineResyncPosition(TrainServer * server, TrainEngine * engine) {
-	if (TAL_IsNextNodeAvailable(&server->tal, engine)) {
-		TrainServer_ProcessEngineFindingPosition(server, engine);
-	} else {
-		TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 1);
-		engine->state = TRAIN_ENGINE_WAIT_FOR_RESERVATION;
-	}
-	
-	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
-	TAL_CalculateTrainLocation(&server->tal, engine);
+	assert(0, "TrainServer_ProcessEngineResyncPosition: obsoleted");
 }
 
 void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainEngine * engine) {
@@ -110,9 +102,7 @@ void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngi
 	if (!engine->destination_node) {
 		// Reverse and try again
 		//PrintMessage("No destination in this direction! Reversing..");
-		TAL_SetTrainSpeed(&server->tal, REVERSE_SPEED, engine->train_num, 0);
-		TAL_SetTrainSpeed(&server->tal, FINDING_POSITION_SPEED, engine->train_num, 1);
-		engine->current_node = engine->current_node->reverse;
+		TAL_ReverseTrain(&server->tal, engine, FINDING_POSITION_SPEED);
 		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
 		return;
 	}
@@ -131,13 +121,16 @@ void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine *
 	if (server->dijkstras_enabled) {
 		TAL_PopulatePath(&server->tal, engine);
 	} else {
-		PopulateRouteNodeInfo(server, engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length), engine->train_num);
+		if (engine->current_node->type == NODE_BRANCH) {
+			// The algorithm doesn't care that we are on a switch, so use the next node
+			assert(engine->next_node != 0, "TrainServer_ProcessEngineGotDestination: unhandled case");
+			PopulateRouteNodeInfo(server, engine->route_node_info, server->current_track_nodes, engine->next_node, engine->destination_node, 0, 0, &(engine->route_nodes_length), engine->train_num);
+		} else {
+			PopulateRouteNodeInfo(server, engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length), engine->train_num);
+		}
 	}
 	TAL_ReservePathNodes(&server->tal, engine);
 	
-	// TODO: not good, may trip up other trains
-	//TrainServer_QueueSwitchStates(server, engine);
-
 	int i = 0;
 	for(i = 0; i < engine->route_nodes_length; i++){
 		//PrintMessage("Route %d) %s.",i, engine->route_node_info[i].node->name);
@@ -283,8 +276,6 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	TAL_CalculateTrainLocation(&server->tal, engine);
 	TrainServer_TrainProceedOrWait(server, engine);
 	
-	// TODO queuing switch states like this not good, should use distance to next switch
-	//TrainServer_QueueSwitchStates(server, engine);
 	TrainServer_UpdateRouteIndex(server, engine);
 	TAL_PrepareNextSwitch(&server->tal, engine);
 	
@@ -331,23 +322,21 @@ void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * 
 
 void TrainServer_ProcessEngineWaitAndGoForever(TrainServer * server, TrainEngine * engine) {
 	engine->state = TRAIN_ENGINE_WAIT_FOR_ALL_READY;
-	
-/*
-	track_node * next_node = engine->current_node->edge[DIR_AHEAD].dest;
-	
-	if (next_node && next_node->type == NODE_EXIT) {
-		TAL_SetTrainSpeed(&server->tal, REVERSE_SPEED, engine->train_num);
-		TAL_SetTrainSpeed(&server->tal, FINDING_POSITION_SPEED, engine->train_num);
-		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
-	} else {
-		TAL_SetTrainSpeed(&server->tal, FINDING_POSITION_SPEED, engine->train_num);
-		engine->state = TRAIN_ENGINE_RESYNC_POSITION;
-	}
-*/
 }
 
 void TrainServer_ProcessEngineReverseAndTryAgain(TrainServer * server, TrainEngine * engine) {
-	TrainServer_ProcessEngineFindingPosition(server, engine);
+	if (engine->current_node->type == NODE_EXIT) {
+		TAL_ReverseTrain(&server->tal, engine, FINDING_POSITION_SPEED);
+		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
+	} else if (TAL_IsNextNodeAvailable(&server->tal, engine)) {
+		engine->state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
+	} else {
+		TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 1);
+		engine->state = TRAIN_ENGINE_WAIT_FOR_RESERVATION;
+	}
+	
+	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
+	TAL_CalculateTrainLocation(&server->tal, engine);
 }
 
 void TrainServer_ProcessEngineWaitForReservation(TrainServer * server, TrainEngine * engine) {
@@ -403,10 +392,9 @@ void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
 
 void TrainServer_TrainProceedOrWait(TrainServer * server, TrainEngine * engine) {
 	if (!TAL_IsNextNodeAvailable(&server->tal, engine)) {
-		TAL_SetTrainSpeed(&server->tal, REVERSE_SPEED, engine->train_num, 1);
+		TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 1);
 		engine->state = TRAIN_ENGINE_WAIT_FOR_RESERVATION;
 		PrintMessage("Train %d avoiding collision on %s", engine->train_num, engine->current_node->name);
-		TAL_TransitionToNextNode(&server->tal, engine, engine->current_node->reverse);
 	}
 }
 

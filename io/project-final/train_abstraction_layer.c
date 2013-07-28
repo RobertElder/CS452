@@ -455,3 +455,15 @@ void TAL_ReservePathNodes(TAL * tal, TrainEngine * engine) {
 	}
 }
 
+void TAL_ReverseTrain(TAL * tal, TrainEngine * engine, int restart_speed) {
+	TAL_SetTrainSpeed(tal, REVERSE_SPEED, engine->train_num, 0);
+	TAL_SetTrainSpeed(tal, restart_speed, engine->train_num, 1);
+	engine->current_node = engine->current_node->reverse;
+	engine->next_node = TAL_GetNextNode(tal, engine->current_node);
+	engine->estimated_distance_after_node = 0;
+	engine->last_calculated_speed = 0;
+	engine->calculated_speed = 0;
+	engine->last_time_speed_update = TimeSeconds();
+	engine->last_time_location_update = TimeSeconds();
+}
+
