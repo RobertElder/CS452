@@ -68,7 +68,17 @@ void TrainServer_ProcessEngineIdle(TrainServer * server, TrainEngine * engine) {
 }
 
 void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine * engine) {
+#ifdef TRAINS
 	track_node * node = TAL_GetUnreservedSensor(&server->tal);
+#else
+	track_node * node = GetRandomSensor(server);
+	while (1) {
+		if (!node->reserved || node->reserved == engine->train_num) {
+			break;
+		}
+		node = GetRandomSensor(server);
+	}
+#endif
 	
 	if (node && engine->current_node != node) {
 		TAL_SetInitialTrainLocation(&server->tal, engine, node);
