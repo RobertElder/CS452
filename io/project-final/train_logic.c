@@ -428,7 +428,15 @@ void TrainServer_TrainProceedOrWait(TrainServer * server, TrainEngine * engine) 
 int TrainServer_UpdateRouteIndex(TrainServer * server, TrainEngine * engine) {
 	int i = 0;
 	int found = 0;
-	for (i = 0; i < engine->route_nodes_length; i++) {
+	
+	// This accounts for when the sensor reading snaps or rubber bands the train to a sensor by giving it a window of how much the train has proceeded on its route
+	int start_index = engine->route_node_index - 4;
+	
+	if (start_index < 0) {
+		start_index = 0;
+	}
+	
+	for (i = start_index; i < engine->route_nodes_length; i++) {
 		if (engine->route_node_info[i].node == engine->current_node) {
 			found = 1;
 			engine->route_node_index = i;
