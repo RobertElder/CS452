@@ -401,15 +401,21 @@ void TrainServer_TrainProceedOrWait(TrainServer * server, TrainEngine * engine) 
 void TrainServer_UpdateRouteIndex(TrainServer * server, TrainEngine * engine) {
 	int i = 0;
 	int found = 0;
-	for (i = engine->route_node_index; i < engine->route_nodes_length; i++) {
+	for (i = 0; i < engine->route_nodes_length; i++) {
 		if (engine->route_node_info[i].node == engine->current_node) {
 			found = 1;
+			engine->route_node_index = i;
+			break;
+		} else if (engine->route_node_info[i].node->reverse == engine->current_node) {
+			found = 2;
 			engine->route_node_index = i;
 			break;
 		}
 	}
 	
-	if(!(found)){
+	if (found == 2) {
+		PrintMessage("!!! Train %d: Reversed? Current node=%s but route=%s", engine->train_num, engine->current_node->name, engine->route_node_info[engine->route_node_index].node->name);
+	} else if(!(found)){
 		PrintMessage("!!! Train %d: Unable to find current node %s in route list", engine->train_num, engine->current_node->name);
 	}
 }
