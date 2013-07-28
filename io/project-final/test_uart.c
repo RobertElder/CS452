@@ -1,6 +1,6 @@
 #include "test_uart.h"
 
-#define MAX_STATES 100
+#define MAX_STATES 1000
 
 #define FIN_SEND -1
 #define FIN_TAKE -2
@@ -209,7 +209,7 @@ int test_orientation(){
 
 	unsigned int ticks = 0;
 
-	int samples = 3;
+	int samples = 80;
 
 	int k  = 0;
 
@@ -341,14 +341,17 @@ int test_orientation(){
 
 void TEST_UART(){
 
-	int train_num  = 43;
+	int train_num  = 47;
+	int speed_num  = 8;
+
+
 	do_setup();
 	set_switch(9,'C');
 	set_switch(14,'C');
 	set_switch(13,'C');
 	set_switch(154,'S');
 	set_switch(153,'C');
-	move_train(14,train_num);
+	move_train(speed_num, train_num);
 	//  Get rid of bogus sensor data
 	int rtn1 = test_orientation();
 	robprintfbusy((const unsigned char *)"average was %d.\n", rtn1);
@@ -364,7 +367,7 @@ void TEST_UART(){
 	set_switch(13,'C');
 	move_train(15,train_num);
 	stall(500000);
-	move_train(14,train_num);
+	move_train(speed_num, train_num);
 	//  Get rid of bogus sensor data
 	int rtn2 = test_orientation();
 	robprintfbusy((const unsigned char *)"average was %d.\n", rtn2);
