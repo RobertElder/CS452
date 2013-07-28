@@ -418,10 +418,16 @@ void TrainServer_UpdateRouteIndex(TrainServer * server, TrainEngine * engine) {
 		}
 	}
 	
-	if (found == 2) {
-		PrintMessage("!!! Train %d: Reversed? Current node=%s but route=%s", engine->train_num, engine->current_node->name, engine->route_node_info[engine->route_node_index].node->name);
-	} else if(!(found)){
-		PrintMessage("!!! Train %d: Unable to find current node %s in route list", engine->train_num, engine->current_node->name);
+	int new_print_message_hash = found ^ engine->route_node_index ^ (int) engine->current_node;
+	
+	if (new_print_message_hash != engine->print_message_hash) {
+		engine->print_message_hash = new_print_message_hash;
+	
+		if (found == 2) {
+			PrintMessage("!!! Train %d: Reversed? Current node=%s but route=%s", engine->train_num, engine->current_node->name, engine->route_node_info[engine->route_node_index].node->name);
+		} else if(!(found)){
+			PrintMessage("!!! Train %d: Unable to find current node %s in route list", engine->train_num, engine->current_node->name);
+		}
 	}
 }
 

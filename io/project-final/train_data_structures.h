@@ -199,6 +199,7 @@ typedef struct TrainEngine {
 	undirected_node * undirected_node_path[MAX_UNDIRECTED_NODE_PATH];
 	int undirected_node_path_length;
 	TrainEngineReservationQueue reservation_queue;
+	int print_message_hash;
 } TrainEngine;
 
 typedef struct TrainEngineStatusMessage {
