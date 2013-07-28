@@ -145,8 +145,6 @@ void TAL_SetInitialTrainLocation(TAL * tal, TrainEngine * engine, track_node * n
 
 void TAL_TransitionToNextNode(TAL * tal, TrainEngine * engine, track_node * node) {
 	if (engine->previous_node) {
-//		ReleaseTrackNode(engine->previous_node, engine->train_num);
-
 		if (tal->train_server->dijkstras_enabled) {
 			remove_train_node(&engine->train_node, engine->current_node->undirected_node, engine->next_node->undirected_node);
 		}
@@ -163,8 +161,7 @@ void TAL_TransitionToNextNode(TAL * tal, TrainEngine * engine, track_node * node
 		add_train_node(&engine->train_node, node->undirected_node, engine->next_node->undirected_node, 1);
 	}
 	
-	ReserveTrackNode(engine->current_node, engine->train_num);
-//	ReserveTrackNode(engine->next_node, engine->train_num);
+	TAL_ReserveNode(tal, engine, engine->current_node);
 }
 
 track_node * TAL_GetUnreservedSensor(TAL * tal) {
@@ -433,6 +430,28 @@ void TAL_PrepareNextSwitch(TAL * tal, TrainEngine * engine) {
 				QueueSwitchState(tal->train_server, next_switch->num, next_switch_state);
 			}
 		}
+	}
+}
+
+void TAL_ReserveNode(TAL * tal, TrainEngine * engine, track_node * node) {
+	if (node->reserved != engine->train_num) {
+		ReserveTrackNode(node, engine->train_num);
+		Queue_PushEnd((Queue*) &engine->reservation_queue, node);
+	}
+}
+
+void TAL_ReleaseNodes(TAL * tal, TrainEngine * engine, int num_to_keep) {
+	while (Queue_CurrentCount((Queue*) &engine->reservation_queue) > num_to_keep) {
+		track_node * node = Queue_PopStart((Queue*) &engine->reservation_queue);
+		ReleaseTrackNode(node, engine->train_num);
+	}
+}
+
+void TAL_ReservePathNodes(TAL * tal, TrainEngine * engine) {
+	int i;
+	for (i = 0; i < engine->route_nodes_length; i++) {
+		track_node * node = engine->route_node_info[i].node;
+		TAL_ReserveNode(tal, engine, node);
 	}
 }
 

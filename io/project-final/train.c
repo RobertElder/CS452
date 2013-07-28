@@ -970,6 +970,8 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	
 	memset(&engine->train_node, 0, sizeof(undirected_node));
 	engine->train_node.type = NODE_TRAIN;
+	
+	Queue_Initialize((Queue*) &engine->reservation_queue, TRAIN_ENGINE_RESERVATION_QUEUE_SIZE);
 }
 
 void TrainEngineClient_Start(){

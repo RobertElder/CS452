@@ -198,6 +198,7 @@ typedef struct TrainEngine {
 	short use_sensor_for_speed_calculation;
 	undirected_node * undirected_node_path[MAX_UNDIRECTED_NODE_PATH];
 	int undirected_node_path_length;
+	TrainEngineReservationQueue reservation_queue;
 } TrainEngine;
 
 typedef struct TrainEngineStatusMessage {

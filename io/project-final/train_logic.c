@@ -133,7 +133,7 @@ void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine *
 	} else {
 		PopulateRouteNodeInfo(server, engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length), engine->train_num);
 	}
-	ReserveTrackNodes(engine);
+	TAL_ReservePathNodes(&server->tal, engine);
 	
 	// TODO: not good, may trip up other trains
 	//TrainServer_QueueSwitchStates(server, engine);
@@ -260,8 +260,8 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 		TAL_SetTrainWait(&server->tal, engine, 4);
 		TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 0);
 		//PrintMessage("At destination %s.", engine->current_node->name);
-		ReleaseTrackNodes(engine);
-		ReserveTrackNode(engine->current_node, engine->train_num);
+		
+		TAL_ReleaseNodes(&server->tal, engine, 3);
 		return;
 	}
 	

@@ -50,4 +50,10 @@ track_node * TAL_UndirectedNodeToTrackNode(TAL * tal, undirected_node * node, un
 
 void TAL_PrepareNextSwitch(TAL * tal, TrainEngine * engine);
 
+void TAL_ReserveNode(TAL * tal, TrainEngine * engine, track_node * node);
+
+void TAL_ReleaseNodes(TAL * tal, TrainEngine * engine, int num_to_keep);
+
+void TAL_ReservePathNodes(TAL * tal, TrainEngine * engine);
+
 #endif
