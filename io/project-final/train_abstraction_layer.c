@@ -426,10 +426,12 @@ void TAL_PrepareNextSwitch(TAL * tal, TrainEngine * engine) {
 		
 		if (distance_to_switch < SWITCH_DISTANCE) {
 			SwitchState next_switch_state = GetNextSwitchState(engine);
+			SwitchState queued_next_switch_state = GetQueuedSwitchState(tal->train_server, next_switch->num);
 			int actual_switch_state = tal->train_server->switch_states[next_switch->num];
 			
-			if (next_switch_state != SWITCH_UNKNOWN && next_switch_state != actual_switch_state) {
+			if (next_switch_state != SWITCH_UNKNOWN && queued_next_switch_state == SWITCH_UNKNOWN && next_switch_state != actual_switch_state) {
 				QueueSwitchState(tal->train_server, next_switch->num, next_switch_state);
+				PrintMessage("Train %d: Switch %s to %c", engine->train_num, next_switch->name, next_switch_state);
 			}
 		}
 	}

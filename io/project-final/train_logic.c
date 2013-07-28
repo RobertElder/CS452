@@ -290,7 +290,7 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	if (found == 0 || found == -1) {
 		engine->lost_count += 1;
 		
-		if (engine->lost_count > 10) {
+		if (engine->lost_count > 100) {
 			engine->lost_count = 0;
 			TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 1);
 			engine->state = TRAIN_ENGINE_WRONG_LOCATION;
@@ -441,7 +441,7 @@ int TrainServer_UpdateRouteIndex(TrainServer * server, TrainEngine * engine) {
 	}
 	
 	// This special case is used when we use the recursive algorithm, but we skip the branch because it can't handle starting on a switch
-	if (found != 0 && engine->source_node->type == NODE_BRANCH && engine->source_node == engine->current_node) {
+	if (found == 0 && engine->source_node->type == NODE_BRANCH && engine->source_node == engine->current_node) {
 		found = 2;
 	}
 	
