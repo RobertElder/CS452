@@ -244,6 +244,8 @@ int TAL_IsTrainWaiting(TAL * tal, TrainEngine * engine) {
 }
 
 int TAL_IsNextNodeAvailable(TAL * tal, TrainEngine * engine) {
+	assert(TAL_GetNextNode(tal, engine->current_node) != 0, "TAL_IsNextNodeAvailable: no next node");
+
 	if (TAL_GetNextNode(tal, engine->current_node)->reserved && TAL_GetNextNode(tal, engine->current_node)->reserved == engine->train_num) {
 		return 1;
 	} else if (!TAL_GetNextNode(tal, engine->current_node)->reserved) {

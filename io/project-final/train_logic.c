@@ -391,10 +391,15 @@ void TrainServer_SlowTrainDown(TrainServer * server, TrainEngine * engine) {
 }
 
 void TrainServer_TrainProceedOrWait(TrainServer * server, TrainEngine * engine) {
-	if (!TAL_IsNextNodeAvailable(&server->tal, engine)) {
+	if (engine->current_node->type == NODE_EXIT) {
+		// Next node is unavailable, but it's not a collision into a train
+	} else if (!TAL_IsNextNodeAvailable(&server->tal, engine)) {
 		TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 1);
 		engine->state = TRAIN_ENGINE_WAIT_FOR_RESERVATION;
-		PrintMessage("Train %d avoiding collision on %s", engine->train_num, engine->current_node->name);
+		
+		assert(engine->next_node != 0, "TrainServer_TrainProceedOrWait: attempting to wait for reservation clear on next node which is 0");
+		
+		PrintMessage("Train %d on %s avoiding collision into %d on %s", engine->train_num, engine->current_node->name, engine->next_node->reserved, engine->next_node->name);
 	}
 }
 
