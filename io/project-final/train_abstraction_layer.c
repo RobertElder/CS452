@@ -110,9 +110,14 @@ void TAL_CalculateTrainSpeedByGuessing(TAL * tal, TrainEngine * engine) {
 		return;
 	}
 	
-	double new_speed = engine->granular_speed_setting / 14.0 * TARGET_SPEED;
+	double new_speed = engine->granular_speed_setting / 12.0 * TARGET_SPEED;
 	engine->last_calculated_speed = engine->calculated_speed;
-	engine->calculated_speed = GUESSING_SPEED_ALPHA * new_speed + (1 - GUESSING_SPEED_ALPHA) * engine->last_calculated_speed;
+	
+	if (new_speed > engine->last_calculated_speed) {
+		engine->calculated_speed = GUESSING_SPEED_UP_ALPHA * new_speed + (1 - GUESSING_SPEED_UP_ALPHA) * engine->last_calculated_speed;
+	} else {
+		engine->calculated_speed = GUESSING_SPEED_DOWN_ALPHA * new_speed + (1 - GUESSING_SPEED_DOWN_ALPHA) * engine->last_calculated_speed;
+	}
 	
 	engine->last_time_speed_update = time;
 }

@@ -18,7 +18,8 @@ static const int const TRAIN_SYSTEM_GO = 96;
 static const int const TRAIN_SYSTEM_STOP = 97;
 
 static const double const SPEED_ALPHA = 0.9;
-static const double const GUESSING_SPEED_ALPHA = 0.2;
+static const double const GUESSING_SPEED_UP_ALPHA = 0.1;
+static const double const GUESSING_SPEED_DOWN_ALPHA = 0.3;
 static const int const TARGET_SPEED = 430;  // mm
 static const int const STOPPING_DISTANCE[52][16] = {
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 0-9
