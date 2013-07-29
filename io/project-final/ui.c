@@ -671,8 +671,8 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET, ENGINE_STATUS_COL_OFFSET);
 		ANSI_Style(BOLD_STYLE);
 		PutString(COM2, 
-"                                         Speed       Sensor Times (s)       Distance (mm)\n"
-"Train State               From Now To    mm/s      Expect Last   Actual   After Next NSens NSwit Dest");
+"                                       Speed       Sensor Times (s)       Distance (mm)             Score\n"
+"Train State             From Now To    mm/s      Expect Last   Actual   After Next NSens NSwit Dest Pts");
 		ANSI_Style(NORMAL_STYLE);
 	}
 	
@@ -704,6 +704,7 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		int distance_to_destination = engine->distance_to_destination;
 		int distance_to_next_node = engine->distance_to_next_node;
 		int distance_to_next_switch = engine->distance_to_next_switch;
+		int points = engine->points;
 	
 		if (engine->source_node) {
 			source_node_name = engine->source_node->name;
@@ -737,7 +738,8 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 		int state = engine->state;
 	
 		int new_hash_1 = train_num ^ speed_setting ^ calculated_speed ^ (int) current_node_name ^ state ^ (int) next_node_name ^ (int) dest_node_name ^ (int) source_node_name;
-		int new_hash_2 = expected_time_at_next_sensor ^ expected_time_at_last_sensor ^ actual_time_at_last_sensor ^ estimated_distance_after_node ^ distance_to_next_node ^ distance_to_next_sensor ^ distance_to_next_switch ^ distance_to_destination;
+		int new_hash_2 = expected_time_at_next_sensor ^ expected_time_at_last_sensor ^ actual_time_at_last_sensor ^ estimated_distance_after_node ^ distance_to_next_node ^ distance_to_next_sensor ^ distance_to_next_switch ^ distance_to_destination ^ points;
+		
 		int differs_1 = new_hash_1 != server->train_engine_status_hashes_1[slot_num];
 		int differs_2 = new_hash_2 != server->train_engine_status_hashes_2[slot_num];
 	
@@ -746,7 +748,7 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 	
 		if (differs_1 || server->dirty) {
 			ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET + 2 + slot_num, ENGINE_STATUS_COL_OFFSET);
-			ANSI_CursorCol(51);
+			ANSI_CursorCol(49);
 			ANSI_ClearLine(CLEAR_TO_START);
 		
 			ANSI_CursorCol(1);
@@ -755,45 +757,48 @@ void UIServer_PrintTrainEngineStatus(UIServer * server) {
 			ANSI_CursorCol(7);
 			PutString(COM2, "%s", TRAIN_ENGINE_STATE_NAMES[state]);
 		
-			ANSI_CursorCol(27);
+			ANSI_CursorCol(25);
 			PutString(COM2, "%s", source_node_name);
 		
-			ANSI_CursorCol(32);
+			ANSI_CursorCol(30);
 			PutString(COM2, "%s", current_node_name);
 		
-			ANSI_CursorCol(36);
+			ANSI_CursorCol(34);
 			PutString(COM2, "%s", dest_node_name);
 		
-			ANSI_CursorCol(42);
+			ANSI_CursorCol(40);
 			PutString(COM2, "%d (%d)", calculated_speed, speed_setting);
 		}
 		
 		if (differs_2 || server->dirty) {
 			ANSI_Cursor(ENGINE_STATUS_ROW_OFFSET + 2 + slot_num, ENGINE_STATUS_COL_OFFSET);
-			ANSI_CursorCol(52);
+			ANSI_CursorCol(50);
 			ANSI_ClearLine(CLEAR_TO_END);
 			PutString(COM2, "%d", expected_time_at_next_sensor);
 		
-			ANSI_CursorCol(59);
+			ANSI_CursorCol(57);
 			PutString(COM2, "%d", expected_time_at_last_sensor);
 		
-			ANSI_CursorCol(66);
+			ANSI_CursorCol(64);
 			PutString(COM2, "%d", actual_time_at_last_sensor);
 		
-			ANSI_CursorCol(75);
+			ANSI_CursorCol(73);
 			PutString(COM2, "%d", estimated_distance_after_node);
 			
-			ANSI_CursorCol(81);
+			ANSI_CursorCol(79);
 			PutString(COM2, "%d", distance_to_next_node);
 		
-			ANSI_CursorCol(86);
+			ANSI_CursorCol(84);
 			PutString(COM2, "%d", distance_to_next_sensor);
 		
-			ANSI_CursorCol(92);
+			ANSI_CursorCol(90);
 			PutString(COM2, "%d", distance_to_next_switch);
 			
-			ANSI_CursorCol(98);
+			ANSI_CursorCol(96);
 			PutString(COM2, "%d", distance_to_destination);
+			
+			ANSI_CursorCol(101);
+			PutString(COM2, "%d", points);
 		}
 	}
 }

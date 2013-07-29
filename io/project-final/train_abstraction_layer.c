@@ -93,10 +93,13 @@ void TAL_CalculateTrainSpeedBySensor(TAL * tal, TrainEngine * engine) {
 	
 	if (new_calculated_speed > MAX_PHYSICAL_SPEED) {
 		PrintMessage("!!! Train %d speed calculation too fast (%d mm/s)", engine->train_num, (int) new_calculated_speed);
+		TAL_AddPoints(tal, engine, POINTS_BAD_TRAIN);
 	} else if (new_calculated_speed < 0) {
 		PrintMessage("!!! Train %d speed calculation negative (%d mm/s)", engine->train_num, (int) new_calculated_speed);
+		TAL_AddPoints(tal, engine, POINTS_BAD_TRAIN);
 	} else {
 		engine->calculated_speed = new_calculated_speed;
+		TAL_AddPoints(tal, engine, POINTS_GOOD_TRAIN);
 	}
 	
 	engine->actual_time_at_last_sensor = time;
@@ -477,5 +480,10 @@ void TAL_ReverseTrain(TAL * tal, TrainEngine * engine, int restart_speed) {
 	engine->calculated_speed = 0;
 	engine->last_time_speed_update = TimeSeconds();
 	engine->last_time_location_update = TimeSeconds();
+}
+
+void TAL_AddPoints(TAL * tal, TrainEngine * engine, int points) {
+	engine->points += points;
+	PrintMessage("%d points for train %d!", points, engine->train_num);
 }
 

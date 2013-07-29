@@ -54,6 +54,13 @@ static const int FINDING_POSITION_SPEED = 4;
 static const double MAX_PHYSICAL_SPEED = 550; // mm/s
 static const int SWITCH_DISTANCE = 500; // mm
 
+static const int POINTS_EXCELLENT_TRAIN = 100;
+static const int POINTS_VERY_GOOD_TRAIN = 10;
+static const int POINTS_GOOD_TRAIN = 5;
+static const int POINTS_BAD_TRAIN = -5;
+static const int POINTS_VERY_BAD_TRAIN = -10;
+static const int POINTS_EXTREMELY_BAD_TRAIN = -100;
+
 typedef enum TrainEngineState {
 	TRAIN_ENGINE_IDLE,
 	TRAIN_ENGINE_FINDING_POSITION,
@@ -72,7 +79,7 @@ typedef enum TrainEngineState {
 	TRAIN_ENGINE_WRONG_LOCATION,
 } TrainEngineState;
 
-static const char const TRAIN_ENGINE_STATE_NAMES[][20] = {
+static const char const TRAIN_ENGINE_STATE_NAMES[][17] = {
 	"Idle",
 	"Finding Position",
 	"Resync Position",
@@ -202,6 +209,7 @@ typedef struct TrainEngine {
 	TrainEngineReservationQueue reservation_queue;
 	int print_message_hash;
 	int lost_count;
+	int points;
 } TrainEngine;
 
 typedef struct TrainEngineStatusMessage {

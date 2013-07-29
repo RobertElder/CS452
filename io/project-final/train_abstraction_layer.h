@@ -58,4 +58,6 @@ void TAL_ReservePathNodes(TAL * tal, TrainEngine * engine);
 
 void TAL_ReverseTrain(TAL * tal, TrainEngine * engine, int restart_speed);
 
+void TAL_AddPoints(TAL * tal, TrainEngine * engine, int points);
+
 #endif
