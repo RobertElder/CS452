@@ -108,7 +108,7 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngine * engine) {
 	// TODO disambig whether the user should input the destination or random destination
 	engine->destination_node = GetRandomSensorReachableViaDirectedGraph(server, engine->current_node, engine->train_num);
-		
+	
 	if (!engine->destination_node) {
 		// Reverse and try again
 		//PrintMessage("No destination in this direction! Reversing..");
@@ -139,6 +139,13 @@ void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine *
 			PopulateRouteNodeInfo(server, engine->route_node_info, server->current_track_nodes, engine->current_node, engine->destination_node, 0, 0, &(engine->route_nodes_length), engine->train_num);
 		}
 	}
+	
+	if (engine->route_nodes_length == 0) {
+		engine->state = TRAIN_ENGINE_WAIT_FOR_DESTINATION;
+		PrintMessage("!!! Train %d got zero length route", engine->train_num);
+		return;
+	}
+	
 	TAL_ReservePathNodes(&server->tal, engine);
 	
 	int i = 0;
@@ -280,10 +287,16 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 		
 		if (engine->lost_count > 100) {
 			engine->lost_count = 0;
+			PrintMessage("*** Train %d is lost. ***", engine->train_num);
+			PrintMessage("Train %d: Route index=%d, length=%d, state=%d", engine->train_num, engine->route_node_index, engine->route_nodes_length, engine->state);
 			TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 1);
 			TAL_ReleaseNodes(&server->tal, engine, 3);
 			engine->state = TRAIN_ENGINE_WRONG_LOCATION;
-			PrintMessage("*** Train %d is lost. ***", engine->train_num);
+			
+			int i;
+			for(i = 0; i < engine->route_nodes_length; i++) {
+				PrintMessage("Train %d Route %d %s", engine->train_num, i, engine->route_node_info[i].node->name);
+			}
 			return;
 		}
 	}
@@ -420,6 +433,8 @@ void TrainServer_TrainProceedOrWait(TrainServer * server, TrainEngine * engine) 
 }
 
 int TrainServer_UpdateRouteIndex(TrainServer * server, TrainEngine * engine) {
+	assertf(engine->route_nodes_length != 0, "TrainServer_UpdateRouteIndex: Train %d has 0 length route", engine->train_num);
+
 	int i = 0;
 	int found = 0;
 	
