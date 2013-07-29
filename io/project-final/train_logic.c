@@ -423,7 +423,9 @@ void TrainServer_TrainProceedOrWait(TrainServer * server, TrainEngine * engine) 
 	if (engine->current_node->type == NODE_EXIT) {
 		// Next node is unavailable, but it's not a collision into a train
 	} else if (!TAL_IsNextNodeAvailable(&server->tal, engine)) {
-		TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 1);
+		// Emergency stop
+		TAL_ReverseTrain(&server->tal, engine, 1);
+		TAL_ReverseTrain(&server->tal, engine, 0);
 		engine->state = TRAIN_ENGINE_WAIT_FOR_RESERVATION;
 		
 		assert(engine->next_node != 0, "TrainServer_TrainProceedOrWait: attempting to wait for reservation clear on next node which is 0");

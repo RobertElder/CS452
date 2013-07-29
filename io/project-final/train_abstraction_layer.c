@@ -87,13 +87,16 @@ int TAL_IsDestinationSensorBad(TAL * tal, int module_num, int sensor_num) {
 void TAL_CalculateTrainSpeedBySensor(TAL * tal, TrainEngine * engine) {
 	double time = TimeSeconds();
 	double time_difference = time - engine->actual_time_at_last_sensor;
-	double new_speed = (double) engine->distance_to_next_sensor / time_difference;
+	double new_sensor_speed = (double) engine->distance_to_next_sensor / time_difference;
 	engine->last_calculated_speed = engine->calculated_speed;
-	engine->calculated_speed = SPEED_ALPHA * new_speed + (1 - SPEED_ALPHA) * engine->last_calculated_speed;
+	double new_calculated_speed = SPEED_ALPHA * new_sensor_speed + (1 - SPEED_ALPHA) * engine->last_calculated_speed;
 	
-	if (engine->calculated_speed > MAX_PHYSICAL_SPEED) {
-		//PrintMessage("Train speed calculation too fast (%d mm/s). Capping.", (int) engine->calculated_speed);
-		engine->calculated_speed = MAX_PHYSICAL_SPEED;
+	if (new_calculated_speed > MAX_PHYSICAL_SPEED) {
+		PrintMessage("!!! Train %d speed calculation too fast (%d mm/s)", engine->train_num, (int) new_calculated_speed);
+	} else if (new_calculated_speed < 0) {
+		PrintMessage("!!! Train %d speed calculation negative (%d mm/s)", engine->train_num, (int) new_calculated_speed);
+	} else {
+		engine->calculated_speed = new_calculated_speed;
 	}
 	
 	engine->actual_time_at_last_sensor = time;
