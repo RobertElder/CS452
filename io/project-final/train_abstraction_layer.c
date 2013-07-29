@@ -88,7 +88,6 @@ void TAL_CalculateTrainSpeedBySensor(TAL * tal, TrainEngine * engine) {
 	double time = TimeSeconds();
 	double time_difference = time - engine->actual_time_at_last_sensor;
 	double new_sensor_speed = (double) engine->distance_to_next_sensor / time_difference;
-	engine->last_calculated_speed = engine->calculated_speed;
 	double new_calculated_speed = SPEED_ALPHA * new_sensor_speed + (1 - SPEED_ALPHA) * engine->last_calculated_speed;
 	
 	if (new_calculated_speed > MAX_PHYSICAL_SPEED) {
@@ -98,6 +97,7 @@ void TAL_CalculateTrainSpeedBySensor(TAL * tal, TrainEngine * engine) {
 		PrintMessage("!!! Train %d speed calculation negative (%d mm/s)", engine->train_num, (int) new_calculated_speed);
 		TAL_AddPoints(tal, engine, POINTS_BAD_TRAIN);
 	} else {
+		engine->last_calculated_speed = engine->calculated_speed;
 		engine->calculated_speed = new_calculated_speed;
 		TAL_AddPoints(tal, engine, POINTS_GOOD_TRAIN);
 	}
@@ -490,5 +490,84 @@ void TAL_ReverseTrain(TAL * tal, TrainEngine * engine, int restart_speed) {
 void TAL_AddPoints(TAL * tal, TrainEngine * engine, int points) {
 	engine->points += points;
 	PrintMessage("%d points for train %d!", points, engine->train_num);
+}
+
+int TAL_DistanceToNode(TAL * tal, track_node * source_node, track_node * dest_node) {
+	if (source_node == dest_node) {
+		return 0;
+	}
+
+	int num_undirected_nodes;
+	
+	if (tal->train_server->current_undirected_nodes == tal->train_server->track_a_undirected_nodes) {
+		num_undirected_nodes = tal->train_server->num_track_a_undirected_nodes;
+	} else {
+		num_undirected_nodes = tal->train_server->num_track_b_undirected_nodes;
+	}
+	
+	undirected_node * train_nodes[0];
+
+	int path_length = 0;
+	undirected_node * path[MAX_UNDIRECTED_NODE_PATH];
+	dijkstra(
+		path,
+		MAX_UNDIRECTED_NODE_PATH,
+		&path_length,
+		tal->train_server->current_undirected_nodes,
+		num_undirected_nodes,
+		train_nodes,
+		0,
+		source_node->undirected_node,
+		dest_node->undirected_node
+	);
+	
+	int distance = 0;
+	int i;
+	for (i = 0; i < path_length - 1; i++) {
+		undirected_node * src = path[i];
+		undirected_node * dest = path[i+1];
+		int edge_index = get_edge_index(src, dest);
+		distance += src->adjacent_nodes.edge[edge_index].micrometers_distance / 1000.0;
+	}
+	
+	return distance;
+}
+
+track_node * TAL_GetNearestSensor(TAL * tal, track_node * source_node, int *sensor_distance) {
+	int smallest_distance = 99999;
+	track_node * sensor_node = 0;
+	
+	int sensor_module;
+	int sensor_num;
+	
+	for (sensor_module = 0; sensor_module < NUM_SENSOR_MODULES; sensor_module++) {
+		for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
+			if ((tal->train_server->sensor_bit_flags[sensor_module] >> sensor_num) & 0x01) {
+				track_node * candidate_node = SensorToTrackNode(tal->train_server->current_track_nodes, sensor_module, sensor_num);
+				
+				int distance = TAL_DistanceToNode(tal, source_node, candidate_node);
+				
+				if (distance && distance < smallest_distance) {
+					sensor_node = candidate_node;
+					*sensor_distance = distance;
+				}
+				
+			}
+		}
+	}
+	
+	return sensor_node;
+}
+
+track_node * TAL_GetNearestSensorByAttribution(TAL * tal, TrainEngine * engine) {
+	int distance_to_sensor;
+	
+	track_node * nearest_node = TAL_GetNearestSensor(tal, engine->current_node, &distance_to_sensor);
+	
+	if (nearest_node && distance_to_sensor < SENSOR_ATTRIBUTION_DISTANCE_THRESHOLD) {
+		return nearest_node;
+	} else {
+		return 0;
+	}
 }
 

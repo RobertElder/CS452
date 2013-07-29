@@ -60,4 +60,10 @@ void TAL_ReverseTrain(TAL * tal, TrainEngine * engine, int restart_speed);
 
 void TAL_AddPoints(TAL * tal, TrainEngine * engine, int points);
 
+int TAL_DistanceToNode(TAL * tal, track_node * source_node, track_node * dest_node);
+
+track_node * TAL_GetNearestSensor(TAL * tal, track_node * node, int * sensor_distance);
+
+track_node * TAL_GetNearestSensorByAttribution(TAL * tal, TrainEngine * engine);
+
 #endif

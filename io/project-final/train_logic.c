@@ -260,6 +260,14 @@ int DistanceToDestination(TrainEngine * engine) {
 void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine) {
 	track_node * node = TAL_GetTrainReservedSensor(&server->tal, engine->train_num);
 	
+	if (!node) {
+		node = TAL_GetNearestSensorByAttribution(&server->tal, engine);
+		
+		if (node) {
+			PrintMessage("Train %d: Sensor attribution used node %s though not on path!", engine->train_num, node->name);
+		}
+	}
+	
 	if (node && node != engine->current_node) {
 		engine->use_sensor_for_speed_calculation = 1;
 		TAL_TransitionToNextNode(&server->tal, engine, node);

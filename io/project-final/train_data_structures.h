@@ -19,7 +19,7 @@ static const int const TRAIN_SYSTEM_STOP = 97;
 
 static const double const SPEED_ALPHA = 0.9;
 static const double const GUESSING_SPEED_UP_ALPHA = 0.1;
-static const double const GUESSING_SPEED_DOWN_ALPHA = 0.2;
+static const double const GUESSING_SPEED_DOWN_ALPHA = 0.15;
 static const int const TARGET_SPEED = 430;  // mm
 static const int const STOPPING_DISTANCE[52][16] = {
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 0-9
@@ -51,8 +51,9 @@ static const double FEEDBACK_CONTROL_SPEED_INCREMENT = 0.4;
 static const double FEEDBACK_CONTROL_SPEED_DECREMENT = -0.7;
 static const int STARTUP_TRAIN_SPEED = 8;
 static const int FINDING_POSITION_SPEED = 4;
-static const double MAX_PHYSICAL_SPEED = 550; // mm/s
+static const double MAX_PHYSICAL_SPEED = 700; // mm/s
 static const int SWITCH_DISTANCE = 500; // mm
+static const int SENSOR_ATTRIBUTION_DISTANCE_THRESHOLD = 650; //mm
 
 static const int POINTS_EXCELLENT_TRAIN = 100;
 static const int POINTS_VERY_GOOD_TRAIN = 10;
