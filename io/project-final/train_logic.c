@@ -285,7 +285,7 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	if (found == 0 || found == -1) {
 		engine->lost_count += 1;
 		
-		if (engine->lost_count > 100) {
+		if (engine->lost_count > 1000) {
 			engine->lost_count = 0;
 			PrintMessage("*** Train %d is lost. ***", engine->train_num);
 			PrintMessage("Train %d: Route index=%d, length=%d, state=%d", engine->train_num, engine->route_node_index, engine->route_nodes_length, engine->state);
