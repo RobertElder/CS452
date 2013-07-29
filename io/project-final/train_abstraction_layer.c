@@ -430,19 +430,24 @@ track_node * TAL_UndirectedNodeToTrackNode(TAL * tal, undirected_node * node, un
 }
 
 void TAL_PrepareNextSwitch(TAL * tal, TrainEngine * engine) {
-	track_node * next_switch = GetNextSwitch(engine);
-	if (next_switch) {
-		int distance_to_switch = DistanceToNextSwitch(engine);
-		engine->distance_to_next_switch = distance_to_switch;
+	int i;
+	
+	for (i = engine->route_node_index; i < engine->route_node_index + 2; i++) {
+		track_node * next_switch = GetNextSwitch(engine, i);
+		if (next_switch) {
+			int distance_to_switch = DistanceToNextSwitch(engine, i);
+			engine->distance_to_next_switch = distance_to_switch;
+			double distance_in_time_period = engine->calculated_speed * 1.5;
 		
-		if (distance_to_switch < SWITCH_DISTANCE) {
-			SwitchState next_switch_state = GetNextSwitchState(engine);
-			SwitchState queued_next_switch_state = GetQueuedSwitchState(tal->train_server, next_switch->num);
-			int actual_switch_state = tal->train_server->switch_states[next_switch->num];
+			if (distance_to_switch < SWITCH_DISTANCE || distance_in_time_period > distance_to_switch) {
+				SwitchState next_switch_state = GetNextSwitchState(engine, i);
+				SwitchState queued_next_switch_state = GetQueuedSwitchState(tal->train_server, next_switch->num);
+				int actual_switch_state = tal->train_server->switch_states[next_switch->num];
 			
-			if (next_switch_state != SWITCH_UNKNOWN && queued_next_switch_state == SWITCH_UNKNOWN && next_switch_state != actual_switch_state) {
-				QueueSwitchState(tal->train_server, next_switch->num, next_switch_state);
-				PrintMessage("Train %d: Switch %s to %c", engine->train_num, next_switch->name, next_switch_state);
+				if (next_switch_state != SWITCH_UNKNOWN && queued_next_switch_state == SWITCH_UNKNOWN && next_switch_state != actual_switch_state) {
+					QueueSwitchState(tal->train_server, next_switch->num, next_switch_state);
+					PrintMessage("Train %d: Switch %s to %c", engine->train_num, next_switch->name, next_switch_state);
+				}
 			}
 		}
 	}

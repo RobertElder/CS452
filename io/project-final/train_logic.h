@@ -42,15 +42,15 @@ void TrainServer_TrainProceedOrWait(TrainServer * server, TrainEngine * engine);
 
 int DistanceToNextSensor(TrainEngine * engine);
 
-int DistanceToNextSwitch(TrainEngine * engine);
+int DistanceToNextSwitch(TrainEngine * engine, int route_index);
 
 int DistanceToDestination(TrainEngine * engine);
 
 track_node * GetNextSensor(TrainEngine * engine);
 
-track_node * GetNextSwitch(TrainEngine * engine);
+track_node * GetNextSwitch(TrainEngine * engine, int route_index);
 
-SwitchState GetNextSwitchState(TrainEngine * engine);
+SwitchState GetNextSwitchState(TrainEngine * engine, int route_index);
 
 int TrainServer_UpdateRouteIndex(TrainServer * server, TrainEngine * engine);
 

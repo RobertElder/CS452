@@ -184,11 +184,11 @@ int DistanceToNextSensor(TrainEngine * engine) {
 	return distance;
 }
 
-int DistanceToNextSwitch(TrainEngine * engine) {
+int DistanceToNextSwitch(TrainEngine * engine, int route_index) {
 	int distance = 0;
 	int i;
 	
-	for (i = engine->route_node_index; i < engine->route_nodes_length; i++) {
+	for (i = route_index; i < engine->route_nodes_length; i++) {
 		if (engine->route_node_info[i].node->type == NODE_BRANCH && i != engine->route_node_index) {
 			break;
 		}
@@ -213,10 +213,10 @@ track_node * GetNextSensor(TrainEngine * engine) {
 	return 0;
 }
 
-track_node * GetNextSwitch(TrainEngine * engine) {
+track_node * GetNextSwitch(TrainEngine * engine, int route_index) {
 	int i;
 	
-	for (i = engine->route_node_index; i < engine->route_nodes_length; i++) {
+	for (i = route_index; i < engine->route_nodes_length; i++) {
 		
 		if (engine->route_node_info[i].node->type == NODE_BRANCH && i != engine->route_node_index) {
 			return engine->route_node_info[i].node;
@@ -227,10 +227,10 @@ track_node * GetNextSwitch(TrainEngine * engine) {
 	return 0;
 }
 
-SwitchState GetNextSwitchState(TrainEngine * engine) {
+SwitchState GetNextSwitchState(TrainEngine * engine, int route_index) {
 	int i;
 	
-	for (i = engine->route_node_index; i < engine->route_nodes_length; i++) {
+	for (i = route_index; i < engine->route_nodes_length; i++) {
 		
 		if (engine->route_node_info[i].node->type == NODE_BRANCH && i != engine->route_node_index) {
 			return engine->route_node_info[i].switch_state;
@@ -277,6 +277,8 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 		TAL_AddPoints(&server->tal, engine, POINTS_EXCELLENT_TRAIN);
 		return;
 	}
+	
+	TAL_PrepareNextSwitch(&server->tal, engine);
 		
 	if (!engine->use_sensor_for_speed_calculation) {
 		TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
