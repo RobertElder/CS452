@@ -267,19 +267,7 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 		TAL_ReleaseNodes(&server->tal, engine, 3);
 		return;
 	}
-	
-	
-	/*	if (node->reserved && node->reserved != engine->train_num) {
-			PrintMessage("!!! Train %d went into track %s reserved for train %d", engine->train_num, node->name, node->reserved);
-			TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 0);
-			engine->state = TRAIN_ENGINE_WRONG_LOCATION;
-		} else if (!node->reserved) {
-			PrintMessage("!!! Train %d went into track %s that was not reserved", engine->train_num, node->name);
-			TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 0);
-			engine->state = TRAIN_ENGINE_WRONG_LOCATION;
-		}
-	}*/
-	
+		
 	if (!engine->use_sensor_for_speed_calculation) {
 		TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
 	}
@@ -293,6 +281,7 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 		if (engine->lost_count > 100) {
 			engine->lost_count = 0;
 			TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 1);
+			TAL_ReleaseNodes(&server->tal, engine, 3);
 			engine->state = TRAIN_ENGINE_WRONG_LOCATION;
 			PrintMessage("*** Train %d is lost. ***", engine->train_num);
 			return;
@@ -350,8 +339,10 @@ void TrainServer_ProcessEngineReverseAndTryAgain(TrainServer * server, TrainEngi
 	if (engine->current_node->type == NODE_EXIT) {
 		TAL_ReverseTrain(&server->tal, engine, FINDING_POSITION_SPEED);
 		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
+		TAL_ReleaseNodes(&server->tal, engine, 3);
 	} else if (TAL_IsNextNodeAvailable(&server->tal, engine)) {
 		engine->state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
+		TAL_ReleaseNodes(&server->tal, engine, 3);
 	} else {
 		TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 1);
 		engine->state = TRAIN_ENGINE_WAIT_FOR_RESERVATION;
@@ -364,6 +355,9 @@ void TrainServer_ProcessEngineReverseAndTryAgain(TrainServer * server, TrainEngi
 void TrainServer_ProcessEngineWaitForReservation(TrainServer * server, TrainEngine * engine) {
 	if (TAL_IsNextNodeAvailable(&server->tal, engine)) {
 		engine->state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
+	} else if (RNG_GetRange(&server->rng, 1, 100) == 1) {
+		TAL_ReverseTrain(&server->tal, engine, 1);
+		PrintMessage("Train %d: gave up waiting. Reversing", engine->train_num);
 	}
 	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
 }
