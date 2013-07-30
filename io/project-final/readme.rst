@@ -304,7 +304,7 @@ Appendix
 ========
 
 System Calls
-------------
+++++++++++++
 
 ``Create``
     Returns the new task id, ``ERR_K_INVALID_PRIORITY -1``, or ``ERR_K_OUT_OF_TD -2``
@@ -371,7 +371,7 @@ System Calls
 
 
 Priorities
-----------
+++++++++++
 
 ======================== ==========
 Task                     Priority
