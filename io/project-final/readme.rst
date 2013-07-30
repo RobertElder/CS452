@@ -173,6 +173,20 @@ On-the-fly switching
 Although the current reservation prohibits multiple trains using switches by reserving it for the duration of the route, on-the-fly switching is implemented in case we were able to reduce the reservations needed. Each train looks ahead at the next 2 switches and computes the distance to them. If the switches are less than 50cm or the train will pass by them within 2 seconds, it will switch them to the correct route. We use this generous amount of time because the train model is not entirely accurate and switching early will reduce trains caught on the switches.
 
 
+Lost train detection
+--------------------
+
+Lost trains are detected by the model if the train has been found to be not on its current path. It is able to detect this by running the train through the internal model and state of the switches. For example, if the switch queue is backlogged and the command to active the switch has not been sent yet, the model will move the train based on the current state of the switches. However, the model may not reflect reality, so the model will keep a counter of how many times it has determined that it is on the wrong part of the track. 
+
+If a sensor reading has confirmed that it went to the wrong branch, the train will be put into the lost state and it can be concluded that the model was correct. If a sensor reading has snapped the train onto the correct route, then the switch has actually been put into the correct state and it can be concluded that the model has computed an incorrect train speed.
+
+Ideally, it would be best to use timeouts and determine windowed distances to the sensors beyond each branch. However, only a portion of this feature was implemented but it was disabled. If given more time to fine tune the calibration, this feature would be useful for detecting incorrect train behaviour and allow use to recover from a lost train state.
+
+When a train is lost in wrong location state. It will do nothing to be safe, however, it is possible for the train to recover by computing a new route.
+
+
+
+
 Train Switch Master
 -------------------
 
@@ -242,7 +256,7 @@ The gf command operates as following:
 
 1. Do steps 1-15 of the go command
 2. Wait for 4 seconds
-3. Goto step 1
+3. Goto step 5
 
 
 Train Scoring
