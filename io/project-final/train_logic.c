@@ -474,10 +474,10 @@ int TrainServer_UpdateRouteIndex(TrainServer * server, TrainEngine * engine) {
 	
 		if (found == -1) {
 			PrintMessage("!!! Train %d: Reversed? Current node=%s but route=%s", engine->train_num, engine->current_node->name, engine->route_node_info[engine->route_node_index].node->name);
+		} else if (found == 2) {
+			//PrintMessage("Train %d: %s not in route list, but considered special case.", engine->train_num, engine->current_node->name);
 		} else if(found != 1){
 			PrintMessage("!!! Train %d: Unable to find current node %s in route list", engine->train_num, engine->current_node->name);
-		} else if (found == 2) {
-			PrintMessage("Train %d: %s not in route list, but considered special case.", engine->train_num, engine->current_node->name);
 		}
 	}
 	
