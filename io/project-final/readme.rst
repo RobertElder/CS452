@@ -226,6 +226,28 @@ The gf command operates as following:
 3. Goto step 1
 
 
+Train Scoring
+-------------
+
+In this deliverable, trains are given points and they must optimize their high score.
+
+The trains are given or removed points depending on what kind of events occur.
+
+============== ================================================================
+Points Awarded Event
+============== ================================================================
+10             Train found its initial position
+-10            Train decided to not go anywhere
+100            Train found arrived at its destination
+-100           Train went off course
+-5             Train slowed and sped back up unnecessarily 
+5              Train found another path when the original was blocked
+-5             Train computed a speed that was physically impossible
+-5             Train computed a speed that was negative
+5              Train computed a speed that was reasonable
+============== ================================================================
+
+
 UI Servers
 ++++++++++
 
