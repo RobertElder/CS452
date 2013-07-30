@@ -88,17 +88,19 @@ void TAL_CalculateTrainSpeedBySensor(TAL * tal, TrainEngine * engine) {
 	double time = TimeSeconds();
 	double time_difference = time - engine->actual_time_at_last_sensor;
 	double new_sensor_speed = (double) engine->distance_to_next_sensor / time_difference;
-	double new_calculated_speed = SPEED_ALPHA * new_sensor_speed + (1 - SPEED_ALPHA) * engine->last_calculated_speed;
+	double new_calculated_speed = SENSOR_SPEED_ALPHA * new_sensor_speed + (1 - SENSOR_SPEED_ALPHA) * engine->last_calculated_sensor_speed;
 	
 	if (new_calculated_speed > MAX_PHYSICAL_SPEED) {
 		//PrintMessage("!!! Train %d speed calculation too fast (%d mm/s)", engine->train_num, (int) new_calculated_speed);
+		engine->last_calculated_sensor_speed = engine->calculated_sensor_speed;
+		engine->calculated_sensor_speed = MAX_PHYSICAL_SPEED;
 		TAL_AddPoints(tal, engine, POINTS_BAD_TRAIN, "measuring too fast speed");
 	} else if (new_calculated_speed < 0) {
 		//PrintMessage("!!! Train %d speed calculation negative (%d mm/s)", engine->train_num, (int) new_calculated_speed);
 		TAL_AddPoints(tal, engine, POINTS_BAD_TRAIN, "measuring negative speed");
 	} else {
-		engine->last_calculated_speed = engine->calculated_speed;
-		engine->calculated_speed = new_calculated_speed;
+		engine->last_calculated_sensor_speed = engine->calculated_sensor_speed;
+		engine->calculated_sensor_speed = new_calculated_speed;
 		TAL_AddPoints(tal, engine, POINTS_GOOD_TRAIN, "measuring a reasonable speed");
 	}
 	
@@ -106,7 +108,7 @@ void TAL_CalculateTrainSpeedBySensor(TAL * tal, TrainEngine * engine) {
 	engine->expected_time_at_last_sensor = engine->expected_time_at_next_sensor;
 	engine->last_time_speed_update = time;
 	engine->distance_to_next_sensor = DistanceToNextSensor(engine);
-	engine->expected_time_at_next_sensor = (double) engine->distance_to_next_sensor / engine->calculated_speed + time;
+	engine->expected_time_at_next_sensor = (double) engine->distance_to_next_sensor / engine->calculated_sensor_speed + time;
 }
 
 void TAL_CalculateTrainSpeedByGuessing(TAL * tal, TrainEngine * engine) {
@@ -117,15 +119,24 @@ void TAL_CalculateTrainSpeedByGuessing(TAL * tal, TrainEngine * engine) {
 	}
 	
 	double new_speed = engine->granular_speed_setting / 12.0 * TARGET_SPEED;
-	engine->last_calculated_speed = engine->calculated_speed;
+	engine->last_calculated_model_speed = engine->calculated_model_speed;
 	
-	if (new_speed > engine->last_calculated_speed) {
-		engine->calculated_speed = GUESSING_SPEED_UP_ALPHA * new_speed + (1 - GUESSING_SPEED_UP_ALPHA) * engine->last_calculated_speed;
+	if (new_speed > engine->last_calculated_model_speed) {
+		engine->calculated_model_speed = GUESSING_SPEED_UP_ALPHA * new_speed + (1 - GUESSING_SPEED_UP_ALPHA) * engine->last_calculated_model_speed;
 	} else {
-		engine->calculated_speed = GUESSING_SPEED_DOWN_ALPHA * new_speed + (1 - GUESSING_SPEED_DOWN_ALPHA) * engine->last_calculated_speed;
+		engine->calculated_model_speed = GUESSING_SPEED_DOWN_ALPHA * new_speed + (1 - GUESSING_SPEED_DOWN_ALPHA) * engine->last_calculated_model_speed;
 	}
 	
 	engine->last_time_speed_update = time;
+}
+
+void TAL_CalculateTrainSpeed(TAL * tal, TrainEngine * engine) {
+	if (engine->use_sensor_for_speed_calculation) {
+		engine->last_calculated_speed = engine->calculated_speed;
+		engine->calculated_speed = SENSOR_SPEED_WEIGHT_MIX_ALPHA * engine->calculated_sensor_speed + (1.0 - SENSOR_SPEED_WEIGHT_MIX_ALPHA) * engine->calculated_model_speed;
+	} else {
+		engine->calculated_speed = engine->calculated_model_speed;
+	}
 }
 
 void TAL_CalculateTrainLocation(TAL * tal, TrainEngine * engine) {

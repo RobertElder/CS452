@@ -17,9 +17,10 @@ static const int const REVERSE_SPEED = 15;
 static const int const TRAIN_SYSTEM_GO = 96;
 static const int const TRAIN_SYSTEM_STOP = 97;
 
-static const double const SPEED_ALPHA = 0.9;
-static const double const GUESSING_SPEED_UP_ALPHA = 0.1;
+static const double const SENSOR_SPEED_ALPHA = 0.9;
+static const double const GUESSING_SPEED_UP_ALPHA = 0.15;
 static const double const GUESSING_SPEED_DOWN_ALPHA = 0.15;
+static const double const SENSOR_SPEED_WEIGHT_MIX_ALPHA = 0.7;
 static const int const TARGET_SPEED = 430;  // mm
 static const int const STOPPING_DISTANCE[52][16] = {
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 0-9
@@ -51,7 +52,7 @@ static const double FEEDBACK_CONTROL_SPEED_INCREMENT = 0.4;
 static const double FEEDBACK_CONTROL_SPEED_DECREMENT = -0.7;
 static const int STARTUP_TRAIN_SPEED = 8;
 static const int FINDING_POSITION_SPEED = 4;
-static const double MAX_PHYSICAL_SPEED = 700; // mm/s
+static const double MAX_PHYSICAL_SPEED = 750; // mm/s
 static const int SWITCH_DISTANCE = 500; // mm
 static const int SENSOR_ATTRIBUTION_DISTANCE_THRESHOLD = 650; //mm
 
@@ -182,6 +183,10 @@ typedef struct TrainEngine {
 	double granular_speed_setting; 
 	double calculated_speed;
 	double last_calculated_speed;
+	double calculated_sensor_speed;
+	double calculated_model_speed;
+	double last_calculated_model_speed;
+	double last_calculated_sensor_speed;
 	double expected_time_at_next_sensor;
 	double expected_time_at_last_sensor;
 	double actual_time_at_last_sensor;

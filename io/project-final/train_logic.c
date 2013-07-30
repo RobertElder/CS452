@@ -89,6 +89,7 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 	}
 	
 	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
+	TAL_CalculateTrainSpeed(&server->tal, engine);
 }
 
 void TrainServer_ProcessEngineResyncPosition(TrainServer * server, TrainEngine * engine) {
@@ -103,6 +104,7 @@ void TrainServer_ProcessEngineFoundStartingPosition(TrainServer * server, TrainE
 	}
 	
 	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
+	TAL_CalculateTrainSpeed(&server->tal, engine);
 	TAL_CalculateTrainLocation(&server->tal, engine);
 }
 
@@ -167,6 +169,7 @@ void TrainServer_ProcessEngineWaitForAllReady(TrainServer * server, TrainEngine 
 	}
 	
 	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
+	TAL_CalculateTrainSpeed(&server->tal, engine);
 	TAL_CalculateTrainLocation(&server->tal, engine);
 }
 
@@ -274,10 +277,8 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 	}
 	
 	TAL_PrepareNextSwitch(&server->tal, engine);
-		
-	if (!engine->use_sensor_for_speed_calculation) {
-		TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
-	}
+	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
+	TAL_CalculateTrainSpeed(&server->tal, engine);
 	TAL_CalculateTrainLocation(&server->tal, engine);
 	TrainServer_TrainProceedOrWait(server, engine);
 	
@@ -325,6 +326,7 @@ void TrainServer_ProcessEngineNearDestination(TrainServer * server, TrainEngine 
 
 	TrainServer_ProcessEngineRunning(server, engine);
 	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
+	TAL_CalculateTrainSpeed(&server->tal, engine);
 	TAL_CalculateTrainLocation(&server->tal, engine);
 	TrainServer_TrainProceedOrWait(server, engine);
 }
@@ -342,6 +344,7 @@ void TrainServer_ProcessEngineAtDestination(TrainServer * server, TrainEngine * 
 		engine->state = TRAIN_ENGINE_WAIT_AND_GO_FOREVER;
 	}
 	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
+	TAL_CalculateTrainSpeed(&server->tal, engine);
 	TAL_CalculateTrainLocation(&server->tal, engine);
 	TrainServer_TrainProceedOrWait(server, engine);
 }
@@ -364,6 +367,7 @@ void TrainServer_ProcessEngineReverseAndTryAgain(TrainServer * server, TrainEngi
 	}
 	
 	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
+	TAL_CalculateTrainSpeed(&server->tal, engine);
 	TAL_CalculateTrainLocation(&server->tal, engine);
 }
 
@@ -376,10 +380,12 @@ void TrainServer_ProcessEngineWaitForReservation(TrainServer * server, TrainEngi
 		TAL_AddPoints(&server->tal, engine, POINTS_GOOD_TRAIN, "trying another path");
 	}
 	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
+	TAL_CalculateTrainSpeed(&server->tal, engine);
 }
 
 void TrainServer_ProcessEngineWrongLocation(TrainServer * server, TrainEngine * engine) {
 	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
+	TAL_CalculateTrainSpeed(&server->tal, engine);
 	TAL_CalculateTrainLocation(&server->tal, engine);
 }
 

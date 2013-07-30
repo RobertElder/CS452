@@ -970,6 +970,10 @@ void TrainEngine_Initialize(TrainEngine * engine, int train_num) {
 	engine->print_message_hash = 0;
 	engine->lost_count = 0;
 	engine->points = 0;
+	engine->calculated_sensor_speed = 0;
+	engine->last_calculated_sensor_speed = 0;
+	engine->calculated_model_speed = 0;
+	engine->last_calculated_model_speed = 0;
 	
 	memset(&engine->train_node, 0, sizeof(undirected_node));
 	engine->train_node.type = NODE_TRAIN;

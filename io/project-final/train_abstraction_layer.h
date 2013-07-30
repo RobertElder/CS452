@@ -16,6 +16,8 @@ void TAL_CalculateTrainSpeedBySensor(TAL * tal, TrainEngine * engine);
 
 void TAL_CalculateTrainSpeedByGuessing(TAL * tal, TrainEngine * engine);
 
+void TAL_CalculateTrainSpeed(TAL * tal, TrainEngine * engine);
+
 void TAL_CalculateTrainLocation(TAL * tal, TrainEngine * engine);
 
 void TAL_SetInitialTrainLocation(TAL * tal, TrainEngine * engine, track_node * node);
