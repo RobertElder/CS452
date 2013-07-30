@@ -162,6 +162,7 @@ void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine *
 
 void TrainServer_ProcessEngineWaitForAllReady(TrainServer * server, TrainEngine * engine) {
 	if (TrainServer_NumActivatedEngines(server) == server->num_engines) {
+		TrainServer_SnapTrainLocationBySensor(server, engine);
 		engine->state = TRAIN_ENGINE_WAIT_FOR_DESTINATION;
 	}
 	
@@ -258,22 +259,7 @@ int DistanceToDestination(TrainEngine * engine) {
 }
 
 void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine) {
-	track_node * node = TAL_GetTrainReservedSensor(&server->tal, engine->train_num);
-	
-	if (!node) {
-		node = TAL_GetNearestSensorByAttribution(&server->tal, engine);
-		
-		if (node) {
-			//PrintMessage("Train %d: Sensor attribution used node %s though not on path!", engine->train_num, node->name);
-			TAL_AddPoints(&server->tal, engine, POINTS_VERY_BAD_TRAIN, "straying off course");
-		}
-	}
-	
-	if (node && node != engine->current_node) {
-		engine->use_sensor_for_speed_calculation = 1;
-		TAL_TransitionToNextNode(&server->tal, engine, node);
-		TrainServer_ProcessSensorData(server, engine);
-	}
+	TrainServer_SnapTrainLocationBySensor(server, engine);
 	
 	if (engine->current_node == engine->destination_node) {
 		engine->use_sensor_for_speed_calculation = 0;
@@ -496,5 +482,24 @@ int TrainServer_UpdateRouteIndex(TrainServer * server, TrainEngine * engine) {
 	}
 	
 	return found;
+}
+
+void TrainServer_SnapTrainLocationBySensor(TrainServer * server, TrainEngine * engine) {
+	track_node * node = TAL_GetTrainReservedSensor(&server->tal, engine->train_num);
+	
+	if (!node) {
+		node = TAL_GetNearestSensorByAttribution(&server->tal, engine);
+		
+		if (node) {
+			//PrintMessage("Train %d: Sensor attribution used node %s though not on path!", engine->train_num, node->name);
+			TAL_AddPoints(&server->tal, engine, POINTS_VERY_BAD_TRAIN, "straying off course");
+		}
+	}
+	
+	if (node && node != engine->current_node) {
+		engine->use_sensor_for_speed_calculation = 1;
+		TAL_TransitionToNextNode(&server->tal, engine, node);
+		TrainServer_ProcessSensorData(server, engine);
+	}
 }
 

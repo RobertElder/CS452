@@ -54,4 +54,6 @@ SwitchState GetNextSwitchState(TrainEngine * engine, int route_index);
 
 int TrainServer_UpdateRouteIndex(TrainServer * server, TrainEngine * engine);
 
+void TrainServer_SnapTrainLocationBySensor(TrainServer * server, TrainEngine * engine);
+
 #endif
