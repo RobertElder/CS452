@@ -117,6 +117,7 @@ void TrainServer_ProcessEngineWaitForDestination(TrainServer * server, TrainEngi
 		//PrintMessage("No destination in this direction! Reversing..");
 		TAL_ReverseTrain(&server->tal, engine, FINDING_POSITION_SPEED);
 		engine->state = TRAIN_ENGINE_REVERSE_AND_TRY_AGAIN;
+		engine->use_sensor_for_speed_calculation = 0;
 		return;
 	}
 
@@ -292,6 +293,7 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 			PrintMessage("Train %d: Route index=%d, length=%d, state=%d", engine->train_num, engine->route_node_index, engine->route_nodes_length, engine->state);
 			TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 1);
 			TAL_ReleaseNodes(&server->tal, engine, 3);
+			engine->use_sensor_for_speed_calculation = 0;
 			engine->state = TRAIN_ENGINE_WRONG_LOCATION;
 			TAL_AddPoints(&server->tal, engine, POINTS_EXTREMELY_BAD_TRAIN, "for being completely off course");
 			
@@ -435,6 +437,7 @@ void TrainServer_TrainProceedOrWait(TrainServer * server, TrainEngine * engine) 
 		// Emergency stop
 		TAL_ReverseTrain(&server->tal, engine, 1);
 		TAL_ReverseTrain(&server->tal, engine, 0);
+		engine->use_sensor_for_speed_calculation = 0;
 		engine->state = TRAIN_ENGINE_WAIT_FOR_RESERVATION;
 		
 		assert(engine->next_node != 0, "TrainServer_TrainProceedOrWait: attempting to wait for reservation clear on next node which is 0");
