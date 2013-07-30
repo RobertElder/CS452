@@ -290,8 +290,7 @@ Files used by UI servers: ``ui.c``, ``ansi.c``, ``maps/map_gen.py``, ``maps/map_
 UI Server
 ---------
 
-* CR LF is handled correctly now.
-* Minor bug: certain inputs will cause assertion failures.
+* ``atoi()`` no longer throws an assertion failure on bad  input
 
 
 The UI Server is responsible for drawing the textual user interface. It draws a header, the time since start up, a system load indicator expressed in percentage, the command prompt, table of sensors readings, an ASCII diagram of the track layout, a table of train status, and a scrolled area of train information.
@@ -300,11 +299,13 @@ The command prompt supports up to 80 characters. Once this limit is reached, no 
 
 When a sensor is triggered, the UI Server will display an bold number on the table. Sensor data for the UI is cached by the Train Server so displayed sensor readings may not reflect actual state. Sensor states in the Train Server, however, reflect actual states.
 
-The ASCII map shows sensors as X and bold X. Switches are shown as U, C, or S which represent Unknown, Curved, or Straight. The ASCII map code was generated through a script from a text file.
+The ASCII map shows sensors as X and bold X with underline. Switches are shown as U, C, or S which represent Unknown, Curved, or Straight. The ASCII map code was generated through a script from a text file.
 
 A green highlight shows the destination of the first train. A yellow highlight shows the destination for other trains.
 
 A black highlight shows the reservation of the first train. A red highlight shows the reservation for other trains.
+
+The model's location of the train is indicated by a bold digit. If the model train and the actual train is on a sensor it will show a bold digit with underline.
 
 Some of the hilights of the UI are found in figure 4.
 
