@@ -167,6 +167,11 @@ The provided track nodes have been modified with an extra field called ``reserve
 
 A train will always check the node ahead to see if the node is reserved. If the node is reserved, it will stop and wait in the ``WAIT_FOR_RESERVATION`` state. During this state, it will generate a random number between 1 and 100. If the number is 1, it will reverse direction and attempt to find a new destination.
 
+On-the-fly switching
+--------------------
+
+Although the current reservation prohibits multiple trains using switches by reserving it for the duration of the route, on-the-fly switching is implemented in case we were able to reduce the reservations needed. Each train looks ahead at the next 2 switches and computes the distance to them. If the switches are less than 50cm or the train will pass by them within 2 seconds, it will switch them to the correct route. We use this generous amount of time because the train model is not entirely accurate and switching early will reduce trains caught on the switches.
+
 
 Train Switch Master
 -------------------
