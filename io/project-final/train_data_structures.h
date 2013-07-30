@@ -17,8 +17,10 @@ static const int const REVERSE_SPEED = 15;
 static const int const TRAIN_SYSTEM_GO = 96;
 static const int const TRAIN_SYSTEM_STOP = 97;
 
-static const double const SPEED_ALPHA = 0.9;
-static const double const GUESSING_SPEED_ALPHA = 0.2;
+static const double const SENSOR_SPEED_ALPHA = 0.9;
+static const double const GUESSING_SPEED_UP_ALPHA = 0.15;
+static const double const GUESSING_SPEED_DOWN_ALPHA = 0.15;
+static const double const SENSOR_SPEED_WEIGHT_MIX_ALPHA = 0.7;
 static const int const TARGET_SPEED = 430;  // mm
 static const int const STOPPING_DISTANCE[52][16] = {
 	{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}, // 0-9
@@ -46,11 +48,20 @@ static const int const STOPPING_DISTANCE[52][16] = {
 		{0, 50, 50, 50, 50, 100, 200, 400, 460, 520, 560, 600, 650, 700, 1000, 0}
 };
 
-static const double FEEDBACK_CONTROL_SPEED_INCREMENT = 0.3;
+static const double FEEDBACK_CONTROL_SPEED_INCREMENT = 0.4;
 static const double FEEDBACK_CONTROL_SPEED_DECREMENT = -0.7;
 static const int STARTUP_TRAIN_SPEED = 8;
 static const int FINDING_POSITION_SPEED = 4;
-static const double MAX_PHYSICAL_SPEED = 550; // mm/s
+static const double MAX_PHYSICAL_SPEED = 700; // mm/s
+static const int SWITCH_DISTANCE = 500; // mm
+static const int SENSOR_ATTRIBUTION_DISTANCE_THRESHOLD = 650; //mm
+
+static const int POINTS_EXCELLENT_TRAIN = 100;
+static const int POINTS_VERY_GOOD_TRAIN = 10;
+static const int POINTS_GOOD_TRAIN = 5;
+static const int POINTS_BAD_TRAIN = -5;
+static const int POINTS_VERY_BAD_TRAIN = -10;
+static const int POINTS_EXTREMELY_BAD_TRAIN = -100;
 
 typedef enum TrainEngineState {
 	TRAIN_ENGINE_IDLE,
@@ -70,7 +81,7 @@ typedef enum TrainEngineState {
 	TRAIN_ENGINE_WRONG_LOCATION,
 } TrainEngineState;
 
-static const char const TRAIN_ENGINE_STATE_NAMES[][20] = {
+static const char const TRAIN_ENGINE_STATE_NAMES[][17] = {
 	"Idle",
 	"Finding Position",
 	"Resync Position",
@@ -172,6 +183,10 @@ typedef struct TrainEngine {
 	double granular_speed_setting; 
 	double calculated_speed;
 	double last_calculated_speed;
+	double calculated_sensor_speed;
+	double calculated_model_speed;
+	double last_calculated_model_speed;
+	double last_calculated_sensor_speed;
 	double expected_time_at_next_sensor;
 	double expected_time_at_last_sensor;
 	double actual_time_at_last_sensor;
@@ -180,6 +195,7 @@ typedef struct TrainEngine {
 	int distance_to_next_node;
 	int sample_distance_to_next_sensor;
 	int distance_to_destination;
+	int distance_to_next_switch;
 	double estimated_distance_after_node;
 	double last_time_location_update;
 	track_node * previous_node;
@@ -196,6 +212,10 @@ typedef struct TrainEngine {
 	short use_sensor_for_speed_calculation;
 	undirected_node * undirected_node_path[MAX_UNDIRECTED_NODE_PATH];
 	int undirected_node_path_length;
+	TrainEngineReservationQueue reservation_queue;
+	int print_message_hash;
+	int lost_count;
+	int points;
 } TrainEngine;
 
 typedef struct TrainEngineStatusMessage {

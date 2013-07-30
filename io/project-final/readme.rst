@@ -1,22 +1,22 @@
 =========
-CS 452 P2
+CS 452 PF
 =========
 
 
 :Names: Robert Elder, Christopher Foo
 :ID #: 20335246, 20309244
 :Userids: relder, chfoo
-:Date due: July 23, 2013
+:Date due: July 31, 2013
 
 
 Running
 =======
 
-The executable is located at ``/u/cs452/tftp/ARM/relder-chfoo/p2-submit/kern.elf``.
+The executable is located at ``/u/cs452/tftp/ARM/relder-chfoo/pf-submit/kern.elf``.
 
 The entry point is located at ``0x00045000`` or ``%{FREEMEMLO}`` It *must* be executed with caching enabled. (Caches not enabled by the program itself due to time contraints)::
 
-    load -b %{FREEMEMLO} -h 10.15.167.4 ARM/relder-chfoo/p2-submit/kern.elf
+    load -b %{FREEMEMLO} -h 10.15.167.4 ARM/relder-chfoo/pf-submit/kern.elf
     go -c
 
 
@@ -223,7 +223,7 @@ Assert
 
 The assert statement, as usual, is enhanced to show Thomas The Tank Engine. Please do not be alarmed when you see it.
 
-When an assertion failure occurs, the Stop command will now be sent to avoid train collisions.
+When an assertion failure occurs, the Stop command will be sent to avoid train collisions.
 
 
 Serial IO
@@ -441,106 +441,20 @@ In this deliverable we have several features that significantly improve the perf
 Source Code
 ===========
 
-The source code is located at ``/u4/chfoo/cs452/group/p2-submit/io/project2/``. It can be compiled by running ``make``.
+The source code is located at ``/u4/chfoo/cs452/group/pf-submit/io/project-final/``. It can be compiled by running ``make``.
 
 Source code MD5 hashes::
 
-    chfoo@nettop36:~/cs452/group/p2-submit/io/project2$ md5sum */*/* */*.*  *.*
-    bd0a0df5b9fbc588bdc203efe3c6570d  tracks/tests/Makefile
-    fac587c527e77d0b2b243879ce9cc9a3  tracks/tests/tests.c
-    50ef0e1e3c71ab1e795fc3d39f75ef9d  include/bwio.h
-    9af226f127c1fd759530cd45236c37b8  include/ts7200.h
-    94944e9febc4db1bb344fff990ed7e9e  maps/map.h
-    3dfa3ed141445a72c20840b384c1ebb9  maps/map_a.c
-    c6adb76c95a6ae7986d03cd416d5837e  maps/map_a.h
-    703f1eeadf245074517591baa0844a37  maps/map_a.txt
-    c415ff53472ff6ffcd28afcab0038e4c  maps/map_b.c
-    eba8710b29615da70e7165571efd99d8  maps/map_b.h
-    093b6fff35ab1def4b776eb25a623c01  maps/map_b.txt
-    ead84e8315fd7e45f0e8e631197b9150  maps/map_gen.py
-    1a1aac0b745639b84fe74f1839547512  tracks/track_data.c
-    1352f3743944badbb8c2399e6fb2ccd4  tracks/track_data.h
-    e33dcce364a34b75f722eb3d272626cb  tracks/track_node.h
-    c531fbaa2b102637bf455e0f6176bc36  tracks/undirected_nodes.c
-    1828da1574bab787f726066f173a699d  tracks/undirected_nodes.h
-    1a5d522885e2e71cd9b940bd52ff9b42  Screenshot-1.png
-    e613d497f4ddd240605c62968fcc8b98  Screenshot-2.png
-    e92b7c25883384cd034329580bdb0e5d  Screenshot.png
-    0dc64506433fa8e40520a29acdae7984  ansi.c
-    cc47d9653ed272a2d23a743ab186914d  ansi.h
-    b8c8b5fafcd1fd43beaeee7da1e5550f  buffer.c
-    04c39523dd006155ba353fb3ba1dddfb  buffer.h
-    ad48b92a01b68f1b8e33f95a9590e7f9  clock.c
-    f798d08d32ce37146d8013b821f740f5  clock.h
-    d79855f9ffb6a0003409ebb81290b47f  figure1.jpg
-    ea9ed6320aea54e698752e9a9b94adc5  figure2.jpg
-    97543aad843c35a031e79c5faf4ca957  figure2.png
-    4bc0f85c30a9d3bfaf7d355123aadf58  figure3.jpg
-    9adce26681f68a082f5c45bf7833c0ed  figure4.jpg
-    8c879f7e1e375bc7199895c9ef74d8e3  figure4.png
-    796800c7dc1bbd2d2444ff3ad2046a51  ioflags.jpg
-    cac2aaebb371f2ab8150cdbe1e7f5528  kern.c
-    e3d60e6c74c202e9f5d27c1f80ea4e13  kern.elf
-    d41d8cd98f00b204e9800998ecf8427e  kern.h
-    6152637f1334fd74e0eb806912affc59  kernel_irq.c
-    db3b8b5c5eaa48d2e5bab408ffd172c2  kernel_irq.h
-    bd3f47ad7601caa6f6a64dbbd77ae784  kernel_state.h
-    5439df921ac46fd07959e43125fefa91  memory.c
-    b16265e8b0bfe3a510b3a25e05b8674a  memory.h
-    adcff2244ac92050360eacd7ab4f5dd9  message.c
-    921f82dee0e89dd011e179f67d706d03  message.h
-    615b2439e1f227fc8451bce70c045e11  nameserver.c
-    f9335969b8c71be878a915c26e7a606c  nameserver.h
-    08703117df738f05b4ba289925ee7bf9  notifier.c
-    3fd892b4a7ec6c055cdad49ad7449b59  notifier.h
-    78a32a3a80cad8a4cc40de1ce18fbe29  orex.ld
-    96282407319e88eb23bb90a8daf06b9f  priorities.h
-    cf633eed1c5eaa9cb54a2f74f1d34fa2  private_kernel_interface.c
-    299821b9f1a7a97ec90a3b8863f67045  private_kernel_interface.h
-    797daf216f6d2955ab3317c1b94f4648  public_kernel_interface.c
-    93963b17c60bdd40b39629a70d43405b  public_kernel_interface.h
-    63c2ccbe48bb263149cfdc1d0cbe0370  queue.c
-    ca12973f6a47637476903ba771206956  queue.h
-    092ccec4bf20645fcde14470e074e8ea  random.c
-    7b31c57ff692317d816c839156382596  random.h
-    4dc002ebccd6a049d9600e703f53eace  readme.pdf
-    d5216a1e9b9a6da93135aa089ce58373  readme.rst
-    335f48d9eb92e9ee949b394c96f05b4f  readme.tex
-    b58af196bdaf29ff72ff1c20b9e92cca  robio.c
-    5763b2a44810b6d0afafc27fb88cc7de  robio.h
-    28986f2c4e92d601a1cb6f1bbd846c7e  route.c
-    2fe7d2acdae03abb1904c8a460f4d53c  route.h
-    155b6b3d1816287618cc197aec5d5884  rps.c
-    6eee23bcabb82e39ca885de1563eca4f  rps.h
-    02566388717be1765b35028f7f16bf39  scheduler.c
-    0b1101123bcff9dbbf9d39542c35aacb  scheduler.h
-    fba4eb1fd2006e2d70124be70af02282  swi_kernel_interface.s
-    00f9f65864243bdd18687e7a849c72a1  task_descriptor.c
-    34b26bd48a79c0a2572ca700e9ea4283  task_descriptor.h
-    33f883f692ee8388a7f1be0b1409c73f  tasks.c
-    0d3699b1a8224eb6995bb042834f66b5  tasks.h
-    eaed4bd78a6fa73453c639c426fef6b6  test_uart.c
-    5b820ca4fce39820f678a6080fd594ef  test_uart.h
-    b1f93e60c825a24ec38e015fe28d0295  train.c
-    1c3cc69bfc281b1994fb9ce3d03c129b  train.h
-    3a70433035aa2ad078efd5f1571eba1a  train_data_structures.h
-    3a0ed813a12c962e5f741eaacccda1be  train_logic.c
-    b5cb4a8dc956cc0f45878b0e8b935ad2  train_logic.h
-    d4ad03272947d96db7fbd9528ca11ced  uart.c
-    1a8185a782b5c582a6ba13127ae1a1e3  uart.h
-    833fae6a88b54a60fbde799bab941ca9  ui.c
-    6fcbf108793dcbca79d022b950830c02  ui.h
-    5b609bdd0235c3858e16c053b8e53bfd  va_list_def.h
+    TODO
 
 
 
 Elf MD5 hash::
 
-    chfoo@nettop36:/u/cs452/tftp/ARM/relder-chfoo/p2-submit$ md5sum kern.elf 
-    e3d60e6c74c202e9f5d27c1f80ea4e13  kern.elf
+    TODO
 
 
-Git sha1 hash: ``1d430103399c522c572e9e0bd71d26ee0d042e51``
+Git sha1 hash: ``TODO``
 
 
 
