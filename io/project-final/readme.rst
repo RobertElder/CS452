@@ -45,6 +45,10 @@ Figure 2 and Figure 3 show different map configurations.
 
     Figure 2
 
+.. figure:: figure5.png
+
+    Figure 3
+
 
 go TRAIN
     Begins the train route finding process. The train should start up, find position, and go to a random destination.
