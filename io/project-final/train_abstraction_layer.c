@@ -91,15 +91,15 @@ void TAL_CalculateTrainSpeedBySensor(TAL * tal, TrainEngine * engine) {
 	double new_calculated_speed = SPEED_ALPHA * new_sensor_speed + (1 - SPEED_ALPHA) * engine->last_calculated_speed;
 	
 	if (new_calculated_speed > MAX_PHYSICAL_SPEED) {
-		PrintMessage("!!! Train %d speed calculation too fast (%d mm/s)", engine->train_num, (int) new_calculated_speed);
-		TAL_AddPoints(tal, engine, POINTS_BAD_TRAIN);
+		//PrintMessage("!!! Train %d speed calculation too fast (%d mm/s)", engine->train_num, (int) new_calculated_speed);
+		TAL_AddPoints(tal, engine, POINTS_BAD_TRAIN, "measuring too fast speed");
 	} else if (new_calculated_speed < 0) {
-		PrintMessage("!!! Train %d speed calculation negative (%d mm/s)", engine->train_num, (int) new_calculated_speed);
-		TAL_AddPoints(tal, engine, POINTS_BAD_TRAIN);
+		//PrintMessage("!!! Train %d speed calculation negative (%d mm/s)", engine->train_num, (int) new_calculated_speed);
+		TAL_AddPoints(tal, engine, POINTS_BAD_TRAIN, "measuring negative speed");
 	} else {
 		engine->last_calculated_speed = engine->calculated_speed;
 		engine->calculated_speed = new_calculated_speed;
-		TAL_AddPoints(tal, engine, POINTS_GOOD_TRAIN);
+		TAL_AddPoints(tal, engine, POINTS_GOOD_TRAIN, "measuring a reasonable speed");
 	}
 	
 	engine->actual_time_at_last_sensor = time;
@@ -456,7 +456,7 @@ void TAL_PrepareNextSwitch(TAL * tal, TrainEngine * engine) {
 			
 				if (next_switch_state != SWITCH_UNKNOWN && queued_next_switch_state == SWITCH_UNKNOWN && next_switch_state != actual_switch_state) {
 					QueueSwitchState(tal->train_server, next_switch->num, next_switch_state);
-					PrintMessage("Train %d: Switch %s to %c", engine->train_num, next_switch->name, next_switch_state);
+					//PrintMessage("Train %d: Switch %s to %c", engine->train_num, next_switch->name, next_switch_state);
 				}
 			}
 		}
@@ -497,9 +497,9 @@ void TAL_ReverseTrain(TAL * tal, TrainEngine * engine, int restart_speed) {
 	engine->last_time_location_update = TimeSeconds();
 }
 
-void TAL_AddPoints(TAL * tal, TrainEngine * engine, int points) {
+void TAL_AddPoints(TAL * tal, TrainEngine * engine, int points, char * reason) {
 	engine->points += points;
-	PrintMessage("%d points for train %d!", points, engine->train_num);
+	PrintMessage("%d points to train %d for %s!", points, engine->train_num, reason);
 }
 
 int TAL_DistanceToNode(TAL * tal, track_node * source_node, track_node * dest_node) {

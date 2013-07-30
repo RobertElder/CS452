@@ -85,7 +85,7 @@ void TrainServer_ProcessEngineFindingPosition(TrainServer * server, TrainEngine 
 		TAL_SetTrainWait(&server->tal, engine, 4);
 		TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 0);
 		engine->state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
-		TAL_AddPoints(&server->tal, engine, POINTS_VERY_GOOD_TRAIN);
+		TAL_AddPoints(&server->tal, engine, POINTS_VERY_GOOD_TRAIN, "finding its position");
 	}
 	
 	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
@@ -143,8 +143,8 @@ void TrainServer_ProcessEngineGotDestination(TrainServer * server, TrainEngine *
 	
 	if (engine->route_nodes_length == 0) {
 		engine->state = TRAIN_ENGINE_WAIT_FOR_DESTINATION;
-		PrintMessage("!!! Train %d got zero length route", engine->train_num);
-		TAL_AddPoints(&server->tal, engine, POINTS_VERY_BAD_TRAIN);
+		//PrintMessage("!!! Train %d got zero length route", engine->train_num);
+		TAL_AddPoints(&server->tal, engine, POINTS_VERY_BAD_TRAIN, "for deciding to go nowhere");
 		return;
 	}
 	
@@ -264,7 +264,8 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 		node = TAL_GetNearestSensorByAttribution(&server->tal, engine);
 		
 		if (node) {
-			PrintMessage("Train %d: Sensor attribution used node %s though not on path!", engine->train_num, node->name);
+			//PrintMessage("Train %d: Sensor attribution used node %s though not on path!", engine->train_num, node->name);
+			TAL_AddPoints(&server->tal, engine, POINTS_VERY_BAD_TRAIN, "straying off course");
 		}
 	}
 	
@@ -282,7 +283,7 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 		//PrintMessage("At destination %s.", engine->current_node->name);
 		
 		TAL_ReleaseNodes(&server->tal, engine, 3);
-		TAL_AddPoints(&server->tal, engine, POINTS_EXCELLENT_TRAIN);
+		TAL_AddPoints(&server->tal, engine, POINTS_EXCELLENT_TRAIN, "arriving at its destination");
 		return;
 	}
 	
@@ -305,7 +306,7 @@ void TrainServer_ProcessEngineRunning(TrainServer * server, TrainEngine * engine
 			TAL_SetTrainSpeed(&server->tal, 0, engine->train_num, 1);
 			TAL_ReleaseNodes(&server->tal, engine, 3);
 			engine->state = TRAIN_ENGINE_WRONG_LOCATION;
-			TAL_AddPoints(&server->tal, engine, POINTS_EXTREMELY_BAD_TRAIN);
+			TAL_AddPoints(&server->tal, engine, POINTS_EXTREMELY_BAD_TRAIN, "for being completely off course");
 			
 			int i;
 			for(i = 0; i < engine->route_nodes_length; i++) {
@@ -333,7 +334,7 @@ void TrainServer_ProcessEngineNearDestination(TrainServer * server, TrainEngine 
 	if (engine->distance_to_destination > stopping_distance * 2) {
 //		PrintMessage("Speeding back up because distance was great");
 		engine->state = TRAIN_ENGINE_RUNNING;
-		TAL_AddPoints(&server->tal, engine, POINTS_BAD_TRAIN);
+		TAL_AddPoints(&server->tal, engine, POINTS_BAD_TRAIN, "slowing down and speeding back up");
 	}
 
 	TrainServer_ProcessEngineRunning(server, engine);
@@ -385,8 +386,8 @@ void TrainServer_ProcessEngineWaitForReservation(TrainServer * server, TrainEngi
 		engine->state = TRAIN_ENGINE_FOUND_STARTING_POSITION;
 	} else if (RNG_GetRange(&server->rng, 1, 100) == 1) {
 		TAL_ReverseTrain(&server->tal, engine, 1);
-		PrintMessage("Train %d: gave up waiting. Reversing", engine->train_num);
-		TAL_AddPoints(&server->tal, engine, POINTS_BAD_TRAIN);
+		//PrintMessage("Train %d: gave up waiting. Reversing", engine->train_num);
+		TAL_AddPoints(&server->tal, engine, POINTS_GOOD_TRAIN, "trying another path");
 	}
 	TAL_CalculateTrainSpeedByGuessing(&server->tal, engine);
 }
