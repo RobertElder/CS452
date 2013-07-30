@@ -494,6 +494,7 @@ void TrainServer_SnapTrainLocationBySensor(TrainServer * server, TrainEngine * e
 	track_node * node = TAL_GetTrainReservedSensor(&server->tal, engine->train_num);
 	
 	if (!node) {
+/* TODO: model is not correct enough to use this yet
 		track_node * nearest_node = TAL_GetNearestSensorByAttribution(&server->tal, engine);
 		
 		if (nearest_node && !nearest_node->reserved) {
@@ -501,6 +502,7 @@ void TrainServer_SnapTrainLocationBySensor(TrainServer * server, TrainEngine * e
 			//PrintMessage("Train %d: Sensor attribution used node %s though not on path!", engine->train_num, node->name);
 			TAL_AddPoints(&server->tal, engine, POINTS_VERY_BAD_TRAIN, "straying off course");
 		}
+*/
 	}
 	
 	if (node && node != engine->current_node) {

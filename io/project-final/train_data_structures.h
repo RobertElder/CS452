@@ -52,7 +52,7 @@ static const double FEEDBACK_CONTROL_SPEED_INCREMENT = 0.4;
 static const double FEEDBACK_CONTROL_SPEED_DECREMENT = -0.7;
 static const int STARTUP_TRAIN_SPEED = 8;
 static const int FINDING_POSITION_SPEED = 4;
-static const double MAX_PHYSICAL_SPEED = 750; // mm/s
+static const double MAX_PHYSICAL_SPEED = 700; // mm/s
 static const int SWITCH_DISTANCE = 500; // mm
 static const int SENSOR_ATTRIBUTION_DISTANCE_THRESHOLD = 650; //mm
 
