@@ -588,11 +588,15 @@ track_node * TAL_GetNearestSensorByAttribution(TAL * tal, TrainEngine * engine) 
 	
 	int i;
 	for (i = 0; i < tal->train_server->num_engines; i++) {
-		nearest_node[i] = TAL_GetNearestSensor(tal, tal->train_server->train_engines[i].current_node, &distance_to_sensor[i]);
+		if (tal->train_server->train_engines[i].current_node) {
+			nearest_node[i] = TAL_GetNearestSensor(tal, tal->train_server->train_engines[i].current_node, &distance_to_sensor[i]);
 		
-		if (&tal->train_server->train_engines[i] == engine) {
-			current_train_nearest_node = nearest_node[i];
-			current_train_distance_to_sensor = distance_to_sensor[i];
+			if (&tal->train_server->train_engines[i] == engine) {
+				current_train_nearest_node = nearest_node[i];
+				current_train_distance_to_sensor = distance_to_sensor[i];
+			}
+		} else {
+			nearest_node[i] = 0;
 		}
 	}
 	
