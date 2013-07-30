@@ -129,6 +129,17 @@ Routing and Navigation
 
 Currently, we use a simple recursive graph search algorithm for calculating paths.  This will soon be replaced by the much more accurate Dijkstra's algorithm once the undirected graph model is incorporated into the routing.  Once we have determined a series of nodes that we need to navigate through, we determine the set of switches that need to be changed from their current state, up until we possibly end up changing that same switch again (for re-entrant paths that only involve moving forward).  The switches are queued in the order in which they need to be switched so that the closest switch will be the first one to change.  If the train triggers a sensor that is not on the path it was expected to take, a warning is printed for debugging purposes.
 
+
+Model
+-----
+
+The model of the train uses an estimated speed of the train computed using simple linear interpolation of the ideal speed of 45cm/s. Ideally, it should be using a finely calibrated tables, however, this could not be implemented within the time provided but the currently code is ready to support this.
+
+Sensor readings augment the train model. It currently snaps the train to the location of the sensor. Ideally, we should use a rubber band method that gently interpolates the differences and jitter.
+
+A simulation build has been provided that behaves similarly to the actual build. It randomly uses a sensor as the initial position.
+
+
 Stopping
 --------
 
@@ -153,6 +164,8 @@ Reservations
 ------------
 
 The provided track nodes have been modified with an extra field called ``reserved``. It holds the train number of the reservation. Once the destination and route is calculated, all the nodes in the route are reserved. Once the train reaches its destination, the nodes are released from reservation.  The concept of switch reservations is taken care of, because while a train has reserved a switch, no other can attempt to queue a switch change.
+
+A train will always check the node ahead to see if the node is reserved. If the node is reserved, it will stop and wait in the ``WAIT_FOR_RESERVATION`` state. During this state, it will generate a random number between 1 and 100. If the number is 1, it will reverse direction and attempt to find a new destination.
 
 
 Train Switch Master
@@ -212,7 +225,8 @@ The go command operates as following:
 11. Using the sensor data and  feedback control system, adjust the speed to achieve a speed of 45 cm/s.
 12. If the next node is a switch that needs to be activated, switch it.
 13. If the distance to destination is within the stopping distance, slow the train down.
-14. Wait for a sensor and stop.
+14. If the next node is reserved, wait until it is cleared. If it is not cleared and a random number generator generates a true condition, reverse direction and go to step 5.
+15. Wait for a sensor and stop.
 
 For an iterative version of the go command, see GF command which will iteratively use the go command after a train reaches its destination.
 
@@ -221,7 +235,7 @@ GF
 
 The gf command operates as following:
 
-1. Do steps 1-14 of the go command
+1. Do steps 1-15 of the go command
 2. Wait for 4 seconds
 3. Goto step 1
 
