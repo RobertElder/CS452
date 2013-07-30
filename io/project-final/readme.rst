@@ -12,12 +12,23 @@ CS 452 PF
 Running
 =======
 
-The executable is located at ``/u/cs452/tftp/ARM/relder-chfoo/pf-submit/kern.elf``.
+The executable is located at ``/u/cs452/tftp/ARM/relder-chfoo/pf-submit/final-demo.elf``.
 
-The entry point is located at ``0x00045000`` or ``%{FREEMEMLO}`` It *must* be executed with caching enabled. (Caches not enabled by the program itself due to time contraints)::
+The entry point is located at ``0x00045000`` or ``%{FREEMEMLO}`` It *must* be executed with caching enabled. (Caches not enabled by the program itself due to time constraints)::
 
-    load -b %{FREEMEMLO} -h 10.15.167.4 ARM/relder-chfoo/pf-submit/kern.elf
+    load -b %{FREEMEMLO} -h 10.15.167.4 ARM/relder-chfoo/pf-submit/final-demo.elf
     go -c
+
+There are also other files:
+
+``kern_simulation.elf``
+    A train simulation that can support up to an arbitrary number of 10 trains.
+
+``kern_test.elf``
+    Runs 390 rock paper scissor tasks. (That's a lot of tasks!)
+
+``orientation.elf``
+    Program used to collect sensor data for train orientation.
 
 
 Commands
@@ -37,18 +48,6 @@ q
 
 map NAME
     Sets the current track. NAME should be A or B.
-
-Figure 2 and Figure 3 show different map configurations.
-
-
-.. figure:: figure2.png
-
-    Figure 2
-
-.. figure:: figure5.png
-
-    Figure 3
-
 
 go TRAIN
     Begins the train route finding process. The train should start up, find position, and go to a random destination.
@@ -88,154 +87,12 @@ To start up two trains
 Description
 ===========
 
-Kernel
-++++++
-
-* No kernel changes since last deliverable.
-
-
-.. figure:: figure1.jpg
-
-
-System Calls
-------------
-
-* System calls support up to 5 arguments.
-* No changes since last deliverable.
-
-
-``Create``
-    Returns the new task id, ``ERR_K_INVALID_PRIORITY -1``, or ``ERR_K_OUT_OF_TD -2``
-
-``MyTid``
-    Returns the current task id
-
-``MyParentTid``
-    Returns the parent task id. The parent task id is always returned regardless of the parent's state.
-
-``Pass``
-    (Rescheduling happens as normal in the background.)
-
-``Exit``
-    Task is marked as ``ZOMBIE`` (and rescheduling happens as normal in the background).
-
-``Send``
-    Sends a message to the given task ID. ``-3`` code is not implemented.
-
-``Receive``
-    Blocks until a message is received. Returns the size of the message which will be typically ``MESSAGE_SIZE 16``
-
-``Reply``
-    Replies a message to the task. On errors ``-3`` ``-4``, an assert will fire before returning to aid in debugging.
-
-``RegisterAs``
-   Prepares a ``NameServerMessage`` structure with a message type of ``REGISTER_AS`` and sends the message to the Name Server. ``0`` is always returned because the Task ID is hard-coded and the call should never send to the wrong task.
-
-``WhoIs``
-    Prepares a ``WHO_IS`` message type and sends it to the Name Server. As noted in ``RegisterAs``, we either return a Task ID or 0 if the task has not been created. However, the task ID returned may be in a zombie state.
-
-``AwaitEvent``
-    Marks the task as ``EVENT_BLOCKED``. The task will be unblocked by the Scheduler. This call always returns 0 and the user task will be responsible for obtaining the data themselves. ``AwaitEvent`` supports only 1 task per event type.
-
-``Time``
-    Wraps a ``Send`` to the Clock Server. It first queries the Name Server for the Clock Server and then sends a ``TIME_REQUEST`` message. It expects back a ``TIME_REPLY`` message and returns the time.
-
-``Delay``
-    Similar to ``Time``, it sends a ``DELAY_REQUEST`` message and expects back a ``DELAY_REPLY`` message.
-
-``DelayUntil``
-    Similar to ``Time``, it sends a ``DELAY_UNTIL_REQUEST`` message and expects back a ``DELAY_REPLY`` message.
-
-``TimeSeconds``, ``DelaySeconds``, ``DelayUntilSeconds``
-    Same as above but in seconds. It simply converts the ticks into seconds before calling the system calls. These calls are simply for convenience.
-
-``Getc``
-    Sends a message to either Keyboard Input Server or Train Input Server. It will block until the servers have a character to return.
-
-``Putc``
-    Sends a message to either Screen Output Server or Train Output Server. The servers will place the character into the server's Char Buffer.
-
-``PutString``
-    Formats the string and calls ``Putc`` for every character.
-
-``PutcAtomic``
-    Like ``Putc``, but accepts multiple characters and guarantees the characters are placed into the queue sequentially. This call is useful to ensure that two byte commands are not separated by a single byte command.
-
-``SendTrainCommand``
-    Sends a message type ``TRAIN_COMMAND`` to the Train Command Server. The call is for convenience.
-
-``PrintMessage``
-    Similar to ``PrintMessage``, but this sends the string to the UI Print Server to be displayed on the lower half of the screen using a ``UI_PRINT_MESSAGE`` message type
-
-
-
-Watchdog
---------
-
-The watchdog has been changed to report starvation after 500,000 schedules to be more strict in detecting this problem.
-
-
-Scheduler
----------
-
-The scheduler now calculates the system load by counting the number of low priority schedules per 1,000,000 schedules. This may not reflect the true load as the Idle Task may take a long time slice before rescheduling. In the future deliverable, we may implement counting the time each task is scheduled.
-
-Priorities
-----------
-
-For this deliverable, we have thought carefully about the priorities of each task.
-
-======================== ==========
-Task                     Priority
-======================== ==========
-Clock Notifier            0
-Clock Server              0
-First Task                0
-Name Server               1
-Administrator             2
-UART Bootstrap            3
-Train IO Notifier         4
-Train Input Notifier      4
-Train Output Notifier     4
-Keyboard Input Notifier   4
-Screen Output Notifier    4
-Train Input Server        5
-Train Output Server       5
-Screen Output Server      6
-Keyboard Input Server     6
-Train Server              7
-UI Print Task             7
-Train Command Server      8
-Train Switch Master       8
-UI Server                 8
-Train Sensor Reader       9
-Train Engine              9
-Train Server Timer       10
-UI Keyboard Input        12
-UI Timer                 13
-RPS Test Start           15
-RPS Server               16
-RPS Client               31
-Idle Task                31
-======================== ==========
-
-For more info, see Performance.
-
-
 Assert
 ++++++
 
 The assert statement, as usual, is enhanced to show Thomas The Tank Engine. Please do not be alarmed when you see it.
 
 When an assertion failure occurs, the Stop command will be sent to avoid train collisions.
-
-
-Serial IO
-+++++++++
-
-File: ``uart.c``
-
-* FIFOs are now used for the terminal input/output.
 
 
 Train Navigation
@@ -401,6 +258,10 @@ Some of the hilights of the UI are found in figure 4.
 
     Figure 4
 
+.. figure:: figure5.png
+
+    Figure 5
+
 
 UI Timer
 --------
@@ -418,28 +279,6 @@ UI Print Message Task
 ---------------------
 
 This task is responsible for printing messages into the scrolled area. It uses the ANSI feature to set scrolling areas. It is separate from the UI Server as messages may be from higher priority tasks like the Train Server. It is called via the ``PrintMessage`` call.  This method was implemented as a non busy-waiting alternative for debug messages.
-
-
-Rock Paper Scissors
--------------------
-
-Rock Paper Scissors is now back and can be run using the ``rps`` command.  Since it still functions from our earlier deliverable, we have decided to use it for stress testing.  It currently runs with 42 clients players.  It will display the results of each round in the scrolling area of the UI. The ``rps`` command should only be run once, however, the RPS games will last 12345689 rounds so there is no need to rerun the ``rps`` command the second time.
-
-
-
-Performance
-+++++++++++
-
-In this deliverable we have several features that significantly improve the performance of our kernel:
-
-1)  The priorities were adjusted to achieve the following
-
-    * Notifiers have high priority
-    * The UI keyboard input no longer drops characters while the UI is redrawing.
-    * The Switch Master and Train Speed Client are at higher priorities than the Sensor Reader. This setup is necessary to avoid the trains getting caught on the switches.
-
-2)  FIFOs for the terminal were enabled. Without FIFOs, the UI task may be interrupted during sending ANSI sequences and leaving incomplete sequences on the screen. With FIFOs, the screen updates correctly without flickering.
-
 
 
 Source Code
@@ -460,6 +299,113 @@ Elf MD5 hash::
 
 Git sha1 hash: ``TODO``
 
+
+Appendix
+========
+
+System Calls
+------------
+
+``Create``
+    Returns the new task id, ``ERR_K_INVALID_PRIORITY -1``, or ``ERR_K_OUT_OF_TD -2``
+
+``MyTid``
+    Returns the current task id
+
+``MyParentTid``
+    Returns the parent task id. The parent task id is always returned regardless of the parent's state.
+
+``Pass``
+    (Rescheduling happens as normal in the background.)
+
+``Exit``
+    Task is marked as ``ZOMBIE`` (and rescheduling happens as normal in the background).
+
+``Send``
+    Sends a message to the given task ID. ``-3`` code is not implemented.
+
+``Receive``
+    Blocks until a message is received. Returns the size of the message which will be typically ``MESSAGE_SIZE 16``
+
+``Reply``
+    Replies a message to the task. On errors ``-3`` ``-4``, an assert will fire before returning to aid in debugging.
+
+``RegisterAs``
+   Prepares a ``NameServerMessage`` structure with a message type of ``REGISTER_AS`` and sends the message to the Name Server. ``0`` is always returned because the Task ID is hard-coded and the call should never send to the wrong task.
+
+``WhoIs``
+    Prepares a ``WHO_IS`` message type and sends it to the Name Server. As noted in ``RegisterAs``, we either return a Task ID or 0 if the task has not been created. However, the task ID returned may be in a zombie state.
+
+``AwaitEvent``
+    Marks the task as ``EVENT_BLOCKED``. The task will be unblocked by the Scheduler. This call always returns 0 and the user task will be responsible for obtaining the data themselves. ``AwaitEvent`` supports only 1 task per event type.
+
+``Time``
+    Wraps a ``Send`` to the Clock Server. It first queries the Name Server for the Clock Server and then sends a ``TIME_REQUEST`` message. It expects back a ``TIME_REPLY`` message and returns the time.
+
+``Delay``
+    Similar to ``Time``, it sends a ``DELAY_REQUEST`` message and expects back a ``DELAY_REPLY`` message.
+
+``DelayUntil``
+    Similar to ``Time``, it sends a ``DELAY_UNTIL_REQUEST`` message and expects back a ``DELAY_REPLY`` message.
+
+``TimeSeconds``, ``DelaySeconds``, ``DelayUntilSeconds``
+    Same as above but in seconds. It simply converts the ticks into seconds before calling the system calls. These calls are simply for convenience.
+
+``Getc``
+    Sends a message to either Keyboard Input Server or Train Input Server. It will block until the servers have a character to return.
+
+``Putc``
+    Sends a message to either Screen Output Server or Train Output Server. The servers will place the character into the server's Char Buffer.
+
+``PutString``
+    Formats the string and calls ``Putc`` for every character.
+
+``PutcAtomic``
+    Like ``Putc``, but accepts multiple characters and guarantees the characters are placed into the queue sequentially. This call is useful to ensure that two byte commands are not separated by a single byte command.
+
+``SendTrainCommand``
+    Sends a message type ``TRAIN_COMMAND`` to the Train Command Server. The call is for convenience.
+
+``PrintMessage``
+    Similar to ``PrintMessage``, but this sends the string to the UI Print Server to be displayed on the lower half of the screen using a ``UI_PRINT_MESSAGE`` message type
+
+
+Priorities
+----------
+
+======================== ==========
+Task                     Priority
+======================== ==========
+Clock Notifier            0
+Clock Server              0
+First Task                0
+Name Server               1
+Administrator             2
+UART Bootstrap            3
+Train IO Notifier         4
+Train Input Notifier      4
+Train Output Notifier     4
+Keyboard Input Notifier   4
+Screen Output Notifier    4
+Train Input Server        5
+Train Output Server       5
+Screen Output Server      6
+Keyboard Input Server     6
+Train Server              7
+UI Print Task             7
+Train Command Server      8
+Train Switch Master       8
+UI Server                 8
+Train Sensor Reader       9
+Train Engine              9
+Train Server Timer       10
+UI Keyboard Input        12
+UI Timer                 13
+RPS Test Start           15
+RPS Server               16
+RPS Client               31
+Idle Task                31
+======================== ==========
 
 
 
