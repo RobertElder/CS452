@@ -581,12 +581,34 @@ track_node * TAL_GetNearestSensor(TAL * tal, track_node * source_node, int *sens
 }
 
 track_node * TAL_GetNearestSensorByAttribution(TAL * tal, TrainEngine * engine) {
-	int distance_to_sensor;
+	int distance_to_sensor[MAX_NUM_ENGINES];
+	track_node * nearest_node[MAX_NUM_ENGINES];
+	int current_train_distance_to_sensor = 0;
+	track_node * current_train_nearest_node = 0;
 	
-	track_node * nearest_node = TAL_GetNearestSensor(tal, engine->current_node, &distance_to_sensor);
+	int i;
+	for (i = 0; i < tal->train_server->num_engines; i++) {
+		nearest_node[i] = TAL_GetNearestSensor(tal, tal->train_server->train_engines[i].current_node, &distance_to_sensor[i]);
+		
+		if (&tal->train_server->train_engines[i] == engine) {
+			current_train_nearest_node = nearest_node[i];
+			current_train_distance_to_sensor = distance_to_sensor[i];
+		}
+	}
 	
-	if (nearest_node && distance_to_sensor < SENSOR_ATTRIBUTION_DISTANCE_THRESHOLD) {
-		return nearest_node;
+	for (i = 0; i < tal->train_server->num_engines; i++) {
+		if (&tal->train_server->train_engines[i] == engine) {
+			continue;
+		} else if (nearest_node[i] == current_train_nearest_node) {
+			// The nearest node belongs to another train
+			current_train_nearest_node = 0;
+			break;
+		}
+	}
+	
+	
+	if (current_train_nearest_node && current_train_distance_to_sensor < SENSOR_ATTRIBUTION_DISTANCE_THRESHOLD) {
+		return current_train_nearest_node;
 	} else {
 		return 0;
 	}
