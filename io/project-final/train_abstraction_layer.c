@@ -431,13 +431,23 @@ track_node * TAL_UndirectedNodeToTrackNode(TAL * tal, undirected_node * node, un
 
 void TAL_PrepareNextSwitch(TAL * tal, TrainEngine * engine) {
 	int i;
+	int start_i = engine->route_node_index - 1;
+	int end_i = engine->route_node_index + 3;
 	
-	for (i = engine->route_node_index; i < engine->route_node_index + 2; i++) {
+	if (start_i < 0) {
+		start_i = 0;
+	}
+	
+	if (end_i > engine->route_nodes_length) {
+		end_i = engine->route_nodes_length;
+	}
+	
+	for (i = start_i; i < end_i; i++) {
 		track_node * next_switch = GetNextSwitch(engine, i);
 		if (next_switch) {
 			int distance_to_switch = DistanceToNextSwitch(engine, i);
 			engine->distance_to_next_switch = distance_to_switch;
-			double distance_in_time_period = engine->calculated_speed * 1.5;
+			double distance_in_time_period = engine->calculated_speed * 2.0;
 		
 			if (distance_to_switch < SWITCH_DISTANCE || distance_in_time_period > distance_to_switch) {
 				SwitchState next_switch_state = GetNextSwitchState(engine, i);
