@@ -597,758 +597,758 @@ Idle Task                31
 
 
 Raw data collected from experiments:
-++++++++++
+++++++++++++++++++++++++++++++++++++
 
 All numbers shown in this section are the number of clock ticks for a clock that ticks 508000 times per second.
 
 A test was done by cooling a train down for 25 minutes to better understand the relationship between temperature and speed.  The results are inconclusive at best, but do not show any significant effect on train speed for the given test.
 
 
+::
 
+    Sensor in front with 45 speed 14.  Train has not been run in a while, and exhibits the slow speedup effect.
 
-Sensor in front with 45 speed 14.  Train has not been run in a while, and exhibits the slow speedup effect.
-
-RedBoot> go -c
-delta is 713033
-delta is 700574
-delta is 700574
-delta is 675654
-delta is 675641
-delta is 663154
-delta is 663140
-delta is 650720
-delta is 650720
-delta is 638247
-delta is 638246
-delta is 638194
-delta is 638234
-delta is 638207
-delta is 638246
-delta is 638246
-delta is 638246
-delta is 638220
-delta is 625786
-delta is 625786
-delta is 638220
-delta is 638245
-delta is 638247
-delta is 625787
-delta is 638247
-delta is 638247
-delta is 625786
-delta is 625787
-delta is 625760
-delta is 625786
-delta is 625787
-delta is 625773
-delta is 638247
-delta is 625785
-delta is 625787
-delta is 625786
-delta is 625786
-delta is 625747
-delta is 625786
-delta is 625746
-delta is 625786
-delta is 638247
-delta is 625786
-delta is 625746
-delta is 625787
-delta is 625747
-delta is 625787
-delta is 625746
-delta is 625773
-delta is 625774
-delta is 625746
-delta is 625774
-delta is 625761
-delta is 625787
-delta is 625786
-delta is 625759
-delta is 625773
-delta is 625773
-delta is 625785
-delta is 625773
-delta is 625747
-delta is 625786
-delta is 625734
-delta is 625774
-delta is 625787
-delta is 625787
-delta is 625772
-delta is 625786
-delta is 625720
-delta is 625746
-delta is 625786
-delta is 625760
-delta is 625786
-delta is 625786
-delta is 625746
-delta is 625720
-delta is 625773
-delta is 625747
-delta is 625760
-average was 634134.
-
-
-
-
-delta is 638260
-delta is 625786
-delta is 625786
-delta is 625787
-delta is 638246
-delta is 638246
-delta is 625747
-delta is 625759
-delta is 625786
-delta is 638220
-delta is 625787
-delta is 638247
-delta is 625786
-delta is 625760
-delta is 625786
-delta is 625786
-delta is 638247
-delta is 625786
-delta is 625772
-delta is 625774
-delta is 625787
-delta is 625773
-delta is 625773
-delta is 625773
-delta is 625787
-delta is 625760
-delta is 625772
-delta is 638247
-delta is 625747
-delta is 625773
-delta is 625787
-delta is 625786
-delta is 625759
-delta is 625760
-delta is 638260
-delta is 625787
-delta is 625747
-delta is 625786
-delta is 625760
-delta is 625774
-delta is 625746
-delta is 625786
-delta is 625760
-delta is 625773
-delta is 638247
-delta is 625786
-delta is 625760
-delta is 625773
-delta is 625786
-delta is 625786
-delta is 625786
-delta is 625786
-delta is 625760
-delta is 625786
-delta is 625774
-delta is 625747
-delta is 625759
-delta is 625720
-delta is 625787
-delta is 625787
-delta is 625787
-delta is 625786
-delta is 625786
-delta is 625760
-delta is 625786
-delta is 625773
-delta is 625760
-delta is 638219
-delta is 625773
-delta is 625760
-delta is 625787
-delta is 625787
-delta is 625759
-delta is 625707
-delta is 638247
-delta is 638246
-delta is 638234
-delta is 625799
-delta is 625761
-average was 627824.
-
-same test again
-
-RedBoot> go -c
-delta is 2476
-delta is 625774
-delta is 625786
-delta is 625707
-delta is 625786
-delta is 625787
-delta is 625720
-delta is 625785
-delta is 625787
-delta is 625747
-delta is 625773
-delta is 625761
-delta is 625786
-delta is 625786
-delta is 638233
-delta is 625759
-delta is 625774
-delta is 625787
-delta is 625786
-delta is 625774
-delta is 625787
-delta is 625786
-delta is 625760
-delta is 625786
-delta is 625786
-delta is 625787
-delta is 613246
-delta is 625760
-delta is 625774
-delta is 625786
-delta is 625747
-delta is 625774
-delta is 625773
-delta is 625787
-delta is 625785
-delta is 625786
-delta is 625800
-delta is 625759
-delta is 625774
-delta is 625761
-delta is 625746
-delta is 613247
-delta is 625773
-delta is 625760
-delta is 625760
-delta is 625785
-delta is 625747
-delta is 625774
-delta is 625787
-delta is 625786
-delta is 638206
-delta is 625760
-delta is 625746
-delta is 625706
-delta is 625773
-delta is 625747
-delta is 625747
-delta is 625787
-delta is 625786
-delta is 625774
-delta is 625747
-delta is 625786
-delta is 625721
-delta is 638207
-delta is 625760
-delta is 625746
-delta is 625785
-delta is 625747
-delta is 625787
-delta is 625786
-delta is 625773
-delta is 625719
-delta is 625747
-delta is 625786
-delta is 625785
-delta is 625760
-delta is 625787
-delta is 625773
-delta is 625787
-average was 625926.
-
-
-
-delta is 625747
-delta is 625786
-delta is 625786
-delta is 625760
-delta is 613326
-delta is 625747
-delta is 625785
-delta is 625746
-delta is 625720
-delta is 625746
-delta is 613327
-delta is 625747
-delta is 625787
-delta is 625760
-delta is 625785
-delta is 625747
-delta is 613260
-delta is 625746
-delta is 625774
-delta is 625787
-delta is 625734
-delta is 613287
-delta is 625786
-delta is 625760
-delta is 625747
-delta is 625774
-delta is 625787
-delta is 625746
-delta is 625787
-delta is 625787
-delta is 625759
-delta is 613313
-delta is 613314
-delta is 625787
-delta is 625786
-delta is 613285
-delta is 613326
-delta is 625787
-delta is 625787
-delta is 625747
-delta is 625786
-delta is 625774
-delta is 625747
-delta is 625786
-delta is 625721
-delta is 625787
-delta is 625721
-delta is 625787
-delta is 625706
-delta is 613326
-delta is 638246
-delta is 613260
-delta is 613313
-delta is 625785
-delta is 625707
-delta is 625747
-delta is 625760
-delta is 625720
-delta is 625759
-delta is 613287
-delta is 625787
-delta is 625746
-delta is 625720
-delta is 625760
-delta is 625733
-delta is 625787
-delta is 625786
-delta is 613300
-delta is 625734
-delta is 625787
-delta is 625786
-delta is 625759
-delta is 613247
-delta is 625747
-delta is 625760
-delta is 625773
-delta is 625732
-delta is 613313
-delta is 625786
-average was 623553.
-
-Speed test with 47 speed 8 10 laps before using ice.  sensor in back.
-
-
- i  asdfasdfasdf
-delta is 1012196
-delta is 1012195
-delta is 999762
-delta is 999762
-delta is 999735
-delta is 999749
-delta is 999722
-delta is 999722
-delta is 999762
-average was 1002511.
-asdfasdfasdf
-
-
-delta is 987275
-delta is 1037089
-delta is 987288
-delta is 974830
-delta is 987288
-delta is 974788
-delta is 987249
-delta is 1012156
-delta is 1037156
-average was 998346.
-
-
-speed test with 47 speed 8 80 laps after icing for about 25 mins sensor in front.
-
-
-iRedBoot> go -c
-asdfasdfasdf
-delta is 1024629
-delta is 1024656
-delta is 1111943
-delta is 1012209
-delta is 999761
-delta is 999735
-delta is 1012222
-delta is 1099470
-delta is 999735
-delta is 999762
-delta is 999736
-delta is 999761
-delta is 999749
-delta is 1012222
-delta is 999735
-delta is 1074549
-delta is 987289
-delta is 987275
-delta is 987302
-delta is 987302
-delta is 987262
-delta is 987289
-delta is 987289
-delta is 987301
-delta is 987288
-delta is 987262
-delta is 987262
-delta is 999762
-delta is 987302
-delta is 987303
-delta is 974802
-delta is 999762
-delta is 974815
-delta is 974788
-delta is 974762
-delta is 974802
-delta is 974828
-delta is 974829
-delta is 974829
-delta is 974829
-delta is 987223
-delta is 987302
-delta is 974762
-delta is 974828
-delta is 987289
-delta is 987262
-delta is 987262
-delta is 987302
-delta is 987262
-delta is 974816
-delta is 987288
-delta is 987275
-delta is 1024682
-delta is 974828
-delta is 987302
-delta is 974803
-delta is 974802
-delta is 974841
-delta is 987289
-delta is 974803
-delta is 974828
-delta is 974789
-delta is 987302
-delta is 974816
-delta is 987289
-delta is 999762
-delta is 974828
-delta is 974829
-delta is 974828
-delta is 987301
-delta is 987275
-delta is 974789
-delta is 974762
-delta is 974816
-delta is 974828
-delta is 974789
-delta is 974762
-delta is 987302
-delta is 987262
-average was 990908.
-
-
-continuing in the other direction...
-
-
-
-Aidelta is 1049615
-delta is 987288
-delta is 987262
-delta is 987249
-delta is 987262
-delta is 987302
-delta is 987250
-delta is 987289
-delta is 987301
-delta is 987288
-delta is 974815
-delta is 987302
-delta is 974829
-delta is 987289
-delta is 987276
-delta is 1049628
-delta is 974817
-delta is 1037155
-delta is 974815
-delta is 987289
-delta is 1024669
-delta is 987275
-delta is 987302
-delta is 974789
-delta is 987288
-delta is 987289
-delta is 987288
-delta is 987262
-delta is 987289
-delta is 987289
-delta is 974762
-delta is 974828
-delta is 974828
-delta is 987289
-delta is 987290
-delta is 987289
-delta is 974802
-delta is 974801
-delta is 1012182
-delta is 987288
-delta is 987249
-delta is 987289
-delta is 1012183
-delta is 1012235
-delta is 987289
-delta is 987235
-delta is 987262
-delta is 987249
-delta is 987236
-delta is 974829
-delta is 987262
-delta is 974828
-delta is 974815
-delta is 987276
-delta is 987289
-delta is 987302
-delta is 974815
-delta is 974842
-delta is 974762
-delta is 974764
-delta is 974828
-delta is 987289
-delta is 987288
-delta is 987289
-delta is 974828
-delta is 1037129
-delta is 987302
-delta is 1012222
-delta is 974789
-delta is 974749
-delta is 987249
-delta is 987262
-delta is 987262
-delta is 987302
-delta is 974762
-delta is 974762
-delta is 974762
-delta is 974842
-delta is 1049589
-average was 988695.
+    RedBoot> go -c
+    delta is 713033
+    delta is 700574
+    delta is 700574
+    delta is 675654
+    delta is 675641
+    delta is 663154
+    delta is 663140
+    delta is 650720
+    delta is 650720
+    delta is 638247
+    delta is 638246
+    delta is 638194
+    delta is 638234
+    delta is 638207
+    delta is 638246
+    delta is 638246
+    delta is 638246
+    delta is 638220
+    delta is 625786
+    delta is 625786
+    delta is 638220
+    delta is 638245
+    delta is 638247
+    delta is 625787
+    delta is 638247
+    delta is 638247
+    delta is 625786
+    delta is 625787
+    delta is 625760
+    delta is 625786
+    delta is 625787
+    delta is 625773
+    delta is 638247
+    delta is 625785
+    delta is 625787
+    delta is 625786
+    delta is 625786
+    delta is 625747
+    delta is 625786
+    delta is 625746
+    delta is 625786
+    delta is 638247
+    delta is 625786
+    delta is 625746
+    delta is 625787
+    delta is 625747
+    delta is 625787
+    delta is 625746
+    delta is 625773
+    delta is 625774
+    delta is 625746
+    delta is 625774
+    delta is 625761
+    delta is 625787
+    delta is 625786
+    delta is 625759
+    delta is 625773
+    delta is 625773
+    delta is 625785
+    delta is 625773
+    delta is 625747
+    delta is 625786
+    delta is 625734
+    delta is 625774
+    delta is 625787
+    delta is 625787
+    delta is 625772
+    delta is 625786
+    delta is 625720
+    delta is 625746
+    delta is 625786
+    delta is 625760
+    delta is 625786
+    delta is 625786
+    delta is 625746
+    delta is 625720
+    delta is 625773
+    delta is 625747
+    delta is 625760
+    average was 634134.
 
 
 
 
-Reading data for E5 using batch sensor polling method.  Done in polling loop, holding down sensor.
+    delta is 638260
+    delta is 625786
+    delta is 625786
+    delta is 625787
+    delta is 638246
+    delta is 638246
+    delta is 625747
+    delta is 625759
+    delta is 625786
+    delta is 638220
+    delta is 625787
+    delta is 638247
+    delta is 625786
+    delta is 625760
+    delta is 625786
+    delta is 625786
+    delta is 638247
+    delta is 625786
+    delta is 625772
+    delta is 625774
+    delta is 625787
+    delta is 625773
+    delta is 625773
+    delta is 625773
+    delta is 625787
+    delta is 625760
+    delta is 625772
+    delta is 638247
+    delta is 625747
+    delta is 625773
+    delta is 625787
+    delta is 625786
+    delta is 625759
+    delta is 625760
+    delta is 638260
+    delta is 625787
+    delta is 625747
+    delta is 625786
+    delta is 625760
+    delta is 625774
+    delta is 625746
+    delta is 625786
+    delta is 625760
+    delta is 625773
+    delta is 638247
+    delta is 625786
+    delta is 625760
+    delta is 625773
+    delta is 625786
+    delta is 625786
+    delta is 625786
+    delta is 625786
+    delta is 625760
+    delta is 625786
+    delta is 625774
+    delta is 625747
+    delta is 625759
+    delta is 625720
+    delta is 625787
+    delta is 625787
+    delta is 625787
+    delta is 625786
+    delta is 625786
+    delta is 625760
+    delta is 625786
+    delta is 625773
+    delta is 625760
+    delta is 638219
+    delta is 625773
+    delta is 625760
+    delta is 625787
+    delta is 625787
+    delta is 625759
+    delta is 625707
+    delta is 638247
+    delta is 638246
+    delta is 638234
+    delta is 625799
+    delta is 625761
+    average was 627824.
 
-31409
-31408
-31409
-31408
-31409
-31408
-31409
-31422
-31408
-31409
-31408
-31409
-31408
-31409
-31407
-31409
-31409
-31408
-31409
-31421
-31409
-31409
-31408
-31409
-31408
-31409
-31408
-31409
-31409
-31408
-31421
-31408
-31409
-31408
-31409
-31409
-31408
-31409
-31408
-31409
-31408
-31409
-31422
-31408
-31409
-31408
-31408
-31408
-31409
-31409
-31408
-31409
-31408
-31409
-31422
-31408
-31409
-31408
-31409
-31408
-31409
-31408
-31408
-31409
-31408
-31409
-31421
-31409
-31409
-31408
-31409
-31408
-31409
-31408
-31409
-31408
-31409
-31408
-31422
-31408
-31408
-31409
-31408
-31409
-31409
-31408
-31409
-31408
-31409
-31408
-31422
-31409
-31408
-31409
-31408
-31408
-31408
-31409
-31408
+    same test again
+
+    RedBoot> go -c
+    delta is 2476
+    delta is 625774
+    delta is 625786
+    delta is 625707
+    delta is 625786
+    delta is 625787
+    delta is 625720
+    delta is 625785
+    delta is 625787
+    delta is 625747
+    delta is 625773
+    delta is 625761
+    delta is 625786
+    delta is 625786
+    delta is 638233
+    delta is 625759
+    delta is 625774
+    delta is 625787
+    delta is 625786
+    delta is 625774
+    delta is 625787
+    delta is 625786
+    delta is 625760
+    delta is 625786
+    delta is 625786
+    delta is 625787
+    delta is 613246
+    delta is 625760
+    delta is 625774
+    delta is 625786
+    delta is 625747
+    delta is 625774
+    delta is 625773
+    delta is 625787
+    delta is 625785
+    delta is 625786
+    delta is 625800
+    delta is 625759
+    delta is 625774
+    delta is 625761
+    delta is 625746
+    delta is 613247
+    delta is 625773
+    delta is 625760
+    delta is 625760
+    delta is 625785
+    delta is 625747
+    delta is 625774
+    delta is 625787
+    delta is 625786
+    delta is 638206
+    delta is 625760
+    delta is 625746
+    delta is 625706
+    delta is 625773
+    delta is 625747
+    delta is 625747
+    delta is 625787
+    delta is 625786
+    delta is 625774
+    delta is 625747
+    delta is 625786
+    delta is 625721
+    delta is 638207
+    delta is 625760
+    delta is 625746
+    delta is 625785
+    delta is 625747
+    delta is 625787
+    delta is 625786
+    delta is 625773
+    delta is 625719
+    delta is 625747
+    delta is 625786
+    delta is 625785
+    delta is 625760
+    delta is 625787
+    delta is 625773
+    delta is 625787
+    average was 625926.
 
 
 
-Reading data in B5 in polling loop, using individual sensor class polling method.
+    delta is 625747
+    delta is 625786
+    delta is 625786
+    delta is 625760
+    delta is 613326
+    delta is 625747
+    delta is 625785
+    delta is 625746
+    delta is 625720
+    delta is 625746
+    delta is 613327
+    delta is 625747
+    delta is 625787
+    delta is 625760
+    delta is 625785
+    delta is 625747
+    delta is 613260
+    delta is 625746
+    delta is 625774
+    delta is 625787
+    delta is 625734
+    delta is 613287
+    delta is 625786
+    delta is 625760
+    delta is 625747
+    delta is 625774
+    delta is 625787
+    delta is 625746
+    delta is 625787
+    delta is 625787
+    delta is 625759
+    delta is 613313
+    delta is 613314
+    delta is 625787
+    delta is 625786
+    delta is 613285
+    delta is 613326
+    delta is 625787
+    delta is 625787
+    delta is 625747
+    delta is 625786
+    delta is 625774
+    delta is 625747
+    delta is 625786
+    delta is 625721
+    delta is 625787
+    delta is 625721
+    delta is 625787
+    delta is 625706
+    delta is 613326
+    delta is 638246
+    delta is 613260
+    delta is 613313
+    delta is 625785
+    delta is 625707
+    delta is 625747
+    delta is 625760
+    delta is 625720
+    delta is 625759
+    delta is 613287
+    delta is 625787
+    delta is 625746
+    delta is 625720
+    delta is 625760
+    delta is 625733
+    delta is 625787
+    delta is 625786
+    delta is 613300
+    delta is 625734
+    delta is 625787
+    delta is 625786
+    delta is 625759
+    delta is 613247
+    delta is 625747
+    delta is 625760
+    delta is 625773
+    delta is 625732
+    delta is 613313
+    delta is 625786
+    average was 623553.
 
-12699
-12698
-12699
-12698
-12699
-12685
-12699
-12698
-12699
-12698
-12685
-12698
-12473
-12698
-12699
-12698
-12699
-12460
-12698
-12699
-12473
-12698
-12699
-12698
-12699
-12460
-12698
-12699
-12698
-12686
-12698
-12699
-12698
-12699
-12685
-12698
-12699
-12698
-12699
-12685
-12698
-12699
-12699
-12685
-12698
-12699
-12698
-12699
-12684
-12698
-12699
-12698
-12699
-12685
-12698
-12699
-12698
-12699
-12685
-12699
-12698
-12699
-12685
-12698
-12699
-12698
-12699
-12685
-12698
-12699
-12699
-12698
-12685
-12699
-12698
-12699
-12685
-12698
-12699
-12698
-12699
-12685
-12699
-12698
-12698
-12699
-12685
-12699
-12697
-12699
-12698
-12685
-12699
-12698
-12699
-12685
-12699
-12698
-12699
+    Speed test with 47 speed 8 10 laps before using ice.  sensor in back.
+
+
+     i  asdfasdfasdf
+    delta is 1012196
+    delta is 1012195
+    delta is 999762
+    delta is 999762
+    delta is 999735
+    delta is 999749
+    delta is 999722
+    delta is 999722
+    delta is 999762
+    average was 1002511.
+    asdfasdfasdf
+
+
+    delta is 987275
+    delta is 1037089
+    delta is 987288
+    delta is 974830
+    delta is 987288
+    delta is 974788
+    delta is 987249
+    delta is 1012156
+    delta is 1037156
+    average was 998346.
+
+
+    speed test with 47 speed 8 80 laps after icing for about 25 mins sensor in front.
+
+
+    iRedBoot> go -c
+    asdfasdfasdf
+    delta is 1024629
+    delta is 1024656
+    delta is 1111943
+    delta is 1012209
+    delta is 999761
+    delta is 999735
+    delta is 1012222
+    delta is 1099470
+    delta is 999735
+    delta is 999762
+    delta is 999736
+    delta is 999761
+    delta is 999749
+    delta is 1012222
+    delta is 999735
+    delta is 1074549
+    delta is 987289
+    delta is 987275
+    delta is 987302
+    delta is 987302
+    delta is 987262
+    delta is 987289
+    delta is 987289
+    delta is 987301
+    delta is 987288
+    delta is 987262
+    delta is 987262
+    delta is 999762
+    delta is 987302
+    delta is 987303
+    delta is 974802
+    delta is 999762
+    delta is 974815
+    delta is 974788
+    delta is 974762
+    delta is 974802
+    delta is 974828
+    delta is 974829
+    delta is 974829
+    delta is 974829
+    delta is 987223
+    delta is 987302
+    delta is 974762
+    delta is 974828
+    delta is 987289
+    delta is 987262
+    delta is 987262
+    delta is 987302
+    delta is 987262
+    delta is 974816
+    delta is 987288
+    delta is 987275
+    delta is 1024682
+    delta is 974828
+    delta is 987302
+    delta is 974803
+    delta is 974802
+    delta is 974841
+    delta is 987289
+    delta is 974803
+    delta is 974828
+    delta is 974789
+    delta is 987302
+    delta is 974816
+    delta is 987289
+    delta is 999762
+    delta is 974828
+    delta is 974829
+    delta is 974828
+    delta is 987301
+    delta is 987275
+    delta is 974789
+    delta is 974762
+    delta is 974816
+    delta is 974828
+    delta is 974789
+    delta is 974762
+    delta is 987302
+    delta is 987262
+    average was 990908.
+
+
+    continuing in the other direction...
+
+
+
+    Aidelta is 1049615
+    delta is 987288
+    delta is 987262
+    delta is 987249
+    delta is 987262
+    delta is 987302
+    delta is 987250
+    delta is 987289
+    delta is 987301
+    delta is 987288
+    delta is 974815
+    delta is 987302
+    delta is 974829
+    delta is 987289
+    delta is 987276
+    delta is 1049628
+    delta is 974817
+    delta is 1037155
+    delta is 974815
+    delta is 987289
+    delta is 1024669
+    delta is 987275
+    delta is 987302
+    delta is 974789
+    delta is 987288
+    delta is 987289
+    delta is 987288
+    delta is 987262
+    delta is 987289
+    delta is 987289
+    delta is 974762
+    delta is 974828
+    delta is 974828
+    delta is 987289
+    delta is 987290
+    delta is 987289
+    delta is 974802
+    delta is 974801
+    delta is 1012182
+    delta is 987288
+    delta is 987249
+    delta is 987289
+    delta is 1012183
+    delta is 1012235
+    delta is 987289
+    delta is 987235
+    delta is 987262
+    delta is 987249
+    delta is 987236
+    delta is 974829
+    delta is 987262
+    delta is 974828
+    delta is 974815
+    delta is 987276
+    delta is 987289
+    delta is 987302
+    delta is 974815
+    delta is 974842
+    delta is 974762
+    delta is 974764
+    delta is 974828
+    delta is 987289
+    delta is 987288
+    delta is 987289
+    delta is 974828
+    delta is 1037129
+    delta is 987302
+    delta is 1012222
+    delta is 974789
+    delta is 974749
+    delta is 987249
+    delta is 987262
+    delta is 987262
+    delta is 987302
+    delta is 974762
+    delta is 974762
+    delta is 974762
+    delta is 974842
+    delta is 1049589
+    average was 988695.
+
+
+
+
+    Reading data for E5 using batch sensor polling method.  Done in polling loop, holding down sensor.
+
+    31409
+    31408
+    31409
+    31408
+    31409
+    31408
+    31409
+    31422
+    31408
+    31409
+    31408
+    31409
+    31408
+    31409
+    31407
+    31409
+    31409
+    31408
+    31409
+    31421
+    31409
+    31409
+    31408
+    31409
+    31408
+    31409
+    31408
+    31409
+    31409
+    31408
+    31421
+    31408
+    31409
+    31408
+    31409
+    31409
+    31408
+    31409
+    31408
+    31409
+    31408
+    31409
+    31422
+    31408
+    31409
+    31408
+    31408
+    31408
+    31409
+    31409
+    31408
+    31409
+    31408
+    31409
+    31422
+    31408
+    31409
+    31408
+    31409
+    31408
+    31409
+    31408
+    31408
+    31409
+    31408
+    31409
+    31421
+    31409
+    31409
+    31408
+    31409
+    31408
+    31409
+    31408
+    31409
+    31408
+    31409
+    31408
+    31422
+    31408
+    31408
+    31409
+    31408
+    31409
+    31409
+    31408
+    31409
+    31408
+    31409
+    31408
+    31422
+    31409
+    31408
+    31409
+    31408
+    31408
+    31408
+    31409
+    31408
+
+
+
+    Reading data in B5 in polling loop, using individual sensor class polling method.
+
+    12699
+    12698
+    12699
+    12698
+    12699
+    12685
+    12699
+    12698
+    12699
+    12698
+    12685
+    12698
+    12473
+    12698
+    12699
+    12698
+    12699
+    12460
+    12698
+    12699
+    12473
+    12698
+    12699
+    12698
+    12699
+    12460
+    12698
+    12699
+    12698
+    12686
+    12698
+    12699
+    12698
+    12699
+    12685
+    12698
+    12699
+    12698
+    12699
+    12685
+    12698
+    12699
+    12699
+    12685
+    12698
+    12699
+    12698
+    12699
+    12684
+    12698
+    12699
+    12698
+    12699
+    12685
+    12698
+    12699
+    12698
+    12699
+    12685
+    12699
+    12698
+    12699
+    12685
+    12698
+    12699
+    12698
+    12699
+    12685
+    12698
+    12699
+    12699
+    12698
+    12685
+    12699
+    12698
+    12699
+    12685
+    12698
+    12699
+    12698
+    12699
+    12685
+    12699
+    12698
+    12698
+    12699
+    12685
+    12699
+    12697
+    12699
+    12698
+    12685
+    12699
+    12698
+    12699
+    12685
+    12699
+    12698
+    12699
 
 
