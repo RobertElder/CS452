@@ -349,6 +349,16 @@ It was observed that trains speed up over a very long period of time.  After ini
 
 .. figure:: speed-increase-speed-14.png
 
+.. figure:: IMG_20130730_0001.jpg
+
+.. figure:: IMG_20130730_0002.jpg
+
+.. figure:: IMG_20130730_0003.jpg
+
+.. figure:: IMG_20130730_0004.jpg
+
+.. figure:: IMG_20130730_0005.jpg
+
 
 
 Source Code
