@@ -337,6 +337,15 @@ UI Print Message Task
 This task is responsible for printing messages into the scrolled area. It uses the ANSI feature to set scrolling areas. It is separate from the UI Server as messages may be from higher priority tasks like the Train Server. It is called via the ``PrintMessage`` call.  This method was implemented as a non busy-waiting alternative for debug messages.
 
 
+Real Time Worst Case Execution Analysis
++++++++++++++++++++++++++++++++++++++++
+
+.. figure:: speed-increase-speed-11.png
+
+.. figure:: speed-increase-speed-14.png
+
+
+
 Source Code
 ===========
 
