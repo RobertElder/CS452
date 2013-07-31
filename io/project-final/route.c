@@ -48,6 +48,8 @@ void ReleaseTrackNode(track_node * node, int train_num){
 }
 
 void ReleaseTrackNodes(TrainEngine * engine) {
+	assert(0, "ReleaseTrackNodes: obsoleted. Use TAL_ReleaseNodes instead");
+	
 	int i;
 	for (i = 0; i < engine->route_nodes_length; i++) {
 		ReleaseTrackNode(engine->route_node_info[i].node, engine->train_num);
@@ -55,6 +57,8 @@ void ReleaseTrackNodes(TrainEngine * engine) {
 }
 
 void ReserveTrackNodes(TrainEngine * engine) {
+	assert(0, "ReserveTrackNodes: obsoleted. Use TAL_ReservePathNodes instead");
+	
 	int i;
 	for (i = 0; i < engine->route_nodes_length; i++) {
 		ReserveTrackNode(engine->route_node_info[i].node, engine->train_num);

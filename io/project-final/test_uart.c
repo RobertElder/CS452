@@ -213,7 +213,6 @@ int test_orientation(){
 
 	int k  = 0;
 
-	robprintfbusy((const unsigned char *)"asdfasdfasdf\n");
 	while(state_number < (samples * 2)){
 		*status =  0;
 
@@ -341,9 +340,8 @@ int test_orientation(){
 
 void TEST_UART(){
 
-	int train_num  = 47;
-	int speed_num  = 8;
-
+	int train_num  = 45;
+	int speed_num  = 14;
 
 	do_setup();
 	set_switch(9,'C');
@@ -371,6 +369,11 @@ void TEST_UART(){
 	//  Get rid of bogus sensor data
 	int rtn2 = test_orientation();
 	robprintfbusy((const unsigned char *)"average was %d.\n", rtn2);
+	if(rtn2 < rtn1){
+		robprintfbusy((const unsigned char *)"Sensor is currently at the back of the train.\n");
+	}else{
+		robprintfbusy((const unsigned char *)"Sensor is currently at the front of the train.\n");
+	}
 	move_train(0,train_num);
 	while(1){};
 }

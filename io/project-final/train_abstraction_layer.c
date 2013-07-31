@@ -87,20 +87,28 @@ int TAL_IsDestinationSensorBad(TAL * tal, int module_num, int sensor_num) {
 void TAL_CalculateTrainSpeedBySensor(TAL * tal, TrainEngine * engine) {
 	double time = TimeSeconds();
 	double time_difference = time - engine->actual_time_at_last_sensor;
-	double new_speed = (double) engine->distance_to_next_sensor / time_difference;
-	engine->last_calculated_speed = engine->calculated_speed;
-	engine->calculated_speed = SPEED_ALPHA * new_speed + (1 - SPEED_ALPHA) * engine->last_calculated_speed;
+	double new_sensor_speed = (double) engine->distance_to_next_sensor / time_difference;
+	double new_calculated_speed = SENSOR_SPEED_ALPHA * new_sensor_speed + (1 - SENSOR_SPEED_ALPHA) * engine->last_calculated_sensor_speed;
 	
-	if (engine->calculated_speed > MAX_PHYSICAL_SPEED) {
-		//PrintMessage("Train speed calculation too fast (%d mm/s). Capping.", (int) engine->calculated_speed);
-		engine->calculated_speed = MAX_PHYSICAL_SPEED;
+	if (new_calculated_speed > MAX_PHYSICAL_SPEED) {
+		//PrintMessage("!!! Train %d speed calculation too fast (%d mm/s)", engine->train_num, (int) new_calculated_speed);
+		engine->last_calculated_sensor_speed = engine->calculated_sensor_speed;
+		engine->calculated_sensor_speed = MAX_PHYSICAL_SPEED;
+		TAL_AddPoints(tal, engine, POINTS_BAD_TRAIN, "measuring too fast speed");
+	} else if (new_calculated_speed < 0) {
+		//PrintMessage("!!! Train %d speed calculation negative (%d mm/s)", engine->train_num, (int) new_calculated_speed);
+		TAL_AddPoints(tal, engine, POINTS_BAD_TRAIN, "measuring negative speed");
+	} else {
+		engine->last_calculated_sensor_speed = engine->calculated_sensor_speed;
+		engine->calculated_sensor_speed = new_calculated_speed;
+		TAL_AddPoints(tal, engine, POINTS_GOOD_TRAIN, "measuring a reasonable speed");
 	}
 	
 	engine->actual_time_at_last_sensor = time;
 	engine->expected_time_at_last_sensor = engine->expected_time_at_next_sensor;
 	engine->last_time_speed_update = time;
 	engine->distance_to_next_sensor = DistanceToNextSensor(engine);
-	engine->expected_time_at_next_sensor = (double) engine->distance_to_next_sensor / engine->calculated_speed + time;
+	engine->expected_time_at_next_sensor = (double) engine->distance_to_next_sensor / engine->calculated_sensor_speed + time;
 }
 
 void TAL_CalculateTrainSpeedByGuessing(TAL * tal, TrainEngine * engine) {
@@ -110,11 +118,25 @@ void TAL_CalculateTrainSpeedByGuessing(TAL * tal, TrainEngine * engine) {
 		return;
 	}
 	
-	double new_speed = engine->granular_speed_setting / 14.0 * TARGET_SPEED;
-	engine->last_calculated_speed = engine->calculated_speed;
-	engine->calculated_speed = GUESSING_SPEED_ALPHA * new_speed + (1 - GUESSING_SPEED_ALPHA) * engine->last_calculated_speed;
+	double new_speed = engine->granular_speed_setting / 11.5 * TARGET_SPEED;
+	engine->last_calculated_model_speed = engine->calculated_model_speed;
+	
+	if (new_speed > engine->last_calculated_model_speed) {
+		engine->calculated_model_speed = GUESSING_SPEED_UP_ALPHA * new_speed + (1 - GUESSING_SPEED_UP_ALPHA) * engine->last_calculated_model_speed;
+	} else {
+		engine->calculated_model_speed = GUESSING_SPEED_DOWN_ALPHA * new_speed + (1 - GUESSING_SPEED_DOWN_ALPHA) * engine->last_calculated_model_speed;
+	}
 	
 	engine->last_time_speed_update = time;
+}
+
+void TAL_CalculateTrainSpeed(TAL * tal, TrainEngine * engine) {
+	if (engine->use_sensor_for_speed_calculation) {
+		engine->last_calculated_speed = engine->calculated_speed;
+		engine->calculated_speed = SENSOR_SPEED_WEIGHT_MIX_ALPHA * engine->calculated_sensor_speed + (1.0 - SENSOR_SPEED_WEIGHT_MIX_ALPHA) * engine->calculated_model_speed;
+	} else {
+		engine->calculated_speed = engine->calculated_model_speed;
+	}
 }
 
 void TAL_CalculateTrainLocation(TAL * tal, TrainEngine * engine) {
@@ -133,7 +155,8 @@ void TAL_CalculateTrainLocation(TAL * tal, TrainEngine * engine) {
 
 	if (engine->estimated_distance_after_node > engine->distance_to_next_node && engine->next_node) {
 		assertf(engine->next_node != 0, "Next node of %s is 0", engine->current_node->name);
-		PrintMessage("Guessing train is at %s (%d > %d)", engine->next_node->name, (int) engine->estimated_distance_after_node, (int) engine->distance_to_next_node);
+		//PrintMessage("Guessing train is at %s (%d > %d)", engine->next_node->name, (int) engine->estimated_distance_after_node, (int) engine->distance_to_next_node);
+		assertf(TAL_IsNextNodeAvailable(tal, engine), "TAL_CalculateTrainLocation: Train %d drifted into node %s reserved for %d", engine->train_num, engine->next_node->name, engine->next_node->reserved);
 		TAL_TransitionToNextNode(tal, engine, engine->next_node);
 	}
 }
@@ -144,8 +167,6 @@ void TAL_SetInitialTrainLocation(TAL * tal, TrainEngine * engine, track_node * n
 
 void TAL_TransitionToNextNode(TAL * tal, TrainEngine * engine, track_node * node) {
 	if (engine->previous_node) {
-//		ReleaseTrackNode(engine->previous_node, engine->train_num);
-
 		if (tal->train_server->dijkstras_enabled) {
 			remove_train_node(&engine->train_node, engine->current_node->undirected_node, engine->next_node->undirected_node);
 		}
@@ -162,8 +183,7 @@ void TAL_TransitionToNextNode(TAL * tal, TrainEngine * engine, track_node * node
 		add_train_node(&engine->train_node, node->undirected_node, engine->next_node->undirected_node, 1);
 	}
 	
-	ReserveTrackNode(engine->current_node, engine->train_num);
-//	ReserveTrackNode(engine->next_node, engine->train_num);
+	TAL_ReserveNode(tal, engine, engine->current_node);
 }
 
 track_node * TAL_GetUnreservedSensor(TAL * tal) {
@@ -246,6 +266,8 @@ int TAL_IsTrainWaiting(TAL * tal, TrainEngine * engine) {
 }
 
 int TAL_IsNextNodeAvailable(TAL * tal, TrainEngine * engine) {
+	assert(TAL_GetNextNode(tal, engine->current_node) != 0, "TAL_IsNextNodeAvailable: no next node");
+
 	if (TAL_GetNextNode(tal, engine->current_node)->reserved && TAL_GetNextNode(tal, engine->current_node)->reserved == engine->train_num) {
 		return 1;
 	} else if (!TAL_GetNextNode(tal, engine->current_node)->reserved) {
@@ -305,11 +327,14 @@ void TAL_FeedbackControlSystem(TAL * tal, TrainEngine * engine) {
 void TAL_SetTrainSpeed(TAL * tal, double speed, int train_num, int lights) {
 	int slot_num = TrainServer_EngineNumToArrayIndex(tal->train_server, train_num);
 	TrainEngine * engine = &tal->train_server->train_engines[slot_num];
+	int new_speed_setting = speed;
+
+	if (speed == REVERSE_SPEED) {
+		speed = 0;
+	}
 	
 	engine->granular_speed_setting = speed;
-	
-	int new_speed_setting = speed;
-	
+
 	if (lights) {
 		new_speed_setting |= LIGHTS_MASK;
 	}
@@ -413,5 +438,183 @@ track_node * TAL_UndirectedNodeToTrackNode(TAL * tal, undirected_node * node, un
 	assert(0, "TAL_UndirectedNodeToTrackNode: no edge to next node");
 	
 	return 0;
+}
+
+void TAL_PrepareNextSwitch(TAL * tal, TrainEngine * engine) {
+	int i;
+	int start_i = engine->route_node_index - 1;
+	int end_i = engine->route_node_index + 3;
+	
+	if (start_i < 0) {
+		start_i = 0;
+	}
+	
+	if (end_i > engine->route_nodes_length) {
+		end_i = engine->route_nodes_length;
+	}
+	
+	for (i = start_i; i < end_i; i++) {
+		track_node * next_switch = GetNextSwitch(engine, i);
+		if (next_switch) {
+			int distance_to_switch = DistanceToNextSwitch(engine, i);
+			engine->distance_to_next_switch = distance_to_switch;
+			double distance_in_time_period = engine->calculated_speed * 2.0;
+		
+			if (distance_to_switch < SWITCH_DISTANCE || distance_in_time_period > distance_to_switch) {
+				SwitchState next_switch_state = GetNextSwitchState(engine, i);
+				SwitchState queued_next_switch_state = GetQueuedSwitchState(tal->train_server, next_switch->num);
+				int actual_switch_state = tal->train_server->switch_states[next_switch->num];
+			
+				if (next_switch_state != SWITCH_UNKNOWN && queued_next_switch_state == SWITCH_UNKNOWN && next_switch_state != actual_switch_state) {
+					QueueSwitchState(tal->train_server, next_switch->num, next_switch_state);
+					//PrintMessage("Train %d: Switch %s to %c", engine->train_num, next_switch->name, next_switch_state);
+				}
+			}
+		}
+	}
+}
+
+void TAL_ReserveNode(TAL * tal, TrainEngine * engine, track_node * node) {
+	if (node->reserved != engine->train_num) {
+		ReserveTrackNode(node, engine->train_num);
+		Queue_PushEnd((Queue*) &engine->reservation_queue, node);
+	}
+}
+
+void TAL_ReleaseNodes(TAL * tal, TrainEngine * engine, int num_to_keep) {
+	while (Queue_CurrentCount((Queue*) &engine->reservation_queue) > num_to_keep) {
+		track_node * node = Queue_PopStart((Queue*) &engine->reservation_queue);
+		ReleaseTrackNode(node, engine->train_num);
+	}
+}
+
+void TAL_ReservePathNodes(TAL * tal, TrainEngine * engine) {
+	int i;
+	for (i = 0; i < engine->route_nodes_length; i++) {
+		track_node * node = engine->route_node_info[i].node;
+		TAL_ReserveNode(tal, engine, node);
+	}
+}
+
+void TAL_ReverseTrain(TAL * tal, TrainEngine * engine, int restart_speed) {
+	TAL_SetTrainSpeed(tal, REVERSE_SPEED, engine->train_num, 0);
+	TAL_SetTrainSpeed(tal, restart_speed, engine->train_num, 1);
+	engine->current_node = engine->current_node->reverse;
+	engine->next_node = TAL_GetNextNode(tal, engine->current_node);
+	engine->estimated_distance_after_node = 0;
+	engine->last_calculated_speed = 0;
+	engine->calculated_speed = 0;
+	engine->last_time_speed_update = TimeSeconds();
+	engine->last_time_location_update = TimeSeconds();
+}
+
+void TAL_AddPoints(TAL * tal, TrainEngine * engine, int points, char * reason) {
+	engine->points += points;
+	PrintMessage("%d points to train %d for %s!", points, engine->train_num, reason);
+}
+
+int TAL_DistanceToNode(TAL * tal, track_node * source_node, track_node * dest_node) {
+	if (source_node == dest_node) {
+		return 0;
+	}
+
+	int num_undirected_nodes;
+	
+	if (tal->train_server->current_undirected_nodes == tal->train_server->track_a_undirected_nodes) {
+		num_undirected_nodes = tal->train_server->num_track_a_undirected_nodes;
+	} else {
+		num_undirected_nodes = tal->train_server->num_track_b_undirected_nodes;
+	}
+	
+	undirected_node * train_nodes[0];
+
+	int path_length = 0;
+	undirected_node * path[MAX_UNDIRECTED_NODE_PATH];
+	dijkstra(
+		path,
+		MAX_UNDIRECTED_NODE_PATH,
+		&path_length,
+		tal->train_server->current_undirected_nodes,
+		num_undirected_nodes,
+		train_nodes,
+		0,
+		source_node->undirected_node,
+		dest_node->undirected_node
+	);
+	
+	int distance = 0;
+	int i;
+	for (i = 0; i < path_length - 1; i++) {
+		undirected_node * src = path[i];
+		undirected_node * dest = path[i+1];
+		int edge_index = get_edge_index(src, dest);
+		distance += src->adjacent_nodes.edge[edge_index].micrometers_distance / 1000.0;
+	}
+	
+	return distance;
+}
+
+track_node * TAL_GetNearestSensor(TAL * tal, track_node * source_node, int *sensor_distance) {
+	int smallest_distance = 99999;
+	track_node * sensor_node = 0;
+	
+	int sensor_module;
+	int sensor_num;
+	
+	for (sensor_module = 0; sensor_module < NUM_SENSOR_MODULES; sensor_module++) {
+		for (sensor_num = 0; sensor_num < SENSORS_PER_MODULE; sensor_num++) {
+			if ((tal->train_server->sensor_bit_flags[sensor_module] >> sensor_num) & 0x01) {
+				track_node * candidate_node = SensorToTrackNode(tal->train_server->current_track_nodes, sensor_module, sensor_num);
+				
+				int distance = TAL_DistanceToNode(tal, source_node, candidate_node);
+				
+				if (distance && distance < smallest_distance) {
+					sensor_node = candidate_node;
+					*sensor_distance = distance;
+				}
+				
+			}
+		}
+	}
+	
+	return sensor_node;
+}
+
+track_node * TAL_GetNearestSensorByAttribution(TAL * tal, TrainEngine * engine) {
+	int distance_to_sensor[MAX_NUM_ENGINES];
+	track_node * nearest_node[MAX_NUM_ENGINES];
+	int current_train_distance_to_sensor = 0;
+	track_node * current_train_nearest_node = 0;
+	
+	int i;
+	for (i = 0; i < tal->train_server->num_engines; i++) {
+		if (tal->train_server->train_engines[i].current_node) {
+			nearest_node[i] = TAL_GetNearestSensor(tal, tal->train_server->train_engines[i].current_node, &distance_to_sensor[i]);
+		
+			if (&tal->train_server->train_engines[i] == engine) {
+				current_train_nearest_node = nearest_node[i];
+				current_train_distance_to_sensor = distance_to_sensor[i];
+			}
+		} else {
+			nearest_node[i] = 0;
+		}
+	}
+	
+	for (i = 0; i < tal->train_server->num_engines; i++) {
+		if (&tal->train_server->train_engines[i] == engine) {
+			continue;
+		} else if (nearest_node[i] == current_train_nearest_node) {
+			// The nearest node belongs to another train
+			current_train_nearest_node = 0;
+			break;
+		}
+	}
+	
+	
+	if (current_train_nearest_node && current_train_distance_to_sensor < SENSOR_ATTRIBUTION_DISTANCE_THRESHOLD) {
+		return current_train_nearest_node;
+	} else {
+		return 0;
+	}
 }
 
