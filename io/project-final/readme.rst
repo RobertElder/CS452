@@ -344,16 +344,124 @@ The source code is located at ``/u4/chfoo/cs452/group/pf-submit/io/project-final
 
 Source code MD5 hashes::
 
-    TODO
-
+    chfoo@nettop37:~/cs452/group/pf-submit/io/project-final$ md5sum */*/* */* *    
+    bd0a0df5b9fbc588bdc203efe3c6570d  tracks/tests/Makefile
+    bf8d2b5291390f9f727f7fa766bf9348  tracks/tests/tests.c
+    50ef0e1e3c71ab1e795fc3d39f75ef9d  include/bwio.h
+    9af226f127c1fd759530cd45236c37b8  include/ts7200.h
+    94944e9febc4db1bb344fff990ed7e9e  maps/map.h
+    3dfa3ed141445a72c20840b384c1ebb9  maps/map_a.c
+    c6adb76c95a6ae7986d03cd416d5837e  maps/map_a.h
+    703f1eeadf245074517591baa0844a37  maps/map_a.txt
+    7834e70e1b89501a33508f8ad5f0624a  maps/map_b.c
+    eba8710b29615da70e7165571efd99d8  maps/map_b.h
+    bd274a1bb75033031b39937bbf837f85  maps/map_b.txt
+    ead84e8315fd7e45f0e8e631197b9150  maps/map_gen.py
+    ec02c471a6b2bf494ff65b7a6e740a97  tracks/parse_track
+    md5sum: tracks/tests: Is a directory
+    1a1aac0b745639b84fe74f1839547512  tracks/track_data.c
+    1352f3743944badbb8c2399e6fb2ccd4  tracks/track_data.h
+    e33dcce364a34b75f722eb3d272626cb  tracks/track_node.h
+    9b68c8cea9bd88aad8571cae7f35a03f  tracks/tracka
+    f01263617106358e3fea00e84f9b324a  tracks/trackb
+    7b05a2c3e87fd049cebd40cf67fd0ef1  tracks/undirected_nodes.c
+    fc5b08361b98de3499737c9681addd33  tracks/undirected_nodes.h
+    612547069490bb70f5f6c9e1a565045b  45-run
+    a4e8acaf80c4680a85fbf8729afcb900  80-times
+    c7be4a987b71b07d49d973a6a61545a7  Makefile
+    1a5d522885e2e71cd9b940bd52ff9b42  Screenshot-1.png
+    e613d497f4ddd240605c62968fcc8b98  Screenshot-2.png
+    e92b7c25883384cd034329580bdb0e5d  Screenshot.png
+    41010359d05f8a46d7d402a38b0b9693  Screenshot3.png
+    0dc64506433fa8e40520a29acdae7984  ansi.c
+    cc47d9653ed272a2d23a743ab186914d  ansi.h
+    b8c8b5fafcd1fd43beaeee7da1e5550f  buffer.c
+    04c39523dd006155ba353fb3ba1dddfb  buffer.h
+    ad48b92a01b68f1b8e33f95a9590e7f9  clock.c
+    f798d08d32ce37146d8013b821f740f5  clock.h
+    d79855f9ffb6a0003409ebb81290b47f  figure1.jpg
+    ea9ed6320aea54e698752e9a9b94adc5  figure2.jpg
+    97543aad843c35a031e79c5faf4ca957  figure2.png
+    4bc0f85c30a9d3bfaf7d355123aadf58  figure3.jpg
+    9adce26681f68a082f5c45bf7833c0ed  figure4.jpg
+    8c879f7e1e375bc7199895c9ef74d8e3  figure4.png
+    f6f62ebe51da7f2d8cddd6c74c53801a  figure5.png
+    8b4dec2e4a8518bb27bca5929531dc82  final-demo.elf
+    f085cf6938e4ca9624555ba76eb5b45b  ice-test
+    md5sum: include: Is a directory
+    796800c7dc1bbd2d2444ff3ad2046a51  ioflags.jpg
+    cac2aaebb371f2ab8150cdbe1e7f5528  kern.c
+    d41d8cd98f00b204e9800998ecf8427e  kern.h
+    aec1db7c3d6f93aa7b9b6fd98e47b4db  kern_simulation.elf
+    3f559a290b3a3a5fb91d2262d7a8d47d  kern_test.elf
+    6152637f1334fd74e0eb806912affc59  kernel_irq.c
+    db3b8b5c5eaa48d2e5bab408ffd172c2  kernel_irq.h
+    bd3f47ad7601caa6f6a64dbbd77ae784  kernel_state.h
+    md5sum: maps: Is a directory
+    5439df921ac46fd07959e43125fefa91  memory.c
+    b16265e8b0bfe3a510b3a25e05b8674a  memory.h
+    adcff2244ac92050360eacd7ab4f5dd9  message.c
+    e43a3792e6748d3227db13b2d9f9c549  message.h
+    615b2439e1f227fc8451bce70c045e11  nameserver.c
+    f9335969b8c71be878a915c26e7a606c  nameserver.h
+    08703117df738f05b4ba289925ee7bf9  notifier.c
+    3fd892b4a7ec6c055cdad49ad7449b59  notifier.h
+    78a32a3a80cad8a4cc40de1ce18fbe29  orex.ld
+    9d5e4e2a134be237d62d888af793de04  orientation.elf
+    96282407319e88eb23bb90a8daf06b9f  priorities.h
+    cf633eed1c5eaa9cb54a2f74f1d34fa2  private_kernel_interface.c
+    299821b9f1a7a97ec90a3b8863f67045  private_kernel_interface.h
+    f0d95167eb82b7426ca76cd33b627b9c  public_kernel_interface.c
+    c19a9aaa189bbaa1547f52e59009f999  public_kernel_interface.h
+    63c2ccbe48bb263149cfdc1d0cbe0370  queue.c
+    e12b085b2bf8cd425365b345831841f2  queue.h
+    092ccec4bf20645fcde14470e074e8ea  random.c
+    7b31c57ff692317d816c839156382596  random.h
+    cfea4010ae3135b177e3ecc8e29e1b42  readme.pdf
+    bf88193205eacf0d76502ea124bf7bdc  readme.rst
+    d24874efbd4544370f6347b1cae9cca9  readme.tex
+    3477616820d4a1447b5a569e246409bf  robio.c
+    5763b2a44810b6d0afafc27fb88cc7de  robio.h
+    f6b6225f4f50d316f154ee5927de4080  route.c
+    2fe7d2acdae03abb1904c8a460f4d53c  route.h
+    155b6b3d1816287618cc197aec5d5884  rps.c
+    6eee23bcabb82e39ca885de1563eca4f  rps.h
+    02566388717be1765b35028f7f16bf39  scheduler.c
+    0b1101123bcff9dbbf9d39542c35aacb  scheduler.h
+    6b8f1fdb8b0676c61b8ee263e43a18b4  sensor-periods
+    fba4eb1fd2006e2d70124be70af02282  swi_kernel_interface.s
+    00f9f65864243bdd18687e7a849c72a1  task_descriptor.c
+    34b26bd48a79c0a2572ca700e9ea4283  task_descriptor.h
+    33f883f692ee8388a7f1be0b1409c73f  tasks.c
+    0d3699b1a8224eb6995bb042834f66b5  tasks.h
+    126838fe0a43c2de5588e2f0f961d784  test_uart.c
+    5b820ca4fce39820f678a6080fd594ef  test_uart.h
+    md5sum: tracks: Is a directory
+    a068a724bb13ffa4e64a8902738adbae  train.c
+    b82348475b05867e134a4cccf9602d77  train.h
+    7c3a92aa318aa46c34a85a1f6d96a349  train_abstraction_layer.c
+    a379252956109aaae75059ecb6dbcfd6  train_abstraction_layer.h
+    d6df7a88aec394cbddc22e290307b83f  train_data_structures.h
+    926e48905f6cb40ce35d6df164408878  train_logic.c
+    da12dfebda37a969e5de4a109618ee15  train_logic.h
+    d4ad03272947d96db7fbd9528ca11ced  uart.c
+    1a8185a782b5c582a6ba13127ae1a1e3  uart.h
+    ef0786d9cd6e0d698c0bfc3a6fff0851  ui.c
+    a7fd7dab78620ea996b01012367b0b76  ui.h
+    5b609bdd0235c3858e16c053b8e53bfd  va_list_def.h
 
 
 Elf MD5 hash::
 
-    TODO
+    chfoo@nettop37:/u/cs452/tftp/ARM/relder-chfoo/pf-submit$ md5sum *
+    8b4dec2e4a8518bb27bca5929531dc82  final-demo.elf
+    aec1db7c3d6f93aa7b9b6fd98e47b4db  kern_simulation.elf
+    3f559a290b3a3a5fb91d2262d7a8d47d  kern_test.elf
+    9d5e4e2a134be237d62d888af793de04  orientation.elf
 
 
-Git sha1 hash: ``TODO``
+
+Git sha1 hash: ``e9e737e07135cc8864f6c8e1e89bf6cf0fbeb63a``
 
 
 Appendix
