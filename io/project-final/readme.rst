@@ -340,6 +340,11 @@ This task is responsible for printing messages into the scrolled area. It uses t
 Real Time Worst Case Execution Analysis
 +++++++++++++++++++++++++++++++++++++++
 
+Since this deliverable significantly depends on the accuracy of the simulated train model, an analysis was done into the sampling error, and how worst-case execution can affect the error in determining where train actually are.
+
+It was observed that trains speed up over a very long period of time.  After initial acceleration, trains can continue gaining velocity of up to another 10 cm/s.  This takes place over a period that stablizes after about 1-3 minutes, however in some cases, speedup of less than 1 cm/s is still observed 7 minutes after the train has started.  The graphs below show a plot of how the train velocity increases over time for two different speeds.
+
+
 .. figure:: speed-increase-speed-11.png
 
 .. figure:: speed-increase-speed-14.png
